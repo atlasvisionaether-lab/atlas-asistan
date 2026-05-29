@@ -3,105 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Asistan | Yapay Zeka Destekli Müşteri Hizmetleri</title>
+    <title>Atlas Asistan | Yapay Zeka AI Automation</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <header>
-        <div class="container navbar">
+    <header class="navbar">
+        <div class="container nav-container">
             <div class="logo">
-                <i class="fa-solid fa-robot"></i> <span>Atlas Asistan</span>
+                <i class="fa-solid fa-robot"></i> 
+                <span>ATLAS ASİSTAN <small>AI AUTOMATION</small></span>
             </div>
-            <nav>
-                <a href="#ozellikler">Özellikler</a>
-                <a href="#entegrasyon">Entegrasyon</a>
-                <a href="#iletisim" class="btn-primary-outline">İletişim</a>
+            <nav class="nav-links">
+                <a href="#cozum">Çözüm</a>
+                <a href="#moduller">Modüller</a>
+                <a href="#paketler">Paketler</a>
+                <a href="https://wa.me/905344682769" target="_blank" class="btn-login">
+                    <i class="fa-brands fa-whatsapp"></i> 0534 468 2769
+                </a>
             </nav>
         </div>
     </header>
 
     <section class="hero">
-        <div class="container hero-wrapper">
+        <div class="container hero-grid">
+            
             <div class="hero-content">
-                <h1>Klinik ve Güzellik Merkeziniz İçin <span class="gradient-text">7/24 Aktif AI Asistan</span></h1>
-                <p>Müşterilerinizin sorularını saniyeler içinde yanıtlayan, WhatsApp ve Instagram üzerinden otomatik randevu ve bilgi akışı sağlayan yapay zeka tabanlı akıllı asistan sistemi.</p>
-                <div class="hero-buttons">
-                    <a href="#iletisim" class="btn-primary">Hemen Başlayın</a>
-                    <a href="#ozellikler" class="btn-secondary">Detayları İncele</a>
+                <div class="badge">
+                    <span class="dot"></span> GÜZELLİK & SAĞLIK SEKTÖRÜ İÇİN ÖZEL
+                </div>
+                <h1>Kliniğiniz Kapalıyken Bile Randevu Defterinizi Dolduran <br> <span class="gradient-text">Yapay Zeka Asistanı.</span></h1>
+                <p>Güzellik ve sağlık sektörü için tasarlandı. Atlas Asistan ile WhatsApp ve Instagram'dan gelen tüm hasta/müşteri mesajlarını otonom olarak yanıtlayın, randevularınızı 7/24 otomatik planlayın.</p>
+                <div class="hero-actions">
+                    <a href="https://wa.me/905344682769" target="_blank" class="btn-primary">Hemen Randevu Alın</a>
                 </div>
             </div>
-            <div class="hero-image">
-                <div class="ui-mockup">
-                    <div class="ui-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                    <div class="ui-body">
-                        <div class="chat-bubble bot">Merhaba! Atlas Güzellik Merkezi'ne hoş geldiniz. Nasıl yardımcı olabilirim?</div>
-                        <div class="chat-bubble user">Cilt bakımı fiyatları hakkında bilgi alabilir miyim ve Cumartesi gününe randevu uygun mu?</div>
-                        <div class="chat-bubble bot animated">Tabii ki! Cumartesi günü saat 14:00 ve 16:00 saatleri uygundur. Sizin için hangisini rezerve edelim? ✨</div>
+
+            <div class="hero-visual">
+                <div class="floating-badge badge-left">
+                    <i class="fa-solid fa-bolt"></i>
+                    <div>
+                        <small>Yanıt</small>
+                        <strong>0.8 saniye</strong>
+                    </div>
+                </div>
+
+                <div class="phone-mockup">
+                    <div class="phone-header">
+                        <div class="phone-logo"><i class="fa-solid fa-robot"></i></div>
+                        <div class="phone-title">
+                            <strong>Atlas Asistan</strong>
+                            <span class="online-status"><span class="dot"></span> Çevrimiçi • Otonom</span>
+                        </div>
+                        <div class="phone-icons">
+                            <i class="fa-brands fa-instagram"></i>
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="phone-body">
+                        <div class="time-stamp">Bugün 07:14</div>
+                        
+                        <div class="message-row user-row">
+                            <div class="msg user-msg">Lazer epilasyon fiyat nedir?</div>
+                        </div>
+
+                        <div class="message-row ai-row">
+                            <div class="msg ai-msg">
+                                <div class="ai-msg-header">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> ATLAS AI
+                                </div>
+                                Merhaba! Tüm vücut lazer epilasyon 2.500₺. Yarın 14:00 veya 16:30 müsait. Hangisini tercih edersiniz?
+                                <div class="action-btn"><i class="fa-regular fa-calendar-check"></i> Randevu takvime eklendi ✓</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </section>
 
-    <section id="ozellikler" class="features">
-        <div class="container">
-            <h2 class="section-title">Neden Atlas Asistan?</h2>
-            <div class="grid-3">
-                <div class="card">
-                    <i class="fa-brands fa-whatsapp icon-whatsapp"></i>
-                    <h3>WhatsApp Entegrasyonu</h3>
-                    <p>Müşterileriniz doğrudan WhatsApp hat hattınız üzerinden asistanla konuşur, süreç kesintiye uğramaz.</p>
-                </div>
-                <div class="card">
-                    <i class="fa-brands fa-instagram icon-instagram"></i>
-                    <h3>Instagram DM & Yorum</h3>
-                    <p>Gelen kutunuza veya gönderi yorumlarınıza yapay zeka anında yanıt vererek potansiyel müşterileri kaçırmaz.</p>
-                </div>
-                <div class="card">
-                    <i class="fa-solid fa-calendar-check icon-calendar"></i>
-                    <h3>7/24 Kesintisiz Randevu</h3>
-                    <p>Gece yarısı gelen randevu talepleri bile otomatik olarak işlenir, işletmeniz uyurken de kazanmaya devam eder.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="iletisim" class="contact">
-        <div class="container max-w-600">
-            <h2 class="section-title">Detaylı Bilgi ve Demo Alın</h2>
-            <p class="section-subtitle">İşletmenizi yapay zeka çağına taşımak ve asistanınızı özelleştirmek için formu doldurun.</p>
-            <form id="contactForm" class="styled-form">
-                <div class="form-group">
-                    <label for="name">Adınız Soyadınız</label>
-                    <input type="text" id="name" required placeholder="Örn. Ali Yılmaz">
-                </div>
-                <div class="form-group">
-                    <label for="phone">Telefon Numaranız</label>
-                    <input type="tel" id="phone" required placeholder="05xx xxx xx xx">
-                </div>
-                <div class="form-group">
-                    <label for="business">İşletme Türü</label>
-                    <select id="business">
-                        <option value="klinik">Klinik / Sağlık Merkezi</option>
-                        <option value="guzellik">Güzellik Salonu</option>
-                        <option value="retail">Perakende / Mağaza</option>
-                        <option value="diger">Diğer</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-primary btn-block">Bilgi Talep Et</button>
-            </form>
-        </div>
-    </section>
-
-    <footer>
-        <div class="container footer-content">
-            <p>&copy; 2026 Atlas Asistan. Tüm Hakları Saklıdır.</p>
-            <p>İletişim: 0534 468 2769</p>
-        </div>
-    </footer>
-
-    <script src="script.js"></script>
 </body>
 </html>
