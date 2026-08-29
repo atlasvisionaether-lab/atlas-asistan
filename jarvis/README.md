@@ -271,10 +271,23 @@ Ekran kartı hızlandırması için CUDA kütüphaneleri gerekir. Jarvis varsay�
 CPU kullanır ve bu hatayı almamalısınız; `.env` içinde `WHISPER_DEVICE=cpu` olduğundan
 emin olun. (Dil modeli tarafı bundan etkilenmez, Ollama GPU'yu kendi kullanır.)
 
-**Cevapta uzun İngilizce muhakeme görünüyor**
-`qwen3` gibi modeller akıl yürütmesini cevabın içine gömer. Atlas bunu ayıklar; ayrıca
-sistem istemine `/no_think` işareti koyar. Yine de görüyorsanız Ollama'nız eski olabilir,
-güncelleyin: `curl -fsSL https://ollama.com/install.sh | sh`
+**Cevap geç geliyor / model önce İngilizce düşünüyor**
+`qwen3` ailesi cevaptan önce kendi kendine akıl yürütür. Atlas bu metni gizler, ama
+**gizlemek süreyi kurtarmaz** — model onu yine de üretir. Gerçekten durdurmak için sırayla:
+
+1. **Ollama'yı güncelleyin.** Akıl yürütmeyi kapatan ayar 0.9 sürümüyle geldi; daha
+   eskisi bu ayarı sessizce yok sayar. Atlas açılışta sürümünüzü kontrol eder ve gerekirse
+   uyarır.
+   ```bash
+   curl -fsSL https://ollama.com/install.sh | sh
+   ```
+2. **Düşünmeyen bir modele geçin.** `gemma3:12b` ve `qwen2.5:7b` hiç akıl yürütmez,
+   ilk kelime anında gelir:
+   ```bash
+   bash switch-model.sh gemma3:12b
+   ```
+3. Atlas ayrıca istemine `/no_think` işaretini koyar (qwen3'ün kendi anahtarı) ve akıl
+   yürütme metnini akıştan ayıklar.
 
 **Cevap gelmiyor, uygulama donmuş gibi**
 `qwen3` gibi modeller cevaptan önce kendi kendine akıl yürütebilir. Bu kapalı gelir

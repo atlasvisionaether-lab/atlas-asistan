@@ -133,6 +133,27 @@ def ollama_available() -> bool:
         return False
 
 
+def ollama_surumu() -> str:
+    try:
+        return requests.get(f"{OLLAMA_HOST}/api/version", timeout=3).json().get("version", "")
+    except Exception:
+        return ""
+
+
+def dusunme_ayari_destekli(surum: str = None) -> bool:
+    """'think' parametresi Ollama 0.9'dan itibaren var; oncesinde sessizce yok sayilir."""
+    surum = surum if surum is not None else ollama_surumu()
+    parcalar = []
+    for p in surum.split("-")[0].split("."):
+        if p.isdigit():
+            parcalar.append(int(p))
+        else:
+            break
+    if len(parcalar) < 2:
+        return True  # okunamadi, uyari verme
+    return (parcalar[0], parcalar[1]) >= (0, 9)
+
+
 def model_installed(model: str) -> bool:
     try:
         tags = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=5).json()
@@ -311,6 +332,23 @@ def _stream_once(payload: dict, on_token, on_think=None, on_discard=None) -> tup
     return "".join(metin), cagrilar
 
 
+def _no_think_ekle(messages: list) -> list:
+    """qwen3 ailesinde akil yurutmeyi kapatan isareti son kullanici mesajina ekler.
+
+    Gecmisi bozmamak icin kopya uzerinde calisilir; isaret arayuzde gorunmez.
+    """
+    if THINK:
+        return messages
+    kopya = list(messages)
+    for i in range(len(kopya) - 1, -1, -1):
+        if kopya[i].get("role") == "user":
+            icerik = str(kopya[i].get("content", ""))
+            if "/no_think" not in icerik:
+                kopya[i] = dict(kopya[i], content=f"{icerik} /no_think")
+            break
+    return kopya
+
+
 def chat_stream(messages: list, on_token, on_tool=None, web_enabled: bool = None,
                 max_rounds: int = 6, on_think=None, on_discard=None) -> str:
     """Ollama ile sohbet eder; model arac cagirirsa aramayi yapip devam eder.
@@ -324,7 +362,7 @@ def chat_stream(messages: list, on_token, on_tool=None, web_enabled: bool = None
     cevap = ""
 
     for _ in range(max_rounds):
-        payload = {"model": MODEL, "messages": messages, "stream": True}
+        payload = {"model": MODEL, "messages": _no_think_ekle(messages), "stream": True}
         if think_enabled:
             payload["think"] = THINK
         if tools_enabled:
@@ -688,6 +726,10 @@ def preflight() -> bool:
         print(f"{C_RED}Ollama calismiyor ({OLLAMA_HOST}).{C_RESET}")
         print("  sudo systemctl start ollama    # ya da ayri bir terminalde: ollama serve")
         return False
+    if not THINK and not dusunme_ayari_destekli():
+        print(f"{C_DIM}(Ollama surumunuz eski: modelin akil yurutmesi kapatilamiyor, "
+              f"cevaplar yavas gelebilir.{C_RESET}")
+        print(f"{C_DIM} Guncellemek icin: curl -fsSL https://ollama.com/install.sh | sh){C_RESET}")
     if not model_installed(MODEL):
         print(f"{C_RED}'{MODEL}' modeli bulunamadi.{C_RESET}")
         print(f"  ollama pull {MODEL}")

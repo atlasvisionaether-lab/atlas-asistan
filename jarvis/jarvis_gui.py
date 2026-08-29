@@ -53,6 +53,11 @@ class JarvisApp:
                              f"Terminalde:  ollama pull {core.MODEL}", error=True)
         else:
             self._say_system(f"{core.NAME} hazir. Model: {core.MODEL}")
+            if not core.THINK and not core.dusunme_ayari_destekli():
+                self._say_system(
+                    "Ollama surumunuz eski: modelin akil yurutmesi kapatilamiyor, "
+                    "cevaplar yavas gelebilir. Terminalde guncelleyin:\n"
+                    "curl -fsSL https://ollama.com/install.sh | sh")
 
     # ------------------------------------------------------------------ arayuz
     def _build_ui(self) -> None:

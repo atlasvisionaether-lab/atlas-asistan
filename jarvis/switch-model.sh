@@ -37,12 +37,12 @@ fi
 
 # ad | disk boyutu | calismak icin gereken bellek (GB) | aciklama
 MODELS=(
-  "qwen3:8b|~5 GB|6|Guclu muhakeme, iyi Turkce. 8 GB VRAM icin ideal."
-  "qwen3:14b|~9 GB|10|Daha isabetli cevaplar. 12 GB+ VRAM ister."
-  "gemma3:12b|~8 GB|9|Google modeli, cok dilli yani guclu."
-  "qwen2.5:7b|~5 GB|6|Hizli ama muhakemesi zayif."
+  "qwen3:8b|~5 GB|6|Guclu muhakeme, iyi Turkce. Cevap oncesi dusunur (yavas)."
+  "qwen3:14b|~9 GB|10|Daha isabetli. Dusunur (yavas). 12 GB+ VRAM ister."
+  "gemma3:12b|~8 GB|9|Dusunmez, hizli cevap verir. Cok dilli yani guclu."
+  "qwen2.5:7b|~5 GB|6|Dusunmez, cok hizli. Muhakemesi zayif."
   "llama3.1:8b|~5 GB|6|Meta modeli, Turkcesi qwen'den geride."
-  "qwen3:30b-a3b|~18 GB|20|Cok guclu, 20 GB+ VRAM ya da 24 GB+ RAM ister."
+  "qwen3:30b-a3b|~18 GB|20|Cok guclu ama dusunur; ilk cevap gec gelir."
 )
 
 # ------------------------------------------------------------------- secim
@@ -62,6 +62,8 @@ else
   done
   echo
   info "Donaniminiz icin onerilen: $ONERI  (-> ile isaretli)"
+  echo "  Not: 'dusunur' yazan modeller cevap oncesi kendi kendine akil yurutur;"
+  echo "       daha isabetli ama sesli kullanimda belirgin sekilde yavastir."
   echo
   read -r -p "  Numara secin (bos birakirsaniz $ONERI kurulur): " secim
   if [ -z "$secim" ]; then
