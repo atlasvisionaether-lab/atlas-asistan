@@ -1,4 +1,4 @@
-# Jarvis — Ubuntu için yerel Türkçe sesli asistan
+# Atlas — Ubuntu için yerel Türkçe sesli asistan
 
 Ollama üzerinde **tamamen kendi bilgisayarınızda** çalışan, Türkçe konuşan bir asistan.
 İnternet bağlantısı yalnızca ilk kurulumda (model indirmek için) gerekir; sonrasında
@@ -76,9 +76,33 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 jarvis
 ```
 
-### Sesli mod nasıl çalışır?
+### Sürekli dinleme (uyandırma sözcüğü)
 
-Pencerede **Konuş** düğmesine bir kez basarsınız (basılı tutmak yok). Düğme kırmızı
+Pencerede **Surekli dinle** düğmesine basın. Artık düğmeye basmanıza gerek yok: **"Atlas"**
+diye seslenip talimatınızı söylemeniz yeterli.
+
+```
+"Atlas, saat kaç?"          -> hemen cevaplar
+"Atlas"                     -> "Efendim?" der ve talimatınızı bekler
+"Merhaba Atlas, hava nasıl" -> uyandırma sözcüğü ilk üç kelime içinde de olabilir
+"Bugün hava güzel"          -> yok sayılır, uyandırma sözcüğü geçmiyor
+```
+
+Uyandırma sözcüğünü değiştirmek için `.env` içindeki `JARVIS_WAKE_WORDS` satırını düzenleyin
+(virgülle birden fazla yazabilirsiniz). Asistanın adı `JARVIS_NAME` ile değişir.
+
+Terminalde aynı mod:
+
+```bash
+./jarvis --wake
+```
+
+Mikrofon sürekli açık olur, ama **ses bilgisayardan dışarı çıkmaz** — konuşma çözümlemesi
+de yerelde yapılır. Yalnızca uyandırma sözcüğüyle başlayan cümleler modele gönderilir.
+
+### Düğmeyle konuşma
+
+Sürekli dinlemeyi istemiyorsanız: **Konuş** düğmesine bir kez basarsınız (basılı tutmak yok). Düğme kırmızı
 **Bitir**'e döner ve durum satırında ses seviyesi çubuğu görünür. Konuşmanız bitince
 iki şeyden biri olur:
 

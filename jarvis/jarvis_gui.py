@@ -28,6 +28,7 @@ class JarvisApp:
         self.busy = False
         self.recording = False
         self.stop_flag = threading.Event()
+        self.always_on = threading.Event()
 
         root.title(f"{core.NAME} — Yerel Asistan")
         root.geometry("820x600")
@@ -83,6 +84,12 @@ class JarvisApp:
                                   bg=ACCENT, fg=BG, activebackground=FG,
                                   relief="flat", font=("Ubuntu", 11, "bold"), cursor="hand2")
         self.send_btn.pack(side="left", ipady=4)
+
+        self.always_btn = tk.Button(bar, text="  Surekli dinle  ",
+                                    command=self.toggle_always, bg=BG_INPUT, fg=FG,
+                                    activebackground=ACCENT, relief="flat",
+                                    font=("Ubuntu", 11), cursor="hand2")
+        self.always_btn.pack(side="left", padx=(0, 8), ipady=4)
 
         self.web_on = tk.BooleanVar(value=core.WEB_SEARCH)
         self.tts_on = tk.BooleanVar(value=True)
@@ -148,6 +155,13 @@ class JarvisApp:
                     self._append(payload)
                 elif kind == "status":
                     self.status.configure(text=payload)
+                elif kind == "sys":
+                    self._say_system(payload)
+                elif kind == "always_off":
+                    self.always_on.clear()
+                    self.always_btn.configure(text="  Surekli dinle  ",
+                                              bg=BG_INPUT, fg=FG)
+                    self._set_busy(False)
                 elif kind == "tool":
                     self._append(f"\n\n[ internette araniyor: {payload} ]\n", "sys")
                     self._append(f"{core.NAME}\n", "bot")
@@ -163,6 +177,8 @@ class JarvisApp:
                 elif kind == "done":
                     self._append("\n\n")
                     self._set_busy(False)
+                    if self.always_on.is_set():
+                        self.mic_btn.configure(state="disabled")
                 elif kind == "idle":
                     self._set_busy(False)
         except queue.Empty:
@@ -196,6 +212,77 @@ class JarvisApp:
         self.events.put(("status",
                          f"dinliyorum {cubuk} {durum} - {elapsed:.0f}sn "
                          f"(bitirmek icin Bitir)"))
+
+    def toggle_always(self) -> None:
+        """Uyandirma sozcugu ile surekli dinlemeyi acar/kapatir."""
+        if self.always_on.is_set():
+            self.always_on.clear()
+            self.stop_flag.set()
+            self.status.configure(text="dinleme durduruluyor...")
+            return
+        if self.busy:
+            return
+        self.always_on.set()
+        self.always_btn.configure(text="  Dinlemeyi durdur  ", bg=ERR_COLOR, fg=BG)
+        self.mic_btn.configure(state="disabled")
+        threading.Thread(target=self._worker_always, daemon=True).start()
+
+    def _worker_always(self) -> None:
+        uyandirma = core.WAKE_WORDS[0].title() if core.WAKE_WORDS else core.NAME
+        if not self._ensure_listener():
+            self.events.put(("always_off", None))
+            return
+        self._say_ready(uyandirma)
+
+        while self.always_on.is_set():
+            self.events.put(("status", f"'{uyandirma}' demenizi bekliyorum..."))
+            metin = self._listen_once()
+            if not self.always_on.is_set():
+                break
+            if not metin:
+                continue
+            uyandi, komut = core.wake_match(metin)
+            if not uyandi:
+                continue
+            if not komut:
+                self.events.put(("status", "efendim? sizi dinliyorum..."))
+                if self.speaker is not None:
+                    self.speaker.say("Efendim?")
+                komut = self._listen_once()
+                if not komut or not self.always_on.is_set():
+                    continue
+            self.events.put(("user", komut))
+            self.messages.append({"role": "user", "content": komut})
+            self.events.put(("bot", None))
+            self.events.put(("status", "dusunuyor..."))
+            self._stream_reply()
+
+        self.events.put(("always_off", None))
+
+    def _ensure_listener(self) -> bool:
+        if self.listener is not None:
+            return True
+        self.events.put(("status", f"ses tanima modeli yukleniyor ({core.WHISPER_MODEL})..."))
+        try:
+            self.listener = core.Listener()
+            return True
+        except Exception as exc:
+            self.events.put(("error", f"Mikrofon baslatilamadi: {exc}"))
+            return False
+
+    def _say_ready(self, uyandirma: str) -> None:
+        self.events.put(("sys", f"Surekli dinleme acik. '{uyandirma}' diye seslenip "
+                                f"talimatinizi soyleyin."))
+
+    def _listen_once(self) -> str:
+        """Surekli dinleme dongusu icin tek bir konusma yakalar."""
+        self.stop_flag.clear()
+        try:
+            return self.listener.listen(should_stop=lambda: not self.always_on.is_set())
+        except Exception as exc:
+            self.events.put(("error", f"Ses cozumlenemedi: {exc}"))
+            self.always_on.clear()
+            return ""
 
     def _worker_ask(self) -> None:
         self._stream_reply()

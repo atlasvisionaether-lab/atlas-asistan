@@ -32,7 +32,9 @@ except ImportError:  # dotenv yoksa sadece ortam degiskenleri kullanilir
 
 MODEL = os.getenv("JARVIS_MODEL", "qwen2.5:7b")
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
-NAME = os.getenv("JARVIS_NAME", "Jarvis")
+NAME = os.getenv("JARVIS_NAME", "Atlas")
+WAKE_WORDS = [w.strip().lower() for w in
+              os.getenv("JARVIS_WAKE_WORDS", "atlas,atlas asistan").split(",") if w.strip()]
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
 WHISPER_LANG = os.getenv("WHISPER_LANG", "tr")
 WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu")
@@ -422,6 +424,33 @@ def print_stream_token(token: str) -> None:
     sys.stdout.flush()
 
 
+def wake_match(text: str) -> "tuple[bool, str]":
+    """Metin uyandirma sozcugu ile basliyor mu?
+
+    (uyandi_mi, komut) dondurur. Komut, uyandirma sozcugunden sonrasidir;
+    bos ise kullanici sadece seslenmis demektir.
+    """
+    ham = (text or "").strip()
+    if not ham:
+        return False, ""
+    # ses tanima noktalama ekleyebilir: "Atlas, saat kac?" / "Atlas!"
+    sade = ham.lower().replace("!", " ").replace(",", " ").replace(".", " ")
+    sade = sade.replace("?", " ").replace(":", " ").strip()
+    sade = " ".join(sade.split())
+
+    kelimeler = sade.split()
+    for kelime in sorted(WAKE_WORDS, key=len, reverse=True):
+        parca = kelime.split()
+        # uyandirma sozcugu cumlenin basinda ya da ilk birkac kelime icinde olmali
+        # ("Atlas saat kac" ve "Merhaba Atlas saat kac" ikisi de gecerli)
+        for i in range(min(len(kelimeler), 3)):
+            if kelimeler[i:i + len(parca)] == parca:
+                atilacak = i + len(parca)
+                kalan = " ".join(ham.split()[atilacak:]).lstrip(",;:!? ").strip()
+                return True, kalan
+    return False, ""
+
+
 def _tool_notice(sorgu: str) -> None:
     print(f"\n{C_DIM}(internette araniyor: {sorgu}){C_RESET}\n"
           f"{C_GREEN}{NAME}:{C_RESET} ", end="", flush=True)
@@ -461,6 +490,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Jarvis - yerel Turkce asistan")
     parser.add_argument("-p", "--prompt", help="Tek seferlik soru sor ve cik")
     parser.add_argument("--voice", action="store_true", help="Mikrofondan dinle")
+    parser.add_argument("--wake", action="store_true",
+                        help="Surekli dinle, uyandirma sozcugunu bekle (--voice gerektirmez)")
     parser.add_argument("--no-tts", action="store_true", help="Sesli yaniti kapat")
     parser.add_argument("--model", help=f"Ollama modeli (varsayilan: {MODEL})")
     parser.add_argument("--no-web", action="store_true",
@@ -485,6 +516,8 @@ def main() -> int:
         return 0
 
     listener = None
+    if args.wake:
+        args.voice = True
     if args.voice:
         try:
             listener = Listener()
@@ -495,12 +528,32 @@ def main() -> int:
     print(f"{C_CYAN}{NAME} hazir{C_RESET} {C_DIM}(model: {MODEL}"
           f"{', internet acik' if WEB_SEARCH else ''}) - cikmak icin 'cik' yazin "
           f"ya da Ctrl+C{C_RESET}")
-    if listener:
+    if listener and args.wake:
+        uyandirma = WAKE_WORDS[0].title() if WAKE_WORDS else NAME
+        print(f"{C_DIM}Surekli dinleme acik. '{uyandirma}' diye seslenip talimatinizi "
+              f"soyleyin. Cikmak icin Ctrl+C.{C_RESET}")
+    elif listener:
         print(f"{C_DIM}Konusmaya baslamak icin Enter'a basin.{C_RESET}")
 
     while True:
         try:
-            if listener:
+            if listener and args.wake:
+                print(f"{C_DIM}dinliyorum...{C_RESET}", end="\r", flush=True)
+                duyulan = listener.listen()
+                if not duyulan:
+                    continue
+                uyandi, user_text = wake_match(duyulan)
+                if not uyandi:
+                    continue
+                if not user_text:
+                    print(f"{C_GREEN}{NAME}:{C_RESET} Efendim?")
+                    if speaker:
+                        speaker.say("Efendim?")
+                    user_text = listener.listen()
+                    if not user_text:
+                        continue
+                print(f"{C_CYAN}Sen:{C_RESET} {user_text}")
+            elif listener:
                 input(f"{C_CYAN}[Enter ile konus]{C_RESET} ")
                 print(f"{C_DIM}Dinliyorum...{C_RESET}")
                 user_text = listener.listen()

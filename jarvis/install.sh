@@ -126,7 +126,7 @@ if "$VENV_DIR/bin/python" -c "import tkinter" >/dev/null 2>&1; then
   cat > "$APPS_DIR/jarvis.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
-Name=Jarvis
+Name=Atlas
 GenericName=Yerel Yapay Zeka Asistani
 Comment=Ollama ile calisan Turkce sesli asistan
 Exec=$JARVIS_DIR/jarvis-gui
@@ -137,7 +137,7 @@ StartupNotify=true
 DESKTOP
   chmod +x "$APPS_DIR/jarvis.desktop"
   update-desktop-database "$APPS_DIR" >/dev/null 2>&1 || true
-  info "Uygulama menusune eklendi (Etkinlikler > Jarvis)."
+  info "Uygulama menusune eklendi (Etkinlikler > Atlas)."
 else
   warn "tkinter bulunamadi; pencere uygulamasi devre disi."
   warn "Kurmak icin: sudo apt install -y python3-tk  (sonra bu betigi tekrar calistirin)"
