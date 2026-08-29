@@ -176,7 +176,7 @@ class JarvisApp:
                                               bg=BG_INPUT, fg=FG)
                     self._set_busy(False)
                 elif kind == "tool":
-                    self._append(f"\n\n[ internette araniyor: {payload} ]\n", "sys")
+                    self._append(f"\n\n[ {payload} ]\n", "sys")
                     self._append(f"{core.NAME}\n", "bot")
                 elif kind == "recording":
                     self._set_busy(True, "dinliyorum, konusun...", mic_active=True)
@@ -359,8 +359,8 @@ class JarvisApp:
             reply = core.chat_stream(
                 self.messages,
                 self._on_token,
-                on_tool=lambda sorgu: self.events.put(("tool", sorgu)),
-                tools_enabled=self.web_on.get(),
+                on_tool=lambda ad, args: self.events.put(("tool", core.arac_metni(ad, args))),
+                web_enabled=self.web_on.get(),
                 on_think=lambda _t: self.events.put(("wait", "akil yurutuyor")),
             )
         except core.requests.exceptions.ConnectionError:

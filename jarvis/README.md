@@ -131,7 +131,34 @@ sessizlik algılaması ve 20 saniyelik üst sınır geçerlidir.
 
 ---
 
-## 3. İnternet araması
+## 3. Neler yapabilir
+
+Atlas sadece sohbet etmez; aşağıdaki işleri **gerçekten** yapar. Uydurmaz, ilgili aracı
+çağırır ve sonucu size anlatır. Sesli de çalışır: "Atlas, saat kaç?" deyip cevabı duyabilirsiniz.
+
+| İstek | Ne olur |
+|---|---|
+| "Saat kaç?" / "Bugün günlerden ne?" | Sistem saatini ve tarihi söyler |
+| "1250'nin yüzde 18'i kaç?" | Hesaplar (güvenli matematik ayrıştırıcı, kod çalıştırmaz) |
+| "Bilgisayarın durumu nasıl?" | Bellek, disk, çalışma süresi, pil durumu |
+| "Şunu not al: süt almayı unutma" | Notu kalıcı olarak kaydeder |
+| "Notlarım neydi?" | Kayıtlı notları listeler |
+| "20 dakika sonra bana hatırlat" | Masaüstü bildirimi kurar |
+| "Tarayıcıyı aç" | Uygulamayı başlatır |
+| "Bugün İstanbul'da hava nasıl?" | İnternette arar (aşağıya bakın) |
+
+Notlar `~/.local/share/atlas/notlar.json` dosyasında tutulur.
+
+**Güvenlik:** `uygulama_ac` yalnızca sabit bir listedeki uygulamaları açar — model
+rastgele komut çalıştıramaz. `hesapla` ifadeyi kendi ayrıştırıcısıyla çözer, kod
+yorumlayıcısı kullanmaz.
+
+Yeni yetenek eklemek için `jarvis_tools.py` dosyasına `@arac(...)` ile işaretlenmiş bir
+fonksiyon yazmanız yeterli; Atlas onu otomatik olarak tanır.
+
+---
+
+## 4. İnternet araması
 
 Jarvis, cevabı için güncel bilgi gerektiğine **kendi karar verdiğinde** DuckDuckGo'da arama
 yapar; sıradan sohbette, çeviride, kod sorularında internete hiç dokunmaz. Arama yaptığında
@@ -154,7 +181,7 @@ aramasız devam eder, hata vermez.
 
 ---
 
-## 4. Model değiştirme
+## 5. Model değiştirme
 
 Cevap kalitesi doğrudan modele bağlıdır. Donanımınızı ölçüp uygun modeli kuran araç:
 
@@ -184,7 +211,7 @@ Değişiklikten sonra Jarvis'i yeniden başlatın. Eski modeli silmek için `oll
 
 ---
 
-## 5. Yapılandırma
+## 6. Yapılandırma
 
 Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 
@@ -211,7 +238,7 @@ Asistanın karakterini değiştirmek için `jarvis.py` içindeki `SYSTEM_PROMPT`
 
 ---
 
-## 6. Sorun giderme
+## 7. Sorun giderme
 
 **"Ollama çalışmıyor" hatası**
 ```bash
@@ -275,7 +302,7 @@ Yoksa `bash install.sh` komutunu tekrar çalıştırın.
 
 ---
 
-## 7. Güncelleme
+## 8. Güncelleme
 
 ```bash
 cd ~/atlas-asistan
@@ -287,7 +314,7 @@ masaüstü kısayolu değiştiyse `cd jarvis && bash install.sh` komutunu tekrar
 
 ---
 
-## 8. Donanım gereksinimi
+## 9. Donanım gereksinimi
 
 | RAM | Önerilen model | Beklenen hız (CPU) |
 |---|---|---|

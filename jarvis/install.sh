@@ -25,6 +25,7 @@ sudo apt-get install -y \
   ffmpeg \
   portaudio19-dev libasound2-dev \
   espeak-ng \
+  libnotify-bin \
   alsa-utils
 
 # ---------------------------------------------------------------- 2. ollama

@@ -61,12 +61,23 @@ def build_system_prompt(web: bool = WEB_SEARCH) -> str:
     """Sistem istemi. Internet araci aciksa yapabildikleri buna gore degisir."""
     yapabildiklerin = (
         "Sohbet etmek, soru cevaplamak, aciklama yapmak, metin yazmak ve duzeltmek, "
-        "ceviri, ozetleme, fikir uretmek, kod yazmak ve anlatmak, hesap yapmak."
+        "ceviri, ozetleme, fikir uretmek, kod yazmak ve anlatmak."
+    )
+    araclarin = (
+        "\n\nARACLARIN: Asagidaki isleri gercekten yapabilirsin, cevabi uydurma, "
+        "ilgili araci cagir:\n"
+        "- saat_tarih: su anki saat, tarih ve gun\n"
+        "- hesapla: matematik islemleri\n"
+        "- sistem_bilgisi: bellek, disk, calisma suresi, pil durumu\n"
+        "- not_ekle / notlari_getir / notlari_sil: kullanicinin notlarini saklarsin\n"
+        "- hatirlatici_kur: belirtilen dakika sonra masaustu bildirimi\n"
+        "- uygulama_ac: tarayici, hesap makinesi, dosyalar, terminal gibi uygulamalar\n"
+        "Arac sonucu HATA ile basliyorsa kullaniciya sorunu sade bir dille anlat."
     )
     yapamadiklarin = (
-        "E-posta ve mesaj gondermek, sosyal medya hesaplarina baglanmak, dosya acmak ya "
-        "da degistirmek, uygulama calistirmak, alarm ve hatirlatici kurmak, takvim "
-        "islemleri, gecmis konusmalari hatirlamak."
+        "E-posta ve mesaj gondermek, sosyal medya hesaplarina baglanmak, dosyalarin "
+        "icerigini okumak ya da degistirmek, takvim islemleri, gecmis sohbetleri "
+        "hatirlamak (notlar disinda)."
     )
     if web:
         arac = (
@@ -92,7 +103,8 @@ def build_system_prompt(web: bool = WEB_SEARCH) -> str:
         "Ingilizce terimleri gerekirse parantez icinde verebilirsin ama cumlelerin Turkce "
         "olmali. Bu kural her kosulda gecerlidir.\n\n"
         f"YAPABILDIKLERIN: {yapabildiklerin}\n\n"
-        f"YAPAMADIKLARIN: {yapamadiklarin} Bunlarin hicbirine bagli degilsin. Boyle bir "
+        f"{araclarin}\n\n"
+        f"YAPAMADIKLARIN: {yapamadiklarin} Bunlara bagli degilsin. Boyle bir "
         "sey istenirse acikca yapamadigini soyle ve yapabildigin bir alternatif oner. "
         "Sahip olmadigin bir yetenegi asla varmis gibi anlatma."
         f"{arac}\n\n"
@@ -126,29 +138,16 @@ def model_installed(model: str) -> bool:
     return model in names or any(n.split(":")[0] == model.split(":")[0] for n in names)
 
 
-TOOLS = [{
-    "type": "function",
-    "function": {
-        "name": "internette_ara",
-        "description": (
-            "Internette arama yapar ve baslik, ozet ve baglantilardan olusan sonuclari "
-            "dondurur. Sadece guncel ya da egitim verilerinde bulunmayan bilgi "
-            "gerektiginde kullan."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "sorgu": {
-                    "type": "string",
-                    "description": "Arama sorgusu. Kisa ve anahtar kelimelerden olussun.",
-                }
-            },
-            "required": ["sorgu"],
-        },
-    },
-}]
+import jarvis_tools as tools  # noqa: E402  (ayarlar okunduktan sonra)
 
 
+@tools.arac("internette_ara",
+            "Internette arama yapar ve baslik, ozet ve baglantilardan olusan "
+            "sonuclari dondurur. Sadece guncel ya da egitim verilerinde bulunmayan "
+            "bilgi gerektiginde kullan.",
+            {"sorgu": {"type": "string",
+                       "description": "Arama sorgusu. Kisa ve anahtar kelimelerden olussun."}},
+            ["sorgu"])
 def web_search(sorgu: str, limit: int = WEB_RESULTS) -> str:
     """DuckDuckGo uzerinden arama yapar, modele verilecek metni dondurur."""
     try:
@@ -174,15 +173,15 @@ def web_search(sorgu: str, limit: int = WEB_RESULTS) -> str:
     return "\n\n".join(parcalar)
 
 
+def aktif_arac_adlari(web: bool) -> list:
+    """Internet kapaliyken arama araci modele hic sunulmaz."""
+    return [ad for ad in tools.ARACLAR if web or ad != "internette_ara"]
+
+
 def _run_tool(ad: str, args: dict, on_tool=None) -> str:
-    if ad != "internette_ara":
-        return f"HATA: '{ad}' adinda bir arac yok."
-    sorgu = (args.get("sorgu") or args.get("query") or "").strip()
-    if not sorgu:
-        return "HATA: arama sorgusu bos."
     if on_tool is not None:
-        on_tool(sorgu)
-    return web_search(sorgu)
+        on_tool(ad, args or {})
+    return tools.calistir(ad, args)
 
 
 def _stream_once(payload: dict, on_token, on_think=None) -> tuple:
@@ -216,14 +215,15 @@ def _stream_once(payload: dict, on_token, on_think=None) -> tuple:
     return "".join(metin), cagrilar
 
 
-def chat_stream(messages: list, on_token, on_tool=None, tools_enabled: bool = None,
+def chat_stream(messages: list, on_token, on_tool=None, web_enabled: bool = None,
                 max_rounds: int = 6, on_think=None) -> str:
     """Ollama ile sohbet eder; model arac cagirirsa aramayi yapip devam eder.
 
     Arac sonuclari `messages` listesine eklenir, boylece sohbet gecmisinde kalir.
     """
-    if tools_enabled is None:
-        tools_enabled = WEB_SEARCH
+    if web_enabled is None:
+        web_enabled = WEB_SEARCH
+    tools_enabled = True     # model arac cagirmayi desteklemiyorsa kapanir
     think_enabled = True
     cevap = ""
 
@@ -232,7 +232,7 @@ def chat_stream(messages: list, on_token, on_tool=None, tools_enabled: bool = No
         if think_enabled:
             payload["think"] = THINK
         if tools_enabled:
-            payload["tools"] = TOOLS
+            payload["tools"] = tools.specs(aktif_arac_adlari(web_enabled))
         try:
             cevap, cagrilar = _stream_once(payload, on_token, on_think)
         except requests.exceptions.HTTPError:
@@ -554,8 +554,19 @@ def wake_match(text: str) -> "tuple[bool, str]":
     return False, ""
 
 
-def _tool_notice(sorgu: str) -> None:
-    print(f"\n{C_DIM}(internette araniyor: {sorgu}){C_RESET}\n"
+def arac_metni(ad: str, args: dict) -> str:
+    """Calistirilan araci kullaniciya anlatan kisa metin."""
+    if ad == "internette_ara":
+        return f"internette araniyor: {args.get('sorgu', '')}"
+    if ad == "hesapla":
+        return f"hesaplaniyor: {args.get('ifade', '')}"
+    if ad == "uygulama_ac":
+        return f"uygulama aciliyor: {args.get('uygulama', '')}"
+    return f"{ad} calistiriliyor"
+
+
+def _tool_notice(ad: str, args: dict) -> None:
+    print(f"\n{C_DIM}({arac_metni(ad, args)}){C_RESET}\n"
           f"{C_GREEN}{NAME}:{C_RESET} ", end="", flush=True)
 
 
