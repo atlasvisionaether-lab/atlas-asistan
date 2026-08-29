@@ -97,7 +97,24 @@ if [ ! -f "$JARVIS_DIR/.env" ]; then
   sed "s|^JARVIS_MODEL=.*|JARVIS_MODEL=$MODEL|" "$JARVIS_DIR/.env.example" > "$JARVIS_DIR/.env"
   info ".env olusturuldu."
 else
-  info ".env zaten var, dokunulmadi."
+  # Mevcut .env korunur; yalnizca yeni eklenen ayarlar sonuna yazilir.
+  eklenen=0
+  while IFS= read -r satir; do
+    case "$satir" in
+      ''|'#'*) continue ;;
+    esac
+    anahtar="${satir%%=*}"
+    if ! grep -q "^${anahtar}=" "$JARVIS_DIR/.env"; then
+      [ "$eklenen" -eq 0 ] && printf '\n# --- yeni ayarlar (guncelleme ile eklendi) ---\n' >> "$JARVIS_DIR/.env"
+      echo "$satir" >> "$JARVIS_DIR/.env"
+      eklenen=$((eklenen + 1))
+    fi
+  done < "$JARVIS_DIR/.env.example"
+  if [ "$eklenen" -gt 0 ]; then
+    info ".env korundu, $eklenen yeni ayar eklendi."
+  else
+    info ".env guncel, dokunulmadi."
+  fi
 fi
 
 cat > "$JARVIS_DIR/jarvis" <<RUNNER

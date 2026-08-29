@@ -186,6 +186,7 @@ Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 | `MIC_SILENCE_THRESHOLD` | Sessizlik eşiğinin alt sınırı. Ortam ölçümü bunun altında kalırsa bu değer kullanılır |
 | `MIC_NOISE_FACTOR` | Ortam gürültüsünün kaç katı "konuşma" sayılsın. `2.0` daha hassas, `5.0` sadece yüksek sesi alır (varsayılan `3.0`) |
 | `MIC_SILENCE_SECONDS` | Konuşma bitince beklenecek süre |
+| `JARVIS_THINK` | `0` model doğrudan cevaplar (hızlı), `1` cevaptan önce kendi kendine akıl yürütür (daha isabetli ama çok daha yavaş) |
 | `JARVIS_WEB` | `1` internet araması açık, `0` kapalı |
 | `JARVIS_WEB_RESULTS` | Kaç arama sonucu modele verilsin (varsayılan 5) |
 | `JARVIS_WEB_REGION` | Arama bölgesi (varsayılan `tr-tr`) |
@@ -227,6 +228,15 @@ cd ~/atlas-asistan/jarvis && bash install.sh
 Ekran kartı hızlandırması için CUDA kütüphaneleri gerekir. Jarvis varsayılan olarak
 CPU kullanır ve bu hatayı almamalısınız; `.env` içinde `WHISPER_DEVICE=cpu` olduğundan
 emin olun. (Dil modeli tarafı bundan etkilenmez, Ollama GPU'yu kendi kullanır.)
+
+**Cevap gelmiyor, uygulama donmuş gibi**
+`qwen3` gibi modeller cevaptan önce kendi kendine akıl yürütebilir. Bu kapalı gelir
+(`JARVIS_THINK=0`); açtıysanız durum satırında "akil yurutuyor... N sn" yazar, donma değildir.
+Durum satırı hiç ilerlemiyorsa `ollama ps` ile modelin yüklenip yüklenmediğine bakın.
+
+**Mikrofon konuşmadığım şeyleri yazıyor**
+Sessizlikte ses tanıma metin uydurabilir. `.env` içinde `MIC_NOISE_FACTOR` değerini
+yükseltin (ör. `4.0`) ya da `WHISPER_MODEL=medium` deneyin.
 
 **Cevaplar çok yavaş**
 Daha küçük bir modele geçin (`.env` içinde `JARVIS_MODEL=qwen2.5:3b`) ve

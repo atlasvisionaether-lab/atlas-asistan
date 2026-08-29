@@ -45,6 +45,9 @@ NOISE_FACTOR = float(os.getenv("MIC_NOISE_FACTOR", "3.0"))
 WEB_SEARCH = os.getenv("JARVIS_WEB", "1").strip().lower() not in {"0", "false", "hayir", "kapali"}
 WEB_RESULTS = int(os.getenv("JARVIS_WEB_RESULTS", "5"))
 WEB_REGION = os.getenv("JARVIS_WEB_REGION", "tr-tr")
+# qwen3 gibi modeller cevaptan once kendi kendine akil yurutur. Sesli asistanda
+# bu uzun bir sessizlik demek; varsayilan olarak kapali.
+THINK = os.getenv("JARVIS_THINK", "0").strip().lower() in {"1", "true", "evet", "acik"}
 SAMPLE_RATE = 16000
 
 def build_system_prompt(web: bool = WEB_SEARCH) -> str:
@@ -171,7 +174,7 @@ def _run_tool(ad: str, args: dict, on_tool=None) -> str:
     return web_search(sorgu)
 
 
-def _stream_once(payload: dict, on_token) -> tuple:
+def _stream_once(payload: dict, on_token, on_think=None) -> tuple:
     """Tek bir /api/chat cagrisini akitir; (metin, arac_cagrilari) dondurur."""
     metin, cagrilar = [], []
     with requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, stream=True,
@@ -188,6 +191,9 @@ def _stream_once(payload: dict, on_token) -> tuple:
             if data.get("error"):
                 raise RuntimeError(data["error"])
             mesaj = data.get("message", {})
+            dusunce = mesaj.get("thinking") or ""
+            if dusunce and on_think is not None:
+                on_think(dusunce)
             token = mesaj.get("content", "")
             if token:
                 metin.append(token)
@@ -200,27 +206,33 @@ def _stream_once(payload: dict, on_token) -> tuple:
 
 
 def chat_stream(messages: list, on_token, on_tool=None, tools_enabled: bool = None,
-                max_rounds: int = 3) -> str:
+                max_rounds: int = 6, on_think=None) -> str:
     """Ollama ile sohbet eder; model arac cagirirsa aramayi yapip devam eder.
 
     Arac sonuclari `messages` listesine eklenir, boylece sohbet gecmisinde kalir.
     """
     if tools_enabled is None:
         tools_enabled = WEB_SEARCH
+    think_enabled = True
     cevap = ""
 
     for _ in range(max_rounds):
         payload = {"model": MODEL, "messages": messages, "stream": True}
+        if think_enabled:
+            payload["think"] = THINK
         if tools_enabled:
             payload["tools"] = TOOLS
         try:
-            cevap, cagrilar = _stream_once(payload, on_token)
+            cevap, cagrilar = _stream_once(payload, on_token, on_think)
         except requests.exceptions.HTTPError:
-            if not tools_enabled:
-                raise
-            # model arac kullanimini desteklemiyor olabilir; aracsiz dene
-            tools_enabled = False
-            continue
+            # Bazi modeller "think" ya da "tools" alanini kabul etmez; sirayla birak
+            if think_enabled:
+                think_enabled = False
+                continue
+            if tools_enabled:
+                tools_enabled = False
+                continue
+            raise
         if not cagrilar:
             return cevap
 
@@ -414,8 +426,18 @@ class Listener:
             return self._transcribe(audio)
 
     def _transcribe(self, audio) -> str:
-        segments, _info = self.model.transcribe(audio, language=WHISPER_LANG, vad_filter=True)
-        return " ".join(s.text.strip() for s in segments).strip()
+        segments, _info = self.model.transcribe(
+            audio,
+            language=WHISPER_LANG,
+            vad_filter=True,
+            # sessizlikte uydurma metin uretilmesini azaltir
+            condition_on_previous_text=False,
+            no_speech_threshold=0.6,
+            temperature=0.0,
+        )
+        parcalar = [s.text.strip() for s in segments
+                    if getattr(s, "no_speech_prob", 0.0) < 0.6 and s.text.strip()]
+        return " ".join(parcalar).strip()
 
 
 # ----------------------------------------------------------------------- akis

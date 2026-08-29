@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import queue
 import threading
+import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
@@ -29,6 +30,8 @@ class JarvisApp:
         self.recording = False
         self.stop_flag = threading.Event()
         self.always_on = threading.Event()
+        self.wait_since = None      # cevap beklenmeye baslanan an
+        self.wait_label = ""
 
         root.title(f"{core.NAME} — Yerel Asistan")
         root.geometry("820x600")
@@ -155,6 +158,15 @@ class JarvisApp:
                     self._append(payload)
                 elif kind == "status":
                     self.status.configure(text=payload)
+                elif kind == "transcribed":
+                    self._set_busy(True, "yaziya cevriliyor...")
+                elif kind == "wait":
+                    if self.wait_since is None:
+                        self.wait_since = time.monotonic()
+                    self.wait_label = payload
+                elif kind == "wait_done":
+                    self.wait_since = None
+                    self.status.configure(text="")
                 elif kind == "sys":
                     self._say_system(payload)
                 elif kind == "always_off":
@@ -175,14 +187,19 @@ class JarvisApp:
                 elif kind == "error":
                     self._append(f"\n{payload}\n\n", "err")
                 elif kind == "done":
+                    self.wait_since = None
                     self._append("\n\n")
                     self._set_busy(False)
                     if self.always_on.is_set():
                         self.mic_btn.configure(state="disabled")
                 elif kind == "idle":
+                    self.wait_since = None
                     self._set_busy(False)
         except queue.Empty:
             pass
+        if self.wait_since is not None:
+            gecen = time.monotonic() - self.wait_since
+            self.status.configure(text=f"{self.wait_label}... {gecen:.0f} sn")
         self.root.after(60, self._drain)
 
     # ------------------------------------------------------------------ eylemler
@@ -202,6 +219,11 @@ class JarvisApp:
         self.messages.append({"role": "user", "content": text})
         self._append(f"{core.NAME}\n", "bot")
         threading.Thread(target=self._worker_ask, daemon=True).start()
+
+    def _on_token(self, token: str) -> None:
+        """Ilk gercek token gelince bekleme sayacini durdurur."""
+        self.events.put(("wait_done", None))
+        self.events.put(("token", token))
 
     def _on_level(self, level: float, threshold: float, elapsed: float,
                   started: bool) -> None:
@@ -289,12 +311,14 @@ class JarvisApp:
 
     def _stream_reply(self) -> None:
         """Ollama yanitini akitir; hem yazili hem sesli girdide ayni yol."""
+        self.events.put(("wait", "dusunuyor"))
         try:
             reply = core.chat_stream(
                 self.messages,
-                lambda t: self.events.put(("token", t)),
+                self._on_token,
                 on_tool=lambda sorgu: self.events.put(("tool", sorgu)),
                 tools_enabled=self.web_on.get(),
+                on_think=lambda _t: self.events.put(("wait", "akil yurutuyor")),
             )
         except core.requests.exceptions.ConnectionError:
             self.messages.pop()
@@ -347,7 +371,7 @@ class JarvisApp:
             return
         finally:
             self.recording = False
-        self.events.put(("status", "yaziya cevriliyor..."))
+            self.events.put(("transcribed", None))
         if not text:
             self.events.put(("error", "Ses algilanmadi, tekrar deneyin."))
             self.events.put(("idle", None))
