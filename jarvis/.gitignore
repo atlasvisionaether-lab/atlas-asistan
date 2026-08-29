@@ -5,3 +5,6 @@ voices/*.onnx.json
 jarvis
 __pycache__/
 *.pyc
+
+.venv/
+jarvis-gui

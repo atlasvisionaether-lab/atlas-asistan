@@ -44,6 +44,20 @@ JARVIS_MODEL=llama3.1:8b bash install.sh
 
 ## 2. Kullanım
 
+### Pencere uygulaması (önerilen)
+
+Kurulumdan sonra Jarvis, Ubuntu uygulama menüsüne eklenir: **Etkinlikler → "Jarvis"** yazıp
+tıklayın. Terminalden açmak isterseniz:
+
+```bash
+./jarvis-gui
+```
+
+Pencerede yazarak sohbet edebilir, **Konuş** düğmesiyle mikrofondan konuşabilir,
+**Sesli yanıt** kutusundan seslendirmeyi açıp kapatabilirsiniz.
+
+### Terminal
+
 ```bash
 ./jarvis                       # yazılı sohbet
 ./jarvis --voice               # sesli sohbet (Enter'a basıp konuşun)
@@ -64,8 +78,9 @@ jarvis
 
 ### Sesli mod nasıl çalışır?
 
-`--voice` modunda Enter'a basıp konuşursunuz. Jarvis, ~1,2 saniye sessizlik
-algıladığında kaydı bitirir, konuşmanızı metne çevirir, cevabı üretir ve sesli okur.
+Enter'a (pencerede **Konuş** düğmesine) **bir kez** basarsınız — basılı tutmanız gerekmez.
+Sonra konuşursunuz; Jarvis ~1,2 saniye sessizlik algıladığında kaydı kendisi bitirir,
+konuşmanızı metne çevirir, cevabı üretir ve sesli okur.
 
 ---
 
@@ -79,6 +94,7 @@ Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 | `OLLAMA_HOST` | Ollama adresi (varsayılan `http://localhost:11434`) |
 | `JARVIS_NAME` | Asistanın adı |
 | `WHISPER_MODEL` | `tiny` / `base` / `small` / `medium` — büyüdükçe daha isabetli, daha yavaş |
+| `WHISPER_DEVICE` | `cpu` (varsayılan, her zaman çalışır) veya `cuda`. CUDA kütüphaneleri eksikse Jarvis kendiliğinden CPU'ya döner |
 | `MIC_SILENCE_THRESHOLD` | Mikrofon sessizlik eşiği. Jarvis erken kesiyorsa düşürün (ör. `0.008`), gürültüde takılıyorsa yükseltin (ör. `0.02`) |
 | `MIC_SILENCE_SECONDS` | Konuşma bitince beklenecek süre |
 | `PIPER_VOICE` | Türkçe ses dosyası; boş bırakılırsa espeak-ng kullanılır |
@@ -108,6 +124,18 @@ arecord -d 3 test.wav && aplay test.wav   # 3 saniye kayıt + oynat
 ```
 Ses kaydı boş çıkıyorsa Ayarlar → Ses → Giriş bölümünden doğru cihazı seçin.
 
+**Uygulama menüsünde "Jarvis" görünmüyor**
+`python3-tk` kurulu olmayabilir:
+```bash
+sudo apt install -y python3-tk
+cd ~/atlas-asistan/jarvis && bash install.sh
+```
+
+**Ses tanıma `libcublas.so.12 is not found` hatası veriyor**
+Ekran kartı hızlandırması için CUDA kütüphaneleri gerekir. Jarvis varsayılan olarak
+CPU kullanır ve bu hatayı almamalısınız; `.env` içinde `WHISPER_DEVICE=cpu` olduğundan
+emin olun. (Dil modeli tarafı bundan etkilenmez, Ollama GPU'yu kendi kullanır.)
+
 **Cevaplar çok yavaş**
 Daha küçük bir modele geçin (`.env` içinde `JARVIS_MODEL=qwen2.5:3b`) ve
 `WHISPER_MODEL=base` yapın. Nvidia ekran kartınız varsa güncel sürücülerle
@@ -122,7 +150,19 @@ Yoksa `bash install.sh` komutunu tekrar çalıştırın.
 
 ---
 
-## 5. Donanım gereksinimi
+## 5. Güncelleme
+
+```bash
+cd ~/atlas-asistan
+git pull
+```
+
+Yalnızca Python dosyaları değiştiyse yeniden kuruluma gerek yoktur. Sistem paketi ya da
+masaüstü kısayolu değiştiyse `cd jarvis && bash install.sh` komutunu tekrar çalıştırın.
+
+---
+
+## 6. Donanım gereksinimi
 
 | RAM | Önerilen model | Beklenen hız (CPU) |
 |---|---|---|

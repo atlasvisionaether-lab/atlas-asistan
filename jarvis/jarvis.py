@@ -35,6 +35,7 @@ OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
 NAME = os.getenv("JARVIS_NAME", "Jarvis")
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
 WHISPER_LANG = os.getenv("WHISPER_LANG", "tr")
+WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu")
 SILENCE_THRESHOLD = float(os.getenv("MIC_SILENCE_THRESHOLD", "0.012"))
 SILENCE_SECONDS = float(os.getenv("MIC_SILENCE_SECONDS", "1.2"))
 MAX_SECONDS = float(os.getenv("MIC_MAX_SECONDS", "20"))
@@ -188,8 +189,20 @@ class Listener:
 
         self.np = np
         self.sd = sd
-        print(f"{C_DIM}Ses tanima modeli yukleniyor ({WHISPER_MODEL})...{C_RESET}")
-        self.model = WhisperModel(WHISPER_MODEL, device="auto", compute_type="int8")
+        self._WhisperModel = WhisperModel
+        print(f"{C_DIM}Ses tanima modeli yukleniyor ({WHISPER_MODEL}, {WHISPER_DEVICE})...{C_RESET}")
+        self.model = self._load(WHISPER_DEVICE)
+
+    def _load(self, device: str):
+        """CUDA istenip de kutuphaneler eksikse sessizce CPU'ya duser."""
+        compute = "float16" if device == "cuda" else "int8"
+        try:
+            return self._WhisperModel(WHISPER_MODEL, device=device, compute_type=compute)
+        except Exception as exc:
+            if device == "cpu":
+                raise
+            print(f"{C_DIM}({device} kullanilamadi: {exc}; CPU'ya geciliyor){C_RESET}")
+            return self._WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
 
     def record(self) -> "list":
         np, sd = self.np, self.sd
@@ -218,6 +231,17 @@ class Listener:
         audio = self.record()
         if len(audio) == 0:
             return ""
+        try:
+            return self._transcribe(audio)
+        except RuntimeError as exc:
+            # libcublas/libcudnn eksikse hata ancak burada, cozumleme sirasinda cikar
+            if "cannot be loaded" not in str(exc) and "not found" not in str(exc):
+                raise
+            print(f"{C_DIM}(GPU ses tanima calismadi: {exc}; CPU'ya geciliyor){C_RESET}")
+            self.model = self._load("cpu")
+            return self._transcribe(audio)
+
+    def _transcribe(self, audio) -> str:
         segments, _info = self.model.transcribe(audio, language=WHISPER_LANG, vad_filter=True)
         return " ".join(s.text.strip() for s in segments).strip()
 

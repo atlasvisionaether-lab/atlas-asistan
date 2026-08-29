@@ -20,7 +20,7 @@ info "1/6 - Sistem paketleri kuruluyor (sudo sifresi istenebilir)..."
 sudo apt-get update -y
 sudo apt-get install -y \
   curl git ca-certificates \
-  python3 python3-venv python3-pip python3-dev \
+  python3 python3-venv python3-pip python3-dev python3-tk \
   build-essential \
   ffmpeg \
   portaudio19-dev libasound2-dev \
@@ -106,14 +106,46 @@ exec "$VENV_DIR/bin/python" "$JARVIS_DIR/jarvis.py" "\$@"
 RUNNER
 chmod +x "$JARVIS_DIR/jarvis"
 
-if [ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"; then
-  ln -sf "$JARVIS_DIR/jarvis" "$HOME/.local/bin/jarvis"
-  info "Kisayol: ~/.local/bin/jarvis"
+cat > "$JARVIS_DIR/jarvis-gui" <<RUNNER
+#!/usr/bin/env bash
+cd "$JARVIS_DIR" || exit 1
+exec "$VENV_DIR/bin/python" "$JARVIS_DIR/jarvis_gui.py" "\$@"
+RUNNER
+chmod +x "$JARVIS_DIR/jarvis-gui"
+
+mkdir -p "$HOME/.local/bin"
+ln -sf "$JARVIS_DIR/jarvis" "$HOME/.local/bin/jarvis"
+ln -sf "$JARVIS_DIR/jarvis-gui" "$HOME/.local/bin/jarvis-gui"
+info "Kisayollar: ~/.local/bin/jarvis ve ~/.local/bin/jarvis-gui"
+
+# --- uygulama menusu girdisi -------------------------------------------------
+if "$VENV_DIR/bin/python" -c "import tkinter" >/dev/null 2>&1; then
+  APPS_DIR="$HOME/.local/share/applications"
+  mkdir -p "$APPS_DIR"
+  cat > "$APPS_DIR/jarvis.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Jarvis
+GenericName=Yerel Yapay Zeka Asistani
+Comment=Ollama ile calisan Turkce sesli asistan
+Exec=$JARVIS_DIR/jarvis-gui
+Icon=$JARVIS_DIR/icon.svg
+Terminal=false
+Categories=Utility;Office;
+StartupNotify=true
+DESKTOP
+  chmod +x "$APPS_DIR/jarvis.desktop"
+  update-desktop-database "$APPS_DIR" >/dev/null 2>&1 || true
+  info "Uygulama menusune eklendi (Etkinlikler > Jarvis)."
+else
+  warn "tkinter bulunamadi; pencere uygulamasi devre disi."
+  warn "Kurmak icin: sudo apt install -y python3-tk  (sonra bu betigi tekrar calistirin)"
 fi
 
 echo
 info "Kurulum tamamlandi!"
 echo
+echo "  Pencere    : $JARVIS_DIR/jarvis-gui   (ya da uygulama menusunden 'Jarvis')"
 echo "  Yazili mod : $JARVIS_DIR/jarvis"
 echo "  Sesli mod  : $JARVIS_DIR/jarvis --voice"
 echo "  Tek soru   : $JARVIS_DIR/jarvis -p \"Merhaba, kendini tanit\""
