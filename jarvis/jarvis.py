@@ -39,6 +39,7 @@ WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu")
 SILENCE_THRESHOLD = float(os.getenv("MIC_SILENCE_THRESHOLD", "0.012"))
 SILENCE_SECONDS = float(os.getenv("MIC_SILENCE_SECONDS", "1.2"))
 MAX_SECONDS = float(os.getenv("MIC_MAX_SECONDS", "20"))
+NOISE_FACTOR = float(os.getenv("MIC_NOISE_FACTOR", "3.0"))
 SAMPLE_RATE = 16000
 
 SYSTEM_PROMPT = (
@@ -216,31 +217,56 @@ class Listener:
             print(f"{C_DIM}({device} kullanilamadi: {exc}; CPU'ya geciliyor){C_RESET}")
             return self._WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
 
-    def record(self) -> "list":
+    def record(self, should_stop=None, on_level=None) -> "list":
+        """Mikrofondan kayit alir.
+
+        Ilk yarim saniyede ortam gurultusunu olcup sessizlik esigini ona gore
+        belirler; boylece gurultulu odalarda "konusma bitti" anini kacirmaz.
+        should_stop() True donerse kayit hemen biter (kullanici durdurdu).
+        """
         np, sd = self.np, self.sd
         block = int(SAMPLE_RATE * 0.1)  # 100 ms
-        silence_blocks = int(SILENCE_SECONDS / 0.1)
-        max_blocks = int(MAX_SECONDS / 0.1)
-        frames, quiet, started = [], 0, False
+        silence_blocks = max(1, int(SILENCE_SECONDS / 0.1))
+        max_blocks = max(1, int(MAX_SECONDS / 0.1))
+        calib_blocks = 5  # 500 ms ortam olcumu
+        frames, noise, quiet, started, manuel = [], [], 0, False, False
+        threshold = SILENCE_THRESHOLD
 
         with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32",
                             blocksize=block) as stream:
-            for _ in range(max_blocks):
+            for i in range(max_blocks):
+                if should_stop is not None and should_stop():
+                    manuel = True
+                    break
                 chunk, _overflow = stream.read(block)
                 frames.append(chunk.copy())
                 level = float(np.sqrt(np.mean(np.square(chunk))))
-                if level > SILENCE_THRESHOLD:
+
+                if i < calib_blocks:
+                    noise.append(level)
+                    if i == calib_blocks - 1:
+                        floor = sum(noise) / len(noise)
+                        threshold = max(SILENCE_THRESHOLD, floor * NOISE_FACTOR)
+                    continue
+
+                if on_level is not None:
+                    on_level(level, threshold, (i + 1) * 0.1, started)
+
+                if level > threshold:
                     started, quiet = True, 0
                 elif started:
                     quiet += 1
                     if quiet >= silence_blocks:
                         break
-        if not started:
+
+        if not started and not manuel:
+            return np.zeros(0, dtype="float32")
+        if not frames:
             return np.zeros(0, dtype="float32")
         return np.concatenate(frames, axis=0).flatten()
 
-    def listen(self) -> str:
-        audio = self.record()
+    def listen(self, should_stop=None, on_level=None) -> str:
+        audio = self.record(should_stop=should_stop, on_level=on_level)
         if len(audio) == 0:
             return ""
         try:

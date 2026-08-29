@@ -26,6 +26,8 @@ class JarvisApp:
         self.messages = [{"role": "system", "content": core.SYSTEM_PROMPT}]
         self.listener = None
         self.busy = False
+        self.recording = False
+        self.stop_flag = threading.Event()
 
         root.title(f"{core.NAME} — Yerel Asistan")
         root.geometry("820x600")
@@ -107,12 +109,16 @@ class JarvisApp:
     def _say_system(self, text: str, error: bool = False) -> None:
         self._append(f"{text}\n\n", "err" if error else "sys")
 
-    def _set_busy(self, busy: bool, status: str = "") -> None:
+    def _set_busy(self, busy: bool, status: str = "", mic_active: bool = False) -> None:
+        """mic_active: kayit suruyor, mikrofon dugmesi 'Bitir' olarak acik kalir."""
         self.busy = busy
         state = "disabled" if busy else "normal"
         self.entry.configure(state=state)
         self.send_btn.configure(state=state)
-        self.mic_btn.configure(state=state)
+        self.mic_btn.configure(state="normal" if (mic_active or not busy) else "disabled",
+                               text="  Bitir  " if mic_active else "  Konus  ",
+                               bg=ERR_COLOR if mic_active else BG_INPUT,
+                               fg=BG if mic_active else FG)
         self.status.configure(text=status)
         if not busy:
             self.entry.focus_set()
@@ -136,6 +142,8 @@ class JarvisApp:
                     self._append(payload)
                 elif kind == "status":
                     self.status.configure(text=payload)
+                elif kind == "recording":
+                    self._set_busy(True, "dinliyorum, konusun...", mic_active=True)
                 elif kind == "bot":
                     self._append(f"{core.NAME}\n", "bot")
                 elif kind == "user":
@@ -170,6 +178,16 @@ class JarvisApp:
         self._append(f"{core.NAME}\n", "bot")
         threading.Thread(target=self._worker_ask, daemon=True).start()
 
+    def _on_level(self, level: float, threshold: float, elapsed: float,
+                  started: bool) -> None:
+        """Kayit sirasinda ses seviyesini durum satirinda gosterir."""
+        dolu = min(8, int((level / threshold) * 4)) if threshold > 0 else 0
+        cubuk = "|" * dolu + "." * (8 - dolu)
+        durum = "konusuyorsunuz" if started else "sessizlik bekleniyor"
+        self.events.put(("status",
+                         f"dinliyorum {cubuk} {durum} - {elapsed:.0f}sn "
+                         f"(bitirmek icin Bitir)"))
+
     def _worker_ask(self) -> None:
         self._stream_reply()
 
@@ -197,8 +215,14 @@ class JarvisApp:
             self.events.put(("status", ""))
 
     def listen(self) -> None:
+        """Ilk basista dinlemeye baslar, ikinci basista kaydi bitirir."""
+        if self.recording:
+            self.stop_flag.set()
+            self.status.configure(text="kayit bitiriliyor...")
+            return
         if self.busy:
             return
+        self.stop_flag.clear()
         self._set_busy(True, "mikrofon hazirlaniyor...")
         threading.Thread(target=self._worker_listen, daemon=True).start()
 
@@ -211,13 +235,19 @@ class JarvisApp:
                 self.events.put(("error", f"Mikrofon baslatilamadi: {exc}"))
                 self.events.put(("idle", None))
                 return
-        self.events.put(("status", "dinliyorum, konusun..."))
+        self.recording = True
+        self.events.put(("recording", None))
         try:
-            text = self.listener.listen()
+            text = self.listener.listen(should_stop=self.stop_flag.is_set,
+                                        on_level=self._on_level)
         except Exception as exc:
+            self.recording = False
             self.events.put(("error", f"Ses cozumlenemedi: {exc}"))
             self.events.put(("idle", None))
             return
+        finally:
+            self.recording = False
+        self.events.put(("status", "yaziya cevriliyor..."))
         if not text:
             self.events.put(("error", "Ses algilanmadi, tekrar deneyin."))
             self.events.put(("idle", None))

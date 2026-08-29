@@ -78,9 +78,20 @@ jarvis
 
 ### Sesli mod nasıl çalışır?
 
-Enter'a (pencerede **Konuş** düğmesine) **bir kez** basarsınız — basılı tutmanız gerekmez.
-Sonra konuşursunuz; Jarvis ~1,2 saniye sessizlik algıladığında kaydı kendisi bitirir,
-konuşmanızı metne çevirir, cevabı üretir ve sesli okur.
+Pencerede **Konuş** düğmesine bir kez basarsınız (basılı tutmak yok). Düğme kırmızı
+**Bitir**'e döner ve durum satırında ses seviyesi çubuğu görünür. Konuşmanız bitince
+iki şeyden biri olur:
+
+- Jarvis ~1,2 saniye sessizlik algılar ve kaydı kendisi bitirir, ya da
+- **Bitir**'e basarsınız ve kayıt o anda durur.
+
+Sessizlik eşiği her kayıtta ortama göre yeniden hesaplanır: ilk yarım saniyede odanın
+gürültü seviyesi ölçülür, eşik onun katı olarak belirlenir. Böylece gürültülü bir odada
+"konuşma bitti" anı kaçmaz. Yine de sürekli gürültüde Jarvis erken kesiyorsa ya da hiç
+durmuyorsa `.env` içindeki `MIC_NOISE_FACTOR` değeriyle oynayın.
+
+Terminal (`--voice`) modunda Enter'a basıp konuşursunuz; orada bitirme düğmesi yoktur,
+sessizlik algılaması ve 20 saniyelik üst sınır geçerlidir.
 
 ---
 
@@ -125,7 +136,8 @@ Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 | `JARVIS_NAME` | Asistanın adı |
 | `WHISPER_MODEL` | `tiny` / `base` / `small` / `medium` — büyüdükçe daha isabetli, daha yavaş |
 | `WHISPER_DEVICE` | `cpu` (varsayılan, her zaman çalışır) veya `cuda`. CUDA kütüphaneleri eksikse Jarvis kendiliğinden CPU'ya döner |
-| `MIC_SILENCE_THRESHOLD` | Mikrofon sessizlik eşiği. Jarvis erken kesiyorsa düşürün (ör. `0.008`), gürültüde takılıyorsa yükseltin (ör. `0.02`) |
+| `MIC_SILENCE_THRESHOLD` | Sessizlik eşiğinin alt sınırı. Ortam ölçümü bunun altında kalırsa bu değer kullanılır |
+| `MIC_NOISE_FACTOR` | Ortam gürültüsünün kaç katı "konuşma" sayılsın. `2.0` daha hassas, `5.0` sadece yüksek sesi alır (varsayılan `3.0`) |
 | `MIC_SILENCE_SECONDS` | Konuşma bitince beklenecek süre |
 | `PIPER_VOICE` | Türkçe ses dosyası; boş bırakılırsa espeak-ng kullanılır |
 
