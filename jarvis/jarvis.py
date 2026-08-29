@@ -118,20 +118,53 @@ class Speaker:
             self.enabled = False
 
     def say(self, text: str) -> None:
+        """Metni seslendirir. Ses uretilemezse sohbet aksamaz, uyari basilir."""
         text = text.strip()
         if not self.enabled or not text:
             return
         if self.voice is not None:
-            self._say_piper(text)
-        else:
+            try:
+                self._say_piper(text)
+                return
+            except Exception as exc:
+                print(f"{C_DIM}(piper seslendiremedi: {exc}; espeak-ng deneniyor){C_RESET}")
+                self.voice = None
+        if shutil.which("espeak-ng"):
             subprocess.run(["espeak-ng", "-v", "tr", "-s", "160", text], check=False)
+        else:
+            self.enabled = False
+
+    def _synthesize(self, text: str, wav: "wave.Wave_write") -> None:
+        """Piper surumleri arasinda degisen synthesize API'sini tek noktada toplar."""
+        voice = self.voice
+        # piper-tts >= 1.3: wav basliklarini kendisi yazar
+        if hasattr(voice, "synthesize_wav"):
+            voice.synthesize_wav(text, wav)
+            return
+        # piper-tts 1.2: synthesize(text, wav_file)
+        try:
+            voice.synthesize(text, wav)
+            return
+        except TypeError:
+            pass
+        # ara surumler: AudioChunk ureteci dondurur, basliklari biz yazariz
+        header_written = False
+        for chunk in voice.synthesize(text):
+            if not header_written:
+                wav.setnchannels(chunk.sample_channels)
+                wav.setsampwidth(chunk.sample_width)
+                wav.setframerate(chunk.sample_rate)
+                header_written = True
+            wav.writeframes(chunk.audio_int16_bytes)
+        if not header_written:
+            raise RuntimeError("piper ses uretmedi")
 
     def _say_piper(self, text: str) -> None:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             path = tmp.name
         try:
             with wave.open(path, "wb") as wav:
-                self.voice.synthesize(text, wav)
+                self._synthesize(text, wav)
             player = shutil.which("aplay") or shutil.which("paplay") or shutil.which("ffplay")
             if player is None:
                 return
