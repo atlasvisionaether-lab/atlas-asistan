@@ -88,6 +88,18 @@ diye seslenip talimatınızı söylemeniz yeterli.
 "Bugün hava güzel"          -> yok sayılır, uyandırma sözcüğü geçmiyor
 ```
 
+### Karşılıklı konuşma
+
+Sürekli dinleme açıkken sohbet doğal akar:
+
+- **Araya girebilirsiniz.** Atlas konuşurken siz konuşmaya başlayınca susar ve sizi dinler.
+- **Her seferinde "Atlas" demeniz gerekmez.** Cevaptan sonra 6 saniye boyunca doğrudan
+  devam edebilirsiniz; sessiz kalırsanız yeniden uyandırma sözcüğünü bekler.
+
+Hoparlörünüz yüksek sesteyse Atlas kendi sesini sizin sesiniz sanıp kendini kesebilir. O
+zaman `.env` içindeki `JARVIS_BARGE_FACTOR` değerini yükseltin (ör. `6.0`) ya da kulaklık
+kullanın. Araya girmeyi tamamen kapatmak için `JARVIS_BARGE=0`.
+
 Uyandırma sözcüğünü değiştirmek için `.env` içindeki `JARVIS_WAKE_WORDS` satırını düzenleyin
 (virgülle birden fazla yazabilirsiniz). Asistanın adı `JARVIS_NAME` ile değişir.
 
@@ -186,6 +198,9 @@ Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 | `MIC_SILENCE_THRESHOLD` | Sessizlik eşiğinin alt sınırı. Ortam ölçümü bunun altında kalırsa bu değer kullanılır |
 | `MIC_NOISE_FACTOR` | Ortam gürültüsünün kaç katı "konuşma" sayılsın. `2.0` daha hassas, `5.0` sadece yüksek sesi alır (varsayılan `3.0`) |
 | `MIC_SILENCE_SECONDS` | Konuşma bitince beklenecek süre |
+| `JARVIS_BARGE` | `1` konuşurken araya girilebilir, `0` kapalı |
+| `JARVIS_BARGE_FACTOR` | Araya girme hassasiyeti. Atlas kendi sesiyle kesiliyorsa yükseltin |
+| `JARVIS_FOLLOWUP_SECONDS` | Cevaptan sonra uyandırma sözcüğü gerekmeyen süre |
 | `JARVIS_THINK` | `0` model doğrudan cevaplar (hızlı), `1` cevaptan önce kendi kendine akıl yürütür (daha isabetli ama çok daha yavaş) |
 | `JARVIS_WEB` | `1` internet araması açık, `0` kapalı |
 | `JARVIS_WEB_RESULTS` | Kaç arama sonucu modele verilsin (varsayılan 5) |
@@ -233,6 +248,14 @@ emin olun. (Dil modeli tarafı bundan etkilenmez, Ollama GPU'yu kendi kullanır.
 `qwen3` gibi modeller cevaptan önce kendi kendine akıl yürütebilir. Bu kapalı gelir
 (`JARVIS_THINK=0`); açtıysanız durum satırında "akil yurutuyor... N sn" yazar, donma değildir.
 Durum satırı hiç ilerlemiyorsa `ollama ps` ile modelin yüklenip yüklenmediğine bakın.
+
+**Atlas kendi kendini kesiyor**
+Hoparlör sesi mikrofona kaçıyor. `.env` içinde `JARVIS_BARGE_FACTOR=6.0` yapın, sesi kısın
+ya da kulaklık kullanın.
+
+**İngilizce cevap veriyor**
+Sistem isteminde Türkçe zorunluluğu var; yine de olursa `.env` içinde `JARVIS_THINK=0`
+olduğundan emin olun ve sohbeti temizleyip yeniden deneyin.
 
 **Mikrofon konuşmadığım şeyleri yazıyor**
 Sessizlikte ses tanıma metin uydurabilir. `.env` içinde `MIC_NOISE_FACTOR` değerini

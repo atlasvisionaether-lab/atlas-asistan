@@ -30,6 +30,7 @@ class JarvisApp:
         self.recording = False
         self.stop_flag = threading.Event()
         self.always_on = threading.Event()
+        self.last_barge = False     # son cevap araya girilerek mi kesildi
         self.wait_since = None      # cevap beklenmeye baslanan an
         self.wait_label = ""
 
@@ -250,36 +251,76 @@ class JarvisApp:
         threading.Thread(target=self._worker_always, daemon=True).start()
 
     def _worker_always(self) -> None:
+        """Uyandirma sozcugu bekler, cevaptan sonra kisa sure sohbeti surdurur."""
         uyandirma = core.WAKE_WORDS[0].title() if core.WAKE_WORDS else core.NAME
         if not self._ensure_listener():
             self.events.put(("always_off", None))
             return
         self._say_ready(uyandirma)
+        takip = False       # True: uyandirma sozcugu gerekmeyen kisa pencere
 
         while self.always_on.is_set():
-            self.events.put(("status", f"'{uyandirma}' demenizi bekliyorum..."))
-            metin = self._listen_once()
-            if not self.always_on.is_set():
-                break
-            if not metin:
-                continue
-            uyandi, komut = core.wake_match(metin)
-            if not uyandi:
-                continue
-            if not komut:
-                self.events.put(("status", "efendim? sizi dinliyorum..."))
-                if self.speaker is not None:
-                    self.speaker.say("Efendim?")
-                komut = self._listen_once()
-                if not komut or not self.always_on.is_set():
+            if takip:
+                # Araya girildiyse kullanici zaten konusuyor, ortam olcumu yapma
+                self.events.put(("status", "devam edebilirsiniz..."))
+                komut = self._listen_once(max_seconds=core.FOLLOWUP_SECONDS,
+                                          calibrate=not self.last_barge)
+                self.last_barge = False
+                if not komut:
+                    takip = False
                     continue
+            else:
+                self.events.put(("status", f"'{uyandirma}' demenizi bekliyorum..."))
+                metin = self._listen_once()
+                if not self.always_on.is_set():
+                    break
+                if not metin:
+                    continue
+                uyandi, komut = core.wake_match(metin)
+                if not uyandi:
+                    continue
+                if not komut:
+                    self.events.put(("status", "efendim? sizi dinliyorum..."))
+                    self._speak("Efendim?")
+                    komut = self._listen_once()
+                    if not komut or not self.always_on.is_set():
+                        continue
+
             self.events.put(("user", komut))
             self.messages.append({"role": "user", "content": komut})
             self.events.put(("bot", None))
-            self.events.put(("status", "dusunuyor..."))
             self._stream_reply()
+            takip = True
 
         self.events.put(("always_off", None))
+
+    def _speak(self, text: str) -> bool:
+        """Konusur. Kullanici araya girerse konusmayi keser ve True doner."""
+        if self.speaker is None or not self.tts_on.get() or not text.strip():
+            return False
+        araya_girilebilir = (core.BARGE and self.listener is not None
+                             and self.always_on.is_set())
+        if not araya_girilebilir:
+            self.speaker.say(text)
+            return False
+
+        kesildi, bitti = threading.Event(), threading.Event()
+
+        def izle():
+            try:
+                if self.listener.wait_for_speech(should_stop=bitti.is_set):
+                    kesildi.set()
+            except Exception:
+                pass  # mikrofon izlenemiyorsa konusma normal sekilde bitsin
+
+        threading.Thread(target=izle, daemon=True).start()
+        try:
+            self.speaker.say(text, should_stop=kesildi.is_set)
+        finally:
+            bitti.set()
+        if kesildi.is_set():
+            self.events.put(("sys", "(araya girdiniz, sizi dinliyorum)"))
+        return kesildi.is_set()
 
     def _ensure_listener(self) -> bool:
         if self.listener is not None:
@@ -296,11 +337,13 @@ class JarvisApp:
         self.events.put(("sys", f"Surekli dinleme acik. '{uyandirma}' diye seslenip "
                                 f"talimatinizi soyleyin."))
 
-    def _listen_once(self) -> str:
+    def _listen_once(self, max_seconds: float = None, calibrate: bool = True) -> str:
         """Surekli dinleme dongusu icin tek bir konusma yakalar."""
         self.stop_flag.clear()
         try:
-            return self.listener.listen(should_stop=lambda: not self.always_on.is_set())
+            return self.listener.listen(
+                should_stop=lambda: not self.always_on.is_set(),
+                max_seconds=max_seconds, calibrate=calibrate)
         except Exception as exc:
             self.events.put(("error", f"Ses cozumlenemedi: {exc}"))
             self.always_on.clear()
@@ -333,9 +376,10 @@ class JarvisApp:
             return
         self.messages.append({"role": "assistant", "content": reply})
         self.events.put(("done", None))
+        self.last_barge = False
         if self.tts_on.get() and reply.strip():
             self.events.put(("status", "seslendiriliyor..."))
-            self.speaker.say(reply)
+            self.last_barge = self._speak(reply)
             self.events.put(("status", ""))
 
     def listen(self) -> None:

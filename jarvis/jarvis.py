@@ -16,6 +16,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import wave
 from pathlib import Path
 
@@ -47,6 +49,11 @@ WEB_RESULTS = int(os.getenv("JARVIS_WEB_RESULTS", "5"))
 WEB_REGION = os.getenv("JARVIS_WEB_REGION", "tr-tr")
 # qwen3 gibi modeller cevaptan once kendi kendine akil yurutur. Sesli asistanda
 # bu uzun bir sessizlik demek; varsayilan olarak kapali.
+# Konusurken araya girme (barge-in)
+BARGE = os.getenv("JARVIS_BARGE", "1").strip().lower() not in {"0", "false", "hayir", "kapali"}
+BARGE_FACTOR = float(os.getenv("JARVIS_BARGE_FACTOR", "4.0"))
+BARGE_MIN_SECONDS = float(os.getenv("JARVIS_BARGE_MIN_SECONDS", "0.4"))
+FOLLOWUP_SECONDS = float(os.getenv("JARVIS_FOLLOWUP_SECONDS", "6"))
 THINK = os.getenv("JARVIS_THINK", "0").strip().lower() in {"1", "true", "evet", "acik"}
 SAMPLE_RATE = 16000
 
@@ -78,8 +85,12 @@ def build_system_prompt(web: bool = WEB_SEARCH) -> str:
         arac = ""
 
     return (
-        f"Sen {NAME} adinda, Turkce konusan bir kisisel asistansin. "
+        f"Sen {NAME} adinda bir kisisel asistansin. "
         "Kullanicinin kendi Ubuntu bilgisayarinda, Ollama uzerinde calisiyorsun.\n\n"
+        "DIL KURALI: Her zaman Turkce cevap ver. Kullanici hangi dilde yazarsa yazsin, "
+        "soru ingilizce de olsa, arama sonuclari ingilizce de olsa cevabin Turkce olacak. "
+        "Ingilizce terimleri gerekirse parantez icinde verebilirsin ama cumlelerin Turkce "
+        "olmali. Bu kural her kosulda gecerlidir.\n\n"
         f"YAPABILDIKLERIN: {yapabildiklerin}\n\n"
         f"YAPAMADIKLARIN: {yapamadiklarin} Bunlarin hicbirine bagli degilsin. Boyle bir "
         "sey istenirse acikca yapamadigini soyle ve yapabildigin bir alternatif oner. "
@@ -88,7 +99,7 @@ def build_system_prompt(web: bool = WEB_SEARCH) -> str:
         "NASIL KONUSURSUN: Kisa, net ve dogal cumlelerle. Cevaplarin sesli okunacagi icin "
         "madde isareti, emoji ve markdown bicimlendirmesi kullanma; duz cumlelerle konus. "
         "Uzun listeler yerine en onemli iki uc seyi soyle. Bilmedigin bir sey oldugunda "
-        "tahmin yurutmek yerine bilmedigini soyle."
+        "tahmin yurutmek yerine bilmedigini soyle. Unutma: cevabin Turkce olacak."
     )
 
 
@@ -259,6 +270,7 @@ class Speaker:
     def __init__(self, enabled: bool = True):
         self.enabled = enabled
         self.voice = None
+        self._proc = None
         if not enabled:
             return
         voice_path = os.getenv("PIPER_VOICE", "")
@@ -277,22 +289,54 @@ class Speaker:
             print(f"{C_DIM}(TTS bulunamadi; sesli yanit kapali){C_RESET}")
             self.enabled = False
 
-    def say(self, text: str) -> None:
-        """Metni seslendirir. Ses uretilemezse sohbet aksamaz, uyari basilir."""
+    def say(self, text: str, should_stop=None) -> bool:
+        """Metni seslendirir.
+
+        should_stop() True dondugunde konusma yarida kesilir.
+        Kesildiyse True doner. Ses uretilemezse sohbet aksamaz.
+        """
         text = text.strip()
         if not self.enabled or not text:
-            return
+            return False
         if self.voice is not None:
             try:
-                self._say_piper(text)
-                return
+                return self._say_piper(text, should_stop)
             except Exception as exc:
                 print(f"{C_DIM}(piper seslendiremedi: {exc}; espeak-ng deneniyor){C_RESET}")
                 self.voice = None
         if shutil.which("espeak-ng"):
-            subprocess.run(["espeak-ng", "-v", "tr", "-s", "160", text], check=False)
-        else:
-            self.enabled = False
+            return self._calistir(["espeak-ng", "-v", "tr", "-s", "160", text],
+                                  should_stop)
+        self.enabled = False
+        return False
+
+    def _calistir(self, cmd: list, should_stop=None) -> bool:
+        """Oynatici sureci baslatir; should_stop gelirse durdurur."""
+        try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL)
+        except FileNotFoundError:
+            return False
+        self._proc = proc
+        kesildi = False
+        try:
+            while proc.poll() is None:
+                if should_stop is not None and should_stop():
+                    proc.terminate()
+                    kesildi = True
+                    break
+                time.sleep(0.05)
+        finally:
+            self._proc = None
+            if proc.poll() is None:
+                proc.terminate()
+        return kesildi
+
+    def stop(self) -> None:
+        """Devam eden seslendirmeyi disaridan durdurur."""
+        proc = self._proc
+        if proc is not None and proc.poll() is None:
+            proc.terminate()
 
     def _synthesize(self, text: str, wav: "wave.Wave_write") -> None:
         """Piper surumleri arasinda degisen synthesize API'sini tek noktada toplar."""
@@ -319,7 +363,7 @@ class Speaker:
         if not header_written:
             raise RuntimeError("piper ses uretmedi")
 
-    def _say_piper(self, text: str) -> None:
+    def _say_piper(self, text: str, should_stop=None) -> bool:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             path = tmp.name
         try:
@@ -327,12 +371,11 @@ class Speaker:
                 self._synthesize(text, wav)
             player = shutil.which("aplay") or shutil.which("paplay") or shutil.which("ffplay")
             if player is None:
-                return
+                return False
             cmd = [player, path]
             if player.endswith("ffplay"):
                 cmd = [player, "-nodisp", "-autoexit", "-loglevel", "quiet", path]
-            subprocess.run(cmd, check=False,
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return self._calistir(cmd, should_stop)
         finally:
             Path(path).unlink(missing_ok=True)
 
@@ -363,7 +406,8 @@ class Listener:
             print(f"{C_DIM}({device} kullanilamadi: {exc}; CPU'ya geciliyor){C_RESET}")
             return self._WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
 
-    def record(self, should_stop=None, on_level=None) -> "list":
+    def record(self, should_stop=None, on_level=None,
+               max_seconds: float = None, calibrate: bool = True) -> "list":
         """Mikrofondan kayit alir.
 
         Ilk yarim saniyede ortam gurultusunu olcup sessizlik esigini ona gore
@@ -373,8 +417,8 @@ class Listener:
         np, sd = self.np, self.sd
         block = int(SAMPLE_RATE * 0.1)  # 100 ms
         silence_blocks = max(1, int(SILENCE_SECONDS / 0.1))
-        max_blocks = max(1, int(MAX_SECONDS / 0.1))
-        calib_blocks = 5  # 500 ms ortam olcumu
+        max_blocks = max(1, int((max_seconds or MAX_SECONDS) / 0.1))
+        calib_blocks = 5 if calibrate else 0  # 500 ms ortam olcumu
         frames, noise, quiet, started, manuel = [], [], 0, False, False
         threshold = SILENCE_THRESHOLD
 
@@ -411,8 +455,45 @@ class Listener:
             return np.zeros(0, dtype="float32")
         return np.concatenate(frames, axis=0).flatten()
 
-    def listen(self, should_stop=None, on_level=None) -> str:
-        audio = self.record(should_stop=should_stop, on_level=on_level)
+    def wait_for_speech(self, should_stop=None, factor: float = None,
+                        min_seconds: float = None) -> bool:
+        """Kullanici konusmaya baslayana kadar bekler.
+
+        Atlas konusurken calisir: once kisa bir sessiz an olculur, sonra bu
+        seviyenin belirgin ustunde ve sureklilik gosteren bir ses aranir.
+        Konusma algilanirsa True, should_stop() ile birakilirsa False doner.
+        """
+        np, sd = self.np, self.sd
+        factor = factor if factor is not None else BARGE_FACTOR
+        min_seconds = min_seconds if min_seconds is not None else BARGE_MIN_SECONDS
+        block = int(SAMPLE_RATE * 0.05)  # 50 ms, hizli tepki
+        gerekli = max(1, int(min_seconds / 0.05))
+        olcum, esik, ustuste = [], None, 0
+
+        with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32",
+                            blocksize=block) as stream:
+            while True:
+                if should_stop is not None and should_stop():
+                    return False
+                chunk, _overflow = stream.read(block)
+                level = float(np.sqrt(np.mean(np.square(chunk))))
+                if esik is None:
+                    olcum.append(level)
+                    if len(olcum) >= 4:  # 200 ms ortam olcumu
+                        taban = sum(olcum) / len(olcum)
+                        esik = max(SILENCE_THRESHOLD * factor, taban * factor)
+                    continue
+                if level > esik:
+                    ustuste += 1
+                    if ustuste >= gerekli:
+                        return True
+                else:
+                    ustuste = 0
+
+    def listen(self, should_stop=None, on_level=None, max_seconds: float = None,
+               calibrate: bool = True) -> str:
+        audio = self.record(should_stop=should_stop, on_level=on_level,
+                            max_seconds=max_seconds, calibrate=calibrate)
         if len(audio) == 0:
             return ""
         try:
