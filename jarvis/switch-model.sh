@@ -28,20 +28,21 @@ info "Donanim: ${RAM_GB} GB RAM${GPU_NAME:+, $GPU_NAME (${VRAM_GB} GB VRAM)}"
 
 # Modelin tamami ekran kartina sigarsa cok daha hizli calisir.
 # Yaklasik disk/bellek ihtiyaci (4 bit): 8B ~5 GB, 12B ~8 GB, 14B ~9 GB, 30B ~18 GB
-if   [ "$VRAM_GB" -ge 20 ] || { [ "$VRAM_GB" -eq 0 ] && [ "$RAM_GB" -ge 48 ]; }; then ONERI="qwen3:30b-a3b"
+if   [ "$VRAM_GB" -ge 20 ] || { [ "$VRAM_GB" -eq 0 ] && [ "$RAM_GB" -ge 24 ]; }; then ONERI="qwen3:30b-a3b"
 elif [ "$VRAM_GB" -ge 12 ] || { [ "$VRAM_GB" -eq 0 ] && [ "$RAM_GB" -ge 32 ]; }; then ONERI="qwen3:14b"
 elif [ "$VRAM_GB" -ge 8 ]  || { [ "$VRAM_GB" -eq 0 ] && [ "$RAM_GB" -ge 16 ]; }; then ONERI="qwen3:8b"
 elif [ "$VRAM_GB" -ge 6 ]  || [ "$RAM_GB" -ge 8 ];                                then ONERI="qwen2.5:7b"
 else                                                                                   ONERI="qwen2.5:3b"
 fi
 
+# ad | disk boyutu | calismak icin gereken bellek (GB) | aciklama
 MODELS=(
-  "qwen3:8b|~5 GB|Guclu muhakeme, iyi Turkce. 8 GB VRAM icin ideal."
-  "qwen3:14b|~9 GB|Daha isabetli cevaplar. 12 GB+ VRAM ister."
-  "gemma3:12b|~8 GB|Google modeli, cok dilli yani guclu."
-  "qwen2.5:7b|~5 GB|Simdiki model. Hizli ama muhakemesi zayif."
-  "llama3.1:8b|~5 GB|Meta modeli, Turkcesi qwen'den geride."
-  "qwen3:30b-a3b|~18 GB|Cok guclu, sadece 20 GB+ VRAM ya da 48 GB+ RAM ile."
+  "qwen3:8b|~5 GB|6|Guclu muhakeme, iyi Turkce. 8 GB VRAM icin ideal."
+  "qwen3:14b|~9 GB|10|Daha isabetli cevaplar. 12 GB+ VRAM ister."
+  "gemma3:12b|~8 GB|9|Google modeli, cok dilli yani guclu."
+  "qwen2.5:7b|~5 GB|6|Hizli ama muhakemesi zayif."
+  "llama3.1:8b|~5 GB|6|Meta modeli, Turkcesi qwen'den geride."
+  "qwen3:30b-a3b|~18 GB|20|Cok guclu, 20 GB+ VRAM ya da 24 GB+ RAM ister."
 )
 
 # ------------------------------------------------------------------- secim
@@ -53,7 +54,7 @@ else
   echo
   i=1
   for row in "${MODELS[@]}"; do
-    IFS='|' read -r name size desc <<< "$row"
+    IFS='|' read -r name size need desc <<< "$row"
     mark="  "
     [ "$name" = "$ONERI" ] && mark="->"
     printf "  %s %d) %-14s %-7s %s\n" "$mark" "$i" "$name" "$size" "$desc"
@@ -69,6 +70,31 @@ else
     row="${MODELS[$((secim - 1))]:-}"
     [ -z "$row" ] && { err "Gecersiz secim."; exit 1; }
     MODEL="${row%%|*}"
+  fi
+fi
+
+# --------------------------------------------------- bellek yetiyor mu kontrolu
+NEED=0
+for row in "${MODELS[@]}"; do
+  IFS='|' read -r name size need desc <<< "$row"
+  [ "$name" = "$MODEL" ] && NEED="$need"
+done
+
+if [ "$NEED" -gt 0 ]; then
+  # Model once RAM'e yuklenir; VRAM'e sigan kismi ekran kartina tasinir.
+  if [ "$NEED" -gt "$RAM_GB" ]; then
+    echo
+    warn "$MODEL calismak icin yaklasik ${NEED} GB bellek ister; bu makinede ${RAM_GB} GB RAM var."
+    warn "Model buyuk olasilikla yuklenemez ya da sistem takilir; indirme boyutu da buyuk."
+    warn "Donaniminiz icin onerilen: $ONERI"
+    echo
+    read -r -p "  Yine de denemek istiyor musunuz? (e/H): " onay
+    case "${onay,,}" in
+      e|evet) info "Devam ediliyor." ;;
+      *) info "Vazgecildi. Oneri icin:  bash switch-model.sh $ONERI"; exit 0 ;;
+    esac
+  elif [ "$VRAM_GB" -gt 0 ] && [ "$NEED" -gt "$VRAM_GB" ]; then
+    warn "$MODEL ekran karti bellegine (${VRAM_GB} GB) sigmaz; bir kismi islemcide calisir, yavaslar."
   fi
 fi
 
