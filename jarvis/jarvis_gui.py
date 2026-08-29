@@ -28,8 +28,8 @@ class JarvisApp:
         self.busy = False
 
         root.title(f"{core.NAME} — Yerel Asistan")
-        root.geometry("760x560")
-        root.minsize(520, 380)
+        root.geometry("820x600")
+        root.minsize(420, 320)
         root.configure(bg=BG)
 
         self._build_ui()
@@ -48,18 +48,23 @@ class JarvisApp:
 
     # ------------------------------------------------------------------ arayuz
     def _build_ui(self) -> None:
+        # Onemli: once alt seritler (side="bottom"), sonra sohbet alani.
+        # Aksi halde pencere kucuk acildiginda giris kutusu ve dugmeler
+        # ekran disinda kaliyor.
         self.chat = scrolledtext.ScrolledText(
             self.root, wrap="word", bg=BG, fg=FG, insertbackground=FG,
             font=("Ubuntu", 12), relief="flat", padx=14, pady=12, state="disabled")
-        self.chat.pack(fill="both", expand=True, padx=10, pady=(10, 6))
         self.chat.tag_config("user", foreground=USER_COLOR, font=("Ubuntu", 12, "bold"))
         self.chat.tag_config("bot", foreground=BOT_COLOR, font=("Ubuntu", 12, "bold"))
         self.chat.tag_config("body", foreground=FG)
         self.chat.tag_config("sys", foreground=MUTED, font=("Ubuntu", 10, "italic"))
         self.chat.tag_config("err", foreground=ERR_COLOR, font=("Ubuntu", 10))
 
+        foot = tk.Frame(self.root, bg=BG)
+        foot.pack(side="bottom", fill="x", padx=10, pady=(0, 8))
+
         bar = tk.Frame(self.root, bg=BG)
-        bar.pack(fill="x", padx=10, pady=(0, 10))
+        bar.pack(side="bottom", fill="x", padx=10, pady=(0, 8))
 
         self.entry = tk.Entry(bar, bg=BG_INPUT, fg=FG, insertbackground=FG,
                               font=("Ubuntu", 12), relief="flat")
@@ -77,9 +82,6 @@ class JarvisApp:
                                   relief="flat", font=("Ubuntu", 11, "bold"), cursor="hand2")
         self.send_btn.pack(side="left", ipady=4)
 
-        foot = tk.Frame(self.root, bg=BG)
-        foot.pack(fill="x", padx=10, pady=(0, 8))
-
         self.tts_on = tk.BooleanVar(value=True)
         tk.Checkbutton(foot, text="Sesli yanit", variable=self.tts_on, bg=BG, fg=MUTED,
                        selectcolor=BG_INPUT, activebackground=BG, activeforeground=FG,
@@ -91,6 +93,9 @@ class JarvisApp:
 
         self.status = tk.Label(foot, text="", bg=BG, fg=MUTED, font=("Ubuntu", 10))
         self.status.pack(side="right")
+
+        # sohbet alani en son: kalan tum bosluğu alir, kontrolleri itmez
+        self.chat.pack(side="top", fill="both", expand=True, padx=10, pady=(10, 6))
 
     # ------------------------------------------------------------- yazma islemleri
     def _append(self, text: str, tag: str = "body") -> None:
