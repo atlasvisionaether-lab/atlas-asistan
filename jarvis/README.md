@@ -271,6 +271,11 @@ Ekran kartı hızlandırması için CUDA kütüphaneleri gerekir. Jarvis varsay�
 CPU kullanır ve bu hatayı almamalısınız; `.env` içinde `WHISPER_DEVICE=cpu` olduğundan
 emin olun. (Dil modeli tarafı bundan etkilenmez, Ollama GPU'yu kendi kullanır.)
 
+**Cevapta uzun İngilizce muhakeme görünüyor**
+`qwen3` gibi modeller akıl yürütmesini cevabın içine gömer. Atlas bunu ayıklar; ayrıca
+sistem istemine `/no_think` işareti koyar. Yine de görüyorsanız Ollama'nız eski olabilir,
+güncelleyin: `curl -fsSL https://ollama.com/install.sh | sh`
+
 **Cevap gelmiyor, uygulama donmuş gibi**
 `qwen3` gibi modeller cevaptan önce kendi kendine akıl yürütebilir. Bu kapalı gelir
 (`JARVIS_THINK=0`); açtıysanız durum satırında "akil yurutuyor... N sn" yazar, donma değildir.

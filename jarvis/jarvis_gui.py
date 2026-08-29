@@ -30,6 +30,7 @@ class JarvisApp:
         self.recording = False
         self.stop_flag = threading.Event()
         self.always_on = threading.Event()
+        self.cevap_baslangici = None  # ekrana basilan cevabin baslangic imi
         self.last_barge = False     # son cevap araya girilerek mi kesildi
         self.wait_since = None      # cevap beklenmeye baslanan an
         self.wait_label = ""
@@ -122,6 +123,15 @@ class JarvisApp:
         self.chat.see("end")
         self.chat.configure(state="disabled")
 
+    def _cevabi_temizle(self) -> None:
+        """Dusunce oldugu anlasilan metni ekrandan siler."""
+        if self.cevap_baslangici is None:
+            return
+        self.chat.configure(state="normal")
+        self.chat.delete(self.cevap_baslangici, "end-1c")
+        self.chat.see("end")
+        self.chat.configure(state="disabled")
+
     def _say_system(self, text: str, error: bool = False) -> None:
         self._append(f"{text}\n\n", "err" if error else "sys")
 
@@ -177,10 +187,15 @@ class JarvisApp:
                     self._set_busy(False)
                 elif kind == "tool":
                     self._append(f"\n[ {payload} ]\n", "sys")
+                    # sonraki turun dusuncesi silinirken bu satir korunsun
+                    self.cevap_baslangici = self.chat.index("end-1c")
                 elif kind == "recording":
                     self._set_busy(True, "dinliyorum, konusun...", mic_active=True)
                 elif kind == "bot":
                     self._append(f"{core.NAME}\n", "bot")
+                    self.cevap_baslangici = self.chat.index("end-1c")
+                elif kind == "discard":
+                    self._cevabi_temizle()
                 elif kind == "user":
                     self._append("Sen\n", "user")
                     self._append(f"{payload}\n\n")
@@ -217,7 +232,7 @@ class JarvisApp:
     def _ask(self, text: str) -> None:
         self._set_busy(True, "dusunuyor...")
         self.messages.append({"role": "user", "content": text})
-        self._append(f"{core.NAME}\n", "bot")
+        self.events.put(("bot", None))
         threading.Thread(target=self._worker_ask, daemon=True).start()
 
     def _on_token(self, token: str) -> None:
@@ -361,6 +376,7 @@ class JarvisApp:
                 on_tool=lambda ad, args: self.events.put(("tool", core.arac_metni(ad, args))),
                 web_enabled=self.web_on.get(),
                 on_think=lambda _t: self.events.put(("wait", "akil yurutuyor")),
+                on_discard=lambda: self.events.put(("discard", None)),
             )
         except core.requests.exceptions.ConnectionError:
             self.messages.pop()

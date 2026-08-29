@@ -114,6 +114,8 @@ def build_system_prompt(web: bool = WEB_SEARCH) -> str:
         "madde isareti, emoji ve markdown bicimlendirmesi kullanma; duz cumlelerle konus. "
         "Uzun listeler yerine en onemli iki uc seyi soyle. Bilmedigin bir sey oldugunda "
         "tahmin yurutmek yerine bilmedigini soyle. Unutma: cevabin Turkce olacak."
+        # qwen3 ailesi bu isareti gorunce akil yurutmeyi tamamen kapatir
+        + ("" if THINK else " /no_think")
     )
 
 
@@ -203,15 +205,25 @@ class DusunceSuzgeci:
 
     def _kuyruk_uzunlugu(self) -> int:
         """Yarim kalmis bir etiketi bekletmek icin saklanacak karakter sayisi."""
-        hedef = self.KAPALI if self.icerde else self.ACIK
-        for uzunluk in range(len(hedef) - 1, 0, -1):
-            if self.tampon.endswith(hedef[:uzunluk]):
-                return uzunluk
-        return 0
+        hedefler = [self.KAPALI] if self.icerde else [self.ACIK, self.KAPALI]
+        en_uzun = 0
+        for hedef in hedefler:
+            for uzunluk in range(len(hedef) - 1, 0, -1):
+                if self.tampon.endswith(hedef[:uzunluk]):
+                    en_uzun = max(en_uzun, uzunluk)
+                    break
+        return en_uzun
 
-    def besle(self, token: str) -> str:
+    def besle(self, token: str) -> "tuple[str, bool]":
+        """(gorunur_metin, oncekini_at) dondurur.
+
+        oncekini_at: modelin acilis etiketi gondermeden </think> yazdigi
+        durum. Ollama sablonu <think> etiketini isteme kendisi koydugu icin
+        model yalnizca kapanisi uretir; o ana kadar akan her sey dusuncedir.
+        """
         self.tampon += token
         gorunur = []
+        oncekini_at = False
         while True:
             if self.icerde:
                 yer = self.tampon.find(self.KAPALI)
@@ -220,11 +232,17 @@ class DusunceSuzgeci:
                 self.tampon = self.tampon[yer + len(self.KAPALI):]
                 self.icerde = False
                 continue
-            yer = self.tampon.find(self.ACIK)
-            if yer == -1:
+            acilis = self.tampon.find(self.ACIK)
+            kapanis = self.tampon.find(self.KAPALI)
+            if kapanis != -1 and (acilis == -1 or kapanis < acilis):
+                gorunur.clear()
+                oncekini_at = True
+                self.tampon = self.tampon[kapanis + len(self.KAPALI):]
+                continue
+            if acilis == -1:
                 break
-            gorunur.append(self.tampon[:yer])
-            self.tampon = self.tampon[yer + len(self.ACIK):]
+            gorunur.append(self.tampon[:acilis])
+            self.tampon = self.tampon[acilis + len(self.ACIK):]
             self.icerde = True
         if self.icerde:
             kuyruk = self._kuyruk_uzunlugu()
@@ -237,7 +255,7 @@ class DusunceSuzgeci:
             else:
                 gorunur.append(self.tampon)
                 self.tampon = ""
-        return "".join(gorunur)
+        return "".join(gorunur), oncekini_at
 
     def bitir(self) -> str:
         """Akis bitti; bekleyen metni dondurur."""
@@ -248,7 +266,7 @@ class DusunceSuzgeci:
         return kalan
 
 
-def _stream_once(payload: dict, on_token, on_think=None) -> tuple:
+def _stream_once(payload: dict, on_token, on_think=None, on_discard=None) -> tuple:
     """Tek bir /api/chat cagrisini akitir; (metin, arac_cagrilari) dondurur."""
     metin, cagrilar = [], []
     suzgec = DusunceSuzgeci()
@@ -274,7 +292,11 @@ def _stream_once(payload: dict, on_token, on_think=None) -> tuple:
                 if suzgec.icerde or "<think" in token or suzgec.tampon:
                     if on_think is not None:
                         on_think(token)
-                gorunur = suzgec.besle(token)
+                gorunur, oncekini_at = suzgec.besle(token)
+                if oncekini_at:
+                    metin.clear()
+                    if on_discard is not None:
+                        on_discard()
                 if gorunur:
                     metin.append(gorunur)
                     on_token(gorunur)
@@ -290,7 +312,7 @@ def _stream_once(payload: dict, on_token, on_think=None) -> tuple:
 
 
 def chat_stream(messages: list, on_token, on_tool=None, web_enabled: bool = None,
-                max_rounds: int = 6, on_think=None) -> str:
+                max_rounds: int = 6, on_think=None, on_discard=None) -> str:
     """Ollama ile sohbet eder; model arac cagirirsa aramayi yapip devam eder.
 
     Arac sonuclari `messages` listesine eklenir, boylece sohbet gecmisinde kalir.
@@ -308,7 +330,7 @@ def chat_stream(messages: list, on_token, on_tool=None, web_enabled: bool = None
         if tools_enabled:
             payload["tools"] = tools.specs(aktif_arac_adlari(web_enabled))
         try:
-            cevap, cagrilar = _stream_once(payload, on_token, on_think)
+            cevap, cagrilar = _stream_once(payload, on_token, on_think, on_discard)
         except requests.exceptions.HTTPError:
             # Bazi modeller "think" ya da "tools" alanini kabul etmez; sirayla birak
             if think_enabled:
