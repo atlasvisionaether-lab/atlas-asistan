@@ -116,7 +116,8 @@ chmod +x "$JARVIS_DIR/jarvis-gui"
 mkdir -p "$HOME/.local/bin"
 ln -sf "$JARVIS_DIR/jarvis" "$HOME/.local/bin/jarvis"
 ln -sf "$JARVIS_DIR/jarvis-gui" "$HOME/.local/bin/jarvis-gui"
-info "Kisayollar: ~/.local/bin/jarvis ve ~/.local/bin/jarvis-gui"
+ln -sf "$JARVIS_DIR/switch-model.sh" "$HOME/.local/bin/jarvis-model"
+info "Kisayollar: ~/.local/bin/jarvis, jarvis-gui, jarvis-model"
 
 # --- uygulama menusu girdisi -------------------------------------------------
 if "$VENV_DIR/bin/python" -c "import tkinter" >/dev/null 2>&1; then
@@ -149,5 +150,6 @@ echo "  Pencere    : $JARVIS_DIR/jarvis-gui   (ya da uygulama menusunden 'Jarvis
 echo "  Yazili mod : $JARVIS_DIR/jarvis"
 echo "  Sesli mod  : $JARVIS_DIR/jarvis --voice"
 echo "  Tek soru   : $JARVIS_DIR/jarvis -p \"Merhaba, kendini tanit\""
+echo "  Model degis: bash $JARVIS_DIR/switch-model.sh"
 echo
 echo "  ('jarvis' komutu calismazsa: export PATH=\"\$HOME/.local/bin:\$PATH\")"

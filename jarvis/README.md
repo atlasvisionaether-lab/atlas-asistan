@@ -84,7 +84,37 @@ konuşmanızı metne çevirir, cevabı üretir ve sesli okur.
 
 ---
 
-## 3. Yapılandırma
+## 3. Model değiştirme
+
+Cevap kalitesi doğrudan modele bağlıdır. Donanımınızı ölçüp uygun modeli kuran araç:
+
+```bash
+bash switch-model.sh
+```
+
+Ekran kartınızın belleğini okur, listeden önerilen modeli işaretler, seçtiğinizi indirip
+`.env` dosyasını günceller. Doğrudan da verebilirsiniz:
+
+```bash
+bash switch-model.sh qwen3:8b
+```
+
+| Model | Yaklaşık boyut | Not |
+|---|---|---|
+| `qwen3:8b` | ~5 GB | Güçlü muhakeme, iyi Türkçe. 8 GB VRAM için ideal |
+| `qwen3:14b` | ~9 GB | Daha isabetli. 12 GB+ VRAM ister |
+| `gemma3:12b` | ~8 GB | Çok dilli yanı güçlü |
+| `qwen2.5:7b` | ~5 GB | Hızlı, muhakemesi zayıf |
+| `qwen3:30b-a3b` | ~18 GB | Çok güçlü; 20 GB+ VRAM ya da 48 GB+ RAM |
+
+Model tümüyle ekran kartı belleğine sığdığında çok daha hızlı çalışır. Sığmazsa Ollama
+kalanını işlemciye taşır ve yavaşlar. Kontrol için cevap üretilirken `ollama ps` çalıştırın.
+
+Değişiklikten sonra Jarvis'i yeniden başlatın. Eski modeli silmek için `ollama rm qwen2.5:7b`.
+
+---
+
+## 4. Yapılandırma
 
 Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 
@@ -103,7 +133,7 @@ Asistanın karakterini değiştirmek için `jarvis.py` içindeki `SYSTEM_PROMPT`
 
 ---
 
-## 4. Sorun giderme
+## 5. Sorun giderme
 
 **"Ollama çalışmıyor" hatası**
 ```bash
@@ -150,7 +180,7 @@ Yoksa `bash install.sh` komutunu tekrar çalıştırın.
 
 ---
 
-## 5. Güncelleme
+## 6. Güncelleme
 
 ```bash
 cd ~/atlas-asistan
@@ -162,7 +192,7 @@ masaüstü kısayolu değiştiyse `cd jarvis && bash install.sh` komutunu tekrar
 
 ---
 
-## 6. Donanım gereksinimi
+## 7. Donanım gereksinimi
 
 | RAM | Önerilen model | Beklenen hız (CPU) |
 |---|---|---|
