@@ -10,3 +10,6 @@ numpy>=1.26
 
 # Sesli mod (TTS)
 piper-tts>=1.2.0
+
+# Internet aramasi
+ddgs>=9.0

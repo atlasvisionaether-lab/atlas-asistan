@@ -95,7 +95,30 @@ sessizlik algılaması ve 20 saniyelik üst sınır geçerlidir.
 
 ---
 
-## 3. Model değiştirme
+## 3. İnternet araması
+
+Jarvis, cevabı için güncel bilgi gerektiğine **kendi karar verdiğinde** DuckDuckGo'da arama
+yapar; sıradan sohbette, çeviride, kod sorularında internete hiç dokunmaz. Arama yaptığında
+bunu pencerede `[ internette araniyor: ... ]` satırıyla gösterir ve cevabında kaynağı belirtir.
+
+Kapatmak için pencerenin altındaki **Internet** kutucuğunu boşaltın, ya da:
+
+```bash
+./jarvis --no-web          # o oturum için
+```
+
+Kalıcı kapatmak için `.env` içinde `JARVIS_WEB=0` yapın.
+
+**Gizlilik notu:** Bu özellik açıkken sohbetiniz hâlâ bilgisayarınızda kalır — dışarı çıkan
+tek şey, modelin ürettiği arama sorgusudur (örneğin "Ankara hava durumu"). Sohbetin tamamı
+ya da kişisel verileriniz gönderilmez. Tamamen çevrimdışı kalmak isterseniz kapatın.
+
+Model araç kullanımını desteklemiyorsa (eski ya da küçük modeller) Jarvis bunu fark edip
+aramasız devam eder, hata vermez.
+
+---
+
+## 4. Model değiştirme
 
 Cevap kalitesi doğrudan modele bağlıdır. Donanımınızı ölçüp uygun modeli kuran araç:
 
@@ -125,7 +148,7 @@ Değişiklikten sonra Jarvis'i yeniden başlatın. Eski modeli silmek için `oll
 
 ---
 
-## 4. Yapılandırma
+## 5. Yapılandırma
 
 Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 
@@ -139,13 +162,16 @@ Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 | `MIC_SILENCE_THRESHOLD` | Sessizlik eşiğinin alt sınırı. Ortam ölçümü bunun altında kalırsa bu değer kullanılır |
 | `MIC_NOISE_FACTOR` | Ortam gürültüsünün kaç katı "konuşma" sayılsın. `2.0` daha hassas, `5.0` sadece yüksek sesi alır (varsayılan `3.0`) |
 | `MIC_SILENCE_SECONDS` | Konuşma bitince beklenecek süre |
+| `JARVIS_WEB` | `1` internet araması açık, `0` kapalı |
+| `JARVIS_WEB_RESULTS` | Kaç arama sonucu modele verilsin (varsayılan 5) |
+| `JARVIS_WEB_REGION` | Arama bölgesi (varsayılan `tr-tr`) |
 | `PIPER_VOICE` | Türkçe ses dosyası; boş bırakılırsa espeak-ng kullanılır |
 
 Asistanın karakterini değiştirmek için `jarvis.py` içindeki `SYSTEM_PROMPT` metnini düzenleyin.
 
 ---
 
-## 5. Sorun giderme
+## 6. Sorun giderme
 
 **"Ollama çalışmıyor" hatası**
 ```bash
@@ -192,7 +218,7 @@ Yoksa `bash install.sh` komutunu tekrar çalıştırın.
 
 ---
 
-## 6. Güncelleme
+## 7. Güncelleme
 
 ```bash
 cd ~/atlas-asistan
@@ -204,7 +230,7 @@ masaüstü kısayolu değiştiyse `cd jarvis && bash install.sh` komutunu tekrar
 
 ---
 
-## 7. Donanım gereksinimi
+## 8. Donanım gereksinimi
 
 | RAM | Önerilen model | Beklenen hız (CPU) |
 |---|---|---|

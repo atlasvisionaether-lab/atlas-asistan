@@ -84,11 +84,16 @@ class JarvisApp:
                                   relief="flat", font=("Ubuntu", 11, "bold"), cursor="hand2")
         self.send_btn.pack(side="left", ipady=4)
 
+        self.web_on = tk.BooleanVar(value=core.WEB_SEARCH)
         self.tts_on = tk.BooleanVar(value=True)
         tk.Checkbutton(foot, text="Sesli yanit", variable=self.tts_on, bg=BG, fg=MUTED,
                        selectcolor=BG_INPUT, activebackground=BG, activeforeground=FG,
                        font=("Ubuntu", 10), relief="flat",
                        highlightthickness=0).pack(side="left")
+        tk.Checkbutton(foot, text="Internet", variable=self.web_on, bg=BG, fg=MUTED,
+                       selectcolor=BG_INPUT, activebackground=BG, activeforeground=FG,
+                       font=("Ubuntu", 10), relief="flat",
+                       highlightthickness=0).pack(side="left", padx=(12, 0))
         tk.Button(foot, text="Sohbeti temizle", command=self.clear, bg=BG, fg=MUTED,
                   activebackground=BG, activeforeground=FG, relief="flat",
                   font=("Ubuntu", 10), cursor="hand2").pack(side="left", padx=12)
@@ -126,7 +131,8 @@ class JarvisApp:
     def clear(self) -> None:
         if self.busy:
             return
-        self.messages = [{"role": "system", "content": core.SYSTEM_PROMPT}]
+        self.messages = [{"role": "system",
+                          "content": core.build_system_prompt(self.web_on.get())}]
         self.chat.configure(state="normal")
         self.chat.delete("1.0", "end")
         self.chat.configure(state="disabled")
@@ -142,6 +148,9 @@ class JarvisApp:
                     self._append(payload)
                 elif kind == "status":
                     self.status.configure(text=payload)
+                elif kind == "tool":
+                    self._append(f"\n\n[ internette araniyor: {payload} ]\n", "sys")
+                    self._append(f"{core.NAME}\n", "bot")
                 elif kind == "recording":
                     self._set_busy(True, "dinliyorum, konusun...", mic_active=True)
                 elif kind == "bot":
@@ -194,8 +203,12 @@ class JarvisApp:
     def _stream_reply(self) -> None:
         """Ollama yanitini akitir; hem yazili hem sesli girdide ayni yol."""
         try:
-            reply = core.chat_stream(self.messages,
-                                     lambda t: self.events.put(("token", t)))
+            reply = core.chat_stream(
+                self.messages,
+                lambda t: self.events.put(("token", t)),
+                on_tool=lambda sorgu: self.events.put(("tool", sorgu)),
+                tools_enabled=self.web_on.get(),
+            )
         except core.requests.exceptions.ConnectionError:
             self.messages.pop()
             self.events.put(("error", f"Ollama'ya baglanilamadi ({core.OLLAMA_HOST}).\n"

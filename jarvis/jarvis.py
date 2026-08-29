@@ -40,26 +40,54 @@ SILENCE_THRESHOLD = float(os.getenv("MIC_SILENCE_THRESHOLD", "0.012"))
 SILENCE_SECONDS = float(os.getenv("MIC_SILENCE_SECONDS", "1.2"))
 MAX_SECONDS = float(os.getenv("MIC_MAX_SECONDS", "20"))
 NOISE_FACTOR = float(os.getenv("MIC_NOISE_FACTOR", "3.0"))
+WEB_SEARCH = os.getenv("JARVIS_WEB", "1").strip().lower() not in {"0", "false", "hayir", "kapali"}
+WEB_RESULTS = int(os.getenv("JARVIS_WEB_RESULTS", "5"))
+WEB_REGION = os.getenv("JARVIS_WEB_REGION", "tr-tr")
 SAMPLE_RATE = 16000
 
-SYSTEM_PROMPT = (
-    f"Sen {NAME} adinda, Turkce konusan bir kisisel asistansin. "
-    "Kullanicinin kendi Ubuntu bilgisayarinda, Ollama uzerinde, internete bagli olmadan "
-    "calisiyorsun.\n\n"
-    "YAPABILDIKLERIN: Sohbet etmek, soru cevaplamak, aciklama yapmak, metin yazmak ve "
-    "duzeltmek, ceviri, ozetleme, fikir uretmek, kod yazmak ve anlatmak, hesap yapmak.\n\n"
-    "YAPAMADIKLARIN: Internete girmek, guncel bilgi ya da hava durumu getirmek, e-posta ve "
-    "mesaj gondermek, sosyal medya hesaplarina baglanmak, dosya acmak ya da degistirmek, "
-    "uygulama calistirmak, alarm ve hatirlatici kurmak, takvim islemleri, gecmis "
-    "konusmalari hatirlamak. Bunlarin hicbirine bagli degilsin. Boyle bir sey istenirse "
-    "acikca yapamadigini soyle ve yapabildigin bir alternatif oner. Sahip olmadigin bir "
-    "yetenegi asla varmis gibi anlatma.\n\n"
-    "NASIL KONUSURSUN: Kisa, net ve dogal cumlelerle. Cevaplarin sesli okunacagi icin "
-    "madde isareti, emoji ve markdown bicimlendirmesi kullanma; duz cumlelerle konus. "
-    "Uzun listeler yerine en onemli iki uc seyi soyle. Bilmedigin bir sey oldugunda tahmin "
-    "yurutmek yerine bilmedigini soyle. Egitim verilerin belli bir tarihte bittigi icin "
-    "guncel olaylari bilmezsin; bunu da acikca belirt."
-)
+def build_system_prompt(web: bool = WEB_SEARCH) -> str:
+    """Sistem istemi. Internet araci aciksa yapabildikleri buna gore degisir."""
+    yapabildiklerin = (
+        "Sohbet etmek, soru cevaplamak, aciklama yapmak, metin yazmak ve duzeltmek, "
+        "ceviri, ozetleme, fikir uretmek, kod yazmak ve anlatmak, hesap yapmak."
+    )
+    yapamadiklarin = (
+        "E-posta ve mesaj gondermek, sosyal medya hesaplarina baglanmak, dosya acmak ya "
+        "da degistirmek, uygulama calistirmak, alarm ve hatirlatici kurmak, takvim "
+        "islemleri, gecmis konusmalari hatirlamak."
+    )
+    if web:
+        arac = (
+            "\n\nINTERNET: 'internette_ara' adinda bir aracin var. Egitim verilerinde "
+            "olmayan ya da degismis olabilecek bir sey soruldugunda (guncel olaylar, hava "
+            "durumu, fiyatlar, bir kisinin su anki durumu, yeni cikmis urunler, tarih ve "
+            "saat gerektiren bilgiler) once bu araci kullan, sonra sonuclara dayanarak "
+            "cevap ver. Genel bilgi, tanim, ceviri, matematik, kod gibi konularda araci "
+            "kullanma; kendi bilgisiyle cevap ver. Arama sonuclarindaki bilgiyi aktarirken "
+            "hangi kaynaktan geldigini kisaca soyle. Sonuclar sorunun cevabini icermiyorsa "
+            "bulamadigini soyle, uydurma."
+        )
+    else:
+        yapamadiklarin = "Internete girmek, guncel bilgi ya da hava durumu getirmek, " + \
+            yapamadiklarin[0].lower() + yapamadiklarin[1:]
+        arac = ""
+
+    return (
+        f"Sen {NAME} adinda, Turkce konusan bir kisisel asistansin. "
+        "Kullanicinin kendi Ubuntu bilgisayarinda, Ollama uzerinde calisiyorsun.\n\n"
+        f"YAPABILDIKLERIN: {yapabildiklerin}\n\n"
+        f"YAPAMADIKLARIN: {yapamadiklarin} Bunlarin hicbirine bagli degilsin. Boyle bir "
+        "sey istenirse acikca yapamadigini soyle ve yapabildigin bir alternatif oner. "
+        "Sahip olmadigin bir yetenegi asla varmis gibi anlatma."
+        f"{arac}\n\n"
+        "NASIL KONUSURSUN: Kisa, net ve dogal cumlelerle. Cevaplarin sesli okunacagi icin "
+        "madde isareti, emoji ve markdown bicimlendirmesi kullanma; duz cumlelerle konus. "
+        "Uzun listeler yerine en onemli iki uc seyi soyle. Bilmedigin bir sey oldugunda "
+        "tahmin yurutmek yerine bilmedigini soyle."
+    )
+
+
+SYSTEM_PROMPT = build_system_prompt()
 
 C_CYAN, C_GREEN, C_DIM, C_RED, C_RESET = "\033[1;36m", "\033[1;32m", "\033[2m", "\033[1;31m", "\033[0m"
 
@@ -82,12 +110,72 @@ def model_installed(model: str) -> bool:
     return model in names or any(n.split(":")[0] == model.split(":")[0] for n in names)
 
 
-def chat_stream(messages: list[dict], on_token) -> str:
-    """Ollama /api/chat akisini token token isler, tam cevabi dondurur."""
-    payload = {"model": MODEL, "messages": messages, "stream": True}
-    reply = []
-    with requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, stream=True, timeout=600) as r:
-        r.raise_for_status()
+TOOLS = [{
+    "type": "function",
+    "function": {
+        "name": "internette_ara",
+        "description": (
+            "Internette arama yapar ve baslik, ozet ve baglantilardan olusan sonuclari "
+            "dondurur. Sadece guncel ya da egitim verilerinde bulunmayan bilgi "
+            "gerektiginde kullan."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "sorgu": {
+                    "type": "string",
+                    "description": "Arama sorgusu. Kisa ve anahtar kelimelerden olussun.",
+                }
+            },
+            "required": ["sorgu"],
+        },
+    },
+}]
+
+
+def web_search(sorgu: str, limit: int = WEB_RESULTS) -> str:
+    """DuckDuckGo uzerinden arama yapar, modele verilecek metni dondurur."""
+    try:
+        from ddgs import DDGS
+    except ImportError:
+        return ("HATA: arama kutuphanesi kurulu degil. Kullaniciya soyle: "
+                "jarvis klasorunde 'bash install.sh' calistirmasi gerekiyor.")
+    try:
+        rows = DDGS().text(sorgu, region=WEB_REGION, max_results=limit)
+    except Exception as exc:
+        return f"HATA: arama yapilamadi ({exc}). Internet baglantisi olmayabilir."
+    if not rows:
+        return "Sonuc bulunamadi."
+
+    parcalar = []
+    for i, row in enumerate(rows, 1):
+        baslik = (row.get("title") or "").strip()
+        ozet = (row.get("body") or row.get("description") or "").strip()
+        adres = (row.get("href") or row.get("url") or "").strip()
+        if len(ozet) > 400:
+            ozet = ozet[:400] + "..."
+        parcalar.append(f"{i}. {baslik}\n{ozet}\nKaynak: {adres}")
+    return "\n\n".join(parcalar)
+
+
+def _run_tool(ad: str, args: dict, on_tool=None) -> str:
+    if ad != "internette_ara":
+        return f"HATA: '{ad}' adinda bir arac yok."
+    sorgu = (args.get("sorgu") or args.get("query") or "").strip()
+    if not sorgu:
+        return "HATA: arama sorgusu bos."
+    if on_tool is not None:
+        on_tool(sorgu)
+    return web_search(sorgu)
+
+
+def _stream_once(payload: dict, on_token) -> tuple:
+    """Tek bir /api/chat cagrisini akitir; (metin, arac_cagrilari) dondurur."""
+    metin, cagrilar = [], []
+    with requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, stream=True,
+                       timeout=600) as r:
+        if r.status_code >= 400:
+            raise requests.exceptions.HTTPError(r.text, response=r)
         for line in r.iter_lines(decode_unicode=True):
             if not line:
                 continue
@@ -97,13 +185,57 @@ def chat_stream(messages: list[dict], on_token) -> str:
                 continue
             if data.get("error"):
                 raise RuntimeError(data["error"])
-            token = data.get("message", {}).get("content", "")
+            mesaj = data.get("message", {})
+            token = mesaj.get("content", "")
             if token:
-                reply.append(token)
+                metin.append(token)
                 on_token(token)
+            if mesaj.get("tool_calls"):
+                cagrilar.extend(mesaj["tool_calls"])
             if data.get("done"):
                 break
-    return "".join(reply)
+    return "".join(metin), cagrilar
+
+
+def chat_stream(messages: list, on_token, on_tool=None, tools_enabled: bool = None,
+                max_rounds: int = 3) -> str:
+    """Ollama ile sohbet eder; model arac cagirirsa aramayi yapip devam eder.
+
+    Arac sonuclari `messages` listesine eklenir, boylece sohbet gecmisinde kalir.
+    """
+    if tools_enabled is None:
+        tools_enabled = WEB_SEARCH
+    cevap = ""
+
+    for _ in range(max_rounds):
+        payload = {"model": MODEL, "messages": messages, "stream": True}
+        if tools_enabled:
+            payload["tools"] = TOOLS
+        try:
+            cevap, cagrilar = _stream_once(payload, on_token)
+        except requests.exceptions.HTTPError:
+            if not tools_enabled:
+                raise
+            # model arac kullanimini desteklemiyor olabilir; aracsiz dene
+            tools_enabled = False
+            continue
+        if not cagrilar:
+            return cevap
+
+        messages.append({"role": "assistant", "content": cevap,
+                         "tool_calls": cagrilar})
+        for cagri in cagrilar:
+            islev = cagri.get("function", {})
+            args = islev.get("arguments") or {}
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except json.JSONDecodeError:
+                    args = {"sorgu": args}
+            sonuc = _run_tool(islev.get("name", ""), args, on_tool)
+            messages.append({"role": "tool", "name": islev.get("name", ""),
+                             "content": sonuc})
+    return cevap
 
 
 # ------------------------------------------------------------------------ TTS
@@ -290,10 +422,15 @@ def print_stream_token(token: str) -> None:
     sys.stdout.flush()
 
 
+def _tool_notice(sorgu: str) -> None:
+    print(f"\n{C_DIM}(internette araniyor: {sorgu}){C_RESET}\n"
+          f"{C_GREEN}{NAME}:{C_RESET} ", end="", flush=True)
+
+
 def ask(messages: list[dict], speaker: Speaker | None) -> str:
     print(f"{C_GREEN}{NAME}:{C_RESET} ", end="", flush=True)
     try:
-        reply = chat_stream(messages, print_stream_token)
+        reply = chat_stream(messages, print_stream_token, on_tool=_tool_notice)
     except requests.exceptions.ConnectionError:
         print(f"\n{C_RED}Ollama'ya baglanilamadi ({OLLAMA_HOST}). "
               f"'sudo systemctl start ollama' deneyin.{C_RESET}")
@@ -320,16 +457,21 @@ def preflight() -> bool:
 
 
 def main() -> int:
-    global MODEL
+    global MODEL, WEB_SEARCH, SYSTEM_PROMPT
     parser = argparse.ArgumentParser(description="Jarvis - yerel Turkce asistan")
     parser.add_argument("-p", "--prompt", help="Tek seferlik soru sor ve cik")
     parser.add_argument("--voice", action="store_true", help="Mikrofondan dinle")
     parser.add_argument("--no-tts", action="store_true", help="Sesli yaniti kapat")
     parser.add_argument("--model", help=f"Ollama modeli (varsayilan: {MODEL})")
+    parser.add_argument("--no-web", action="store_true",
+                        help="Internet aramasini kapat")
     args = parser.parse_args()
 
     if args.model:
         MODEL = args.model
+    if args.no_web:
+        WEB_SEARCH = False
+        SYSTEM_PROMPT = build_system_prompt(web=False)
 
     if not preflight():
         return 1
@@ -350,7 +492,8 @@ def main() -> int:
             print(f"{C_RED}Sesli mod baslatilamadi: {exc}{C_RESET}")
             print("Yazili moda geciliyor.")
 
-    print(f"{C_CYAN}{NAME} hazir{C_RESET} {C_DIM}(model: {MODEL}) - cikmak icin 'cik' yazin "
+    print(f"{C_CYAN}{NAME} hazir{C_RESET} {C_DIM}(model: {MODEL}"
+          f"{', internet acik' if WEB_SEARCH else ''}) - cikmak icin 'cik' yazin "
           f"ya da Ctrl+C{C_RESET}")
     if listener:
         print(f"{C_DIM}Konusmaya baslamak icin Enter'a basin.{C_RESET}")
