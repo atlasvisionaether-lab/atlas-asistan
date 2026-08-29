@@ -108,7 +108,9 @@ def build_system_prompt(web: bool = WEB_SEARCH) -> str:
         "sey istenirse acikca yapamadigini soyle ve yapabildigin bir alternatif oner. "
         "Sahip olmadigin bir yetenegi asla varmis gibi anlatma."
         f"{arac}\n\n"
-        "NASIL KONUSURSUN: Kisa, net ve dogal cumlelerle. Cevaplarin sesli okunacagi icin "
+        "NASIL KONUSURSUN: Dogrudan cevabi ver. Dusunme adimlarini, kendi kendine "
+        "yaptigin degerlendirmeleri ve arac cagrisi planlarini yazma; kullanici sadece "
+        "sonucu gorsun. Kisa, net ve dogal cumlelerle konus. Cevaplarin sesli okunacagi icin "
         "madde isareti, emoji ve markdown bicimlendirmesi kullanma; duz cumlelerle konus. "
         "Uzun listeler yerine en onemli iki uc seyi soyle. Bilmedigin bir sey oldugunda "
         "tahmin yurutmek yerine bilmedigini soyle. Unutma: cevabin Turkce olacak."
@@ -184,9 +186,72 @@ def _run_tool(ad: str, args: dict, on_tool=None) -> str:
     return tools.calistir(ad, args)
 
 
+class DusunceSuzgeci:
+    """Akistan <think>...</think> bloklarini ayiklar.
+
+    Bazi modeller (qwen3) akil yurutmeyi ayri bir alanda degil, dogrudan
+    cevap metninin icinde etiketli olarak gonderir. Etiketler token
+    sinirlarina bolunebildigi icin kucuk bir tampon tutulur.
+    """
+
+    ACIK = "<think>"
+    KAPALI = "</think>"
+
+    def __init__(self):
+        self.icerde = False
+        self.tampon = ""
+
+    def _kuyruk_uzunlugu(self) -> int:
+        """Yarim kalmis bir etiketi bekletmek icin saklanacak karakter sayisi."""
+        hedef = self.KAPALI if self.icerde else self.ACIK
+        for uzunluk in range(len(hedef) - 1, 0, -1):
+            if self.tampon.endswith(hedef[:uzunluk]):
+                return uzunluk
+        return 0
+
+    def besle(self, token: str) -> str:
+        self.tampon += token
+        gorunur = []
+        while True:
+            if self.icerde:
+                yer = self.tampon.find(self.KAPALI)
+                if yer == -1:
+                    break
+                self.tampon = self.tampon[yer + len(self.KAPALI):]
+                self.icerde = False
+                continue
+            yer = self.tampon.find(self.ACIK)
+            if yer == -1:
+                break
+            gorunur.append(self.tampon[:yer])
+            self.tampon = self.tampon[yer + len(self.ACIK):]
+            self.icerde = True
+        if self.icerde:
+            kuyruk = self._kuyruk_uzunlugu()
+            self.tampon = self.tampon[len(self.tampon) - kuyruk:] if kuyruk else ""
+        else:
+            kuyruk = self._kuyruk_uzunlugu()
+            if kuyruk:
+                gorunur.append(self.tampon[:-kuyruk])
+                self.tampon = self.tampon[-kuyruk:]
+            else:
+                gorunur.append(self.tampon)
+                self.tampon = ""
+        return "".join(gorunur)
+
+    def bitir(self) -> str:
+        """Akis bitti; bekleyen metni dondurur."""
+        if self.icerde:
+            self.tampon = ""
+            return ""
+        kalan, self.tampon = self.tampon, ""
+        return kalan
+
+
 def _stream_once(payload: dict, on_token, on_think=None) -> tuple:
     """Tek bir /api/chat cagrisini akitir; (metin, arac_cagrilari) dondurur."""
     metin, cagrilar = [], []
+    suzgec = DusunceSuzgeci()
     with requests.post(f"{OLLAMA_HOST}/api/chat", json=payload, stream=True,
                        timeout=600) as r:
         if r.status_code >= 400:
@@ -206,12 +271,21 @@ def _stream_once(payload: dict, on_token, on_think=None) -> tuple:
                 on_think(dusunce)
             token = mesaj.get("content", "")
             if token:
-                metin.append(token)
-                on_token(token)
+                if suzgec.icerde or "<think" in token or suzgec.tampon:
+                    if on_think is not None:
+                        on_think(token)
+                gorunur = suzgec.besle(token)
+                if gorunur:
+                    metin.append(gorunur)
+                    on_token(gorunur)
             if mesaj.get("tool_calls"):
                 cagrilar.extend(mesaj["tool_calls"])
             if data.get("done"):
                 break
+    kalan = suzgec.bitir()
+    if kalan:
+        metin.append(kalan)
+        on_token(kalan)
     return "".join(metin), cagrilar
 
 

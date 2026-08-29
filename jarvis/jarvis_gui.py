@@ -176,8 +176,7 @@ class JarvisApp:
                                               bg=BG_INPUT, fg=FG)
                     self._set_busy(False)
                 elif kind == "tool":
-                    self._append(f"\n\n[ {payload} ]\n", "sys")
-                    self._append(f"{core.NAME}\n", "bot")
+                    self._append(f"\n[ {payload} ]\n", "sys")
                 elif kind == "recording":
                     self._set_busy(True, "dinliyorum, konusun...", mic_active=True)
                 elif kind == "bot":
