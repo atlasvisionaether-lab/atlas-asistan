@@ -44,7 +44,14 @@ class JarvisApp:
         self.speaker = core.Speaker(enabled=True)
         self.root.after(60, self._drain)
 
-        if not core.ollama_available():
+        if core.beyin.BEYIN == "claude":
+            hazir, sorun = core.claude_hazir()
+            if hazir:
+                self._say_system(f"{core.NAME} hazir. Beyin: Claude API "
+                                 f"({core.beyin.CLAUDE_MODEL})")
+            else:
+                self._say_system(sorun, error=True)
+        elif not core.ollama_available():
             self._say_system(
                 f"Ollama calismiyor ({core.OLLAMA_HOST}).\n"
                 "Terminalde su komutu calistirin:  sudo systemctl start ollama", error=True)

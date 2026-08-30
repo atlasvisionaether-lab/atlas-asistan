@@ -54,6 +54,11 @@ BARGE = os.getenv("JARVIS_BARGE", "1").strip().lower() not in {"0", "false", "ha
 BARGE_FACTOR = float(os.getenv("JARVIS_BARGE_FACTOR", "4.0"))
 BARGE_MIN_SECONDS = float(os.getenv("JARVIS_BARGE_MIN_SECONDS", "0.4"))
 FOLLOWUP_SECONDS = float(os.getenv("JARVIS_FOLLOWUP_SECONDS", "6"))
+# Seslendirme: piper (yerel, ucretsiz) | elevenlabs (bulut, dogal) | espeak
+TTS = os.getenv("JARVIS_TTS", "piper").strip().lower()
+ELEVEN_KEY = os.getenv("ELEVENLABS_API_KEY", "").strip()
+ELEVEN_VOICE = os.getenv("ELEVENLABS_VOICE_ID", "").strip()
+ELEVEN_MODEL = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2").strip()
 THINK = os.getenv("JARVIS_THINK", "0").strip().lower() in {"1", "true", "evet", "acik"}
 SAMPLE_RATE = 16000
 
@@ -164,6 +169,7 @@ def model_installed(model: str) -> bool:
 
 
 import jarvis_tools as tools  # noqa: E402  (ayarlar okunduktan sonra)
+import jarvis_beyin as beyin  # noqa: E402
 
 
 @tools.arac("internette_ara",
@@ -349,6 +355,16 @@ def _no_think_ekle(messages: list) -> list:
     return kopya
 
 
+_CLAUDE = []
+
+
+def _claude_beyin():
+    """Claude istemcisi bir kez kurulur, sonraki cagrilarda yeniden kullanilir."""
+    if not _CLAUDE:
+        _CLAUDE.append(beyin.ClaudeBeyin())
+    return _CLAUDE[0]
+
+
 def chat_stream(messages: list, on_token, on_tool=None, web_enabled: bool = None,
                 max_rounds: int = 6, on_think=None, on_discard=None) -> str:
     """Ollama ile sohbet eder; model arac cagirirsa aramayi yapip devam eder.
@@ -357,6 +373,11 @@ def chat_stream(messages: list, on_token, on_tool=None, web_enabled: bool = None
     """
     if web_enabled is None:
         web_enabled = WEB_SEARCH
+
+    if beyin.BEYIN == "claude":
+        return _claude_beyin().sohbet(messages, on_token, on_tool=on_tool,
+                                      web_acik=web_enabled, on_think=on_think)
+
     tools_enabled = True     # model arac cagirmayi desteklemiyorsa kapanir
     think_enabled = True
     cevap = ""
@@ -405,6 +426,10 @@ class Speaker:
         self.enabled = enabled
         self.voice = None
         self._proc = None
+        self.eleven = TTS == "elevenlabs" and bool(ELEVEN_KEY and ELEVEN_VOICE)
+        if TTS == "elevenlabs" and not self.eleven:
+            print(f"{C_DIM}(ELEVENLABS_API_KEY ya da ELEVENLABS_VOICE_ID eksik; "
+                  f"piper sesine dusuldu){C_RESET}")
         if not enabled:
             return
         voice_path = os.getenv("PIPER_VOICE", "")
@@ -432,6 +457,13 @@ class Speaker:
         text = text.strip()
         if not self.enabled or not text:
             return False
+        if self.eleven:
+            try:
+                return self._say_eleven(text, should_stop)
+            except Exception as exc:
+                print(f"{C_DIM}(ElevenLabs seslendiremedi: {exc}; "
+                      f"yerel sese dusuluyor){C_RESET}")
+                self.eleven = False
         if self.voice is not None:
             try:
                 return self._say_piper(text, should_stop)
@@ -443,6 +475,49 @@ class Speaker:
                                   should_stop)
         self.enabled = False
         return False
+
+    def _say_eleven(self, text: str, should_stop=None) -> bool:
+        """ElevenLabs sesini indirdikce oynatir; ilk sesi beklemeden baslar."""
+        player = shutil.which("ffplay") or shutil.which("mpv")
+        if player is None:
+            raise RuntimeError("ffplay bulunamadi (ffmpeg kurulu olmali)")
+        cmd = ([player, "-nodisp", "-autoexit", "-loglevel", "quiet", "-"]
+               if player.endswith("ffplay") else [player, "--really-quiet", "-"])
+
+        adres = (f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVEN_VOICE}/stream"
+                 f"?output_format=mp3_44100_128")
+        istek = {"text": text, "model_id": ELEVEN_MODEL}
+        with requests.post(adres, json=istek, stream=True, timeout=60,
+                           headers={"xi-api-key": ELEVEN_KEY}) as r:
+            if r.status_code >= 400:
+                raise RuntimeError(f"ElevenLabs {r.status_code}: {r.text[:120]}")
+            proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL)
+            self._proc = proc
+            kesildi = False
+            try:
+                for parca in r.iter_content(chunk_size=4096):
+                    if should_stop is not None and should_stop():
+                        kesildi = True
+                        break
+                    if parca and proc.poll() is None:
+                        proc.stdin.write(parca)
+                if not kesildi:
+                    try:
+                        proc.stdin.close()
+                    except Exception:
+                        pass
+                    while proc.poll() is None:
+                        if should_stop is not None and should_stop():
+                            kesildi = True
+                            break
+                        time.sleep(0.05)
+            finally:
+                self._proc = None
+                if proc.poll() is None:
+                    proc.terminate()
+        return kesildi
 
     def _calistir(self, cmd: list, should_stop=None) -> bool:
         """Oynatici sureci baslatir; should_stop gelirse durdurur."""
@@ -721,7 +796,25 @@ def ask(messages: list[dict], speaker: Speaker | None) -> str:
     return reply
 
 
+def claude_hazir() -> "tuple[bool, str]":
+    """Claude beyni icin anahtar ve kutuphane var mi."""
+    try:
+        import anthropic  # noqa: F401
+    except ImportError:
+        return False, ("Claude kutuphanesi kurulu degil. Terminalde: "
+                       "bash install.sh")
+    if not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN")):
+        return False, ("ANTHROPIC_API_KEY tanimli degil. .env dosyasina "
+                       "ANTHROPIC_API_KEY=sk-ant-... satirini ekleyin.")
+    return True, ""
+
+
 def preflight() -> bool:
+    if beyin.BEYIN == "claude":
+        hazir, sorun = claude_hazir()
+        if not hazir:
+            print(f"{C_RED}{sorun}{C_RESET}")
+        return hazir
     if not ollama_available():
         print(f"{C_RED}Ollama calismiyor ({OLLAMA_HOST}).{C_RESET}")
         print("  sudo systemctl start ollama    # ya da ayri bir terminalde: ollama serve")
@@ -777,7 +870,8 @@ def main() -> int:
             print(f"{C_RED}Sesli mod baslatilamadi: {exc}{C_RESET}")
             print("Yazili moda geciliyor.")
 
-    print(f"{C_CYAN}{NAME} hazir{C_RESET} {C_DIM}(model: {MODEL}"
+    etiket = beyin.CLAUDE_MODEL if beyin.BEYIN == "claude" else MODEL
+    print(f"{C_CYAN}{NAME} hazir{C_RESET} {C_DIM}(model: {etiket}"
           f"{', internet acik' if WEB_SEARCH else ''}) - cikmak icin 'cik' yazin "
           f"ya da Ctrl+C{C_RESET}")
     if listener and args.wake:

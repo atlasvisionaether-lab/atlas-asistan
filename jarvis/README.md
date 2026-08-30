@@ -158,7 +158,53 @@ fonksiyon yazmanız yeterli; Atlas onu otomatik olarak tanır.
 
 ---
 
-## 4. İnternet araması
+## 4. Beyin ve ses seçimi
+
+Atlas iki farklı "beyin" ve üç farklı sesle çalışabilir. Hepsi `.env` dosyasından seçilir.
+
+### Beyin
+
+| Ayar | Ne olur |
+|---|---|
+| `JARVIS_BEYIN=ollama` | Yerel model (varsayılan). Ücretsiz, çevrimdışı, tamamen gizli. Cevap kalitesi modelinizin sınırında |
+| `JARVIS_BEYIN=claude` | Claude API. Akıcı Türkçe, güçlü muhakeme, araçları güvenilir kullanır. Kullanım başına ücretli, internet gerekir |
+
+Claude için `.env` dosyasına anahtarınızı yazın:
+
+```
+JARVIS_BEYIN=claude
+ANTHROPIC_API_KEY=sk-ant-...
+JARVIS_CLAUDE_MODEL=claude-opus-5
+```
+
+Anahtar `.env` içinde kalır, `.gitignore` sayesinde GitHub'a gitmez. Maliyeti düşürmek
+isterseniz `JARVIS_CLAUDE_MODEL=claude-haiku-4-5` çok daha ucuzdur.
+
+**Gizlilik farkı:** yerel beyinde hiçbir şey bilgisayardan çıkmaz. Claude'a geçtiğinizde
+sorularınız ve araç sonuçları Anthropic'e gider. Sesiniz yine yerelde metne çevrilir.
+
+### Ses
+
+| Ayar | Ne olur |
+|---|---|
+| `JARVIS_TTS=piper` | Yerel, ücretsiz, hızlı (varsayılan). Ses biraz robotik |
+| `JARVIS_TTS=elevenlabs` | Doğal Türkçe, akış hâlinde. Ücretli, API anahtarı gerekir |
+| `JARVIS_TTS=espeak` | En basit yedek |
+
+ElevenLabs için:
+
+```
+JARVIS_TTS=elevenlabs
+ELEVENLABS_API_KEY=...
+ELEVENLABS_VOICE_ID=...
+```
+
+Ses, indikçe oynatılır — cümlenin tamamı beklenmez — ve araya girdiğinizde anında susar.
+Anahtar yanlışsa ya da bağlantı koparsa Atlas kendiliğinden yerel sese döner, konuşma kesilmez.
+
+---
+
+## 5. İnternet araması
 
 Jarvis, cevabı için güncel bilgi gerektiğine **kendi karar verdiğinde** DuckDuckGo'da arama
 yapar; sıradan sohbette, çeviride, kod sorularında internete hiç dokunmaz. Arama yaptığında
@@ -181,7 +227,7 @@ aramasız devam eder, hata vermez.
 
 ---
 
-## 5. Model değiştirme
+## 6. Model değiştirme
 
 Cevap kalitesi doğrudan modele bağlıdır. Donanımınızı ölçüp uygun modeli kuran araç:
 
@@ -211,7 +257,7 @@ Değişiklikten sonra Jarvis'i yeniden başlatın. Eski modeli silmek için `oll
 
 ---
 
-## 6. Yapılandırma
+## 7. Yapılandırma
 
 Ayarlar `jarvis/.env` dosyasındadır (kurulumda `.env.example`'dan üretilir):
 
@@ -238,7 +284,7 @@ Asistanın karakterini değiştirmek için `jarvis.py` içindeki `SYSTEM_PROMPT`
 
 ---
 
-## 7. Sorun giderme
+## 8. Sorun giderme
 
 **"Ollama çalışmıyor" hatası**
 ```bash
@@ -320,7 +366,7 @@ Yoksa `bash install.sh` komutunu tekrar çalıştırın.
 
 ---
 
-## 8. Güncelleme
+## 9. Güncelleme
 
 ```bash
 cd ~/atlas-asistan
@@ -332,7 +378,7 @@ masaüstü kısayolu değiştiyse `cd jarvis && bash install.sh` komutunu tekrar
 
 ---
 
-## 9. Donanım gereksinimi
+## 10. Donanım gereksinimi
 
 | RAM | Önerilen model | Beklenen hız (CPU) |
 |---|---|---|

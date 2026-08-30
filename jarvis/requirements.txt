@@ -13,3 +13,4 @@ piper-tts>=1.2.0
 
 # Internet aramasi
 ddgs>=9.0
+anthropic>=1.0
