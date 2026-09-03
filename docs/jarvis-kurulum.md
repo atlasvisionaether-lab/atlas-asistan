@@ -9,6 +9,11 @@ arasındaki farklar aşağıda "Düzeltmeler" bölümünde.
 
 ---
 
+> **Bu rehber gerçek bir kurulumla doğrulandı.** Ubuntu 24.04 + Python 3.14 (sistem)
+> üzerinde uçtan uca kuruldu; yol boyunca upstream'de altı ayrı hata/uyumsuzluk çıktı.
+> Hepsi **§9 Bilinen hatalar** bölümünde, tespit yöntemi ve geçici çözümüyle birlikte.
+> Kuruluma başlamadan önce o bölümü bir kez okuman birkaç saat kazandırır.
+
 ## 0. Önce şu düzeltmeler
 
 | Videodaki / özetteki ifade | Deponun gerçeği |
@@ -175,6 +180,9 @@ Sihirbazın `/setup` ekranından da yükleyebilirsin.
 
 ## 5. Çalıştırma
 
+> ⚠️ `./jarvis run` Linux'ta kendini öldürüyor — sebebi ve çözümü §9.2'de.
+> Üç bileşeni ayrı ayrı başlat, ya da §10'daki başlatma betiğini kullan.
+
 **Linux / macOS:**
 
 | Komut | Ne yapar |
@@ -244,3 +252,295 @@ uv run pytest -m "not integration"
 
 Bir adımda takılırsan terminal çıktısını ve `[JRV-...]` kodunu bana yapıştır,
 birlikte bakalım.
+
+
+---
+
+## 9. Bilinen hatalar ve geçici çözümler
+
+Aşağıdakilerin hepsi upstream `v0.3.2` üzerinde gerçek bir Ubuntu kurulumunda
+karşılaşıldı ve kaynak kodda doğrulandı. Satır numaraları o sürüme ait.
+
+### 9.1 Kurulum sihirbazı `bundle/` olmadan geçmiyor
+
+`src/jarvis/kernel/bundle.py:364`:
+
+```python
+"can_continue": bundle_valid,
+```
+
+Sihirbazın 1. adımdaki "Devam" düğmesi **yalnızca** geçerli bir `bundle/` klasörü
+olup olmadığına bakıyor. `setup.js:849` bu değeri okuyup düğmeyi sessizce iptal
+ediyor. Sonuç: README'nin Linux için önerdiği "Parcours C" (`uv sync` +
+`./jarvis eclosion`) yolu sihirbazda kilitleniyor — Python "HAZIR" görünse bile.
+
+**Çözüm:** sihirbazı atla, `.env`'i elle yaz (§4). `SETUP_COMPLETE=true` satırı
+`setup_layout.py:52`'deki `is_setup_complete()` kontrolünü geçirir, sihirbaz bir
+daha araya girmez. `app.py`'de kurulum kapısı yok, doğrudan başlar.
+
+### 9.2 `./jarvis run` kendi kendini öldürüyor
+
+Launcher `run` dalı şunu yapıyor:
+
+```bash
+exec /usr/bin/env bash --noprofile --norc -c '
+  ...
+  pkill -f "livekit-server" 2>/dev/null || true
+```
+
+Bu dev betik `bash -c '...'` argümanı olarak çalıştığı için sürecin kendi komut
+satırı (`/proc/PID/cmdline`) betiğin tüm metnini içeriyor — `"livekit-server"`
+dizesi dahil. `pkill -f` tam komut satırında arama yaptığından kalıp kendi
+kabuğuyla eşleşiyor ve onu öldürüyor. Terminalde tek görünen şey `Sonlandırıldı`.
+
+**Çözüm:** üç bileşeni ayrı başlat (`./jarvis livekit`, `./jarvis api`,
+`./jarvis voice`) ya da §10'daki betiği kullan.
+
+### 9.3 LiveKit tarayıcı SDK'sı CDN'den geliyor
+
+`index.html:3180` ve `home.html:236`:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+```
+
+Reklam engelleyici, katı izleme koruması veya DNS filtresi bunu engellerse
+`LivekitClient` tanımsız kalır ve `voice_livekit.js:68` daha ilk satırda durur.
+Belirti çok yanıltıcı: **tarayıcı mikrofon iznini bile istemez**, çünkü
+`setMicrophoneEnabled` zincirin en sonunda (satır 152).
+
+**Çözüm — kütüphaneyi yerele al:**
+
+```bash
+curl -L -o src/jarvis/interfaces/ui/static/livekit-client.umd.min.js \
+  https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js
+LC_ALL=C sed -i 's|https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js|/livekit-client.umd.min.js|' \
+  src/jarvis/interfaces/ui/static/index.html src/jarvis/interfaces/ui/static/home.html
+```
+
+Statik dosyalar her istekte diskten okunduğu için API'yi yeniden başlatmaya gerek
+yok; tarayıcıda sert yenileme (Ctrl-Shift-R) yeterli.
+
+### 9.4 Gemini TTS ücretsiz kotası günde 10 istek
+
+`TTS_PROVIDER=gemini` seçilirse ilk birkaç cevaptan sonra ses kesilir:
+
+```
+google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED
+quotaId: 'GenerateRequestsPerDayPerProjectPerModel-FreeTier'
+quotaValue: '10'
+```
+
+Kota **günlük**, dakikalık değil — pratikte kullanılamaz. `agent.py:401`'e göre
+`piper` de gerçek zamanlı LiveKit eklentisi olmadığı için ElevenLabs'a düşüyor,
+yani yerel TTS de bir seçenek değil.
+
+**Çözüm:** OpenAI TTS ekle. `lk_openai` zaten `agent.py:37`'de içe aktarılmış;
+`_build_voice_tts` içine bir `openai` dalı eklemek yeterli. Böylece STT, LLM ve
+TTS tek anahtarla çalışır. Sonra `.env`'e:
+
+```env
+TTS_PROVIDER=openai
+OPENAI_TTS_MODEL=tts-1
+OPENAI_TTS_VOICE=alloy
+```
+
+### 9.5 Ses ajanı `ctx.connect()` çağırmıyor (livekit-agents 1.5.7)
+
+`agent.py` entrypoint'i odaya elle bağlanıp özel bir iç değişkeni set ediyor:
+
+```python
+ctx._connected = True  # empêche la double connexion dans session.start()
+```
+
+Bu, eski bir livekit-agents sürümünde çift bağlantıyı engellemek için yazılmış.
+1.5.7'de bağlantı durumu artık o değişkenle izlenmiyor; framework
+`ctx.connect()` çağrılmamış sayıyor, katılımcı eşleştirmesini yapmıyor
+(`input stream attached {"participant": null}`) ve işi kapatıyor:
+
+```
+WARNING The job task completed without establishing a connection or performing
+        a proper shutdown. Ensure that job_ctx.connect()/job_ctx.shutdown() is called
+```
+
+**Çözüm:** elle bağlantıyı devre dışı bırak, `session.start()` öncesinde
+framework'ün kendi `await ctx.connect()` metodunu çağır. Uzun `connect_timeout`
+gerekçesi yerel LiveKit'te (`127.0.0.1`) zaten geçersiz.
+
+### 9.6 STT ve prompt'ta sabit kodlanmış Fransızca
+
+İki ayrı yer, ikisi de `agent.py`:
+
+```python
+# satır ~342 — STT dili
+stt = lk_openai.STT(model="gpt-4o-mini-transcribe", language="fr", ...)
+
+# satır ~94 — ses promptunun son satırı
+f"Réponds en français sauf si {name} parle en anglais."
+```
+
+Türkçe konuşulduğunda STT sesi en yakın Fransızca kelimelere oturtuyor; çıkan
+metin anlamsız oluyor. Yazılı sohbet ayrı bir prompt kullanıyor
+(`prompts/system_static.md`), ses ajanı onu **okumuyor** — `_build_voice_instructions()`
+kendi tabanını üretiyor (`agent.py:101`). Yani dili iki yerde ayrı ayrı düzeltmek gerekiyor.
+
+```bash
+LC_ALL=C sed -i 's/language="fr"/language="tr"/g; s/languages="fr-FR"/languages="tr-TR"/g' \
+  src/jarvis/interfaces/voice/agent.py
+```
+
+Prompt tarafında `system_static.md` sonuna ve `_voice_system_base` içine "her
+zaman Türkçe cevap ver" kuralı eklenmeli. Yönlendirme etiketlerine
+(`[I]`, `[CF]`, `[BG]`) dokunma — `router.py:78` cevabın ilk token'ından onu okuyor.
+
+### 9.7 Türkçe yerel ayarda `grep '[A-Z]'` tuzağı
+
+Bu upstream hatası değil, ortam tuzağı — ama `.env` düzenlerken canını yakabilir:
+
+```bash
+grep -E '^[A-Z_]+=' .env    # tr_TR yerel ayarında I harfini ATLAR
+```
+
+`[A-Z]` aralığı ASCII değil, yerel ayarın harf sıralamasına göre çözülüyor.
+Türkçe'de noktalı/noktasız I ayrımı yüzünden `I` içeren satırlar (`USER_FIRSTNAME`,
+`OPENAI_API_KEY`, `API_BACKEND`...) eşleşmiyor.
+
+**Kural:** `.env` ve kod üzerinde çalışan her `grep`/`sed` komutunun başına
+`LC_ALL=C` koy.
+
+---
+
+## 10. Başlatma betiği
+
+§9.2 yüzünden `./jarvis run` kullanılamıyor. Üç bileşeni arka planda başlatan,
+loglarını tek yere toplayan betik:
+
+```bash
+#!/usr/bin/env bash
+cd ~/jarvis-OS
+mkdir -p /tmp/jarvis
+pkill -f "jarvis.interfaces.voice.agent" 2>/dev/null
+pkill -f "jarvis.app" 2>/dev/null
+pkill -x livekit-server 2>/dev/null
+sleep 1
+nohup livekit-server --dev --node-ip 127.0.0.1 \
+  --keys "devkey: devsecretdevsecretdevsecretdevsecret" > /tmp/jarvis/livekit.log 2>&1 &
+sleep 3
+nohup uv run python -m jarvis.app > /tmp/jarvis/api.log 2>&1 &
+sleep 6
+nohup uv run python -m jarvis.interfaces.voice.agent dev > /tmp/jarvis/voice.log 2>&1 &
+sleep 4
+ss -ltn | grep -E ":(7880|8000)"
+echo BASLATILDI
+```
+
+`pkill -x livekit-server` (tam ad eşleşmesi) ve kalıpların betik dosyasının
+içinde olması — argümanlarında değil — §9.2'deki kendini öldürme sorununu önler.
+
+Durdurmak için:
+
+```bash
+pkill -f "jarvis.interfaces.voice.agent"; pkill -f "jarvis.app"; pkill -x livekit-server
+```
+
+---
+
+## 11. Kurulumu doğrulama — LLM'e sormadan
+
+Jarvis'in kendi yetenekleri hakkında söyledikleri **güvenilir değil**. Model kendi
+araç listesini okuyamıyor ve sıkça "bu özelliğim yok" diyor — araç kayıtlı ve
+çalışır durumdayken bile. Ölçüm için `/api/tools` uç noktalarını kullan.
+
+**Kayıtlı araçları listele:**
+
+```bash
+curl -s http://127.0.0.1:8000/api/tools | python3 -c "import json,sys; print([x['name'] for x in json.load(sys.stdin)])"
+```
+
+**Bir aracı LLM'i devreden çıkararak çalıştır:**
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/tools/execute \
+  -H 'Content-Type: application/json' \
+  -d '{"tool":"list_emails","params":{}}'
+```
+
+Bu ikisi, "araç bozuk" ile "model aracı çağırmıyor" arasındaki farkı kesin olarak
+ayırır. İkincisiyse çözüm prompt'ta: `system_static.md`'ye aracın adını ve ne
+zaman kullanılacağını yazan açık bir kural ekle. Modelin e-posta isteğini `[I]`
+(araçsız cevap) diye sınıflandırması sık görülen bir tuzak.
+
+**Ses hattını katman katman doğrula:**
+
+| Ne | Nasıl |
+|---|---|
+| Sistem mikrofonu | `arecord -f cd -d 5 /tmp/t.wav` sonra tepe genliğini ölç |
+| Tarayıcı yakalıyor mu | Konsolda `AnalyserNode` ile 5 saniyelik tepe ölçümü |
+| SDK yüklü mü | Konsolda `typeof LivekitClient` → `"object"` olmalı |
+| Token üretiliyor mu | `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/voice/token` |
+| Ajan odada mı | `voice.log`'da `registered worker` ve `participant: "ali"` |
+
+Sorun bu beş katmandan hangisinde kopuyorsa oraya bakılır. Mikrofon izni
+istenmiyorsa kopukluk her zaman ilk üçtedir.
+
+---
+
+## 12. Ek yetenekler
+
+### Yerel komut çalıştırma
+
+`run_script` aracı `config/tools.yaml`'dan takma ad okuyor; dosya varsayılan
+olarak tamamen yorum satırı. `CLIRunner._run` sabit ikili listesini uygulamıyor,
+yani buraya yazdığın komut çalışır. Güven sınırın bu dosya.
+
+```yaml
+site_ac:
+  command: ["xdg-open"]
+  description: "Verilen adresi varsayilan tarayicida acar. Arg olarak tam URL gonder."
+  tier: safe
+
+ekran_goruntusu:
+  command: ["gnome-screenshot", "-f", "/tmp/jarvis_ekran.png"]
+  description: "Ekran goruntusu alir."
+  tier: confirm
+```
+
+`tier`: `safe` sormadan çalışır, `confirm` onay bekler, `reject` devre dışı.
+Bunlardan önce bir tehlikeli desen engeli var (`cli.py:109`): `rm -rf /`, fork
+bomb, `mkfs`, `dd of=/dev/`, kabuğa pipe.
+
+`execute_cli`'ın ayrı ve sabit bir ikili listesi var (`cli.py:22`) ve içinde
+macOS'un `open`'ı var ama Linux'un `xdg-open`'ı **yok** — "YouTube aç" bu yüzden
+Linux'ta çalışmaz, `tools.yaml` yolunu kullanman gerekir.
+
+### E-posta gönderme
+
+Depoda gönderme **aracı yok**. `gmail.py:187`'deki `send_gmail_draft` yalnızca
+proaktif motora ve `/api/proactive` uç noktasına bağlı — sohbetten çağrılamıyor.
+Sohbetten göndermek için `Tool` alt sınıfı yazıp `bootstrap.py`'daki araç
+demetine eklemek gerekiyor.
+
+Böyle bir araç yazarken **iki aşamalı onay** şart: `action='draft'` taslağı
+beklemeye alır ve döndürür, yalnızca `action='send'` gerçekten yollar. Gönderim
+geri alınamaz; güvenceyi promptun iyi niyetine değil koda koy. Beklemeye alınan
+taslağa TTL (5 dk) ve tek kullanım kuralı ekle ki çift gönderim olmasın.
+
+Google tarafı: Cloud Console'da Gmail API'yi etkinleştir, **Masaüstü uygulaması**
+tipinde OAuth istemcisi oluştur (Web tipi çalışmaz — JSON'da `installed` yerine
+`web` anahtarı olur), JSON'u `config/google_credentials.json`'a koy, OAuth izin
+ekranında kendini test kullanıcısı olarak ekle. `_SCOPES` (`gmail.py:18`) zaten
+`gmail.readonly` ve `gmail.send` istiyor, ikisi tek yetkilendirmede alınır.
+
+`Hata 401: deleted_client` alırsan elindeki JSON silinmiş bir istemciye ait —
+Console'daki listeyle `client_id`'yi karşılaştır.
+
+### Küre animasyonu
+
+Küre iki şekilde hareket eder: duruma göre (`orb.js`'de `state === "speaking"`)
+ve sesin anlık şiddetine göre (`setAudioLevel`). İkincisi **hiç bağlı değil** —
+`home.js:659` onu yalnızca sunucudan gelen `audio_level` WebSocket mesajıyla
+besliyor ve LiveKit yolunda böyle bir mesaj üretilmiyor.
+
+Bağlamak için `home.js`'e bir kanca (`window.__jarvisSetOrbLevel`) ekleyip
+`voice_livekit.js`'de ajanın ses kanalına bir `AnalyserNode` takmak yeterli —
+tamamen tarayıcı tarafında, sunucuya dokunmadan.
