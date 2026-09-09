@@ -623,6 +623,103 @@
   .step__desc { color: var(--text-gray); font-size: 0.94rem; margin: 0; }
 
   /* ============================================================
+     9b. DÜZELTME YÖNTEMLERİ (3 Seçenek)
+     ============================================================ */
+  .modes { grid-template-columns: 1fr; align-items: stretch; }
+
+  .mode {
+    position: relative; display: flex; flex-direction: column;
+    padding: 34px 26px; border-radius: 20px;
+    border: 1px solid var(--hairline); background: var(--card-black);
+    transition: transform var(--transition-speed) var(--transition-ease),
+                border-color var(--transition-speed) var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease);
+  }
+  .mode:hover { transform: translateY(-8px); border-color: var(--glass-border); }
+  .mode--featured {
+    border-color: var(--gold-primary);
+    background: linear-gradient(165deg, #1f1a12, var(--card-black) 55%);
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, .22), 0 24px 56px -30px rgba(212, 175, 55, .65);
+  }
+  .mode--managed { border-color: rgba(0, 212, 255, .28); background: var(--glass-bg);
+    backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); }
+
+  .mode__badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-heading); font-size: .58rem; font-weight: 700;
+    letter-spacing: .16em; text-transform: uppercase; white-space: nowrap;
+    padding: 6px 15px; border-radius: 999px;
+    background: var(--secondary-black); border: 1px solid var(--hairline); color: var(--text-gray);
+  }
+  .mode--featured .mode__badge { background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+    color: #0a0a0f; border-color: transparent; }
+  .mode--managed .mode__badge { color: var(--accent-blue); border-color: rgba(0, 212, 255, .35); }
+
+  .mode__icon {
+    width: 50px; height: 50px; border-radius: 14px; margin: 8px 0 18px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    color: var(--gold-primary); background: rgba(212, 175, 55, .09);
+    border: 1px solid var(--glass-border);
+  }
+  .mode--managed .mode__icon { color: var(--accent-blue); background: rgba(0, 212, 255, .08);
+    border-color: rgba(0, 212, 255, .3); }
+
+  .mode__name { font-size: 1.05rem; letter-spacing: .06em; text-transform: uppercase; margin: 0 0 8px; }
+  .mode__price { font-family: var(--font-heading); font-weight: 800; font-size: 2rem; line-height: 1; margin-bottom: 4px; }
+  .mode--featured .mode__price { color: var(--gold-primary); }
+  .mode__period { display: block; color: var(--text-gray); font-size: .8rem; margin-bottom: 22px; }
+  .mode__list { display: grid; gap: 11px; margin-bottom: 26px; flex: 1; }
+  .mode__list li { display: flex; align-items: flex-start; gap: 10px; font-size: .9rem; color: var(--text-gray); }
+  .mode__list li i { font-size: .78rem; margin-top: 5px; flex: 0 0 auto; color: var(--sev-low); }
+  .mode__list li.is-wait i { color: var(--sev-medium); }
+  .mode__list li.is-none i { color: var(--text-gray); opacity: .7; }
+  .mode__note { display: block; margin-top: 12px; text-align: center; font-size: .76rem; color: var(--text-gray); }
+
+  /* Karşılaştırma tablosu */
+  .compare { margin-top: 56px; }
+  .compare__title {
+    font-size: 1.05rem; text-align: center; margin-bottom: 22px;
+    letter-spacing: .04em;
+  }
+  .compare__scroll {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--hairline); border-radius: var(--radius);
+    background: var(--card-black);
+  }
+  .compare table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: .88rem; }
+  .compare th, .compare td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--hairline); }
+  .compare thead th {
+    font-family: var(--font-heading); font-size: .68rem; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--gold-primary);
+    background: var(--secondary-black); position: sticky; top: 0;
+  }
+  .compare tbody th { font-weight: 500; color: var(--text-white); }
+  .compare td { color: var(--text-gray); }
+  .compare tbody tr:last-child th, .compare tbody tr:last-child td { border-bottom: none; }
+  .compare tbody tr:hover td, .compare tbody tr:hover th { background: var(--surface-raised); }
+  .compare .yes { color: var(--sev-low); }
+  .compare .wait { color: var(--sev-medium); }
+  .compare .no { color: var(--text-gray); opacity: .75; }
+
+  /* Seçim onay modalı içeriği */
+  .mode-confirm__row {
+    display: flex; align-items: center; gap: 13px; padding: 14px 16px;
+    border-radius: var(--radius-sm); border: 1px solid var(--glass-border);
+    background: var(--surface-raised); margin-bottom: 22px;
+  }
+  .mode-confirm__row i { font-size: 1.15rem; color: var(--gold-primary); flex: 0 0 auto; }
+  .mode-confirm__row strong { display: block; font-family: var(--font-heading);
+    font-size: .82rem; letter-spacing: .06em; }
+  .mode-confirm__row span { font-size: .82rem; color: var(--text-gray); }
+  .mode-confirm__actions { display: grid; gap: 10px; }
+  .mode-confirm__info {
+    margin: 20px 0 0; padding: 13px 15px; border-radius: var(--radius-sm);
+    border: 1px solid rgba(0, 212, 255, .25); background: rgba(0, 212, 255, .06);
+    font-size: .8rem; color: var(--text-gray);
+  }
+  .mode-confirm__info i { color: var(--accent-blue); margin-right: 7px; }
+
+  /* ============================================================
      10. FİYATLANDIRMA
      ============================================================ */
   .plans { grid-template-columns: 1fr; align-items: stretch; }
@@ -897,6 +994,10 @@
     .nav__toggle { display: none; }
     .nav__drawer { display: none; }
     .grid--3 { grid-template-columns: repeat(3, 1fr); }
+    .modes { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .mode--featured { transform: scale(1.04); z-index: 2; }
+    .mode--featured:hover { transform: scale(1.04) translateY(-8px); }
+    .mode-confirm__actions { grid-template-columns: 1fr 1fr; }
     .plans { grid-template-columns: repeat(3, 1fr); gap: 26px; }
     .plan--featured { transform: scale(1.045); z-index: 2; }
     .plan--featured:hover { transform: scale(1.045) translateY(-10px); }
@@ -970,6 +1071,7 @@
           <li><a class="nav__link" href="#hero" data-i18n="nav.home">Ana Sayfa</a></li>
           <li><a class="nav__link" href="#services" data-i18n="nav.services">Hizmetler</a></li>
           <li><a class="nav__link" href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
+          <li><a class="nav__link" href="#remediation" data-i18n="nav.modes">Düzeltme</a></li>
           <li><a class="nav__link" href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
           <li><a class="nav__link" href="#contact" data-i18n="nav.contact">İletişim</a></li>
         </ul>
@@ -999,6 +1101,7 @@
     <a href="#hero" data-i18n="nav.home">Ana Sayfa</a>
     <a href="#services" data-i18n="nav.services">Hizmetler</a>
     <a href="#how" data-i18n="nav.how">Nasıl Çalışır</a>
+    <a href="#remediation" data-i18n="nav.modes">Düzeltme</a>
     <a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a>
     <a href="#contact" data-i18n="nav.contact">İletişim</a>
     <button type="button" class="btn btn--gold btn--block" data-open-modal data-i18n="nav.upgrade">Premium'a Geç</button>
@@ -1165,6 +1268,118 @@
     </section>
 
     <!-- ==========================================================
+         DÜZELTME YÖNTEMLERİ (3 Seçenek)
+         ========================================================== -->
+    <section class="section" id="remediation">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="section__eyebrow" data-i18n="modes.eyebrow">Düzeltme</span>
+          <h2 class="section__title" data-i18n="modes.title">DÜZELTMEYİ NASIL İSTERSİNİZ?</h2>
+          <p class="section__subtitle" data-i18n="modes.subtitle">Size en uygun yöntemi seçin. İstediğiniz zaman değiştirebilirsiniz.</p>
+        </div>
+
+        <div class="grid modes">
+
+          <!-- TAM OTOMATİK -->
+          <article class="mode reveal" data-mode="autonomous">
+            <span class="mode__badge" data-i18n="modes.auto.badge">Yeni</span>
+            <div class="mode__icon"><i class="fa-solid fa-robot" aria-hidden="true"></i></div>
+            <h3 class="mode__name" data-i18n="modes.auto.name">Tam Otomatik</h3>
+            <div class="mode__price" data-i18n="modes.auto.price">₺299</div>
+            <span class="mode__period" data-i18n="modes.auto.period">Tek tarama başına</span>
+            <ul class="mode__list">
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f1">Açıkları otomatik bulur</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f2">Düzeltmeyi otomatik uygular</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f3">Hiçbir müdahale gerekmez</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f4">Uygulama sonrası anında doğrulama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f5">7/24 çalışır</span></li>
+              <li class="is-wait"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span data-i18n="modes.auto.f6">Hata hâlinde otomatik geri alma</span></li>
+            </ul>
+            <button type="button" class="btn btn--ghost btn--block" data-select-mode="autonomous" data-i18n="modes.select">Bu Yöntemi Seç</button>
+            <span class="mode__note" data-i18n="modes.auto.note">Teknik ekipler için ideal</span>
+          </article>
+
+          <!-- YARI OTOMATİK -->
+          <article class="mode mode--featured reveal" data-mode="semi_autonomous" style="--reveal-delay:120ms">
+            <span class="mode__badge" data-i18n="modes.semi.badge">Popüler</span>
+            <div class="mode__icon"><i class="fa-solid fa-user-check" aria-hidden="true"></i></div>
+            <h3 class="mode__name gold-text" data-i18n="modes.semi.name">Yarı Otomatik</h3>
+            <div class="mode__price" data-i18n="modes.semi.price">₺199</div>
+            <span class="mode__period" data-i18n="modes.semi.period">Tek tarama başına</span>
+            <ul class="mode__list">
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f1">Açıkları otomatik bulur</span></li>
+              <li class="is-wait"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i><span data-i18n="modes.semi.f2">Düzeltmeyi önerir, onayınızı bekler</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f3">Her düzeltmenin ön izlemesi</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f4">Yalnızca seçtiklerinizi uygular</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f5">Onay sonrası otomatik uygulama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f6">Otomatik geri alma</span></li>
+            </ul>
+            <button type="button" class="btn btn--gold btn--block" data-select-mode="semi_autonomous" data-i18n="modes.select">Bu Yöntemi Seç</button>
+            <span class="mode__note" data-i18n="modes.semi.note">Bireysel geliştiriciler için ideal</span>
+          </article>
+
+          <!-- YÖNETİLEN HİZMET -->
+          <article class="mode mode--managed reveal" data-mode="managed" style="--reveal-delay:240ms">
+            <span class="mode__badge" data-i18n="modes.managed.badge">Premium</span>
+            <div class="mode__icon"><i class="fa-solid fa-crown" aria-hidden="true"></i></div>
+            <h3 class="mode__name" data-i18n="modes.managed.name">Yönetilen Hizmet</h3>
+            <div class="mode__price" data-i18n="modes.managed.price">₺2.499</div>
+            <span class="mode__period" data-i18n="modes.managed.period">Aylık</span>
+            <ul class="mode__list">
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f1">AI + uzman ekip birlikte çalışır</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f2">Sizin hiçbir şey yapmanıza gerek yok</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f3">7/24 canlı destek</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f4">Yönetici ve teknik ekip raporu</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f5">Sürekli izleme</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f6">Öncelikli müdahale</span></li>
+            </ul>
+            <button type="button" class="btn btn--blue btn--block" data-select-mode="managed" data-i18n="modes.select">Bu Yöntemi Seç</button>
+            <span class="mode__note" data-i18n="modes.managed.note">Kurumsal firmalar için ideal</span>
+          </article>
+        </div>
+
+        <!-- Karşılaştırma tablosu -->
+        <div class="compare reveal">
+          <h3 class="compare__title" data-i18n="compare.title">Tüm Özellikler Karşılaştırması</h3>
+          <div class="compare__scroll" tabindex="0" role="region" aria-labelledby="compareCaption">
+            <table>
+              <caption id="compareCaption" class="sr-only" data-i18n="compare.caption">Üç düzeltme yönteminin özellik karşılaştırması</caption>
+              <thead>
+                <tr>
+                  <th scope="col" data-i18n="compare.feature">Özellik</th>
+                  <th scope="col" data-i18n="modes.auto.name">Tam Otomatik</th>
+                  <th scope="col" data-i18n="modes.semi.name">Yarı Otomatik</th>
+                  <th scope="col" data-i18n="modes.managed.name">Yönetilen Hizmet</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row" data-i18n="compare.r1">Açık tespiti</th>
+                  <td class="yes" data-i18n="compare.ai">AI</td><td class="yes" data-i18n="compare.ai">AI</td><td class="yes" data-i18n="compare.aiExpert">AI + uzman</td></tr>
+                <tr><th scope="row" data-i18n="compare.r2">Düzeltme önerisi</th>
+                  <td class="yes" data-i18n="compare.ai">AI</td><td class="yes" data-i18n="compare.ai">AI</td><td class="yes" data-i18n="compare.aiExpert">AI + uzman</td></tr>
+                <tr><th scope="row" data-i18n="compare.r3">Düzeltme uygulama</th>
+                  <td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="wait" data-i18n="compare.needsApproval">Onay gerekir</td><td class="yes" data-i18n="compare.expertTeam">Uzman ekip</td></tr>
+                <tr><th scope="row" data-i18n="compare.r4">Müşteri müdahalesi</th>
+                  <td class="no" data-i18n="compare.none">Gerekmez</td><td class="wait" data-i18n="compare.approvalOnly">Yalnızca onay</td><td class="no" data-i18n="compare.none">Gerekmez</td></tr>
+                <tr><th scope="row" data-i18n="compare.r5">Doğrulama</th>
+                  <td class="yes" data-i18n="compare.rescan">AI yeniden tarar</td><td class="yes" data-i18n="compare.rescan">AI yeniden tarar</td><td class="yes" data-i18n="compare.expertAi">Uzman + AI</td></tr>
+                <tr><th scope="row" data-i18n="compare.r6">Geri alma</th>
+                  <td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="yes" data-i18n="compare.byExpert">Uzman yapar</td></tr>
+                <tr><th scope="row" data-i18n="compare.r7">Raporlama</th>
+                  <td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="yes" data-i18n="compare.detailed">Detaylı + danışmanlık</td></tr>
+                <tr><th scope="row" data-i18n="compare.r8">Hız</th>
+                  <td class="yes" data-i18n="compare.instant">Anında</td><td class="wait" data-i18n="compare.approvalTime">Onay süresi kadar</td><td class="yes" data-i18n="compare.instant247">Anında (7/24)</td></tr>
+                <tr><th scope="row" data-i18n="compare.r9">Fiyat</th>
+                  <td data-i18n="modes.auto.price">₺299</td><td data-i18n="modes.semi.price">₺199</td><td data-i18n="compare.managedPrice">₺2.499/ay</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pricing__foot" data-i18n="compare.foot">Seçtiğiniz yöntemi panelinizden istediğiniz zaman değiştirebilirsiniz.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================
          FİYATLANDIRMA
          ========================================================== -->
     <section class="section" id="pricing">
@@ -1270,6 +1485,7 @@
             <li><a href="#hero" data-i18n="nav.home">Ana Sayfa</a></li>
             <li><a href="#services" data-i18n="nav.services">Hizmetler</a></li>
             <li><a href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
+            <li><a href="#remediation" data-i18n="nav.modes">Düzeltme</a></li>
             <li><a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
           </ul>
         </div>
@@ -1300,7 +1516,7 @@
        ========================================================== -->
   <div class="modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" hidden>
     <div class="modal__box" role="document">
-      <button type="button" class="modal__close" id="modalClose" aria-label="Kapat" data-i18n-aria="modal.close">
+      <button type="button" class="modal__close" id="modalClose" data-close-modal aria-label="Kapat" data-i18n-aria="modal.close">
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
 
@@ -1337,6 +1553,38 @@
       <p class="modal__foot">
         <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
         <a href="/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       DÜZELTME YÖNTEMİ ONAY MODALI
+       ========================================================== -->
+  <div class="modal" id="modeModal" role="dialog" aria-modal="true" aria-labelledby="modeModalTitle" hidden>
+    <div class="modal__box" role="document">
+      <button type="button" class="modal__close" data-close-modal aria-label="Kapat" data-i18n-aria="modal.close">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+
+      <h2 class="modal__title" id="modeModalTitle" data-i18n="modeModal.title">Seçiminiz</h2>
+      <p class="modal__subtitle" data-i18n="modeModal.subtitle">Bu yöntemi onaylıyor musunuz?</p>
+
+      <div class="mode-confirm__row">
+        <i id="modeConfirmIcon" class="fa-solid fa-robot" aria-hidden="true"></i>
+        <div>
+          <strong id="modeConfirmName">Tam Otomatik</strong>
+          <span id="modeConfirmDesc">Açıkları otomatik bulup kapatır.</span>
+        </div>
+      </div>
+
+      <div class="mode-confirm__actions">
+        <button type="button" class="btn btn--gold" id="modeConfirm" data-i18n="modeModal.confirm">Evet, bu yöntemi kullan</button>
+        <button type="button" class="btn btn--muted" data-close-modal data-i18n="modeModal.cancel">Vazgeç</button>
+      </div>
+
+      <p class="mode-confirm__info">
+        <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
+        <span data-i18n="modeModal.info">Seçiminizi hesap panelinizden istediğiniz zaman değiştirebilirsiniz.</span>
       </p>
     </div>
   </div>
@@ -1412,6 +1660,7 @@
         lang: 'preferredLang',
         theme: 'preferredTheme',
         cookie: 'cookieConsent',
+        mode: 'preferredRemediationMode',
         token: 'authToken'
       }
     };
@@ -1437,7 +1686,7 @@
         },
         a11y: { skip: 'İçeriğe geç', theme: 'Temayı değiştir', menu: 'Menüyü aç/kapat', toTop: 'Sayfanın başına dön' },
         nav: {
-          home: 'Ana Sayfa', services: 'Hizmetler', how: 'Nasıl Çalışır',
+          home: 'Ana Sayfa', services: 'Hizmetler', how: 'Nasıl Çalışır', modes: 'Düzeltme',
           pricing: 'Fiyatlandırma', contact: 'İletişim', upgrade: "Premium'a Geç"
         },
         hero: {
@@ -1469,6 +1718,55 @@
             'Sunucu sürüm bilgisi yanıt başlığında ifşa ediliyor',
             'SSL sertifikası geçerli — yenilemeye 87 gün var'
           ]
+        },
+        modes: {
+          eyebrow: 'Düzeltme', title: 'DÜZELTMEYİ NASIL İSTERSİNİZ?',
+          subtitle: 'Size en uygun yöntemi seçin. İstediğiniz zaman değiştirebilirsiniz.',
+          select: 'Bu Yöntemi Seç', selected: 'Seçili Yöntem ✓',
+          auto: {
+            badge: 'Yeni', name: 'Tam Otomatik', price: '₺299', period: 'Tek tarama başına',
+            f1: 'Açıkları otomatik bulur', f2: 'Düzeltmeyi otomatik uygular',
+            f3: 'Hiçbir müdahale gerekmez', f4: 'Uygulama sonrası anında doğrulama',
+            f5: '7/24 çalışır', f6: 'Hata hâlinde otomatik geri alma',
+            note: 'Teknik ekipler için ideal',
+            desc: 'Açıkları bulur ve düzeltmeyi kendisi uygular; sizin onayınızı beklemez.'
+          },
+          semi: {
+            badge: 'Popüler', name: 'Yarı Otomatik', price: '₺199', period: 'Tek tarama başına',
+            f1: 'Açıkları otomatik bulur', f2: 'Düzeltmeyi önerir, onayınızı bekler',
+            f3: 'Her düzeltmenin ön izlemesi', f4: 'Yalnızca seçtiklerinizi uygular',
+            f5: 'Onay sonrası otomatik uygulama', f6: 'Otomatik geri alma',
+            note: 'Bireysel geliştiriciler için ideal',
+            desc: 'Açıkları bulur ve düzeltmeyi önerir; yalnızca siz onayladıktan sonra uygular.'
+          },
+          managed: {
+            badge: 'Premium', name: 'Yönetilen Hizmet', price: '₺2.499', period: 'Aylık',
+            f1: 'AI + uzman ekip birlikte çalışır', f2: 'Sizin hiçbir şey yapmanıza gerek yok',
+            f3: '7/24 canlı destek', f4: 'Yönetici ve teknik ekip raporu',
+            f5: 'Sürekli izleme', f6: 'Öncelikli müdahale',
+            note: 'Kurumsal firmalar için ideal',
+            desc: 'Uzman ekibimiz AI ile birlikte çalışır; siz yalnızca sonucu ve raporu alırsınız.'
+          }
+        },
+        compare: {
+          title: 'Tüm Özellikler Karşılaştırması',
+          caption: 'Üç düzeltme yönteminin özellik karşılaştırması',
+          feature: 'Özellik',
+          r1: 'Açık tespiti', r2: 'Düzeltme önerisi', r3: 'Düzeltme uygulama',
+          r4: 'Müşteri müdahalesi', r5: 'Doğrulama', r6: 'Geri alma',
+          r7: 'Raporlama', r8: 'Hız', r9: 'Fiyat',
+          ai: 'AI', aiExpert: 'AI + uzman', automatic: 'Otomatik',
+          needsApproval: 'Onay gerekir', expertTeam: 'Uzman ekip', none: 'Gerekmez',
+          approvalOnly: 'Yalnızca onay', rescan: 'AI yeniden tarar', expertAi: 'Uzman + AI',
+          byExpert: 'Uzman yapar', detailed: 'Detaylı + danışmanlık',
+          instant: 'Anında', approvalTime: 'Onay süresi kadar', instant247: 'Anında (7/24)',
+          managedPrice: '₺2.499/ay',
+          foot: 'Seçtiğiniz yöntemi panelinizden istediğiniz zaman değiştirebilirsiniz.'
+        },
+        modeModal: {
+          title: 'Seçiminiz', subtitle: 'Bu yöntemi onaylıyor musunuz?',
+          confirm: 'Evet, bu yöntemi kullan', cancel: 'Vazgeç',
+          info: 'Seçiminizi hesap panelinizden istediğiniz zaman değiştirebilirsiniz.'
         },
         services: {
           eyebrow: 'Yetenekler',
@@ -1549,7 +1847,10 @@
           passMismatch: 'Şifreler eşleşmiyor.',
           registerOk: 'Hesabınız oluşturuldu. Doğrulama e-postasını gönderdik.',
           registerFail: 'Kayıt tamamlanamadı. Lütfen tekrar deneyin.',
-          langChanged: 'Dil Türkçe olarak ayarlandı.'
+          langChanged: 'Dil Türkçe olarak ayarlandı.',
+          modeSaved: '{mode} yöntemi seçildi. Şimdi taranacak adresi girin.',
+          modeSaveFail: 'Tercih kaydedilemedi. Lütfen tekrar deneyin.',
+          scanWithMode: 'Tarama {mode} yöntemiyle başlatıldı.'
         }
       },
 
@@ -1560,7 +1861,7 @@
         },
         a11y: { skip: 'Skip to content', theme: 'Toggle theme', menu: 'Toggle menu', toTop: 'Back to top' },
         nav: {
-          home: 'Home', services: 'Services', how: 'How It Works',
+          home: 'Home', services: 'Services', how: 'How It Works', modes: 'Remediation',
           pricing: 'Pricing', contact: 'Contact', upgrade: 'Upgrade'
         },
         hero: {
@@ -1592,6 +1893,55 @@
             'Server version disclosed in response headers',
             'SSL certificate valid — 87 days until renewal'
           ]
+        },
+        modes: {
+          eyebrow: 'Remediation', title: 'HOW SHOULD WE FIX IT?',
+          subtitle: 'Pick the method that suits you. You can change it at any time.',
+          select: 'Choose This Method', selected: 'Selected ✓',
+          auto: {
+            badge: 'New', name: 'Fully Automatic', price: '$29', period: 'Per scan',
+            f1: 'Finds vulnerabilities automatically', f2: 'Applies fixes automatically',
+            f3: 'No intervention required', f4: 'Instant verification after each fix',
+            f5: 'Runs 24/7', f6: 'Automatic rollback on failure',
+            note: 'Ideal for technical teams',
+            desc: 'Finds the issues and applies the fixes itself, without waiting for your approval.'
+          },
+          semi: {
+            badge: 'Popular', name: 'Semi-Automatic', price: '$19', period: 'Per scan',
+            f1: 'Finds vulnerabilities automatically', f2: 'Proposes fixes and waits for your approval',
+            f3: 'Preview of every fix', f4: 'Applies only what you select',
+            f5: 'Automatic application after approval', f6: 'Automatic rollback',
+            note: 'Ideal for individual developers',
+            desc: 'Finds the issues and proposes fixes, applying them only after you approve.'
+          },
+          managed: {
+            badge: 'Premium', name: 'Managed Service', price: '$249', period: 'Per month',
+            f1: 'AI and expert team work together', f2: 'Nothing for you to do',
+            f3: '24/7 live support', f4: 'Executive and technical reports',
+            f5: 'Continuous monitoring', f6: 'Priority response',
+            note: 'Ideal for enterprises',
+            desc: 'Our expert team works alongside the AI; you simply receive the outcome and the report.'
+          }
+        },
+        compare: {
+          title: 'Full Feature Comparison',
+          caption: 'Feature comparison of the three remediation methods',
+          feature: 'Feature',
+          r1: 'Vulnerability detection', r2: 'Fix proposal', r3: 'Fix application',
+          r4: 'Customer involvement', r5: 'Verification', r6: 'Rollback',
+          r7: 'Reporting', r8: 'Speed', r9: 'Price',
+          ai: 'AI', aiExpert: 'AI + expert', automatic: 'Automatic',
+          needsApproval: 'Approval required', expertTeam: 'Expert team', none: 'Not required',
+          approvalOnly: 'Approval only', rescan: 'AI rescans', expertAi: 'Expert + AI',
+          byExpert: 'By expert', detailed: 'Detailed + advisory',
+          instant: 'Instant', approvalTime: 'As long as approval takes', instant247: 'Instant (24/7)',
+          managedPrice: '$249/mo',
+          foot: 'You can change your chosen method from your dashboard at any time.'
+        },
+        modeModal: {
+          title: 'Your Choice', subtitle: 'Do you confirm this method?',
+          confirm: 'Yes, use this method', cancel: 'Cancel',
+          info: 'You can change your choice from your account dashboard at any time.'
         },
         services: {
           eyebrow: 'Capabilities',
@@ -1672,7 +2022,10 @@
           passMismatch: 'Passwords do not match.',
           registerOk: 'Account created. We sent you a verification email.',
           registerFail: 'Registration failed. Please try again.',
-          langChanged: 'Language set to English.'
+          langChanged: 'Language set to English.',
+          modeSaved: '{mode} selected. Now enter the address to scan.',
+          modeSaveFail: 'Your preference could not be saved. Please try again.',
+          scanWithMode: 'Scan started using {mode}.'
         }
       }
     };
@@ -1744,6 +2097,9 @@
 
       // Sayaçları yeniden biçimlendir (10.000+ / 10,000+)
       formatCounters();
+
+      // Seçili düzeltme yönteminin düğme metni dile göre güncellensin
+      if (typeof modeManager !== 'undefined' && modeManager) modeManager.refresh();
 
       if (!opts.silent) store.set(CONFIG.storageKeys.lang, lang);
       log('Dil uygulandı:', lang);
@@ -2203,16 +2559,19 @@
         });
       },
 
-      /** POST /api/scan */
-      startScan: function (url, type) {
+      /** POST /api/scan — seçilen düzeltme modu istekle birlikte gönderilir */
+      startScan: function (url, type, mode) {
         if (CONFIG.useMockApi) {
           return new Promise(function (resolve) {
             setTimeout(function () {
-              resolve({ scanId: 'demo-' + Date.now(), url: url, type: type || 'quick', status: 'queued' });
+              resolve({ scanId: 'demo-' + Date.now(), url: url, type: type || 'quick',
+                        mode: mode || null, status: 'queued' });
             }, 220);
           });
         }
-        return API.request('/api/scan', { method: 'POST', body: { url: url, type: type || 'quick' } });
+        return API.request('/api/scan', {
+          method: 'POST', body: { url: url, type: type || 'quick', mode: mode || null }
+        });
       },
 
       /** GET /api/scan/{scanId} */
@@ -2235,6 +2594,59 @@
       login: function (email, password) {
         if (CONFIG.useMockApi) return Promise.resolve({ ok: true, token: null });
         return API.request('/api/auth/login', { method: 'POST', body: { email: email, password: password } });
+      },
+
+      /* ---- Düzeltme (remediation) uçları ---- */
+
+      /** POST /api/user/preferences — tercih edilen düzeltme yöntemini kaydeder */
+      savePreference: function (mode) {
+        if (CONFIG.useMockApi) {
+          return new Promise(function (resolve) {
+            setTimeout(function () { resolve({ ok: true, preferredMode: mode }); }, 260);
+          });
+        }
+        return API.request('/api/user/preferences', { method: 'POST', body: { preferredMode: mode } });
+      },
+
+      /** POST /api/remediate — seçilen modda düzeltme sürecini başlatır */
+      remediate: function (scanId, vulnerabilityIds, mode, integration) {
+        if (CONFIG.useMockApi) {
+          return Promise.resolve({
+            scanId: scanId, mode: mode,
+            status: mode === 'semi_autonomous' ? 'awaiting_approval' : 'running',
+            fixesQueued: vulnerabilityIds.length
+          });
+        }
+        return API.request('/api/remediate', {
+          method: 'POST',
+          body: { scanId: scanId, vulnerabilityIds: vulnerabilityIds, mode: mode, integration: integration || null }
+        });
+      },
+
+      /** GET /api/approvals/{scanId} — onay bekleyen düzeltme önerileri */
+      getApprovals: function (scanId) {
+        if (CONFIG.useMockApi) return Promise.resolve({ scanId: scanId, status: 'pending', proposals: [] });
+        return API.request('/api/approvals/' + encodeURIComponent(scanId));
+      },
+
+      /** POST /api/approvals/{scanId}/respond — onay kararını iletir */
+      respondApproval: function (scanId, decision, selectedIds) {
+        if (CONFIG.useMockApi) return Promise.resolve({ ok: true, decision: decision });
+        return API.request('/api/approvals/' + encodeURIComponent(scanId) + '/respond', {
+          method: 'POST', body: { decision: decision, selectedIds: selectedIds || [] }
+        });
+      },
+
+      /** GET /api/remediation/{scanId}/status — düzeltme ilerlemesi */
+      getRemediationStatus: function (scanId) {
+        if (CONFIG.useMockApi) return Promise.resolve({ scanId: scanId, mode: null, stage: 'idle', progress: 0 });
+        return API.request('/api/remediation/' + encodeURIComponent(scanId) + '/status');
+      },
+
+      /** GET /api/managed/{scanId}/ticket — yönetilen hizmet ticket durumu */
+      getManagedTicket: function (scanId) {
+        if (CONFIG.useMockApi) return Promise.resolve({ scanId: scanId, ticketNumber: null, status: 'not_created' });
+        return API.request('/api/managed/' + encodeURIComponent(scanId) + '/ticket');
       }
     };
 
@@ -2337,7 +2749,7 @@
       setStatus(steps[0], 'fa-solid fa-spinner fa-spin');
       addLogRow(domain, 'fa-solid fa-globe', '--gold-primary');
 
-      API.startScan(domain, 'quick').catch(function (err) { log('scan error', err); });
+      API.startScan(domain, 'quick', modeManager.get()).catch(function (err) { log('scan error', err); });
 
       var timer = setInterval(function () {
         stepIndex++;
@@ -2381,50 +2793,51 @@
     /* ==========================================================
        10. KAYIT MODALI
        ========================================================== */
-    var modal = document.getElementById('authModal');
-    var modalClose = document.getElementById('modalClose');
-    var authForm = document.getElementById('authForm');
-    var lastFocused = null;
-    var hideTimer = null;   // kapanış geçişinin sonunda hidden'ı ayarlayan zamanlayıcı
+    /**
+     * Genel modal denetleyicisi. Sayfadaki her modal (kayıt, düzeltme yöntemi
+     * onayı) aynı davranışı paylaşır: geçişli açılış/kapanış, odak tuzağı,
+     * ESC ve dışına tıklayarak kapatma, açılışta odağın modala taşınması.
+     */
+    function createModal(el) {
+      if (!el) return null;
+      var lastFocused = null;
+      var hideTimer = null;   // kapanış geçişinin sonunda hidden'ı ayarlayan zamanlayıcı
 
-    function focusables() {
-      return modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])');
-    }
+      function focusables() {
+        return el.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      }
 
-    function openModal() {
-      if (!modal) return;
-      // Önceki kapanışın bekleyen zamanlayıcısı, yeni açılan modalı gizlemesin
-      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-      lastFocused = document.activeElement;
-      modal.hidden = false;
-      void modal.offsetWidth;            // geçişin çalışması için reflow
-      modal.classList.add('is-open');
-      document.body.style.overflow = 'hidden';
-      var first = modal.querySelector('input');
-      if (first) setTimeout(function () { first.focus(); }, 120);
-    }
+      function open() {
+        // Önceki kapanışın bekleyen zamanlayıcısı, yeni açılan modalı gizlemesin
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        lastFocused = document.activeElement;
+        el.hidden = false;
+        void el.offsetWidth;            // geçişin çalışması için reflow
+        el.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        var first = el.querySelector('input') || el.querySelector('button:not([data-close-modal])');
+        if (first) setTimeout(function () { first.focus(); }, 120);
+      }
 
-    function closeModal() {
-      if (!modal) return;
-      if (hideTimer) clearTimeout(hideTimer);
-      modal.classList.remove('is-open');
-      document.body.style.overflow = '';
-      hideTimer = setTimeout(function () { modal.hidden = true; hideTimer = null; }, 320);
-      if (lastFocused && lastFocused.focus) lastFocused.focus();
-    }
+      function close() {
+        if (hideTimer) clearTimeout(hideTimer);
+        el.classList.remove('is-open');
+        document.body.style.overflow = '';
+        hideTimer = setTimeout(function () { el.hidden = true; hideTimer = null; }, 320);
+        if (lastFocused && lastFocused.focus) lastFocused.focus();
+      }
 
-    var openers = document.querySelectorAll('[data-open-modal]');
-    for (var o = 0; o < openers.length; o++) openers[o].addEventListener('click', openModal);
-    if (modalClose) modalClose.addEventListener('click', closeModal);
+      // Dışına tıklayınca kapat
+      el.addEventListener('click', function (e) { if (e.target === el) close(); });
 
-    if (modal) {
-      // Modal dışına tıklayınca kapat
-      modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+      // Kapatma düğmeleri
+      var closers = el.querySelectorAll('[data-close-modal]');
+      for (var c = 0; c < closers.length; c++) closers[c].addEventListener('click', close);
 
       // ESC ile kapat + odak tuzağı (focus trap)
       document.addEventListener('keydown', function (e) {
-        if (modal.hidden) return;
-        if (e.key === 'Escape') { closeModal(); return; }
+        if (el.hidden) return;
+        if (e.key === 'Escape') { close(); return; }
         if (e.key !== 'Tab') return;
 
         var list = focusables();
@@ -2433,7 +2846,20 @@
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       });
+
+      return { open: open, close: close, el: el };
     }
+
+    var modal = document.getElementById('authModal');
+    var authForm = document.getElementById('authForm');
+    var authModal = createModal(modal);
+    var modeModal = createModal(document.getElementById('modeModal'));
+
+    function openModal() { if (authModal) authModal.open(); }
+    function closeModal() { if (authModal) authModal.close(); }
+
+    var openers = document.querySelectorAll('[data-open-modal]');
+    for (var o = 0; o < openers.length; o++) openers[o].addEventListener('click', openModal);
 
     /* Form doğrulama + kayıt isteği */
     if (authForm) {
@@ -2480,6 +2906,102 @@
           });
       });
     }
+
+    /* ==========================================================
+       10b. DÜZELTME YÖNTEMİ SEÇİMİ (3 Mod)
+       --------------------------------------------------------
+       Müşteri üç yöntemden birini seçer; tercih onay modalıyla
+       doğrulanır, localStorage'a ve API'ye yazılır, sonraki tarama
+       istekleri bu modla gönderilir.
+       ========================================================== */
+    var VALID_MODES = ['autonomous', 'semi_autonomous', 'managed'];
+
+    var modeManager = (function () {
+      var current = null;
+      var pending = null;                 // onay bekleyen seçim
+      var box = document.getElementById('modeModal');
+      var iconEl = document.getElementById('modeConfirmIcon');
+      var nameEl = document.getElementById('modeConfirmName');
+      var descEl = document.getElementById('modeConfirmDesc');
+      var confirmBtn = document.getElementById('modeConfirm');
+
+      // Mod anahtarı -> çeviri alt ağacı ve ikonu
+      var META = {
+        autonomous:      { key: 'auto',    icon: 'fa-solid fa-robot' },
+        semi_autonomous: { key: 'semi',    icon: 'fa-solid fa-user-check' },
+        managed:         { key: 'managed', icon: 'fa-solid fa-crown' }
+      };
+
+      function label(mode) { return t('modes.' + META[mode].key + '.name'); }
+      function describe(mode) { return t('modes.' + META[mode].key + '.desc'); }
+
+      /** Seçilen kartı görsel olarak işaretler. */
+      function markCards() {
+        var cards = document.querySelectorAll('[data-mode]');
+        for (var i = 0; i < cards.length; i++) {
+          var isCurrent = cards[i].getAttribute('data-mode') === current;
+          cards[i].setAttribute('aria-current', isCurrent ? 'true' : 'false');
+          var btn = cards[i].querySelector('[data-select-mode]');
+          if (btn) btn.textContent = isCurrent ? t('modes.selected') : t('modes.select');
+        }
+      }
+
+      /** Onay modalını seçilen yöntemin bilgileriyle doldurup açar. */
+      function propose(mode) {
+        if (VALID_MODES.indexOf(mode) === -1) return;
+        pending = mode;
+        if (iconEl) iconEl.className = META[mode].icon;
+        if (nameEl) nameEl.textContent = label(mode);
+        if (descEl) descEl.textContent = describe(mode);
+        if (modeModal) modeModal.open();
+      }
+
+      /** Onaylanan seçimi kalıcı hâle getirir ve kullanıcıyı taramaya yönlendirir. */
+      function confirm() {
+        if (!pending) return;
+        var mode = pending;
+        var original = confirmBtn ? confirmBtn.textContent : '';
+        if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '…'; }
+
+        API.savePreference(mode)
+          .then(function () {
+            current = mode;
+            store.set(CONFIG.storageKeys.mode, mode);
+            markCards();
+            if (modeModal) modeModal.close();
+            toast(t('toast.modeSaved', { mode: label(mode) }), 'success');
+
+            // Kullanıcıyı taramanın başladığı yere götür
+            var hero = document.getElementById('hero');
+            if (hero) hero.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(function () { if (scanInput) scanInput.focus(); }, 700);
+          })
+          .catch(function (err) {
+            log('preference error', err);
+            toast(t('toast.modeSaveFail'), 'error');
+          })
+          .then(function () {
+            if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = original; }
+            pending = null;
+          });
+      }
+
+      function init() {
+        var saved = store.get(CONFIG.storageKeys.mode);
+        if (VALID_MODES.indexOf(saved) !== -1) current = saved;
+
+        var buttons = document.querySelectorAll('[data-select-mode]');
+        for (var i = 0; i < buttons.length; i++) {
+          buttons[i].addEventListener('click', function () {
+            propose(this.getAttribute('data-select-mode'));
+          });
+        }
+        if (confirmBtn) confirmBtn.addEventListener('click', confirm);
+        markCards();
+      }
+
+      return { init: init, get: function () { return current; }, label: label, refresh: markCards };
+    })();
 
     /* ==========================================================
        11. PLAN BUTONLARI
@@ -2546,6 +3068,8 @@
     try {
       var savedTheme = store.get(CONFIG.storageKeys.theme);
       applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark');
+
+      modeManager.init();
 
       var detected = detectLanguage();
       applyLanguage(detected.lang, { silent: !detected.fromUser });
