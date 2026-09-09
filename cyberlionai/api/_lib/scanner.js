@@ -341,13 +341,20 @@ async function scanSite(rawUrl) {
   let tlsInfo = null;
   let legacyInfo = null;
   if (isHttps) {
-    tlsInfo = await inspectTls(host, port);
+    // Paralel çalıştırılır: sıralı yapılsaydı en kötü durumda üç el sıkışma
+    // arka arkaya beklenir ve fonksiyon zaman aşımına yaklaşırdı.
+    const [inspected, legacy11] = await Promise.all([
+      inspectTls(host, port),
+      probeLegacyTls(host, port, 'TLSv1.1')
+    ]);
+    tlsInfo = inspected;
+
     if (tlsInfo.ok) {
-      // TLS 1.1 kabul ediliyorsa 1.0'ı ayrıca denemeye gerek yok.
-      legacyInfo = await probeLegacyTls(host, port, 'TLSv1.1');
-      if (legacyInfo.tested && !legacyInfo.accepted) {
-        const older = await probeLegacyTls(host, port, 'TLSv1');
-        if (older.tested && older.accepted) legacyInfo = older;
+      legacyInfo = legacy11;
+      // 1.1 kabul edilmiyorsa 1.0 ayrıca denenir; kabul ediliyorsa gerek yok.
+      if (legacy11.tested && !legacy11.accepted) {
+        const legacy10 = await probeLegacyTls(host, port, 'TLSv1');
+        if (legacy10.tested && legacy10.accepted) legacyInfo = legacy10;
       }
     }
   }
