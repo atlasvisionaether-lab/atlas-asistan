@@ -232,3 +232,35 @@ her push otomatik olarak production'a çıkar. Root dizin: `cyberlionai`.
 - Üretim URL'si: `cyberlionai.vercel.app`
 - Alan adı: `cyberlionai.com` — Vercel panelinden projeye eklenmesi ve
   DNS kayıtlarının Vercel'e yönlendirilmesi gerekir.
+
+## Canlı destek asistanı
+
+Sağ altta yüzen **Canlı Asistan** düğmesi bir sohbet paneli açar. Üç kademeli
+çalışır:
+
+| Kademe | Nerede çalışır | Bugün |
+|---|---|---|
+| 1. Anlık yanıt | Tarayıcıda, gömülü bilgi tabanından | ✅ Çalışıyor |
+| 2. Derin analiz | `POST /api/support` (sunucu) | ⏳ Backend bekliyor |
+| 3. Uzman yönlendirmesi | Aciliyet puanı ≥ 6 veya eşleşme yok | ✅ Çalışıyor |
+
+**1. kademe** 14 konuluk bir bilgi tabanından yanıt verir: tarama başlatma,
+ücretsiz plan, fiyatlandırma, düzeltme yöntemleri, CSP, HSTS, X-Frame-Options,
+TLS sürümleri, çerez bayrakları, yetkilendirme şartı, rapor biçimi, veri
+saklama, doğruluk ve iletişim. Güvenlik başlığı sorularında kopyalanabilir
+yapılandırma örneği verir. Ağ isteği yapmaz, çevrimdışı da çalışır.
+
+**3. kademe** aciliyet puanı hesaplar (kritik kelime +4, yüksek kelime +2,
+üst sınır 10). Eşiği aşan veya bilgi tabanında karşılığı olmayan sorularda,
+soruyu taşıyan bir `mailto:destek@cyberlionai.com` bağlantısı sunar.
+
+Yeni konu eklemek için `translations.tr.kb` ve `translations.en.kb` içine
+kaydı, `assistant` içindeki `TOPICS` haritasına anahtar kelimeleri ekleyin.
+Ardından **`python3 tools/csp-hashes.py` çalıştırmayı unutmayın.**
+
+### ⚠️ Dürüstlük notu
+
+Asistan sitenizi taramaz, hesabınıza erişmez ve arka planda birden fazla dil
+modeli çalıştırmaz. Panelde bu, kullanıcıya açıkça yazılıdır. Pazarlama
+metninde bunun ötesinde bir iddiada bulunmadan önce 2. kademenin gerçekten
+devreye alınması gerekir.

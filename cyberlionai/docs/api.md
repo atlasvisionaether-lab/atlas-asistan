@@ -138,3 +138,43 @@ Dikkat edilecek kısıtlar:
 - `approvals_decision_consistency` — karar verilmiş onayda `decision` ve
   `responded_at` birlikte dolu olmalı.
 - `managed_tickets_resolution` — `resolved`/`closed` ticket'ta `resolved_at` zorunlu.
+
+---
+
+## Canlı Destek Asistanı
+
+Asistan üç kademeli çalışır:
+
+1. **Yerel bilgi tabanı** — tarayıcıda, anahtar kelime eşleşmesiyle, ağ isteği
+   olmadan. Bugün çalışan kademe budur.
+2. **Sunucu analizi** — `POST /api/support`. `CONFIG.useMockApi = false`
+   olduğunda çağrılır.
+3. **Uzman yönlendirmesi** — eşleşme yoksa veya aciliyet puanı ≥ 6 ise;
+   kullanıcıya doğrudan ekibe yazma bağlantısı verilir.
+
+### `POST /api/support`
+```json
+{ "sessionId": "sess-abc123",
+  "message": "CSP nasıl eklenir?",
+  "context": { "topic": "csp", "urgency": 0 } }
+```
+Yanıt:
+```json
+{ "sessionId": "sess-abc123", "layer": "server", "answer": "…",
+  "confidence": 0.93, "codeExamples": ["…"], "suggestions": ["hsts", "xframe"] }
+```
+`confidence` 0.85 altındaysa ön yüz yerel yanıtta kalır; `answer` `null` ise
+kademe atlanır.
+
+**Aciliyet puanı:** kritik kelime (hack, sızıntı, fidye, site düştü…) +4,
+yüksek kelime (acil, kritik, çalışmıyor…) +2, üst sınır 10. 6 ve üzeri
+doğrudan uzman kademesine gider ve `support_escalations` kaydı açılır.
+
+### Veritabanı
+
+`db/migrations/002_support.sql`: `support_sessions`, `support_messages`,
+`support_escalations`, `support_kb_entries`.
+
+`support_kb_entries`, yanıtları yeniden dağıtım yapmadan güncellemek ve hangi
+konunun ne sıklıkta sorulduğunu (`hit_count`) ölçmek içindir. Ön yüz kendi
+kopyasını gömülü taşıdığı için sunucu erişilemese de asistan çalışmayı sürdürür.
