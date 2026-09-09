@@ -40,7 +40,12 @@ module.exports = async function handler(req, res) {
   }
 
   if (!r.ok) {
-    return res.status(400).json({ error: { code: auth.mapError(r.status, r.body) } });
+    const code = auth.mapError(r.status, r.body);
+    if (code === 'signup_unavailable' && console && console.error) {
+      // Sunucu tarafi teshis: e-posta veya sifre loglanmaz.
+      console.error('signup blocked by database trigger; status=' + r.status);
+    }
+    return res.status(code === 'signup_unavailable' ? 503 : 400).json({ error: { code: code } });
   }
 
   // Oturum döndüyse e-posta onayı kapalı demektir: doğrudan giriş yapılır.

@@ -286,6 +286,16 @@ function mapError(status, body) {
       || /token has expired|invalid token|otp/i.test(msg)) {
     return 'link_invalid';
   }
+  // GoTrue, auth.users'a yazma sirasinda bir veritabani tetikleyicisi hata
+  // verirse 500 + "Database error saving new user" doner. Bu proje baska bir
+  // uygulamayla paylasildigi ve auth.users uzerinde onlara ait tetikleyiciler
+  // bulundugu icin bu gercek bir olasilik. Genel 'auth_failed' yerine ayri bir
+  // kod donuyoruz: kullanici anlamli bir mesaj gorur, biz de logdan teshis
+  // edebiliriz. Ayrinti docs/auth.md § 8'de.
+  if (code === 'unexpected_failure' || /database error/i.test(msg)) {
+    return 'signup_unavailable';
+  }
+
   if (status === 400 || status === 401 || status === 403) return 'invalid_credentials';
   return 'auth_failed';
 }
