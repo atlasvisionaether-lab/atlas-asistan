@@ -1,0 +1,109 @@
+name: Preview doğrulaması (kimlik)
+
+# Yeni Supabase projesine bağlı preview dağıtımında gerçek kimlik akışını
+# uçtan uca koşar. GERÇEK E-POSTA GÖNDERİR ve gerçek hesap oluşturur;
+# bu yüzden yalnızca elle çalıştırılır.
+#
+# SSO koruması kapatılmaz: istekler Vercel'in "Protection Bypass for
+# Automation" başlığıyla geçer.
+#
+# CI'da yalnızca bypass secret'ı var. Supabase ve Upstash anahtarları buraya
+# konmadı; veritabanı doğrulaması ve test kullanıcısının temizliği Supabase
+# yönetim erişimi olan taraftan yapılır.
+#
+# İKİ FAZ, İKİ AYRI ÇALIŞMA:
+#   1. faz: token_hash boş. Anonim tarama + kayıt; onay e-postası gider.
+#           Çerezler ve üretilen test şifresi artefakt olarak saklanır.
+#   2. faz: e-postadaki token_hash + 1. fazın çalışma numarası girilir.
+#
+# Test şifresi bilerek workflow girdisi DEĞİL: workflow_dispatch girdileri
+# çalışma sayfasında açıkça görünür. Şifre 1. fazda üretilip artefakta
+# yazılır, loglarda maskelenir ve artefakt bir gün sonra silinir.
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: Preview adresi (sonunda / olmadan)
+        required: true
+        default: https://cyberlionai-git-claude-epic-turing-gu2xf8-atlas-asistan.vercel.app
+      test_email:
+        description: Gerçek, erişilebilir test e-posta adresi
+        required: true
+      token_hash:
+        description: 2. faz — onay bağlantısındaki token_hash (1. fazda boş bırakın)
+        required: false
+        default: ''
+      phase1_run_id:
+        description: 2. faz — 1. fazın çalışma numarası (çerezler ve şifre oradan alınır)
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read      # 1. fazın artefaktını okumak için
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Girdileri doğrula
+        run: |
+          if [ -n "${{ inputs.token_hash }}" ] && [ -z "${{ inputs.phase1_run_id }}" ]; then
+            echo "2. faz için phase1_run_id zorunlu: çerezler ve şifre o çalışmadan alınıyor." >&2
+            exit 1
+          fi
+
+      - name: Araçları kur
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils jq
+
+      - name: 1. fazın durumunu indir
+        if: inputs.token_hash != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-state
+          path: .
+          run-id: ${{ inputs.phase1_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Test şifresini hazırla
+        id: pw
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.token_hash }}" ]; then
+            if [ ! -f preview-password.txt ]; then
+              echo "preview-password.txt yok — 1. fazın artefaktı indirilemedi." >&2
+              exit 1
+            fi
+          else
+            # Rastgele, yeterince uzun; büyük/küçük harf ve rakam garantili.
+            printf '%sAa1' "$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 20)" \
+              > preview-password.txt
+          fi
+          PW="$(cat preview-password.txt)"
+          echo "::add-mask::$PW"
+          echo "value=$PW" >> "$GITHUB_OUTPUT"
+
+      - name: Doğrulama
+        env:
+          BASE: ${{ inputs.preview_url }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          TEST_EMAIL: ${{ inputs.test_email }}
+          TEST_PASSWORD: ${{ steps.pw.outputs.value }}
+          TOKEN_HASH: ${{ inputs.token_hash }}
+          COOKIE_JAR: ${{ github.workspace }}/preview-cookies.txt
+        run: bash cyberlionai/tools/preview-verify.sh
+
+      - name: Durumu sakla (1. faz)
+        if: always() && inputs.token_hash == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-state
+          path: |
+            preview-cookies.txt
+            preview-password.txt
+          retention-days: 1
+          if-no-files-found: error
