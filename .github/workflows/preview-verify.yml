@@ -1,0 +1,93 @@
+name: Preview doğrulaması (kimlik)
+
+# Yeni Supabase projesine bağlı preview dağıtımında gerçek kimlik akışını
+# uçtan uca koşar. GERÇEK E-POSTA GÖNDERİR ve gerçek hesap oluşturur;
+# bu yüzden yalnızca elle çalıştırılır.
+#
+# SSO koruması kapatılmaz: istekler Vercel'in "Protection Bypass for
+# Automation" başlığıyla geçer.
+#
+# CI'da yalnızca bypass secret'ı bulunur. Supabase ve Upstash anahtarları
+# buraya konmaz; veritabanı doğrulaması ve test kullanıcısının temizliği
+# Supabase yönetim erişimi olan taraftan yapılır.
+#
+# İKİ FAZ, İKİ AYRI ÇALIŞMA:
+#   1. faz: token_hash boş bırakılır. Anonim tarama yapılır, kayıt açılır,
+#           onay e-postası gider. Oturum çerezleri artefakt olarak saklanır.
+#   2. faz: e-postadaki token_hash ve 1. fazın çalışma numarası (phase1_run_id)
+#           girilir. Çerezler o çalışmadan indirilir ve akış tamamlanır.
+#
+# Çerezlerin taşınması şart: devir, 1. fazda açılan anonim oturumun
+# kayıtlarını taşıyor. Yeni bir oturumla başlansaydı devredilecek kayıt
+# bulunmaz ve test yanlış yere "başarısız" derdi.
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: Preview adresi (sonunda / olmadan)
+        required: true
+        default: https://cyberlionai-git-claude-epic-turing-gu2xf8-atlas-asistan.vercel.app
+      test_email:
+        description: Gerçek, erişilebilir test e-posta adresi
+        required: true
+      test_password:
+        description: Test hesabının şifresi (en az 10 karakter)
+        required: true
+      token_hash:
+        description: 2. faz — onay bağlantısındaki token_hash (1. fazda boş bırakın)
+        required: false
+        default: ''
+      phase1_run_id:
+        description: 2. faz — 1. fazın çalışma numarası (çerezler oradan alınır)
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read      # 1. fazın artefaktını okumak için
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Girdileri doğrula
+        run: |
+          if [ -n "${{ inputs.token_hash }}" ] && [ -z "${{ inputs.phase1_run_id }}" ]; then
+            echo "2. faz için phase1_run_id zorunlu: çerezler o çalışmadan alınıyor." >&2
+            exit 1
+          fi
+
+      - name: Araçları kur
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils jq
+
+      - name: 1. fazın çerezlerini indir
+        if: inputs.token_hash != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-cookies
+          path: .
+          run-id: ${{ inputs.phase1_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Doğrulama
+        env:
+          BASE: ${{ inputs.preview_url }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          TEST_EMAIL: ${{ inputs.test_email }}
+          TEST_PASSWORD: ${{ inputs.test_password }}
+          TOKEN_HASH: ${{ inputs.token_hash }}
+          COOKIE_JAR: ${{ github.workspace }}/preview-cookies.txt
+        run: bash cyberlionai/tools/preview-verify.sh
+
+      - name: Çerezleri sakla (1. faz)
+        if: always() && inputs.token_hash == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-cookies
+          path: preview-cookies.txt
+          retention-days: 1
+          if-no-files-found: error
