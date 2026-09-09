@@ -840,7 +840,11 @@
      12. MODAL (Kayıt)
      ============================================================ */
   .modal {
-    position: fixed; inset: 0; z-index: 400;
+    /* Çerez çubuğunun (450) ÜSTÜNDE olmalı. Altında kaldığında çubuk, açık
+       modalın düğmelerini örtüyordu: 1280x700 gibi yaygın bir dizüstü
+       boyutunda ilk ziyaretçi "Hesap Oluştur" düğmesine tıklayamıyordu.
+       Bildirimler (500) modalın da üstünde kalmaya devam ediyor. */
+    position: fixed; inset: 0; z-index: 460;
     display: flex; align-items: center; justify-content: center;
     padding: 20px;
     background: rgba(4, 4, 8, 0.8);
