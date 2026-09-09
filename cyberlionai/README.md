@@ -11,6 +11,16 @@ cyberlionai/
 ├── index.html        Sayfanın tamamı (HTML + CSS + JS)
 ├── tr/index.html     /tr/ → index.html?lang=tr yönlendirmesi (hreflang için)
 ├── en/index.html     /en/ → index.html?lang=en yönlendirmesi (hreflang için)
+├── gizlilik-politikasi.html
+├── kullanim-sartlari.html
+├── cerez-politikasi.html
+├── 404.html
+├── vercel.json      Güvenlik başlıkları, temiz URL'ler, yönlendirmeler
+├── _headers         Aynı başlıkların Cloudflare Pages / Netlify karşılığı
+├── tools/
+│   └── csp-hashes.py   CSP script hash'lerini üretir
+├── db/migrations/   Veritabanı şeması (üç modlu düzeltme)
+├── docs/api.md      API sözleşmesi
 ├── robots.txt
 ├── sitemap.xml
 ├── og-image.png     Sosyal medya paylaşım görseli (1200×630)
@@ -150,3 +160,75 @@ Chrome 90+, Firefox 88+, Safari 14+, Edge 90+.
   kurum politikasıyla engelliydi; bu yüzden görüntüde yazı tipleri doğru, ikonlar eksiktir.
   Canlı sitede ikonlar da yüklenir.
 - `og-image.png` yalnızca metin ve SVG logodan oluşur, Font Awesome'a bağımlı değildir.
+
+
+## Üç modlu düzeltme (remediation)
+
+Ana sayfadaki **Düzeltme** bölümü müşteriye üç yöntem sunar:
+
+| Mod | Anahtar | Davranış |
+|---|---|---|
+| Tam Otomatik | `autonomous` | Düzeltmeyi onay beklemeden uygular, hata hâlinde geri alır |
+| Yarı Otomatik | `semi_autonomous` | Düzeltmeyi önerir, müşteri onayından sonra uygular |
+| Yönetilen Hizmet | `managed` | AI + uzman ekip birlikte çalışır, ticket açılır |
+
+Seçim `localStorage.preferredRemediationMode` içine yazılır ve
+`POST /api/user/preferences` ile sunucuya gönderilir. Sonraki
+`POST /api/scan` istekleri seçilen modu `mode` alanında taşır.
+
+### ⚠️ Bu bölümün hangi kısmı canlı?
+
+**Hazır ve çalışıyor:** seçim arayüzü, karşılaştırma tablosu, onay modalı,
+tercih kaydı, TR/EN çeviriler, API istemci katmanı (`API.remediate`,
+`API.getApprovals`, `API.respondApproval`, `API.getRemediationStatus`,
+`API.getManagedTicket`), veritabanı şeması ve API sözleşmesi.
+
+**Henüz yok:** düzeltmeleri gerçekten uygulayan motor. Bu, müşterinin
+altyapısında değişiklik yapan (GitHub PR açan, Cloudflare kuralı yazan, AWS
+güvenlik grubu güncelleyen) bir sunucu bileşenidir ve statik bir sayfada
+çalışamaz. `CONFIG.useMockApi = true` olduğu sürece bu uçlar demo yanıt
+döndürür.
+
+**Yayına almadan önce:** motor bağlanana kadar bu bölümdeki fiyatlarla satış
+yapmayın veya bölümü gizleyin. Ücretli bir "otomatik düzeltme" vaadi, arkasında
+çalışan bir motor olmadan yanıltıcı olur.
+
+### Fiyat notu
+
+Bölümdeki fiyatlar (₺299 / ₺199 / ₺2.499) düzeltme yöntemi başınadır ve
+`Fiyatlandırma` bölümündeki plan fiyatlarından (Free / Pro ₺299/ay /
+Enterprise) ayrıdır. İki liste birbiriyle çelişirse tek bir yapıya
+indirilmesi gerekir.
+
+## Güvenlik başlıkları ve CSP
+
+`vercel.json` her yanıta CSP, HSTS (preload), `X-Frame-Options: DENY`,
+`nosniff`, `Referrer-Policy`, `Permissions-Policy` ve COOP ekler.
+
+CSP, satır içi script'ler için `'unsafe-inline'` yerine **sha256 hash**
+kullanır. Bu yüzden:
+
+> **Bir `<script>` bloğunu her düzenlediğinizde `python3 tools/csp-hashes.py`
+> çalıştırın.** Aksi hâlde tarayıcı script'i engeller ve sayfa çalışmaz.
+> `python3 tools/csp-hashes.py --check` yalnızca kontrol eder (CI için uygundur).
+
+## Yasal metinler hakkında
+
+`gizlilik-politikasi.html`, `kullanim-sartlari.html` ve `cerez-politikasi.html`
+sektör standardı şablonlardan üretilmiştir ve sitenin gerçek davranışına göre
+yazılmıştır (örneğin çerez politikası, yalnızca localStorage kullanıldığını
+doğru biçimde anlatır).
+
+**Yine de yayına almadan önce bir hukuk danışmanına inceletin.** Özellikle
+KVKK aydınlatma yükümlülüğü, saklama süreleri ve yurt dışına aktarım maddeleri
+şirketinizin gerçek işleyişine göre uyarlanmalıdır.
+
+## Dağıtım (Vercel)
+
+Proje `atlasvisionaether-lab/atlas-asistan` deposuna bağlıdır; `main` dalına
+her push otomatik olarak production'a çıkar. Root dizin: `cyberlionai`.
+
+- Proje: `cyberlionai` (takım: Atlas' projects)
+- Üretim URL'si: `cyberlionai.vercel.app`
+- Alan adı: `cyberlionai.com` — Vercel panelinden projeye eklenmesi ve
+  DNS kayıtlarının Vercel'e yönlendirilmesi gerekir.
