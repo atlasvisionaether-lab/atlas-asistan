@@ -13,6 +13,7 @@ cyberlionai/
 ├── en/index.html     /en/ → index.html?lang=en yönlendirmesi (hreflang için)
 ├── robots.txt
 ├── sitemap.xml
+├── og-image.png     Sosyal medya paylaşım görseli (1200×630)
 ├── screenshot.png
 └── README.md
 ```
@@ -37,12 +38,15 @@ Alan adı bağlandığında yapılacaklar:
    RewriteCond %{HTTPS} off
    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
    ```
-2. `og:image` için `og-image.png` (1200×630) dosyasını kök dizine ekleyin.
-3. Meta etiketlerdeki `https://cyberlionai.com/` adresleri hazırdır; farklı bir alan adı
-   kullanılacaksa `canonical`, `hreflang`, `og:url`, `sitemap.xml` ve `robots.txt`
-   içindeki adresleri güncelleyin.
+2. Bu dizinin **içeriğini** web köküne kopyalayın (`cyberlionai/` klasörünü değil), böylece
+   `og-image.png`, `robots.txt` ve `sitemap.xml` `https://cyberlionai.com/og-image.png`
+   gibi kök adreslerden servis edilir.
+3. Alan adı **cyberlionai.com** alınmıştır ve `canonical`, `hreflang`, `og:url`,
+   `sitemap.xml`, `robots.txt` içindeki adresler bu alan adına göre hazırdır — değişiklik
+   gerekmez. Farklı bir alan adı kullanılacaksa bu beş yerdeki adresleri güncelleyin.
 4. `info@cyberlionai.com` / `destek@cyberlionai.com` adresleri ve footer'daki sosyal medya
-   bağlantıları (`href="#"`) yer tutucudur — gerçek değerlerle değiştirin.
+   bağlantıları (`href="#"`) ile yasal sayfa bağlantıları (Gizlilik / Kullanım Şartları /
+   Çerez Politikası) yer tutucudur — gerçek değerlerle değiştirin.
 
 ## Dil mekanizması
 
@@ -142,5 +146,7 @@ Chrome 90+, Firefox 88+, Safari 14+, Edge 90+.
 - Google Fonts (Orbitron, Space Grotesk) ve Font Awesome 6.5.1 CDN üzerinden yüklenir;
   yayına alırken bu iki kaynağın erişilebilir olduğundan emin olun. Tamamen bağımsız bir
   kurulum istenirse dosyaları indirip yerel yola çevirin.
-- `screenshot.png`, dış CDN erişimi kapalı bir ortamda alındığı için ikon ve özel yazı
-  tipleri olmadan görünür; canlı sitede bunlar yüklenir.
+- `screenshot.png` alınırken Google Fonts erişilebiliyordu ancak cdnjs (Font Awesome)
+  kurum politikasıyla engelliydi; bu yüzden görüntüde yazı tipleri doğru, ikonlar eksiktir.
+  Canlı sitede ikonlar da yüklenir.
+- `og-image.png` yalnızca metin ve SVG logodan oluşur, Font Awesome'a bağımlı değildir.
