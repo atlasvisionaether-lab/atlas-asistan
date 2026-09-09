@@ -122,6 +122,21 @@ const CHECKS = {
 const M = 48;                      // kenar boşluğu
 const CONTENT_W = A4.width - 2 * M;
 
+/**
+ * Dile duyarlı büyük harf.
+ *
+ * JavaScript'in toUpperCase()'i 'i' harfini 'I' yapar; Türkçede doğrusu 'İ'dir
+ * ve 'ı' harfinin büyüğü 'I'dır. Etiketler büyük harfle yazıldığı için bu fark
+ * raporda görünür hale geliyordu ("GÜVENLIK SKORU", "RISK SEVIYESI").
+ * toLocaleUpperCase('tr') ICU'ya bağlı olduğundan, dönüşüm burada açıkça
+ * yapılıyor: davranış çalışma ortamından bağımsız.
+ */
+function upper(str, lang) {
+  const s = String(str);
+  if (lang !== 'tr') return s.toUpperCase();
+  return s.replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+}
+
 function formatDate(iso, lang) {
   const d = new Date(iso);
   if (isNaN(d)) return '-';
@@ -148,7 +163,7 @@ function buildReport(scan, lang) {
   y = 132;
 
   /* ---- Alan adı ---- */
-  doc.text(M, y, L.domain.toUpperCase(), { size: 7.5, color: MUTED });
+  doc.text(M, y, upper(L.domain, lang), { size: 7.5, color: MUTED });
   y += 20;
   doc.text(M, y, scan.host, { size: 19, bold: true, color: INK });
   y += 30;
@@ -160,14 +175,14 @@ function buildReport(scan, lang) {
   doc.rect(M, y, CONTENT_W, 76, [0.97, 0.97, 0.98]);
   doc.rect(M, y, 4, 76, riskColor);
 
-  doc.text(M + 20, y + 26, L.score.toUpperCase(), { size: 7.5, color: MUTED });
+  doc.text(M + 20, y + 26, upper(L.score, lang), { size: 7.5, color: MUTED });
   const scoreText = (typeof scan.score === 'number' ? scan.score : '—') + '/100';
   doc.text(M + 20, y + 56, scoreText, { size: 26, bold: true, color: riskColor });
 
-  doc.text(M + 170, y + 26, L.risk.toUpperCase(), { size: 7.5, color: MUTED });
+  doc.text(M + 170, y + 26, upper(L.risk, lang), { size: 7.5, color: MUTED });
   doc.text(M + 170, y + 52, risk ? L.riskNames[risk] : '—', { size: 15, bold: true, color: riskColor });
 
-  doc.text(M + 300, y + 26, L.summary.toUpperCase(), { size: 7.5, color: MUTED });
+  doc.text(M + 300, y + 26, upper(L.summary, lang), { size: 7.5, color: MUTED });
   doc.text(M + 300, y + 50,
     L.passed + ': ' + scan.checks_passed + '    ' + L.failed + ': ' + scan.checks_failed
     + '    ' + L.skipped + ': ' + scan.checks_skipped, { size: 9.5, color: INK });
@@ -244,7 +259,7 @@ function buildReport(scan, lang) {
     }
     y += 8;
 
-    doc.text(M + 14, y, L.fixHeader.toUpperCase(), { size: 7, color: MUTED });
+    doc.text(M + 14, y, upper(L.fixHeader, lang), { size: 7, color: MUTED });
     y += 12;
     doc.rect(M + 14, y - 9, CONTENT_W - 14, fixLines.length * 12 + 8, [0.96, 0.96, 0.97]);
     for (const line of fixLines) {

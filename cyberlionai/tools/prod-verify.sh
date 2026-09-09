@@ -122,19 +122,29 @@ check "$(hdr content-type)" "application/pdf" "içerik türü"
 echo "  Content-Disposition: $(hdr content-disposition)"
 echo "  X-Content-Type-Options: $(hdr x-content-type-options)"
 echo "  boyut: $(wc -c < "$PDF") bayt"
-hdr content-disposition | grep -q 'attachment; filename="cyberlionai-security-report-cyberlionai.com-[0-9-]*\.pdf"' \
+# Host, apex'ten www'ye yönlendiği için taranan host www.cyberlionai.com olur.
+hdr content-disposition | grep -qE 'attachment; filename="cyberlionai-security-report-[a-z0-9.-]+-[0-9]{4}-[0-9]{2}-[0-9]{2}\.pdf"' \
   && pass "dosya adı deseni doğru" || fail "dosya adı deseni beklenenden farklı"
 head -c 8 "$PDF" | grep -q '%PDF-' && pass "geçerli PDF imzası" || fail "PDF imzası yok"
 
 echo "  --- pdftotext ile çıkarılan metin (ToUnicode CMap sınaması) ---"
 pdftotext -enc UTF-8 "$PDF" "$WORK/rapor.txt" 2>/dev/null
 head -20 "$WORK/rapor.txt" | sed 's/^/    /'
-TR_OK=1
 for word in "GÜVENLİK RAPORU" "Ölçülemedi" "Düşük" "Eşikler" "Kaldı"; do
   if grep -qF "$word" "$WORK/rapor.txt"; then
     pass "Türkçe metin doğru çıkarıldı: '$word'"
   else
-    fail "Türkçe metin bozuk veya yok: '$word'"; TR_OK=0
+    fail "Türkçe metin bozuk veya yok: '$word'"
+  fi
+done
+
+# Büyük harfe çevrilen etiketler: JS'in toUpperCase()'i 'i' harfini 'I' yapar,
+# Türkçede doğrusu 'İ'dir. Bu üç etiket dile duyarlı dönüşümden geçmeli.
+for word in "GÜVENLİK SKORU" "RİSK SEVİYESİ" "KONTROL ÖZETİ"; do
+  if grep -qF "$word" "$WORK/rapor.txt"; then
+    pass "Türkçe büyük harf doğru: '$word'"
+  else
+    fail "Türkçe büyük harf hatalı (noktasız I): '$word' bulunamadı"
   fi
 done
 
