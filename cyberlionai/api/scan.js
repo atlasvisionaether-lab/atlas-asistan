@@ -12,7 +12,8 @@
  * Tarayıcıdaki sayaç yalnızca gösterim içindir; karar burada verilir.
  */
 
-const { scanSite } = require('./_lib/scanner.js');
+const { scanSite, SCANNER_VERSION, REPORT_VERSION } = require('./_lib/scanner.js');
+const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
 const { resolveSession, clientIp, ipKey } = require('./_lib/session.js');
 
@@ -101,6 +102,21 @@ module.exports = async function handler(req, res) {
       limit: FREE_SCAN_LIMIT,
       remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used)
     };
+
+    // Geçmişe kaydet. Kayıt başarısız olursa tarama sonucu yine döner:
+    // geçmiş bir kolaylık, taramanın kendisi değil.
+    if (db.isConfigured()) {
+      try {
+        result.scanId = await db.saveScan(result, { sessionId: session.id },
+          { scanner: SCANNER_VERSION, report: REPORT_VERSION });
+      } catch (err) {
+        if (console && console.error) console.error('history save failed:', err.message);
+        result.scanId = null;
+      }
+    } else {
+      result.scanId = null;
+    }
+
     return res.status(200).json(result);
   } catch (err) {
     const code = (err && err.message) || 'scan_failed';
