@@ -2,6 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "functions": {
+    "api/scan.js": {
+      "maxDuration": 30,
+      "memory": 512
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
