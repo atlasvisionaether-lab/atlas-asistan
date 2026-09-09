@@ -1,0 +1,29 @@
+name: Üretim doğrulaması
+
+# Cyber Lion AI üretim uçlarını gerçek genel HTTP yolu üzerinden doğrular.
+# Geliştirme ortamı üretim alan adına çıkamadığı için bu iş runner'dan çalışır.
+# Yalnızca kendi alan adımız taranır; oluşan kayıtlar iş sonunda silinir.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/epic-turing-gu2xf8]
+    paths:
+      - cyberlionai/tools/prod-verify.sh
+      - .github/workflows/prod-verify.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Araçları kur
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils jq
+
+      - name: Üretim doğrulaması
+        run: bash cyberlionai/tools/prod-verify.sh
