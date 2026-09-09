@@ -1015,7 +1015,9 @@
     background: var(--primary-black); border: 1px solid var(--hairline);
     font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
     font-size: .78rem; color: var(--gold-primary);
-    overflow-x: auto; white-space: pre;
+    /* Kopyalanacak bir yapılandırma satırı; yatay kaydırmak yerine sarmalayıp
+       tamamını okunur bırakmak daha kullanışlı. */
+    white-space: pre-wrap; overflow-wrap: anywhere;
   }
   .bubble__meta {
     display: block; margin-top: 10px; padding-top: 8px;
