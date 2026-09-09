@@ -17,6 +17,11 @@ cyberlionai/
 ├── 404.html
 ├── vercel.json      Güvenlik başlıkları, temiz URL'ler, yönlendirmeler
 ├── _headers         Aynı başlıkların Cloudflare Pages / Netlify karşılığı
+├── api/
+│   ├── scan.js         POST /api/scan — gerçek tarama ucu
+│   └── _lib/
+│       ├── scanner.js  Tarama motoru (başlıklar + TLS + karışık içerik)
+│       └── guard.js    SSRF koruması
 ├── tools/
 │   └── csp-hashes.py   CSP script hash'lerini üretir
 ├── db/migrations/   Veritabanı şeması (üç modlu düzeltme)
@@ -264,3 +269,62 @@ Asistan sitenizi taramaz, hesabınıza erişmez ve arka planda birden fazla dil
 modeli çalıştırmaz. Panelde bu, kullanıcıya açıkça yazılıdır. Pazarlama
 metninde bunun ötesinde bir iddiada bulunmadan önce 2. kademenin gerçekten
 devreye alınması gerekir.
+
+
+## Gerçek tarama motoru
+
+`POST /api/scan` bir Vercel sunucusuz fonksiyonudur. Demo çıktı kaldırıldı:
+her hedef gerçekten taranır, skor ölçüme göre değişir.
+
+**13 kontrol:** HTTPS, CSP, HSTS, çerez bayrakları, karışık içerik, TLS
+protokolü, sertifika, eski TLS sürümleri, X-Frame-Options, nosniff,
+Referrer-Policy, Permissions-Policy, sürüm ifşası. Ayrıntılı tablo ve yanıt
+biçimi `docs/api.md` içinde.
+
+### Tasarımın temel kuralı
+
+**Yalnızca gerçekten ölçülen şey puanlanır.** Bir kontrol çalıştırılamadıysa
+(TLS el sıkışması başarısız, HTML alınamadı, hedef HTTPS değil) sonuçta
+`skipped` görünür ve skora hiç girmez. Ölçülmemiş bir maddeyi "başarısız"
+sayıp puan düşürmek, güvenlik ürününde yalan rapor demektir.
+
+Aynı nedenle hedef 4xx/5xx döndürdüğünde sonuç bir uyarıyla sunulur: ölçülen
+başlıklar normal sayfanınkinden farklı olabilir.
+
+### Güvenlik: SSRF
+
+Bu uç kullanıcının verdiği adrese **bizim sunucumuzdan** istek atar. Koruma
+olmadan biri bu ucu iç ağımızı taramak için kullanabilir; en tehlikelisi bulut
+meta veri servisidir (169.254.169.254), oradan kimlik bilgisi sızabilir.
+
+`api/_lib/guard.js` döngü, özel, bağlantı yerel, CGNAT ve ayrılmış blokları
+reddeder; doğrulamayı **her yönlendirme adımında yeniden** yapar. Gövde 512 KB,
+zaman aşımı 9 sn, en fazla 4 yönlendirme.
+
+### Hız sınırı — bilinen sınırlama
+
+`api/scan.js` içindeki sayaç **bellek içidir**: sunucusuz ortamda her örneğin
+kendi sayacı olur, yani IP başına 10 dakikada 12 tarama sınırı kesin değildir.
+Ciddi kötüye kullanım için kalıcı bir depo gerekir (Upstash Redis, Vercel KV).
+Bu, ödeme entegrasyonundan önce kapatılması gereken bir açıktır.
+
+### 5 ücretsiz tarama
+
+Sayaç `localStorage.freeScansUsed` içinde tutulur ve kullanıcı tarayıcı
+verisini temizleyerek sıfırlayabilir. Bu bilinçli bir tercihtir: amaç kayıt
+zorunluluğu olmadan ürünü denetmek. Kötüye kullanımı asıl engelleyen sunucu
+tarafındaki hız sınırıdır. Hak dolduğunda kayıt modalı açılır.
+
+### Yerel geliştirme
+
+Statik dosya sunucusu sunucusuz fonksiyonu çalıştırmaz. Uçtan uca denemek için
+`vercel dev` kullanın; bu depo içinde test amaçlı basit bir Node sunucusu da
+yazılabilir (statik dosyalar + `api/scan.js`'i doğrudan require eden bir yol).
+
+### Henüz yapılmadı
+
+- **Ödeme (Stripe/İyzico):** hesap ve API anahtarı gerekiyor; şirket kurulumu
+  tamamlanınca eklenecek. `subscriptions` tablosu şemada hazır.
+- **Tarama geçmişi:** `GET /api/scan/{id}` ve veritabanına yazma; şu an sonuç
+  yalnızca tarayıcıda gösteriliyor, saklanmıyor.
+- **PDF rapor:** tarama sonucu ekranda; indirilebilir rapor henüz yok.

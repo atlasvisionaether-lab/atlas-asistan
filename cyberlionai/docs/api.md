@@ -178,3 +178,84 @@ doğrudan uzman kademesine gider ve `support_escalations` kaydı açılır.
 `support_kb_entries`, yanıtları yeniden dağıtım yapmadan güncellemek ve hangi
 konunun ne sıklıkta sorulduğunu (`hit_count`) ölçmek içindir. Ön yüz kendi
 kopyasını gömülü taşıdığı için sunucu erişilemese de asistan çalışmayı sürdürür.
+
+---
+
+## Gerçek tarama motoru (yayında)
+
+`POST /api/scan` artık **gerçek bir sunucusuz fonksiyondur** (`api/scan.js`).
+Hedefe sunucudan istek atar, güvenlik başlıklarını ve TLS yapılandırmasını
+ölçer, sonucu tek yanıtta döndürür.
+
+### İstek
+```json
+{ "url": "ornek.com" }
+```
+
+### Yanıt
+```json
+{
+  "url": "https://ornek.com/",
+  "host": "ornek.com",
+  "httpStatus": 200,
+  "redirects": 1,
+  "score": 64,
+  "warnings": [],
+  "checks": [
+    { "id": "csp", "severity": "critical", "status": "fail", "detail": null, "note": null }
+  ],
+  "summary": { "total": 13, "passed": 7, "failed": 5, "skipped": 1, "critical": 1, "high": 2 },
+  "durationMs": 812,
+  "scannedAt": "2026-09-09T11:00:00.000Z",
+  "isDemo": false
+}
+```
+
+`status`: `pass` | `fail` | `skipped`. **`skipped` skora girmez** — ölçülemeyen
+bir maddeyi başarısız saymak yanlış rapor üretmek olur.
+
+### Kontroller (13)
+
+| id | Önem | Ne ölçülüyor |
+|---|---|---|
+| `https` | critical | Nihai adres HTTPS mi |
+| `csp` | critical | CSP var mı; `script-src` içinde nonce/hash olmadan `unsafe-inline` varsa başarısız |
+| `hsts` | high | HSTS var mı ve `max-age` ≥ 180 gün mü |
+| `cookies` | high | Set-Cookie başlıklarında Secure + HttpOnly + SameSite |
+| `mixed_content` | high | HTTPS sayfada `http://` ile yüklenen kaynaklar (HTML ayrıştırılır) |
+| `tls_protocol` | high | Görüşülen protokol TLS 1.2/1.3 mü |
+| `tls_cert` | high | Sertifika güvenilir mi, kalan gün sayısı |
+| `tls_legacy` | high | Sunucu TLS 1.0/1.1 kabul ediyor mu (ayrı el sıkışma denemesi) |
+| `xframe` | medium | X-Frame-Options veya CSP `frame-ancestors` |
+| `nosniff` | medium | X-Content-Type-Options: nosniff |
+| `referrer` | low | Referrer-Policy |
+| `permissions` | low | Permissions-Policy |
+| `disclosure` | low | Server / X-Powered-By içinde sürüm numarası |
+
+Ağırlıklar: critical 10, high 7, medium 4, low 2.
+Skor = `(1 − kaybedilen ağırlık / ölçülen toplam ağırlık) × 100`.
+
+### Hata kodları
+
+| Kod | HTTP | Anlamı |
+|---|---|---|
+| `empty`, `invalid_url`, `too_long`, `bad_protocol`, `credentials_not_allowed`, `blocked_port`, `dns_failed` | 400 | Girdi hatalı |
+| `blocked_target` | 403 | Özel ağ / yerel adres — SSRF koruması |
+| `unreachable`, `bad_redirect`, `too_many_redirects` | 502 | Hedefe ulaşılamadı |
+| `timeout` | 504 | Hedef zamanında yanıt vermedi |
+| `rate_limited` | 429 | Hız sınırı (IP başına 10 dakikada 12 tarama) |
+
+### Güvenlik
+
+Bu uç, kullanıcının verdiği adrese **bizim sunucumuzdan** istek attığı için
+SSRF açısından hassastır. `api/_lib/guard.js` şunları reddeder:
+
+- Döngü (127.0.0.0/8, ::1), özel bloklar (10/8, 172.16/12, 192.168/16, fc00::/7)
+- Bağlantı yerel **169.254.0.0/16** — bulut meta veri servisi buradadır
+- CGNAT (100.64/10), çoklu yayın, ayrılmış bloklar
+- `localhost` gibi noktasız adlar, adres içinde kullanıcı adı/şifre
+- 80/443/8080/8443 dışındaki portlar
+
+Doğrulama **her yönlendirme adımında yeniden** yapılır: ilk adres güvenli olsa
+bile sonraki adım özel bir IP'ye gidemez. Yanıt gövdesi 512 KB'de kesilir,
+istekler 9 saniyede zaman aşımına uğrar, en fazla 4 yönlendirme izlenir.

@@ -504,7 +504,7 @@
   .scan__note {
     margin: 0; padding: 0 16px 16px;
     font-size: 0.78rem; color: var(--text-gray);
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   }
   .scan__note i { color: var(--sev-low); }
 
@@ -1307,6 +1307,7 @@
           <p class="scan__note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
             <span data-i18n="hero.scanNote">Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.</span>
+            <span id="scanQuota" style="margin-left:auto;color:var(--gold-primary);white-space:nowrap"></span>
           </p>
 
           <div class="scan__output" id="scanOutput" aria-live="polite">
@@ -1855,13 +1856,16 @@
     var CONFIG = {
       debug: false,                 // production'da false
       apiBaseUrl: '',               // backend hazır olduğunda: 'https://api.cyberlionai.com'
-      useMockApi: true,             // backend bağlanınca false yapın
+      useMockApi: true,             // kayıt/destek/düzeltme uçları için; backend gelince false
+      liveScan: true,               // /api/scan gerçek: sunucusuz fonksiyon yayında
+      freeScanLimit: 5,             // kayıt gerektirmeyen ücretsiz tarama hakkı
       geoLookupUrl: 'https://ipapi.co/country_code/',
       storageKeys: {
         lang: 'preferredLang',
         theme: 'preferredTheme',
         cookie: 'cookieConsent',
         mode: 'preferredRemediationMode',
+        quota: 'freeScansUsed',
         token: 'authToken'
       }
     };
@@ -1909,16 +1913,62 @@
           done: 'Tarama tamamlandı',
           demoNote: 'Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.',
           fullReport: 'Tam Raporu Al',
-          sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Bilgi' },
-          findings: [
-            'Content-Security-Policy başlığı tanımlı değil',
-            'TLS 1.0 / 1.1 desteği hâlâ açık',
-            'Strict-Transport-Security (HSTS) başlığı eksik',
-            'X-Frame-Options tanımsız — clickjacking riski',
-            'Çerezlerde Secure / SameSite bayrağı eksik',
-            'Sunucu sürüm bilgisi yanıt başlığında ifşa ediliyor',
-            'SSL sertifikası geçerli — yenilemeye 87 gün var'
-          ]
+          sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
+          state: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi' },
+          scoreLabel: 'Güvenlik skoru',
+          summary: '{passed} geçti · {failed} kaldı · {skipped} ölçülemedi',
+          quota: 'Kalan ücretsiz tarama: {n}/5',
+          quotaOut: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.',
+          fixLabel: 'Düzeltme',
+          warn: {
+            error_response: 'Hedef {status} hata kodu döndürdü; ölçülen başlıklar normal sayfanınkinden farklı olabilir.',
+            no_html_body: 'Yanıt HTML değildi; sayfa içeriğine dayalı kontroller atlandı.'
+          },
+          err: {
+            empty: 'Lütfen taranacak bir adres girin.',
+            invalid_url: 'Geçerli bir alan adı girin. Örnek: ornek.com',
+            too_long: 'Adres çok uzun.',
+            bad_protocol: 'Yalnızca http ve https adresleri taranabilir.',
+            credentials_not_allowed: 'Adres içinde kullanıcı adı/şifre bulunamaz.',
+            blocked_port: 'Yalnızca 80, 443, 8080 ve 8443 portları taranabilir.',
+            blocked_target: 'Bu hedef taranamaz: özel ağ ve yerel adresler engellidir.',
+            dns_failed: 'Alan adı çözümlenemedi. Yazımı kontrol edin.',
+            timeout: 'Hedef zamanında yanıt vermedi.',
+            unreachable: 'Hedefe ulaşılamadı.',
+            bad_redirect: 'Hedef geçersiz bir yönlendirme yaptı.',
+            too_many_redirects: 'Çok fazla yönlendirme var.',
+            rate_limited: 'Çok fazla istek gönderdiniz. Lütfen biraz sonra tekrar deneyin.',
+            method_not_allowed: 'Geçersiz istek.',
+            scan_failed: 'Tarama tamamlanamadı. Lütfen tekrar deneyin.',
+            network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.'
+          },
+          note: {
+            unsafe_inline: "script-src 'unsafe-inline' içeriyor; koruma büyük ölçüde etkisiz",
+            max_age_low: 'max-age çok kısa (en az 180 gün önerilir)',
+            missing_flags: 'bazı çerezlerde Secure / HttpOnly / SameSite eksik',
+            no_cookies: 'sayfa çerez göndermiyor',
+            not_https: 'sayfa HTTPS değil',
+            no_html: 'HTML içerik alınamadı',
+            not_measured: 'bu ortamda ölçülemedi',
+            expired: 'sertifika süresi dolmuş',
+            expiring_soon: 'sertifikanın süresi yakında doluyor',
+            untrusted: 'sertifika doğrulanamadı'
+          },
+          checks: {
+            https:         { name: 'HTTPS kullanımı', fix: 'Tüm trafiği HTTPS üzerinden sunun ve HTTP isteklerini 301 ile HTTPS\'e yönlendirin.' },
+            hsts:          { name: 'Strict-Transport-Security', fix: 'Strict-Transport-Security: max-age=63072000; includeSubDomains' },
+            csp:           { name: 'Content-Security-Policy', fix: "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'" },
+            xframe:        { name: 'Çerçeveleme koruması', fix: "X-Frame-Options: DENY  (veya CSP frame-ancestors 'none')" },
+            nosniff:       { name: 'MIME tipi zorlaması', fix: 'X-Content-Type-Options: nosniff' },
+            referrer:      { name: 'Referrer-Policy', fix: 'Referrer-Policy: strict-origin-when-cross-origin' },
+            permissions:   { name: 'Permissions-Policy', fix: 'Permissions-Policy: camera=(), microphone=(), geolocation=()' },
+            cookies:       { name: 'Çerez bayrakları', fix: 'Set-Cookie: ...; Secure; HttpOnly; SameSite=Lax' },
+            disclosure:    { name: 'Sürüm bilgisi ifşası', fix: 'Nginx: server_tokens off;  ·  Apache: ServerTokens Prod' },
+            mixed_content: { name: 'Karışık içerik', fix: 'HTTPS sayfada http:// ile yüklenen kaynakları https:// yapın.' },
+            tls_protocol:  { name: 'TLS protokol sürümü', fix: 'Yalnızca TLS 1.2 ve 1.3 açık kalsın.' },
+            tls_cert:      { name: 'SSL sertifikası', fix: 'Sertifikayı yenileyin ve zincirin tam olduğundan emin olun.' },
+            tls_legacy:    { name: 'Eski TLS sürümleri', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' }
+          }
         },
         assist: {
           launch: 'Canlı Asistan', title: 'Cyber Lion Asistan', status: 'Çevrimiçi',
@@ -2160,16 +2210,62 @@
           done: 'Scan complete',
           demoNote: 'This is a demo output. Full reports and remediation steps unlock with PRO.',
           fullReport: 'Get Full Report',
-          sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Info' },
-          findings: [
-            'Content-Security-Policy header is not defined',
-            'TLS 1.0 / 1.1 support is still enabled',
-            'Strict-Transport-Security (HSTS) header is missing',
-            'X-Frame-Options undefined — clickjacking risk',
-            'Cookies missing Secure / SameSite flags',
-            'Server version disclosed in response headers',
-            'SSL certificate valid — 87 days until renewal'
-          ]
+          sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
+          state: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured' },
+          scoreLabel: 'Security score',
+          summary: '{passed} passed · {failed} failed · {skipped} not measured',
+          quota: 'Free scans left: {n}/5',
+          quotaOut: 'You have used your free scans. Upgrade to Premium for unlimited scanning.',
+          fixLabel: 'Fix',
+          warn: {
+            error_response: 'The target returned status {status}; the headers measured may differ from the normal page.',
+            no_html_body: 'The response was not HTML, so content-based checks were skipped.'
+          },
+          err: {
+            empty: 'Please enter an address to scan.',
+            invalid_url: 'Enter a valid domain. Example: example.com',
+            too_long: 'The address is too long.',
+            bad_protocol: 'Only http and https addresses can be scanned.',
+            credentials_not_allowed: 'The address must not contain credentials.',
+            blocked_port: 'Only ports 80, 443, 8080 and 8443 can be scanned.',
+            blocked_target: 'This target cannot be scanned: private and local addresses are blocked.',
+            dns_failed: 'The domain could not be resolved. Check the spelling.',
+            timeout: 'The target did not respond in time.',
+            unreachable: 'The target could not be reached.',
+            bad_redirect: 'The target issued an invalid redirect.',
+            too_many_redirects: 'Too many redirects.',
+            rate_limited: 'Too many requests. Please try again shortly.',
+            method_not_allowed: 'Invalid request.',
+            scan_failed: 'The scan could not be completed. Please try again.',
+            network: 'Could not reach the server. Check your connection.'
+          },
+          note: {
+            unsafe_inline: "script-src allows 'unsafe-inline'; most of the protection is lost",
+            max_age_low: 'max-age is too short (180 days or more recommended)',
+            missing_flags: 'some cookies lack Secure / HttpOnly / SameSite',
+            no_cookies: 'the page sets no cookies',
+            not_https: 'the page is not served over HTTPS',
+            no_html: 'HTML content was not available',
+            not_measured: 'could not be measured in this environment',
+            expired: 'the certificate has expired',
+            expiring_soon: 'the certificate expires soon',
+            untrusted: 'the certificate could not be validated'
+          },
+          checks: {
+            https:         { name: 'HTTPS in use', fix: 'Serve all traffic over HTTPS and 301-redirect HTTP requests to HTTPS.' },
+            hsts:          { name: 'Strict-Transport-Security', fix: 'Strict-Transport-Security: max-age=63072000; includeSubDomains' },
+            csp:           { name: 'Content-Security-Policy', fix: "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'" },
+            xframe:        { name: 'Framing protection', fix: "X-Frame-Options: DENY  (or CSP frame-ancestors 'none')" },
+            nosniff:       { name: 'MIME type enforcement', fix: 'X-Content-Type-Options: nosniff' },
+            referrer:      { name: 'Referrer-Policy', fix: 'Referrer-Policy: strict-origin-when-cross-origin' },
+            permissions:   { name: 'Permissions-Policy', fix: 'Permissions-Policy: camera=(), microphone=(), geolocation=()' },
+            cookies:       { name: 'Cookie flags', fix: 'Set-Cookie: ...; Secure; HttpOnly; SameSite=Lax' },
+            disclosure:    { name: 'Version disclosure', fix: 'Nginx: server_tokens off;  ·  Apache: ServerTokens Prod' },
+            mixed_content: { name: 'Mixed content', fix: 'Load every resource on an HTTPS page over https://.' },
+            tls_protocol:  { name: 'TLS protocol version', fix: 'Leave only TLS 1.2 and 1.3 enabled.' },
+            tls_cert:      { name: 'SSL certificate', fix: 'Renew the certificate and make sure the chain is complete.' },
+            tls_legacy:    { name: 'Legacy TLS versions', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' }
+          }
         },
         assist: {
           launch: 'Live Assistant', title: 'Cyber Lion Assistant', status: 'Online',
@@ -2453,6 +2549,7 @@
 
       // Seçili düzeltme yönteminin düğme metni dile göre güncellensin
       if (typeof modeManager !== 'undefined' && modeManager) modeManager.refresh();
+      if (typeof renderQuota === 'function') renderQuota();
 
       if (!opts.silent) store.set(CONFIG.storageKeys.lang, lang);
       log('Dil uygulandı:', lang);
@@ -2912,24 +3009,31 @@
         });
       },
 
-      /** POST /api/scan — seçilen düzeltme modu istekle birlikte gönderilir */
+      /**
+       * POST /api/scan — gerçek tarama. Sunucu, hedefe kendisi istek atıp
+       * güvenlik başlıklarını ve TLS yapılandırmasını ölçer ve sonucu tek
+       * yanıtta döndürür (ayrı bir sonuç sorgusu gerekmez).
+       */
       startScan: function (url, type, mode) {
-        if (CONFIG.useMockApi) {
-          return new Promise(function (resolve) {
-            setTimeout(function () {
-              resolve({ scanId: 'demo-' + Date.now(), url: url, type: type || 'quick',
-                        mode: mode || null, status: 'queued' });
-            }, 220);
-          });
+        if (!CONFIG.liveScan) {
+          return Promise.reject({ code: 'scan_failed' });
         }
-        return API.request('/api/scan', {
-          method: 'POST', body: { url: url, type: type || 'quick', mode: mode || null }
+        return fetch(CONFIG.apiBaseUrl + '/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url, type: type || 'quick', mode: mode || null })
+        }).then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
+            return data;
+          });
+        }, function () {
+          throw { code: 'network' };
         });
       },
 
-      /** GET /api/scan/{scanId} */
+      /** GET /api/scan/{scanId} — geçmiş tarama kaydı (backend bekliyor) */
       getScan: function (scanId) {
-        if (CONFIG.useMockApi) return Promise.resolve(mockScanResult());
         return API.request('/api/scan/' + encodeURIComponent(scanId));
       },
 
@@ -3013,16 +3117,6 @@
       }
     };
 
-    /* Demo bulguları — backend gelene kadar tutarlı bir örnek çıktı üretir */
-    function mockScanResult() {
-      var sevs = ['high', 'critical', 'medium', 'medium', 'medium', 'low', 'low'];
-      var items = [];
-      for (var i = 0; i < sevs.length; i++) {
-        items.push({ index: i, severity: sevs[i], passed: i === 6 });
-      }
-      return { status: 'completed', score: 62, findings: items };
-    }
-
     /* ==========================================================
        9. CANLI DEMO TARAMA
        ========================================================== */
@@ -3034,9 +3128,12 @@
     var scanLog = document.getElementById('scanLog');
     var scanSummary = document.getElementById('scanSummary');
     var scanScore = document.getElementById('scanScore');
+    var scanSubmit = document.getElementById('scanSubmit');
     var scanning = false;
 
-    /** Girdi temizliği: protokol/yol atılır, yalnızca alan adı doğrulanır. */
+    /** Girdi temizliği: protokol/yol atılır, yalnızca alan adı doğrulanır.
+        Sunucu tarafında aynı doğrulama yeniden yapılır; bu yalnızca kullanıcıya
+        hızlı geri bildirim vermek içindir. */
     function normalizeDomain(raw) {
       var v = String(raw || '').trim().toLowerCase();
       v = v.replace(/^https?:\/\//, '').replace(/^www\./, '');
@@ -3046,42 +3143,119 @@
       return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/.test(v) ? v : null;
     }
 
-    function setStatus(textKey, iconClass) {
+    /* ---- Ücretsiz tarama hakkı -------------------------------------------
+       Sayaç tarayıcıda tutulur; kullanıcı depolamayı temizleyerek sıfırlayabilir.
+       Kötüye kullanımı asıl engelleyen, sunucudaki IP başına hız sınırıdır.    */
+    function scansUsed() {
+      var raw = parseInt(store.get(CONFIG.storageKeys.quota), 10);
+      return isNaN(raw) || raw < 0 ? 0 : raw;
+    }
+    function scansLeft() { return Math.max(0, CONFIG.freeScanLimit - scansUsed()); }
+    function consumeScan() { store.set(CONFIG.storageKeys.quota, String(scansUsed() + 1)); renderQuota(); }
+
+    function renderQuota() {
+      var el = document.getElementById('scanQuota');
+      if (el) el.textContent = t('scan.quota', { n: scansLeft() });
+    }
+
+    function setStatus(text, iconClass) {
       if (!scanStatus) return;
       scanStatus.textContent = '';
       var i = document.createElement('i');
       i.className = iconClass;
       i.setAttribute('aria-hidden', 'true');
-      var s = document.createElement('span');
-      s.textContent = t(textKey);
+      var sp = document.createElement('span');
+      sp.textContent = text;
       scanStatus.appendChild(i);
-      scanStatus.appendChild(s);
+      scanStatus.appendChild(sp);
     }
 
-    function addLogRow(text, icon, iconColorVar) {
+    /* ---- Sonuç satırları ---- */
+
+    var STATE_ICON = {
+      pass: 'fa-solid fa-circle-check',
+      fail: 'fa-solid fa-triangle-exclamation',
+      skipped: 'fa-solid fa-circle-minus'
+    };
+
+    /** Tek bir kontrolü listeye ekler: ad, kanıt, önem etiketi ve düzeltme. */
+    function addCheckRow(item) {
+      var li = document.createElement('li');
+      li.style.alignItems = 'flex-start';
+
+      var icon = document.createElement('i');
+      icon.className = STATE_ICON[item.status] || STATE_ICON.skipped;
+      icon.setAttribute('aria-hidden', 'true');
+      icon.style.color = item.status === 'pass' ? 'var(--sev-low)'
+        : item.status === 'fail' ? 'var(--sev-' + item.severity + ')'
+        : 'var(--text-gray)';
+      icon.style.marginTop = '4px';
+
+      var body = document.createElement('div');
+      body.style.flex = '1';
+      body.style.minWidth = '0';
+
+      var title = document.createElement('b');
+      title.textContent = t('scan.checks.' + item.id + '.name');
+      body.appendChild(title);
+
+      // Kanıt: sunucudan gelen ham başlık değeri veya ölçüm sonucu
+      var evidence = [];
+      if (item.detail) evidence.push(item.detail);
+      if (item.note) evidence.push(t('scan.note.' + item.note));
+      if (evidence.length) {
+        var detail = document.createElement('span');
+        detail.style.display = 'block';
+        detail.style.color = 'var(--text-gray)';
+        detail.style.fontSize = '0.82rem';
+        detail.style.overflowWrap = 'anywhere';
+        detail.textContent = evidence.join(' — ');
+        body.appendChild(detail);
+      }
+
+      // Düzeltme yalnızca kalan kontrollerde gösterilir
+      if (item.status === 'fail') {
+        var fix = document.createElement('code');
+        fix.style.display = 'block';
+        fix.style.marginTop = '7px';
+        fix.style.padding = '9px 11px';
+        fix.style.borderRadius = '8px';
+        fix.style.background = 'var(--primary-black)';
+        fix.style.border = '1px solid var(--hairline)';
+        fix.style.fontSize = '0.76rem';
+        fix.style.color = 'var(--gold-primary)';
+        fix.style.whiteSpace = 'pre-wrap';
+        fix.style.overflowWrap = 'anywhere';
+        fix.textContent = t('scan.checks.' + item.id + '.fix');
+        body.appendChild(fix);
+      }
+
+      var tag = document.createElement('span');
+      tag.className = 'sev sev--' + (item.status === 'skipped' ? 'low' : item.severity);
+      tag.textContent = item.status === 'skipped'
+        ? t('scan.state.skipped')
+        : t('scan.sev.' + item.severity);
+      if (item.status === 'skipped') tag.style.opacity = '0.6';
+
+      li.appendChild(icon);
+      li.appendChild(body);
+      li.appendChild(tag);
+      scanLog.appendChild(li);
+    }
+
+    function addNoticeRow(text, icon, colorVar) {
       var li = document.createElement('li');
       var i = document.createElement('i');
       i.className = icon;
       i.setAttribute('aria-hidden', 'true');
-      if (iconColorVar) i.style.color = 'var(' + iconColorVar + ')';
+      if (colorVar) i.style.color = 'var(' + colorVar + ')';
       var b = document.createElement('b');
       b.textContent = text;
+      b.style.overflowWrap = 'anywhere';
       li.appendChild(i);
       li.appendChild(b);
       scanLog.appendChild(li);
       return li;
-    }
-
-    function addFinding(index, severity, passed) {
-      var li = addLogRow(
-        t('scan.findings')[index],
-        passed ? 'fa-solid fa-circle-check' : 'fa-solid fa-triangle-exclamation',
-        '--sev-' + severity
-      );
-      var tag = document.createElement('span');
-      tag.className = 'sev sev--' + severity;
-      tag.textContent = t('scan.sev.' + severity);
-      li.appendChild(tag);
     }
 
     if (scanForm) {
@@ -3090,68 +3264,119 @@
         if (scanning) { toast(t('toast.scanBusy'), 'info'); return; }
 
         var raw = scanInput ? scanInput.value : '';
-        if (!raw.trim()) { toast(t('toast.urlEmpty'), 'error'); scanInput.focus(); return; }
+        if (!raw.trim()) { toast(t('scan.err.empty'), 'error'); scanInput.focus(); return; }
 
         var domain = normalizeDomain(raw);
-        if (!domain) { toast(t('toast.urlInvalid'), 'error'); scanInput.focus(); return; }
+        if (!domain) { toast(t('scan.err.invalid_url'), 'error'); scanInput.focus(); return; }
+
+        if (scansLeft() <= 0) {
+          toast(t('scan.quotaOut'), 'info', 6000);
+          openModal();
+          return;
+        }
 
         runScan(domain);
       });
     }
 
+    /** Yanıt beklenirken ilerleme çubuğunu adım adım ilerletir (asla %100 olmaz). */
+    function startProgress() {
+      var steps = ['scan.step1', 'scan.step2', 'scan.step3', 'scan.step4'];
+      var index = 0;
+      setStatus(t(steps[0]), 'fa-solid fa-spinner fa-spin');
+      scanBar.style.width = '12%';
+
+      return setInterval(function () {
+        index = Math.min(index + 1, steps.length - 1);
+        setStatus(t(steps[index]), 'fa-solid fa-spinner fa-spin');
+        var width = parseFloat(scanBar.style.width) || 12;
+        scanBar.style.width = Math.min(width + 22, 88) + '%';
+      }, 900);
+    }
+
     function runScan(domain) {
       scanning = true;
+      if (scanSubmit) scanSubmit.disabled = true;
       scanOutput.classList.add('is-active');
       scanLog.textContent = '';
       scanSummary.hidden = true;
       scanBar.style.width = '0%';
 
-      var steps = ['scan.step1', 'scan.step2', 'scan.step3', 'scan.step4'];
-      var stepIndex = 0;
+      addNoticeRow(domain, 'fa-solid fa-globe', '--gold-primary');
+      var ticker = startProgress();
 
-      setStatus(steps[0], 'fa-solid fa-spinner fa-spin');
-      addLogRow(domain, 'fa-solid fa-globe', '--gold-primary');
-
-      API.startScan(domain, 'quick', modeManager.get()).catch(function (err) { log('scan error', err); });
-
-      var timer = setInterval(function () {
-        stepIndex++;
-        scanBar.style.width = Math.min(stepIndex * 25, 100) + '%';
-
-        if (stepIndex < steps.length) {
-          setStatus(steps[stepIndex], 'fa-solid fa-spinner fa-spin');
-          return;
-        }
-
-        clearInterval(timer);
-        finishScan();
-      }, 850);
-    }
-
-    function finishScan() {
-      API.getScan('demo').then(function (result) {
-        setStatus('scan.done', 'fa-solid fa-circle-check');
-        var issues = 0;
-        result.findings.forEach(function (f, n) {
-          setTimeout(function () { addFinding(f.index, f.severity, f.passed); }, n * 110);
-          if (!f.passed) issues++;
-        });
-
-        setTimeout(function () {
-          scanScore.textContent = '';
-          scanScore.appendChild(document.createTextNode(String(result.score)));
-          var sub = document.createElement('span');
-          sub.textContent = '/100';
-          scanScore.appendChild(sub);
-          scanSummary.hidden = false;
+      API.startScan(domain, 'quick', modeManager.get())
+        .then(function (result) { renderScanResult(result); })
+        .catch(function (err) { renderScanError(err); })
+        .then(function () {
+          clearInterval(ticker);
           scanning = false;
-          toast(t('toast.scanDone', { n: issues }), 'success');
-        }, result.findings.length * 110 + 150);
-      }).catch(function () {
-        scanning = false;
-        toast(t('toast.registerFail'), 'error');
-      });
+          if (scanSubmit) scanSubmit.disabled = false;
+        });
     }
+
+    function renderScanResult(result) {
+      scanBar.style.width = '100%';
+      setStatus(t('scan.done'), 'fa-solid fa-circle-check');
+      scanLog.textContent = '';
+
+      // Taranan nihai adres (yönlendirme sonrası)
+      addNoticeRow(result.url, 'fa-solid fa-globe', '--gold-primary');
+
+      // Ölçümü etkileyen durumlar sessizce geçilmez
+      (result.warnings || []).forEach(function (code) {
+        addNoticeRow(t('scan.warn.' + code, { status: result.httpStatus }),
+          'fa-solid fa-circle-info', '--accent-blue');
+      });
+
+      // Önce kalanlar, sonra geçenler, en sonda ölçülemeyenler
+      var order = { fail: 0, pass: 1, skipped: 2 };
+      var sev = { critical: 0, high: 1, medium: 2, low: 3 };
+      (result.checks || []).slice().sort(function (a, b) {
+        return (order[a.status] - order[b.status]) || (sev[a.severity] - sev[b.severity]);
+      }).forEach(addCheckRow);
+
+      // Skor
+      scanScore.textContent = '';
+      if (typeof result.score === 'number') {
+        scanScore.appendChild(document.createTextNode(String(result.score)));
+        var sub = document.createElement('span');
+        sub.textContent = '/100';
+        scanScore.appendChild(sub);
+        scanScore.style.color = result.score >= 80 ? 'var(--sev-low)'
+          : result.score >= 55 ? 'var(--sev-medium)' : 'var(--sev-critical)';
+      } else {
+        scanScore.textContent = '—';
+      }
+
+      var note = scanSummary.querySelector('p');
+      if (note) {
+        note.textContent = t('scan.summary', {
+          passed: result.summary.passed,
+          failed: result.summary.failed,
+          skipped: result.summary.skipped
+        });
+      }
+      scanSummary.hidden = false;
+
+      consumeScan();
+      toast(t('toast.scanDone', { n: result.summary.failed }), result.summary.failed ? 'info' : 'success');
+    }
+
+    function renderScanError(err) {
+      var code = (err && err.code) || 'scan_failed';
+      scanBar.style.width = '100%';
+      scanBar.style.background = 'var(--sev-critical)';
+      setStatus(t('scan.err.' + code), 'fa-solid fa-circle-exclamation');
+      scanSummary.hidden = true;
+      log('scan failed', code);
+      toast(t('scan.err.' + code), 'error', 6000);
+      setTimeout(function () {
+        scanBar.style.background = '';
+        scanBar.style.width = '0%';
+      }, 2500);
+    }
+
 
     /* ==========================================================
        10. KAYIT MODALI
