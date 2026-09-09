@@ -301,6 +301,20 @@ meta veri servisidir (169.254.169.254), oradan kimlik bilgisi sızabilir.
 reddeder; doğrulamayı **her yönlendirme adımında yeniden** yapar. Gövde 512 KB,
 zaman aşımı 9 sn, en fazla 4 yönlendirme.
 
+### Üretimde doğrulanmış sonuçlar
+
+Motor Vercel'de (Node 24, iad1) çalışırken ölçülen gerçek değerler:
+
+| Hedef | Skor | Sonuç | Süre |
+|---|---|---|---|
+| github.com | **88/100** | 11 geçti · 2 kaldı · 0 ölçülemedi · TLS 1.3, sertifika 81 gün | 98 ms |
+| example.com | **48/100** | 5 geçti · 7 kaldı · 1 ölçülemedi · **TLS 1.0/1.1 kabul ediyor** | 145 ms |
+
+Aynı motor yerel geliştirmede github.com için 53 veriyordu; aradaki fark
+ölçüm hatası değil, geliştirme ortamındaki araya giren proxy'nin başlıkları
+ve sertifikayı değiştirmesiydi. **Tarama sonuçları yalnızca üretimden
+alındığında güvenilirdir.**
+
 ### Hız sınırı — bilinen sınırlama
 
 `api/scan.js` içindeki sayaç **bellek içidir**: sunucusuz ortamda her örneğin
