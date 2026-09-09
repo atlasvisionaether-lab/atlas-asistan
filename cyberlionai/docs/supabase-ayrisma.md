@@ -1,7 +1,13 @@
 # Cyber Lion AI için ayrı Supabase projesi — plan ve etki analizi
 
-**Durum: yalnızca plan. Hiçbir şey uygulanmadı.**
-Her yazma/oluşturma adımı ayrı onay gerektirir; adımlar § 9'da numaralı.
+**Durum: 1–2. adımlar tamamlandı (2026-09-09).** Kalan adımlar § 9'da.
+Her yazma/oluşturma adımı ayrı onay gerektirir.
+
+| Yeni proje | `cyberlionai` · ref `aohsgagiyaseinhmyfub` · eu-central-1 · aylık 0 ₺ |
+|---|---|
+| API adresi | `https://aohsgagiyaseinhmyfub.supabase.co` |
+| Uygulanan migration'lar | 003, 003b, **003c**, 004 |
+| Eski proje (`atlas-vision`) | **hiç dokunulmadı** |
 
 ---
 
@@ -362,19 +368,53 @@ ekleyeyim.
 
 Hiçbiri uygulanmadı. Her biri ayrı onay bekliyor.
 
-| # | Adım | Kapsam | Maliyet |
+| # | Adım | Kim | Durum |
 |---|---|---|---|
-| 1 | Yeni Supabase projesi oluşturma | `hcjcqznktyyimmoaqyos` organizasyonu, `eu-central-1` | **Aylık 0 ₺** (doğrulandı) |
-| 2 | Migration 003 + 003b + 004'ü yeni projede uygulama | Yeni proje şeması | — |
-| 3 | Auth ayarları: Site URL, Redirect URLs, şifre min. 10, e-posta onayı | Yeni proje | — |
-| 4 | E-posta şablonları (§ 5) | Yeni proje | — |
-| 5 | Vercel **Preview** env: üç değişken | Preview ortamı | — |
-| 6 | Preview'da gerçek kayıt akışı testi | **Gerçek e-posta gönderir** | — |
-| 7 | PR #14 merge | Production kod | — |
-| 8 | `cl_scans` 5 satırın kopyalanması | Yeni projeye INSERT | — |
-| 9 | Vercel **Production** env: üç değişken + deploy | Production | — |
-| 10 | `prod-verify.sh` çalıştırma | Salt-okunur + kendi kayıtlarını siler | — |
-| 11 | Eski `cl_scans`'in silinmesi | En az bir hafta sonra, ayrıca konuşulur | — |
+| 1 | Yeni Supabase projesi (`eu-central-1`, aylık 0 ₺) | Claude | ✅ `aohsgagiyaseinhmyfub` |
+| 2 | Migration 003 + 003b + 003c + 004 | Claude | ✅ doğrulandı |
+| 3 | Auth ayarları: Site URL, Redirect URLs, şifre min. 10, e-posta onayı | **Kullanıcı** | ⏳ araç yok (aşağıya bakın) |
+| 4 | E-posta şablonları (§ 5) | **Kullanıcı** | ⏳ araç yok |
+| 5 | Vercel **Preview** env: üç değişken | **Kullanıcı** | ⏳ araç yok |
+| 5b | Protection Bypass for Automation token'ı + GitHub secret | **Kullanıcı** | ⏳ araç yok |
+| 6 | Preview doğrulaması (iş akışı hazır) | Claude | ⏳ 3–5b bekliyor |
+| 7 | PR #14 merge | **Kullanıcı** | ⏳ 6'dan sonra |
+| 8 | `cl_scans` 5 satırın kopyalanması | Claude | ⏳ onay bekler |
+| 9 | Vercel **Production** env + deploy | **Kullanıcı** | ⏳ onay bekler |
+| 10 | `prod-verify.sh` çalıştırma | Claude | ⏳ |
+| 11 | Eski `cl_scans`'in silinmesi | **Kullanıcı** | ⏳ en az bir hafta sonra |
+
+### Claude'un yapamadığı iki iş
+
+Araç listesinde arandı, mevcut değiller:
+
+- **Protection Bypass token'ı üretme.** Vercel MCP'sinin koruma aracı yalnızca
+  `passwordProtection`, `ssoProtection` ve `trustedIps` alanlarını yönetiyor.
+- **Supabase Auth yapılandırması.** Supabase MCP'si veritabanı tarafını
+  (SQL, migration, advisor, edge function) yönetiyor; Site URL, Redirect URLs
+  ve e-posta şablonları için uç sunmuyor.
+
+Bu ikisi panelden yapılmalı. SSO koruması **kapatılmayacak** — preview'da
+çalışan gerçek bir tarama ucu var; bypass token'ı doğru çözüm.
+
+### 003c — planda olmayan, sonradan eklenen migration
+
+003b uygulandıktan sonra `service_role`'ün Supabase varsayılanından gelen
+`TRUNCATE, REFERENCES, TRIGGER` yetkilerini de taşıdığı görüldü (`GRANT` ekler,
+kısıtlamaz). Hiçbir kod yolunda kullanılmıyorlar; 003c ile geri alındı.
+Kalan dört yetki tam olarak kodun ihtiyacı: `SELECT` (geçmiş/rapor/sahiplik),
+`INSERT` (tarama kaydı), `DELETE` (silme uçları), `UPDATE` (anonim geçmişin
+devri).
+
+### Preview doğrulama otomasyonu
+
+`tools/preview-verify.sh` + `.github/workflows/preview-verify.yml`.
+İki fazlı: 1. faz anonim geçmiş oluşturup kaydı açar ve çerezleri artefakt
+olarak bırakır; 2. faz e-postadaki `token_hash` ile devam eder. Onay bağlantısı
+posta kutusuna düştüğü için otomasyon tek başına tamamlayamaz.
+
+CI'da yalnızca bypass secret'ı bulunur — Supabase ve Upstash anahtarları oraya
+konmadı. Veritabanı doğrulaması ve test kullanıcısının temizliği Supabase
+yönetim erişimi olan taraftan yapılır.
 
 ### Değişecek kaynaklar
 
