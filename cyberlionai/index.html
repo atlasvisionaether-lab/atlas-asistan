@@ -1317,7 +1317,11 @@
             <div class="scan__summary" id="scanSummary" hidden>
               <span class="scan__score" id="scanScore">--<span>/100</span></span>
               <p data-i18n="scan.demoNote">Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.</p>
-              <button type="button" class="btn btn--gold btn--sm" data-open-modal data-i18n="scan.fullReport">Tam Raporu Al</button>
+              <a class="btn btn--gold btn--sm" id="scanReportBtn" hidden>
+                <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                <span data-i18n="scan.downloadPdf">PDF Raporu İndir</span>
+              </a>
+              <button type="button" class="btn btn--gold btn--sm" id="scanUpgradeBtn" data-open-modal data-i18n="scan.fullReport">Tam Raporu Al</button>
             </div>
           </div>
         </div>
@@ -1920,6 +1924,7 @@
           quota: 'Kalan ücretsiz tarama: {n}/5',
           quotaOut: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.',
           fixLabel: 'Düzeltme',
+          downloadPdf: 'PDF Raporu İndir',
           warn: {
             error_response: 'Hedef {status} hata kodu döndürdü; ölçülen başlıklar normal sayfanınkinden farklı olabilir.',
             no_html_body: 'Yanıt HTML değildi; sayfa içeriğine dayalı kontroller atlandı.'
@@ -2219,6 +2224,7 @@
           quota: 'Free scans left: {n}/5',
           quotaOut: 'You have used your free scans. Upgrade to Premium for unlimited scanning.',
           fixLabel: 'Fix',
+          downloadPdf: 'Download PDF Report',
           warn: {
             error_response: 'The target returned status {status}; the headers measured may differ from the normal page.',
             no_html_body: 'The response was not HTML, so content-based checks were skipped.'
@@ -3367,6 +3373,22 @@
         });
       }
       scanSummary.hidden = false;
+
+      // Kayıt oluştuysa PDF bağlantısını göster. Rapor sunucuda, kaydedilmiş
+      // veriden üretilir; buradan skor veya bulgu gönderilmez.
+      var reportBtn = document.getElementById('scanReportBtn');
+      var upgradeBtn = document.getElementById('scanUpgradeBtn');
+      if (reportBtn && upgradeBtn) {
+        if (result.scanId) {
+          reportBtn.href = CONFIG.apiBaseUrl + '/api/report?id=' + encodeURIComponent(result.scanId)
+            + '&lang=' + currentLang;
+          reportBtn.hidden = false;
+          upgradeBtn.hidden = true;
+        } else {
+          reportBtn.hidden = true;
+          upgradeBtn.hidden = false;
+        }
+      }
 
       setQuotaFromServer(result.quota);
       toast(t('toast.scanDone', { n: result.summary.failed }), result.summary.failed ? 'info' : 'success');
