@@ -315,19 +315,51 @@ Aynı motor yerel geliştirmede github.com için 53 veriyordu; aradaki fark
 ve sertifikayı değiştirmesiydi. **Tarama sonuçları yalnızca üretimden
 alındığında güvenilirdir.**
 
-### Hız sınırı — bilinen sınırlama
+### Hız sınırı ve ücretsiz kota — sunucu tarafında, kalıcı
 
-`api/scan.js` içindeki sayaç **bellek içidir**: sunucusuz ortamda her örneğin
-kendi sayacı olur, yani IP başına 10 dakikada 12 tarama sınırı kesin değildir.
-Ciddi kötüye kullanım için kalıcı bir depo gerekir (Upstash Redis, Vercel KV).
-Bu, ödeme entegrasyonundan önce kapatılması gereken bir açıktır.
+Sınırların ikisi de merkezî bir depoda (Upstash Redis, REST üzerinden) tutulur.
+Bellek içi sayaç kullanılmaz: sunucusuz ortamda her fonksiyon örneğinin kendi
+sayacı olur ve istemci farklı örneklere düşerek sınırı kolayca aşar.
 
-### 5 ücretsiz tarama
+| Sınır | Anahtar | Değer |
+|---|---|---|
+| IP hız sınırı | IP'nin SHA-256 özeti | 10 dakikada 12 tarama |
+| Ücretsiz kota | Sunucunun verdiği oturum kimliği | 5 tarama |
 
-Sayaç `localStorage.freeScansUsed` içinde tutulur ve kullanıcı tarayıcı
-verisini temizleyerek sıfırlayabilir. Bu bilinçli bir tercihtir: amaç kayıt
-zorunluluğu olmadan ürünü denetmek. Kötüye kullanımı asıl engelleyen sunucu
-tarafındaki hız sınırıdır. Hak dolduğunda kayıt modalı açılır.
+**Atomiklik:** kontrol ve artırma tek bir Lua script'inde yapılır. Ayrı GET +
+INCR çağrıları yarış koşuluna açıktır; eşzamanlı iki istek son hakkı iki kez
+harcayabilirdi.
+
+**Kota iadesi:** hedefe ulaşılamadığında (zaman aşımı, DNS hatası, ulaşılamaz)
+hak geri verilir. Kullanıcının hatası olmayan bir başarısızlık ücretsiz hakkını
+yakmamalı.
+
+**Oturum kimliği:** `cl_sid` çerezi, sunucunun ürettiği 256 bit rastgele
+değerdir; `HttpOnly; Secure; SameSite=Lax`. JavaScript okuyamaz. Tarayıcıdaki
+`localStorage` yalnızca kalan hakkı **göstermek** için kullanılır; kota kararı
+her zaman sunucuda verilir.
+
+**IP tespiti:** `X-Forwarded-For`un tamamına güvenilmez — istemci başına sahte
+adres ekleyip sınırı atlayabilir. Öncelik `x-vercel-forwarded-for`, sonra
+`x-real-ip`; XFF'e düşülürse **en sağdaki** değer alınır. IP ham saklanmaz,
+SHA-256 özeti anahtar olarak kullanılır.
+
+**Depo yoksa ne olur:** tarama ucu `503 service_unavailable` döndürür ve
+**tarama yapılmaz**. Sınır uygulanamıyorken ucu açık bırakmak, ücretsiz katmanı
+sınırsız hâle getirirdi. Bu bilinçli bir fail-closed tercihidir.
+
+### Kurulum: Upstash Redis
+
+1. Vercel → proje `cyberlionai` → **Storage** → Marketplace'ten **Upstash Redis**
+   ekleyin (ücretsiz katman bu kullanım için yeterlidir).
+2. Entegrasyon şu ortam değişkenlerini otomatik ekler; eklemezse elle girin:
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+3. Production, Preview ve Development ortamlarının üçüne de tanımlayın.
+4. Yeniden deploy edin (env değişikliği mevcut dağıtımı güncellemez).
+
+> Anahtar değerleri **hiçbir zaman** kod deposuna, README'ye veya sohbete
+> yazılmaz; yalnızca Vercel'in Environment Variables ekranına girilir.
 
 ### Yerel geliştirme
 
@@ -342,3 +374,32 @@ yazılabilir (statik dosyalar + `api/scan.js`'i doğrudan require eden bir yol).
 - **Tarama geçmişi:** `GET /api/scan/{id}` ve veritabanına yazma; şu an sonuç
   yalnızca tarayıcıda gösteriliyor, saklanmıyor.
 - **PDF rapor:** tarama sonucu ekranda; indirilebilir rapor henüz yok.
+
+
+## Tarama geçmişi ve PDF raporu
+
+Tarama sonuçları `public.cl_scans` tablosuna kaydedilir; tarama kutusundaki
+**Geçmiş** bağlantısı bu oturuma ait taramaları listeler. Her kayıt için PDF
+raporu indirilebilir; kayıtlar tek tek veya toptan silinebilir.
+
+**Sahiplik:** sunucunun verdiği `cl_sid` çerezi (256 bit rastgele, HttpOnly).
+Tarayıcı veritabanına hiç bağlanmaz — okuma ve yazma yalnızca `service_role`
+kullanan sunucu uçlarından geçer ve sahiplik filtresi her sorgunun içindedir.
+`service_role` RLS'i baypas ettiği için bu uygulama katmanı kontrolü zorunludur.
+
+**Gizlilik:** yalnızca normalize edilmiş host saklanır. Tam URL, path, query
+string, çerez ve ham başlık değerleri hiçbir aşamada yazılmaz. Bulgulardan
+`detail` alanı bilerek çıkarılır; yalnızca `id/severity/status/note` kaydedilir.
+
+**PDF:** `api/_lib/pdf.js` bağımlılıksız bir PDF yazıcıdır. Türkçe karakterler
+için gerçek TrueType font gömer (Work Sans, OFL). Rapor yalnızca kaydedilmiş
+satırdan üretilir; istemciden gelen skora güvenilmez. Dosya adı
+`cyberlionai-security-report-<host>-<YYYY-MM-DD>.pdf`.
+
+Ayrıntılı uç sözleşmeleri: `docs/api.md`.
+
+### Supabase yoksa
+
+Tarama çalışmaya devam eder, yalnızca geçmiş kaydı yapılmaz (`scanId: null`)
+ve geçmiş paneli "kullanılamıyor" durumunu gösterir. Hız sınırının aksine
+burada fail-closed uygulanmaz: geçmiş bir kolaylıktır, güvenlik kontrolü değil.

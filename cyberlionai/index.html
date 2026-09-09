@@ -157,6 +157,10 @@
     border-radius: 4px;
   }
 
+  /* hidden özniteliği, açık display kuralı olan elemanlarda (ör. .btn ile gelen
+     inline-flex) etkisiz kalır. Bu kural onu her durumda geçerli kılar. */
+  [hidden] { display: none !important; }
+
   /* Ekran okuyucular için gizli metin */
   .sr-only {
     position: absolute; width: 1px; height: 1px;
@@ -930,6 +934,46 @@
   @keyframes toastOut { to { opacity: 0; transform: translateY(10px) scale(0.97); } }
 
   /* ============================================================
+     12b. TARAMA GEÇMİŞİ
+     ============================================================ */
+  .history__head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 18px;
+  }
+  .history__list { display: grid; gap: 10px; margin: 0 0 16px; }
+
+  .hist-item {
+    display: grid; gap: 4px 14px; align-items: center;
+    grid-template-columns: auto 1fr auto;
+    padding: 14px 16px; border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline); background: var(--surface-raised);
+  }
+  .hist-item__score {
+    grid-row: span 2; width: 52px; height: 52px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-heading); font-weight: 800; font-size: 1.05rem;
+    border: 1px solid var(--hairline);
+  }
+  .hist-item__host {
+    font-weight: 600; overflow-wrap: anywhere;
+  }
+  .hist-item__meta { font-size: 0.78rem; color: var(--text-gray); }
+  .hist-item__actions { grid-row: span 2; display: flex; gap: 7px; align-items: center; }
+  .hist-item__actions .icon-btn { width: 34px; height: 34px; }
+  .hist-item__actions a.icon-btn { text-decoration: none; }
+
+  .history__state {
+    padding: 30px 16px; text-align: center; color: var(--text-gray); font-size: 0.9rem;
+  }
+  .history__state i { display: block; font-size: 1.6rem; margin-bottom: 10px; color: var(--gold-primary); opacity: .7; }
+  .history__foot { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+
+  @media (max-width: 520px) {
+    .hist-item { grid-template-columns: auto 1fr; }
+    .hist-item__actions { grid-row: auto; grid-column: 1 / -1; justify-content: flex-end; margin-top: 4px; }
+  }
+
+  /* ============================================================
      13b. CANLI DESTEK ASİSTANI
      ============================================================ */
   .assist-launch {
@@ -1307,7 +1351,10 @@
           <p class="scan__note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
             <span data-i18n="hero.scanNote">Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.</span>
-            <span id="scanQuota" style="margin-left:auto;color:var(--gold-primary);white-space:nowrap"></span>
+            <button type="button" id="historyOpen" style="margin-left:auto;background:none;border:none;
+              color:var(--gold-primary);font:inherit;font-size:0.78rem;cursor:pointer;text-decoration:underline;
+              text-underline-offset:3px;white-space:nowrap" data-i18n="history.open">Geçmiş</button>
+            <span id="scanQuota" style="color:var(--gold-primary);white-space:nowrap"></span>
           </p>
 
           <div class="scan__output" id="scanOutput" aria-live="polite">
@@ -1317,7 +1364,11 @@
             <div class="scan__summary" id="scanSummary" hidden>
               <span class="scan__score" id="scanScore">--<span>/100</span></span>
               <p data-i18n="scan.demoNote">Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.</p>
-              <button type="button" class="btn btn--gold btn--sm" data-open-modal data-i18n="scan.fullReport">Tam Raporu Al</button>
+              <a class="btn btn--gold btn--sm" id="scanReportBtn" hidden>
+                <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                <span data-i18n="scan.downloadPdf">PDF Raporu İndir</span>
+              </a>
+              <button type="button" class="btn btn--gold btn--sm" id="scanUpgradeBtn" data-open-modal data-i18n="scan.fullReport">Tam Raporu Al</button>
             </div>
           </div>
         </div>
@@ -1720,6 +1771,38 @@
   </div>
 
   <!-- ==========================================================
+       TARAMA GEÇMİŞİ
+       ========================================================== -->
+  <div class="modal" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyTitle" hidden>
+    <div class="modal__box" role="document" style="max-width:620px">
+      <button type="button" class="modal__close" data-close-modal aria-label="Kapat" data-i18n-aria="modal.close">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+
+      <div class="history__head">
+        <div>
+          <h2 class="modal__title" id="historyTitle" style="margin-bottom:4px" data-i18n="history.title">Tarama Geçmişi</h2>
+          <p class="modal__subtitle" style="margin:0" data-i18n="history.subtitle">Bu tarayıcıdan yaptığınız taramalar.</p>
+        </div>
+      </div>
+
+      <div id="historyBody">
+        <div class="history__state" id="historyState">
+          <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+          <span data-i18n="history.loading">Yükleniyor…</span>
+        </div>
+      </div>
+
+      <ul class="history__list" id="historyList"></ul>
+
+      <div class="history__foot">
+        <button type="button" class="btn btn--ghost btn--sm" id="historyMore" hidden data-i18n="history.more">Daha Fazla Yükle</button>
+        <button type="button" class="btn btn--muted btn--sm" id="historyClear" hidden data-i18n="history.clear">Tüm Geçmişi Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================
        DÜZELTME YÖNTEMİ ONAY MODALI
        ========================================================== -->
   <div class="modal" id="modeModal" role="dialog" aria-modal="true" aria-labelledby="modeModalTitle" hidden>
@@ -1920,6 +2003,7 @@
           quota: 'Kalan ücretsiz tarama: {n}/5',
           quotaOut: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.',
           fixLabel: 'Düzeltme',
+          downloadPdf: 'PDF Raporu İndir',
           warn: {
             error_response: 'Hedef {status} hata kodu döndürdü; ölçülen başlıklar normal sayfanınkinden farklı olabilir.',
             no_html_body: 'Yanıt HTML değildi; sayfa içeriğine dayalı kontroller atlandı.'
@@ -1940,7 +2024,9 @@
             rate_limited: 'Çok fazla istek gönderdiniz. Lütfen biraz sonra tekrar deneyin.',
             method_not_allowed: 'Geçersiz istek.',
             scan_failed: 'Tarama tamamlanamadı. Lütfen tekrar deneyin.',
-            network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.'
+            network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.',
+            service_unavailable: 'Tarama servisi şu anda yapılandırılıyor. Kısa süre sonra tekrar deneyin.',
+            quota_exceeded: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.'
           },
           note: {
             unsafe_inline: "script-src 'unsafe-inline' içeriyor; koruma büyük ölçüde etkisiz",
@@ -1969,6 +2055,20 @@
             tls_cert:      { name: 'SSL sertifikası', fix: 'Sertifikayı yenileyin ve zincirin tam olduğundan emin olun.' },
             tls_legacy:    { name: 'Eski TLS sürümleri', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' }
           }
+        },
+        history: {
+          open: 'Geçmiş', title: 'Tarama Geçmişi',
+          subtitle: 'Bu tarayıcıdan yaptığınız taramalar.',
+          loading: 'Yükleniyor…',
+          empty: 'Henüz tarama yapmadınız. Yukarıdaki alandan başlayabilirsiniz.',
+          unavailable: 'Geçmiş şu anda kullanılamıyor.',
+          error: 'Geçmiş yüklenemedi. Lütfen tekrar deneyin.',
+          more: 'Daha Fazla Yükle', clear: 'Tüm Geçmişi Sil',
+          pdf: 'PDF raporu indir', remove: 'Bu kaydı sil',
+          checks: '{passed} geçti · {failed} kaldı · {skipped} ölçülemedi',
+          deleted: 'Kayıt silindi.', clearedAll: '{n} kayıt silindi.',
+          deleteFailed: 'Silme işlemi başarısız oldu.',
+          confirmClear: 'Tüm tarama geçmişiniz silinecek. Emin misiniz?'
         },
         assist: {
           launch: 'Canlı Asistan', title: 'Cyber Lion Asistan', status: 'Çevrimiçi',
@@ -2217,6 +2317,7 @@
           quota: 'Free scans left: {n}/5',
           quotaOut: 'You have used your free scans. Upgrade to Premium for unlimited scanning.',
           fixLabel: 'Fix',
+          downloadPdf: 'Download PDF Report',
           warn: {
             error_response: 'The target returned status {status}; the headers measured may differ from the normal page.',
             no_html_body: 'The response was not HTML, so content-based checks were skipped.'
@@ -2237,7 +2338,9 @@
             rate_limited: 'Too many requests. Please try again shortly.',
             method_not_allowed: 'Invalid request.',
             scan_failed: 'The scan could not be completed. Please try again.',
-            network: 'Could not reach the server. Check your connection.'
+            network: 'Could not reach the server. Check your connection.',
+            service_unavailable: 'The scanning service is being configured. Please try again shortly.',
+            quota_exceeded: 'You have used your free scans. Upgrade to Premium for unlimited scanning.'
           },
           note: {
             unsafe_inline: "script-src allows 'unsafe-inline'; most of the protection is lost",
@@ -2266,6 +2369,20 @@
             tls_cert:      { name: 'SSL certificate', fix: 'Renew the certificate and make sure the chain is complete.' },
             tls_legacy:    { name: 'Legacy TLS versions', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' }
           }
+        },
+        history: {
+          open: 'History', title: 'Scan History',
+          subtitle: 'Scans made from this browser.',
+          loading: 'Loading…',
+          empty: 'No scans yet. Start from the field above.',
+          unavailable: 'History is currently unavailable.',
+          error: 'History could not be loaded. Please try again.',
+          more: 'Load More', clear: 'Delete All History',
+          pdf: 'Download PDF report', remove: 'Delete this record',
+          checks: '{passed} passed · {failed} failed · {skipped} not measured',
+          deleted: 'Record deleted.', clearedAll: '{n} records deleted.',
+          deleteFailed: 'Deletion failed.',
+          confirmClear: 'Your entire scan history will be deleted. Are you sure?'
         },
         assist: {
           launch: 'Live Assistant', title: 'Cyber Lion Assistant', status: 'Online',
@@ -3025,6 +3142,7 @@
         }).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
+            // Sunucu kotayı yanıtla birlikte bildirir; istemci sayacı buna uyar.
             return data;
           });
         }, function () {
@@ -3100,6 +3218,30 @@
         return API.request('/api/remediation/' + encodeURIComponent(scanId) + '/status');
       },
 
+      /** GET /api/history — bu oturuma ait taramalar (sayfalı) */
+      listHistory: function (limit, offset) {
+        return fetch(CONFIG.apiBaseUrl + '/api/history?limit=' + limit + '&offset=' + offset, {
+          headers: { 'Accept': 'application/json' }
+        }).then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (!res.ok) throw (data && data.error) || { code: 'error' };
+            return data;
+          });
+        }, function () { throw { code: 'network' }; });
+      },
+
+      /** DELETE /api/history — tek kayıt veya tüm geçmiş */
+      deleteHistory: function (id) {
+        var query = id ? '?id=' + encodeURIComponent(id) : '?all=1';
+        return fetch(CONFIG.apiBaseUrl + '/api/history' + query, { method: 'DELETE' })
+          .then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (data) {
+              if (!res.ok) throw (data && data.error) || { code: 'error' };
+              return data;
+            });
+          }, function () { throw { code: 'network' }; });
+      },
+
       /** POST /api/support — asistanın sunucu tarafı (2. kademe) analizi */
       support: function (sessionId, message, context) {
         if (CONFIG.useMockApi) {
@@ -3144,14 +3286,21 @@
     }
 
     /* ---- Ücretsiz tarama hakkı -------------------------------------------
-       Sayaç tarayıcıda tutulur; kullanıcı depolamayı temizleyerek sıfırlayabilir.
-       Kötüye kullanımı asıl engelleyen, sunucudaki IP başına hız sınırıdır.    */
-    function scansUsed() {
+       Karar sunucuda verilir: kota, sunucunun verdiği HttpOnly oturum çerezine
+       bağlı olarak kalıcı depoda tutulur. Buradaki değer yalnızca son sunucu
+       yanıtının gösterimidir; tarayıcı verisi silinse bile sunucudaki sayaç
+       ve IP hız sınırı yerinde kalır.                                        */
+    function scansLeft() {
       var raw = parseInt(store.get(CONFIG.storageKeys.quota), 10);
-      return isNaN(raw) || raw < 0 ? 0 : raw;
+      return isNaN(raw) || raw < 0 ? CONFIG.freeScanLimit : Math.min(raw, CONFIG.freeScanLimit);
     }
-    function scansLeft() { return Math.max(0, CONFIG.freeScanLimit - scansUsed()); }
-    function consumeScan() { store.set(CONFIG.storageKeys.quota, String(scansUsed() + 1)); renderQuota(); }
+
+    /** Sunucunun bildirdiği kalan hakkı gösterime yazar. */
+    function setQuotaFromServer(quota) {
+      if (!quota || typeof quota.remaining !== 'number') return;
+      store.set(CONFIG.storageKeys.quota, String(quota.remaining));
+      renderQuota();
+    }
 
     function renderQuota() {
       var el = document.getElementById('scanQuota');
@@ -3269,12 +3418,9 @@
         var domain = normalizeDomain(raw);
         if (!domain) { toast(t('scan.err.invalid_url'), 'error'); scanInput.focus(); return; }
 
-        if (scansLeft() <= 0) {
-          toast(t('scan.quotaOut'), 'info', 6000);
-          openModal();
-          return;
-        }
-
+        // Yerel sayaç yalnızca gösterim; hak kontrolünü sunucu yapar. Burada
+        // engellenirse, iade edilmiş bir hak yüzünden kullanıcı haksız yere
+        // durdurulabilirdi.
         runScan(domain);
       });
     }
@@ -3359,12 +3505,38 @@
       }
       scanSummary.hidden = false;
 
-      consumeScan();
+      // Kayıt oluştuysa PDF bağlantısını göster. Rapor sunucuda, kaydedilmiş
+      // veriden üretilir; buradan skor veya bulgu gönderilmez.
+      var reportBtn = document.getElementById('scanReportBtn');
+      var upgradeBtn = document.getElementById('scanUpgradeBtn');
+      if (reportBtn && upgradeBtn) {
+        if (result.scanId) {
+          reportBtn.href = CONFIG.apiBaseUrl + '/api/report?id=' + encodeURIComponent(result.scanId)
+            + '&lang=' + currentLang;
+          reportBtn.hidden = false;
+          upgradeBtn.hidden = true;
+        } else {
+          reportBtn.hidden = true;
+          upgradeBtn.hidden = false;
+        }
+      }
+
+      setQuotaFromServer(result.quota);
       toast(t('toast.scanDone', { n: result.summary.failed }), result.summary.failed ? 'info' : 'success');
     }
 
     function renderScanError(err) {
       var code = (err && err.code) || 'scan_failed';
+
+      // Kota sunucuda bitti: gösterimi güncelle ve kayıt modalını aç.
+      if (code === 'quota_exceeded') {
+        setQuotaFromServer({ remaining: 0 });
+        toast(t('scan.quotaOut'), 'info', 6000);
+        openModal();
+        scanOutput.classList.remove('is-active');
+        return;
+      }
+
       scanBar.style.width = '100%';
       scanBar.style.background = 'var(--sev-critical)';
       setStatus(t('scan.err.' + code), 'fa-solid fa-circle-exclamation');
@@ -3612,6 +3784,159 @@
         window.location.href = 'mailto:info@cyberlionai.com?subject=Enterprise';
       });
     }
+
+    /* ==========================================================
+       11a. TARAMA GEÇMİŞİ
+       --------------------------------------------------------
+       Kayıtlar sunucudan, oturum çerezine göre gelir. Bu arayüz hiçbir
+       filtreleme yapmaz; hangi kayıtların görüneceğine sunucu karar verir.
+       ========================================================== */
+    var historyManager = (function () {
+      var PAGE = 10;
+      var openBtn = document.getElementById('historyOpen');
+      var listEl = document.getElementById('historyList');
+      var stateEl = document.getElementById('historyState');
+      var moreBtn = document.getElementById('historyMore');
+      var clearBtn = document.getElementById('historyClear');
+
+      var modal = null;
+      var offset = 0;
+      var loading = false;
+
+      function showState(key, icon) {
+        if (!stateEl) return;
+        stateEl.hidden = false;
+        stateEl.textContent = '';
+        var i = document.createElement('i');
+        i.className = icon;
+        i.setAttribute('aria-hidden', 'true');
+        var span = document.createElement('span');
+        span.textContent = t(key);
+        stateEl.appendChild(i);
+        stateEl.appendChild(span);
+      }
+      function hideState() { if (stateEl) stateEl.hidden = true; }
+
+      function scoreColor(score) {
+        if (typeof score !== 'number') return 'var(--text-gray)';
+        return score >= 80 ? 'var(--sev-low)' : score >= 55 ? 'var(--sev-medium)' : 'var(--sev-critical)';
+      }
+
+      function formatDate(iso) {
+        var d = new Date(iso);
+        if (isNaN(d)) return '';
+        try {
+          return d.toLocaleString(currentLang === 'tr' ? 'tr-TR' : 'en-US',
+            { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch (e) { return iso.slice(0, 16).replace('T', ' '); }
+      }
+
+      /** Tek satır. Tüm metin textContent ile yazılır. */
+      function row(item) {
+        var li = document.createElement('li');
+        li.className = 'hist-item';
+
+        var score = document.createElement('div');
+        score.className = 'hist-item__score';
+        score.style.color = scoreColor(item.score);
+        score.textContent = typeof item.score === 'number' ? String(item.score) : '—';
+
+        var host = document.createElement('div');
+        host.className = 'hist-item__host';
+        host.textContent = item.host;
+
+        var actions = document.createElement('div');
+        actions.className = 'hist-item__actions';
+
+        var pdf = document.createElement('a');
+        pdf.className = 'icon-btn';
+        pdf.href = CONFIG.apiBaseUrl + '/api/report?id=' + encodeURIComponent(item.id) + '&lang=' + currentLang;
+        pdf.setAttribute('aria-label', t('history.pdf'));
+        pdf.title = t('history.pdf');
+        pdf.appendChild(Object.assign(document.createElement('i'), { className: 'fa-solid fa-file-pdf' }));
+
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'icon-btn';
+        del.setAttribute('aria-label', t('history.remove'));
+        del.title = t('history.remove');
+        del.appendChild(Object.assign(document.createElement('i'), { className: 'fa-solid fa-trash-can' }));
+        del.addEventListener('click', function () { removeOne(item.id, li, del); });
+
+        actions.appendChild(pdf);
+        actions.appendChild(del);
+
+        var meta = document.createElement('div');
+        meta.className = 'hist-item__meta';
+        meta.textContent = formatDate(item.scanned_at) + ' · ' + t('history.checks', {
+          passed: item.checks_passed, failed: item.checks_failed, skipped: item.checks_skipped
+        });
+
+        li.appendChild(score);
+        li.appendChild(host);
+        li.appendChild(actions);
+        li.appendChild(meta);
+        return li;
+      }
+
+      function removeOne(id, li, btn) {
+        btn.disabled = true;
+        API.deleteHistory(id).then(function () {
+          li.remove();
+          toast(t('history.deleted'), 'success');
+          if (!listEl.children.length) { showState('history.empty', 'fa-solid fa-inbox'); clearBtn.hidden = true; }
+        }).catch(function () {
+          btn.disabled = false;
+          toast(t('history.deleteFailed'), 'error');
+        });
+      }
+
+      function clearAll() {
+        if (!window.confirm(t('history.confirmClear'))) return;
+        clearBtn.disabled = true;
+        API.deleteHistory(null).then(function (res) {
+          listEl.textContent = '';
+          moreBtn.hidden = true;
+          clearBtn.hidden = true;
+          showState('history.empty', 'fa-solid fa-inbox');
+          toast(t('history.clearedAll', { n: (res && res.deleted) || 0 }), 'success');
+        }).catch(function () {
+          toast(t('history.deleteFailed'), 'error');
+        }).then(function () { clearBtn.disabled = false; });
+      }
+
+      function load(reset) {
+        if (loading) return;
+        loading = true;
+        if (reset) { offset = 0; listEl.textContent = ''; moreBtn.hidden = true; clearBtn.hidden = true; }
+        showState('history.loading', 'fa-solid fa-spinner fa-spin');
+
+        API.listHistory(PAGE, offset).then(function (data) {
+          hideState();
+          (data.items || []).forEach(function (item) { listEl.appendChild(row(item)); });
+          offset += (data.items || []).length;
+          moreBtn.hidden = !data.hasMore;
+          clearBtn.hidden = !listEl.children.length;
+          if (!listEl.children.length) showState('history.empty', 'fa-solid fa-inbox');
+        }).catch(function (err) {
+          var code = err && err.code;
+          showState(code === 'history_unavailable' ? 'history.unavailable' : 'history.error',
+            'fa-solid fa-circle-exclamation');
+          log('history error', code);
+        }).then(function () { loading = false; });
+      }
+
+      function init() {
+        var box = document.getElementById('historyModal');
+        if (!box || !openBtn) return;
+        modal = createModal(box);
+        openBtn.addEventListener('click', function () { modal.open(); load(true); });
+        if (moreBtn) moreBtn.addEventListener('click', function () { load(false); });
+        if (clearBtn) clearBtn.addEventListener('click', clearAll);
+      }
+
+      return { init: init, reload: function () { if (modal) load(true); } };
+    })();
 
     /* ==========================================================
        11b. CANLI DESTEK ASİSTANI
@@ -3963,6 +4288,7 @@
 
       modeManager.init();
       assistant.init();
+      historyManager.init();
 
       var detected = detectLanguage();
       applyLanguage(detected.lang, { silent: !detected.fromUser });

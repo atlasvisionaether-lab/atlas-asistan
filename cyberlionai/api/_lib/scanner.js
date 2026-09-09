@@ -18,6 +18,11 @@ const TLS_TIMEOUT_MS = 6000;
 const MAX_HTML_BYTES = 512 * 1024;   // 512 KB'den sonrası okunmaz
 const MAX_REDIRECTS = 4;
 
+/* Rapor ve motor sürümü: kaydedilen her taramaya ve PDF'e yazılır, böylece
+   eski bir sonuç hangi kural setiyle üretildiği bilinerek okunabilir. */
+const SCANNER_VERSION = '1.1.0';
+const REPORT_VERSION = '1';
+
 /* ============================================================
    Ağ yardımcıları
    ============================================================ */
@@ -393,8 +398,10 @@ async function scanSite(rawUrl) {
     },
     durationMs: Date.now() - started,
     scannedAt: new Date().toISOString(),
+    scannerVersion: SCANNER_VERSION,
+    reportVersion: REPORT_VERSION,
     isDemo: false
   };
 }
 
-module.exports = { scanSite, WEIGHTS };
+module.exports = { scanSite, WEIGHTS, SCANNER_VERSION, REPORT_VERSION };
