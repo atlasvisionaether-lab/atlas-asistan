@@ -1257,10 +1257,10 @@
           </a>
           <p data-i18n="footer.about">Yapay zeka destekli sürekli güvenlik taraması. Zafiyetleri saldırganlardan önce bulun, önceliklendirin ve kapatın.</p>
           <div class="socials">
-            <a href="#" aria-label="LinkedIn" rel="noopener"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
-            <a href="#" aria-label="X / Twitter" rel="noopener"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a>
-            <a href="#" aria-label="GitHub" rel="noopener"><i class="fa-brands fa-github" aria-hidden="true"></i></a>
-            <a href="#" aria-label="YouTube" rel="noopener"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
+            <a href="https://www.linkedin.com/company/cyberlionai" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
+            <a href="https://x.com/cyberlionai" aria-label="X" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a>
+            <a href="https://github.com/cyberlionai" aria-label="GitHub" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github" aria-hidden="true"></i></a>
+            <a href="https://www.youtube.com/@cyberlionai" aria-label="YouTube" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
           </div>
         </div>
 
@@ -1287,9 +1287,9 @@
       <div class="footer__bottom">
         <span data-i18n="footer.rights">© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.</span>
         <nav class="footer__legal" aria-label="Yasal">
-          <a href="#" data-i18n="footer.privacy">Gizlilik Politikası</a>
-          <a href="#" data-i18n="footer.terms">Kullanım Şartları</a>
-          <a href="#" data-i18n="footer.cookies">Çerez Politikası</a>
+          <a href="/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a>
+          <a href="/kullanim-sartlari" data-i18n="footer.terms">Kullanım Şartları</a>
+          <a href="/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a>
         </nav>
       </div>
     </div>
@@ -1334,7 +1334,10 @@
         <button type="submit" class="btn btn--gold btn--block" id="authSubmit" data-i18n="modal.submit">Hesap Oluştur</button>
       </form>
 
-      <p class="modal__foot" data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</p>
+      <p class="modal__foot">
+        <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
+        <a href="/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
+      </p>
     </div>
   </div>
 
@@ -1343,7 +1346,10 @@
 
   <!-- Çerez bildirimi -->
   <div class="cookie" id="cookieBar" role="region" aria-label="Çerez bildirimi">
-    <p data-i18n="cookie.text">Deneyiminizi iyileştirmek için çerez kullanıyoruz. Tercihinizi istediğiniz zaman değiştirebilirsiniz.</p>
+    <p>
+      <span data-i18n="cookie.text">Deneyiminizi iyileştirmek için çerez kullanıyoruz. Tercihinizi istediğiniz zaman değiştirebilirsiniz.</span>
+      <a href="/cerez-politikasi" data-i18n="cookie.more">Çerez Politikası</a>
+    </p>
     <div class="cookie__actions">
       <button type="button" class="btn btn--gold btn--sm" id="cookieAccept" data-i18n="cookie.accept">Kabul Et</button>
       <button type="button" class="btn btn--muted btn--sm" id="cookieDecline" data-i18n="cookie.decline">Reddet</button>
@@ -1524,11 +1530,12 @@
           subtitle: 'Hesabınızı oluşturun ve güvenlik avantajlarından yararlanın.',
           email: 'E-posta', password: 'Şifre', password2: 'Şifre Tekrar',
           remember: 'Beni Hatırla', submit: 'Hesap Oluştur', close: 'Kapat',
-          foot: "Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz."
+          foot: "Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.",
+          termsLink: 'Şartları oku'
         },
         cookie: {
           text: 'Deneyiminizi iyileştirmek için çerez kullanıyoruz. Tercihinizi istediğiniz zaman değiştirebilirsiniz.',
-          accept: 'Kabul Et', decline: 'Reddet'
+          accept: 'Kabul Et', decline: 'Reddet', more: 'Çerez Politikası'
         },
         toast: {
           trial: 'Ücretsiz sürüm zaten aktif — yukarıdaki alandan sitenizi hemen tarayabilirsiniz.',
@@ -1646,11 +1653,12 @@
           subtitle: 'Create your account and unlock security features.',
           email: 'Email', password: 'Password', password2: 'Confirm Password',
           remember: 'Remember Me', submit: 'Create Account', close: 'Close',
-          foot: 'By signing up you agree to the Terms of Use and Privacy Policy.'
+          foot: 'By signing up you agree to the Terms of Use and Privacy Policy.',
+          termsLink: 'Read the terms'
         },
         cookie: {
           text: 'We use cookies to improve your experience. You can change your preference at any time.',
-          accept: 'Accept', decline: 'Decline'
+          accept: 'Accept', decline: 'Decline', more: 'Cookie Policy'
         },
         toast: {
           trial: 'The free tier is already live — scan your site from the field above.',
@@ -2377,6 +2385,7 @@
     var modalClose = document.getElementById('modalClose');
     var authForm = document.getElementById('authForm');
     var lastFocused = null;
+    var hideTimer = null;   // kapanış geçişinin sonunda hidden'ı ayarlayan zamanlayıcı
 
     function focusables() {
       return modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -2384,6 +2393,8 @@
 
     function openModal() {
       if (!modal) return;
+      // Önceki kapanışın bekleyen zamanlayıcısı, yeni açılan modalı gizlemesin
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
       lastFocused = document.activeElement;
       modal.hidden = false;
       void modal.offsetWidth;            // geçişin çalışması için reflow
@@ -2395,9 +2406,10 @@
 
     function closeModal() {
       if (!modal) return;
+      if (hideTimer) clearTimeout(hideTimer);
       modal.classList.remove('is-open');
       document.body.style.overflow = '';
-      setTimeout(function () { modal.hidden = true; }, 320);
+      hideTimer = setTimeout(function () { modal.hidden = true; hideTimer = null; }, 320);
       if (lastFocused && lastFocused.focus) lastFocused.focus();
     }
 

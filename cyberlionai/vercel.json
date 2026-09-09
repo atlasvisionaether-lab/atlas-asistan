@@ -1,0 +1,70 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; script-src 'self' 'sha256-TBN8Q6psxPFqMOdGUWIBFIa9Btk+pnLR0R+6W1rTuNo=' 'sha256-XFpZWZkFF6aM74UA6wSrgvarZKAi01ihFiXGFgX8j+8=' 'sha256-3r+JarKUDjIQCNRex5upJytL3yv6bLqgtLEVtOFgpSk=' 'sha256-xD2cy5lHZVFGbhb7smsSyyCDwLsYnBbb7CD6QEr6DWs=' 'sha256-tJCmpg4lwMPoQeFDZXbllbzmbW59QNPEbgmpgXsOckE=' 'sha256-bbJNHos/F0a9fz/jIB0MkIfkH2Hg+IwDY9rjjO4Twls=' 'sha256-kKQjffethgWQEkt+syPxj8ZsF92rKx3S1gGE86riSvI=' 'sha256-o3fXLRjysbcdiKWo58HwQjXARPGjXrIHkrCVe3NAz60='; connect-src 'self' https://ipapi.co; upgrade-insecure-requests"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "off"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).(png|jpg|jpeg|svg|webp|ico|woff2)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/privacy",
+      "destination": "/gizlilik-politikasi",
+      "permanent": true
+    },
+    {
+      "source": "/terms",
+      "destination": "/kullanim-sartlari",
+      "permanent": true
+    },
+    {
+      "source": "/cookies",
+      "destination": "/cerez-politikasi",
+      "permanent": true
+    }
+  ]
+}
