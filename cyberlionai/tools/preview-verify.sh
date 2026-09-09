@@ -33,6 +33,9 @@ BASE="${BASE:?preview adresi gerekli}"
 BYPASS="${BYPASS:?bypass degeri gerekli}"
 TEST_EMAIL="${TEST_EMAIL:?test e-posta adresi gerekli}"
 TEST_PASSWORD="${TEST_PASSWORD:?test sifresi gerekli}"
+# GitHub secret'ine yapistirilirken sona kacan satir sonu/bosluk bypass'i sessizce
+# gecersiz kilar; deger zaten alfanumerik oldugu icin bosluklari atmak guvenli.
+BYPASS="$(printf '%s' "$BYPASS" | tr -d '[:space:]')"
 TOKEN_HASH="${TOKEN_HASH:-}"
 # Taranacak hedef. Varsayilan kendi alan adimiz; yerel provada degistirilir.
 TARGET="${TARGET:-cyberlionai.com}"
@@ -69,15 +72,34 @@ mask() { printf '%s' "$1" | sed -E 's/(.{2}).*(.{2})/\1***\2/'; }
 echo "Hedef        : $BASE"
 echo "Test adresi  : $(printf '%s' "$TEST_EMAIL" | sed -E 's/(.).*(@.*)/\1***\2/')"
 echo "Faz          : $([ -z "$TOKEN_HASH" ] && echo '1 (kayit)' || echo '2 (onay ve sonrasi)')"
+# Degerin kendisi degil, yalnizca uzunlugu: yanlis/eksik secret'i ayirt etmeye yeter.
+echo "Bypass       : ${#BYPASS} karakter (Vercel'in urettigi deger 32'dir)"
 
 ################################################################################
 head1 "0. Erişim ve servis durumu"
 ################################################################################
+# Korumayi iki bicimde gecmeyi deneriz. Baslik bicimi her istekte gonderiliyor;
+# ama Vercel bazi yollarda yalnizca sorgu parametresiyle alinan bypass cerezini
+# kabul ediyor. Bu on istek cerezi bir kez alir, sonrasinda kavanozdaki cerez
+# tum istekleri tasir. Sorgu parametresi loga dusmez; yalnizca sonuc yazilir.
+curl -sS -o /dev/null -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
+  "$BASE/?x-vercel-protection-bypass=$BYPASS&x-vercel-set-bypass-cookie=samesitenone" \
+  -H "x-vercel-protection-bypass: $BYPASS" >/dev/null 2>&1 || true
+grep -qi '_vercel_jwt' "$COOKIE_JAR" 2>/dev/null \
+  && echo "  bypass cerezi alindi" \
+  || echo "  bypass cerezi alinamadi - yalnizca baslik bicimi denenecek"
+
 api GET /api/auth/me
 check "$STATUS" "200" "preview erişilebilir (SSO bypass çalışıyor)"
 if [ "$STATUS" != "200" ]; then
-  echo "  Yanıt: $(head -c 200 "$BODY")"
-  echo "  Bypass başlığı kabul edilmediyse token yanlış veya süresi dolmuş olabilir."
+  echo "  Durum   : $STATUS"
+  echo "  Location: $(hdr location)"
+  echo "  Yanit   : $(head -c 200 "$BODY")"
+  echo
+  echo "  302 + sso-api/_vercel/sso yonlendirmesi = koruma bypass'i kabul etmedi."
+  echo "  Olasi nedenler: GitHub secret'indaki deger Vercel'deki 'Protection Bypass"
+  echo "  for Automation' degeriyle birebir ayni degil, ya da Vercel'de bypass hic"
+  echo "  olusturulmamis veya yeniden uretilmis."
   exit 1
 fi
 check "$(jq -r '.available' "$BODY")" "true" "kimlik servisi yapılandırılmış"
@@ -120,6 +142,12 @@ if [ -z "$TOKEN_HASH" ]; then
   check "$STATUS" "200" "kayıt isteği kabul edildi"
   check "$(jq -r '.needsConfirmation' "$BODY")" "true" "onay e-postası bekleniyor"
   grep -qi 'cl_at=' "$HDR" && fail "onaydan ÖNCE oturum açıldı" || pass "onaydan önce oturum açılmadı"
+
+  # Bypass cerezi (_vercel_jwt) artefakta tasinmaz: preview'a erisim veren bir
+  # kimlik bilgisi ve 2. faz onu zaten kendi on istegiyle yeniden aliyor.
+  if grep -qi '_vercel_jwt' "$COOKIE_JAR" 2>/dev/null; then
+    grep -vi '_vercel_jwt' "$COOKIE_JAR" > "$WORK/jar" && mv "$WORK/jar" "$COOKIE_JAR"
+  fi
 
   echo
   echo "1. faz tamam. Çerez kavanozu: $COOKIE_JAR"

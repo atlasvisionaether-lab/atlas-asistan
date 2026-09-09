@@ -38,6 +38,10 @@ on:
         description: 2. faz — 1. fazın çalışma numarası (çerezler ve şifre oradan alınır)
         required: false
         default: ''
+      ref:
+        description: Doğrulama betiğinin okunacağı dal (boşsa main)
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -48,7 +52,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # Is akisinin kendisi her zaman main'den kosar (workflow_dispatch boyle
+      # calisir), ama dogrulama betigi gelistirme dalindan okunabilsin diye ref
+      # ayri: betikteki her duzeltme icin main'e merge gerekmez.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Girdileri doğrula
         run: |
