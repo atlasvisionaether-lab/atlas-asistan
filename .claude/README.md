@@ -21,11 +21,11 @@ Ortam değişkenleriyle hedef değiştirilebilir:
 | `CLAUDE_CONFIG_DIR` | `~/.claude` | Ajanların kurulacağı Claude Code dizini |
 | `AGENCY_AGENTS_DIR` | `~/.cache/agency-agents` | Depo klonunun tutulduğu yer |
 
-## Her oturumda otomatik çalıştırmak (opsiyonel)
+## Her oturumda otomatik çalıştırma
 
 Claude Code'un web/uzak oturumları geçici konteynerlerde çalışır, bu yüzden
-`~/.claude/agents/` her yeni oturumda boş başlar. Otomatik kurulum için
-`.claude/settings.json` dosyasına şu `SessionStart` hook'unu ekleyin:
+`~/.claude/agents/` her yeni oturumda boş başlar. Bunu kapatmak için
+`.claude/settings.json` içindeki `SessionStart` hook'unu kaldırın:
 
 ```json
 {
