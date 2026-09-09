@@ -1,0 +1,2562 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0f" />
+
+  <title>Cyber Lion AI - Yapay Zeka ile Güvenlik Taraması</title>
+  <meta name="description" content="Web sitenizdeki güvenlik açıklarını AI ile tespit edin. Ücretsiz deneme, profesyonel raporlama." />
+  <meta name="keywords" content="güvenlik, siber güvenlik, AI, tarama, zafiyet, SSL, OWASP, penetrasyon testi" />
+  <meta name="author" content="Cyber Lion AI" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Cyber Lion AI" />
+  <meta property="og:title" content="Cyber Lion AI - Yapay Zeka Destekli Güvenlik Tarama Platformu" />
+  <meta property="og:description" content="Web sitenizdeki güvenlik açıklarını AI ile tespit edin. Ücretsiz deneme, profesyonel raporlama." />
+  <meta property="og:url" content="https://cyberlionai.com/" />
+  <meta property="og:locale" content="tr_TR" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <meta property="og:image" content="https://cyberlionai.com/og-image.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cyber Lion AI - AI-Powered Security Scanning" />
+  <meta name="twitter:description" content="Detect, report, and fix vulnerabilities in your website." />
+  <meta name="twitter:image" content="https://cyberlionai.com/og-image.png" />
+
+  <!-- Çoklu dil / hreflang -->
+  <link rel="canonical" href="https://cyberlionai.com/" />
+  <link rel="alternate" href="https://cyberlionai.com/tr/" hreflang="tr" />
+  <link rel="alternate" href="https://cyberlionai.com/en/" hreflang="en" />
+  <link rel="alternate" href="https://cyberlionai.com/" hreflang="x-default" />
+
+  <!-- Fontlar -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z' fill='%230a0a0f' stroke='%23d4af37' stroke-width='2.5'/%3E%3Ccircle cx='24' cy='22' r='9' fill='none' stroke='%23d4af37' stroke-width='2.5'/%3E%3C/svg%3E" />
+
+  <style>
+  /* ============================================================
+     1. TASARIM BELİRTEÇLERİ (Design Tokens)
+     ============================================================ */
+  :root {
+    /* Renkler */
+    --primary-black: #0a0a0f;
+    --secondary-black: #12121a;
+    --card-black: #1a1a24;
+    --gold-primary: #d4af37;
+    --gold-light: #ffdf00;
+    --gold-dark: #b8960f;
+    --fire-orange: #ff4d00;
+    --fire-red: #cc3300;
+    --accent-blue: #00d4ff;
+    --text-white: #f0f0f0;
+    --text-gray: #a0a0b0;
+    --glass-bg: rgba(26, 26, 36, 0.7);
+    --glass-border: rgba(212, 175, 55, 0.2);
+
+    /* Türetilmiş yüzeyler */
+    --surface-raised: rgba(255, 255, 255, 0.03);
+    --hairline: rgba(255, 255, 255, 0.08);
+    --shadow-deep: 0 24px 60px -20px rgba(0, 0, 0, 0.85);
+
+    /* Durum renkleri (zafiyet önem dereceleri) */
+    --sev-critical: #ff3b30;
+    --sev-high: #ff7a1a;
+    --sev-medium: #ffc53d;
+    --sev-low: #4ade80;
+
+    /* Fontlar */
+    --font-heading: 'Orbitron', 'Segoe UI', sans-serif;
+    --font-body: 'Space Grotesk', 'Segoe UI', sans-serif;
+
+    /* Geçişler */
+    --transition-speed: 0.3s;
+    --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Ölçek */
+    --nav-h: 72px;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --maxw: 1240px;
+  }
+
+  /* Aydınlık tema (opsiyonel mod) — sıcak fildişi + derin altın */
+  :root[data-theme="light"] {
+    --primary-black: #f7f4ec;
+    --secondary-black: #efeade;
+    --card-black: #ffffff;
+    --gold-primary: #9a7411;
+    --gold-light: #c8960c;
+    --gold-dark: #6f520a;
+    --fire-orange: #d13a00;
+    --fire-red: #a62a00;
+    --accent-blue: #0a7ea4;
+    --text-white: #16161c;
+    --text-gray: #55555f;
+    --glass-bg: rgba(255, 255, 255, 0.78);
+    --glass-border: rgba(154, 116, 17, 0.28);
+    --surface-raised: rgba(0, 0, 0, 0.025);
+    --hairline: rgba(0, 0, 0, 0.1);
+    --shadow-deep: 0 24px 50px -24px rgba(60, 45, 10, 0.35);
+    --sev-low: #17803d;
+    --sev-medium: #a86a00;
+  }
+
+  /* ============================================================
+     2. SIFIRLAMA VE TEMEL
+     ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--nav-h) + 16px);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--primary-black);
+    color: var(--text-white);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: background-color var(--transition-speed) var(--transition-ease),
+                color var(--transition-speed) var(--transition-ease);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    margin: 0 0 0.5em;
+  }
+
+  p { margin: 0 0 1em; }
+  img, svg { max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; border: none; background: none; cursor: pointer; }
+  input { font: inherit; }
+  ul { margin: 0; padding: 0; list-style: none; }
+
+  ::selection { background: var(--gold-primary); color: var(--primary-black); }
+
+  :focus-visible {
+    outline: 2px solid var(--gold-light);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Ekran okuyucular için gizli metin */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  .skip-link {
+    position: absolute; top: -60px; left: 16px; z-index: 999;
+    background: var(--gold-primary); color: #0a0a0f;
+    padding: 10px 18px; border-radius: 0 0 8px 8px; font-weight: 600;
+    transition: top var(--transition-speed) var(--transition-ease);
+  }
+  .skip-link:focus { top: 0; }
+
+  /* ============================================================
+     3. DÜZEN YARDIMCILARI
+     ============================================================ */
+  .container { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+  .section { padding: 88px 0; position: relative; }
+  .section--alt { background: var(--secondary-black); }
+
+  .section__head { max-width: 720px; margin: 0 auto 56px; text-align: center; }
+  .section__eyebrow {
+    display: inline-block;
+    font-family: var(--font-heading); font-size: 0.7rem; font-weight: 600;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--gold-primary); margin-bottom: 14px;
+  }
+  .section__title { font-size: clamp(1.65rem, 4.5vw, 2.6rem); margin-bottom: 16px; }
+  .section__subtitle { color: var(--text-gray); font-size: 1.05rem; margin: 0; }
+
+  .gold-text {
+    color: var(--gold-primary);
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.3),
+                 0 0 20px rgba(212, 175, 55, 0.2),
+                 0 0 40px rgba(212, 175, 55, 0.1);
+  }
+  :root[data-theme="light"] .gold-text { text-shadow: none; }
+
+  .gold-rule {
+    width: 64px; height: 3px; margin: 0 auto;
+    background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    border-radius: 3px;
+  }
+
+  /* Kaydırma (scroll) animasyonu */
+  .reveal {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.7s var(--transition-ease), transform 0.7s var(--transition-ease);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible { opacity: 1; transform: none; }
+
+  /* ============================================================
+     4. BUTONLAR
+     ============================================================ */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: var(--font-heading); font-weight: 600; font-size: 0.82rem;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    padding: 15px 30px; border-radius: 10px;
+    cursor: pointer; white-space: nowrap;
+    transition: transform var(--transition-speed) var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease),
+                background-color var(--transition-speed) var(--transition-ease),
+                border-color var(--transition-speed) var(--transition-ease),
+                color var(--transition-speed) var(--transition-ease);
+  }
+  .btn:hover { transform: scale(1.05); }
+  .btn:active { transform: scale(0.99); }
+
+  .btn--fire {
+    background: linear-gradient(135deg, var(--fire-orange), var(--fire-red));
+    color: var(--gold-light);
+    box-shadow: 0 10px 30px -10px rgba(255, 77, 0, 0.65);
+  }
+  .btn--fire:hover { box-shadow: 0 16px 40px -10px rgba(255, 77, 0, 0.8); }
+
+  .btn--gold {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+    color: #0a0a0f;
+    box-shadow: 0 10px 30px -12px rgba(212, 175, 55, 0.7);
+  }
+  .btn--gold:hover { box-shadow: 0 16px 42px -12px rgba(212, 175, 55, 0.85); }
+
+  .btn--ghost {
+    border: 1px solid var(--glass-border);
+    color: var(--text-white);
+    background: var(--surface-raised);
+  }
+  .btn--ghost:hover { border-color: var(--gold-primary); color: var(--gold-primary); }
+
+  .btn--blue {
+    border: 1px solid rgba(0, 212, 255, 0.45);
+    color: var(--accent-blue);
+    background: rgba(0, 212, 255, 0.08);
+  }
+  .btn--blue:hover { background: rgba(0, 212, 255, 0.16); }
+
+  .btn--muted {
+    border: 1px solid var(--hairline);
+    color: var(--text-gray);
+    background: var(--surface-raised);
+  }
+  .btn--muted:hover { color: var(--text-white); border-color: var(--text-gray); }
+
+  .btn--block { width: 100%; }
+  .btn--sm { padding: 11px 20px; font-size: 0.72rem; }
+
+  /* ============================================================
+     5. ÜST MENÜ (Header / Navbar)
+     ============================================================ */
+  .site-header {
+    position: fixed; inset: 0 0 auto 0; z-index: 200;
+    height: var(--nav-h);
+    display: flex; align-items: center;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    transition: height var(--transition-speed) var(--transition-ease),
+                background-color var(--transition-speed) var(--transition-ease),
+                border-color var(--transition-speed) var(--transition-ease),
+                backdrop-filter var(--transition-speed) var(--transition-ease);
+  }
+  /* Scroll'da: cam efekti yoğunlaşır ve menü hafifçe küçülür (shrink) */
+  .site-header.is-scrolled {
+    height: 62px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border-bottom-color: var(--glass-border);
+  }
+
+  .nav { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; }
+
+  .logo { display: flex; align-items: center; gap: 11px; flex: 0 0 auto; }
+  .logo__mark { width: 34px; height: 34px; flex: 0 0 auto; filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.45)); }
+  .logo__mark .shield { fill: rgba(212, 175, 55, 0.06); stroke: var(--gold-primary); }
+  .logo__mark .mane { fill: var(--gold-primary); }
+  .logo__mark .face { fill: var(--primary-black); }
+  .logo__mark .line { stroke: var(--gold-light); }
+  .logo__text {
+    font-family: var(--font-heading); font-weight: 800; font-size: 0.78rem;
+    letter-spacing: 0.1em; line-height: 1.1; white-space: nowrap;
+  }
+  .logo__text small {
+    display: block; font-size: 0.52rem; font-weight: 500;
+    letter-spacing: 0.32em; color: var(--gold-primary); margin-top: 3px;
+  }
+
+  .nav__links { display: none; align-items: center; gap: 30px; margin-left: auto; }
+  .nav__link {
+    position: relative; color: var(--text-gray);
+    font-size: 0.9rem; font-weight: 500; padding: 6px 0;
+    transition: color var(--transition-speed) var(--transition-ease);
+  }
+  .nav__link::after {
+    content: ''; position: absolute; left: 0; bottom: 0;
+    width: 0; height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--gold-primary), var(--gold-light));
+    transition: width var(--transition-speed) var(--transition-ease);
+  }
+  .nav__link:hover { color: var(--gold-primary); }
+  .nav__link:hover::after { width: 100%; }
+
+  .nav__actions { display: flex; align-items: center; gap: 7px; margin-left: auto; flex: 0 0 auto; }
+
+  .lang-switch {
+    display: flex; align-items: center;
+    border: 1px solid var(--glass-border); border-radius: 8px;
+    overflow: hidden; background: var(--surface-raised);
+  }
+  .lang-switch__btn {
+    font-family: var(--font-heading); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.06em; padding: 8px 9px; color: var(--text-gray);
+    transition: color var(--transition-speed) var(--transition-ease),
+                background-color var(--transition-speed) var(--transition-ease);
+  }
+  .lang-switch__btn:hover { color: var(--text-white); }
+  .lang-switch__btn[aria-pressed="true"] {
+    color: #0a0a0f;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+  }
+
+  .icon-btn {
+    width: 36px; height: 36px; flex: 0 0 auto; display: inline-flex;
+    align-items: center; justify-content: center;
+    border: 1px solid var(--glass-border); border-radius: 8px;
+    background: var(--surface-raised); color: var(--text-gray);
+    transition: color var(--transition-speed) var(--transition-ease),
+                border-color var(--transition-speed) var(--transition-ease);
+  }
+  .icon-btn:hover { color: var(--gold-primary); border-color: var(--gold-primary); }
+
+  .nav__cta { display: none; }
+  .nav__toggle { display: inline-flex; }
+
+  /* Mobil açılır menü */
+  .nav__drawer {
+    position: fixed; top: var(--nav-h); left: 0; right: 0; z-index: 199;
+    background: var(--glass-bg);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 10px 20px 22px;
+    display: grid; gap: 4px;
+    transform: translateY(-12px); opacity: 0; visibility: hidden;
+    transition: transform var(--transition-speed) var(--transition-ease),
+                opacity var(--transition-speed) var(--transition-ease),
+                visibility var(--transition-speed) var(--transition-ease);
+  }
+  .nav__drawer.is-open { transform: none; opacity: 1; visibility: visible; }
+  .nav__drawer a {
+    padding: 13px 4px; color: var(--text-white); font-weight: 500;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .nav__drawer a:hover { color: var(--gold-primary); }
+  .nav__drawer .btn { margin-top: 14px; }
+
+  /* ============================================================
+     6. HERO
+     ============================================================ */
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex; align-items: center;
+    padding: calc(var(--nav-h) + 48px) 0 72px;
+    overflow: hidden;
+  }
+  .hero__canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block; z-index: 0;
+    pointer-events: none;
+  }
+  /* Ateş ışıması — canvas'ın üstünde, içeriğin altında */
+  .hero::after {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background:
+      radial-gradient(60% 45% at 50% 108%, rgba(255, 77, 0, 0.20), transparent 70%),
+      radial-gradient(50% 40% at 50% 0%, rgba(212, 175, 55, 0.10), transparent 70%),
+      linear-gradient(180deg, transparent 55%, var(--primary-black) 100%);
+  }
+  .hero__inner { position: relative; z-index: 2; text-align: center; }
+
+  .hero__badge {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 7px 16px; border-radius: 999px;
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    font-family: var(--font-heading); font-size: 0.63rem; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-primary);
+    margin-bottom: 26px;
+  }
+  .hero__badge .pulse-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--sev-low); box-shadow: 0 0 10px var(--sev-low);
+    animation: pulse 2s var(--transition-ease) infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.82); }
+  }
+
+  .hero__title {
+    font-size: clamp(1.9rem, 7vw, 4.2rem);
+    font-weight: 900; letter-spacing: 0.005em;
+    margin: 0 0 20px;
+  }
+  .hero__title .caret {
+    display: inline-block; width: 3px; height: 0.85em;
+    margin-left: 6px; vertical-align: -0.08em;
+    background: var(--gold-light);
+    box-shadow: 0 0 12px var(--gold-light);
+    animation: blink 1.1s steps(2, start) infinite;
+  }
+  @keyframes blink { to { visibility: hidden; } }
+
+  .hero__subtitle {
+    font-family: var(--font-heading); font-weight: 500;
+    font-size: clamp(0.82rem, 2.2vw, 1.05rem);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent-blue); opacity: 0.78;
+    margin: 0 0 18px;
+  }
+  .hero__desc {
+    max-width: 640px; margin: 0 auto 34px;
+    color: var(--text-gray); font-size: 1.06rem;
+  }
+
+  .hero__actions {
+    display: flex; flex-direction: column; gap: 14px;
+    align-items: stretch; margin-bottom: 40px;
+  }
+
+  .hero__stats {
+    display: grid; grid-template-columns: 1fr; gap: 14px;
+    max-width: 900px; margin: 0 auto;
+  }
+  .stat {
+    padding: 20px 16px; border-radius: var(--radius);
+    border: 1px solid var(--glass-border); background: var(--glass-bg);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .stat__value {
+    display: block; font-family: var(--font-heading); font-weight: 800;
+    font-size: 1.7rem; color: var(--gold-primary); line-height: 1.1;
+  }
+  .stat__label {
+    display: block; margin-top: 6px; font-size: 0.8rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-gray);
+  }
+
+  /* ============================================================
+     7. CANLI DEMO TARAMA KUTUSU
+     ============================================================ */
+  .scan {
+    max-width: 780px; margin: 0 auto 40px;
+    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    box-shadow: var(--shadow-deep);
+    overflow: hidden;
+    text-align: left;
+  }
+  .scan__form { display: grid; gap: 10px; padding: 16px; }
+  .scan__field {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline); background: var(--surface-raised);
+    transition: border-color var(--transition-speed) var(--transition-ease);
+  }
+  .scan__field:focus-within { border-color: var(--gold-primary); }
+  .scan__field i { color: var(--gold-primary); font-size: 0.9rem; }
+  .scan__input {
+    flex: 1; min-width: 0; border: none; background: none; outline: none;
+    color: var(--text-white); padding: 15px 0; font-size: 0.98rem;
+  }
+  .scan__input::placeholder { color: var(--text-gray); opacity: 0.7; }
+  .scan__note {
+    margin: 0; padding: 0 16px 16px;
+    font-size: 0.78rem; color: var(--text-gray);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .scan__note i { color: var(--sev-low); }
+
+  .scan__output { border-top: 1px solid var(--hairline); padding: 18px 16px; display: none; }
+  .scan__output.is-active { display: block; }
+
+  .scan__progress {
+    height: 5px; border-radius: 5px; overflow: hidden;
+    background: var(--surface-raised); margin-bottom: 14px;
+  }
+  .scan__bar {
+    height: 100%; width: 0%; border-radius: 5px;
+    background: linear-gradient(90deg, var(--fire-red), var(--fire-orange), var(--gold-light));
+    transition: width 0.4s var(--transition-ease);
+  }
+  .scan__status {
+    display: flex; align-items: center; gap: 9px;
+    font-family: var(--font-heading); font-size: 0.72rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-primary);
+    margin-bottom: 14px;
+  }
+  .scan__log { display: grid; gap: 7px; margin: 0 0 4px; }
+  .scan__log li {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.86rem; color: var(--text-gray);
+    animation: slideIn 0.35s var(--transition-ease) both;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: none; }
+  }
+  .scan__log li i { width: 16px; text-align: center; }
+  .scan__log li b { color: var(--text-white); font-weight: 600; }
+
+  .sev { font-family: var(--font-heading); font-size: 0.6rem; font-weight: 700;
+         letter-spacing: 0.1em; text-transform: uppercase;
+         padding: 3px 8px; border-radius: 5px; margin-left: auto; flex: 0 0 auto; }
+  .sev--critical { color: var(--sev-critical); background: rgba(255, 59, 48, 0.12); }
+  .sev--high     { color: var(--sev-high);     background: rgba(255, 122, 26, 0.12); }
+  .sev--medium   { color: var(--sev-medium);   background: rgba(255, 197, 61, 0.12); }
+  .sev--low      { color: var(--sev-low);      background: rgba(74, 222, 128, 0.12); }
+
+  .scan__summary {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+    margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--hairline);
+  }
+  .scan__score {
+    font-family: var(--font-heading); font-size: 1.9rem; font-weight: 800;
+    color: var(--sev-high); line-height: 1;
+  }
+  .scan__score span { font-size: 0.85rem; color: var(--text-gray); }
+  .scan__summary p { margin: 0; font-size: 0.85rem; color: var(--text-gray); flex: 1 1 200px; }
+
+  /* ============================================================
+     8. HİZMET KARTLARI
+     ============================================================ */
+  .grid { display: grid; gap: 22px; }
+  .grid--2 { grid-template-columns: 1fr; }
+  .grid--3 { grid-template-columns: 1fr; }
+
+  .feature {
+    position: relative; overflow: hidden;
+    padding: 34px 28px 32px;
+    border-radius: var(--radius);
+    border: 1px solid var(--hairline);
+    background: linear-gradient(160deg, var(--card-black), var(--secondary-black));
+    transition: transform var(--transition-speed) var(--transition-ease),
+                border-color var(--transition-speed) var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease);
+  }
+  /* Üstteki altın vurgu çizgisi */
+  .feature::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    transform: scaleX(0); transform-origin: center;
+    transition: transform 0.45s var(--transition-ease);
+  }
+  .feature:hover { transform: translateY(-10px); border-color: var(--glass-border);
+                   box-shadow: 0 26px 50px -26px rgba(212, 175, 55, 0.4); }
+  .feature:hover::before { transform: scaleX(1); }
+
+  .feature__icon {
+    width: 54px; height: 54px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.35rem; color: var(--gold-primary);
+    background: rgba(212, 175, 55, 0.09);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 22px;
+  }
+  .feature__title { font-size: 1.12rem; margin-bottom: 10px; }
+  .feature__desc { color: var(--text-gray); font-size: 0.94rem; margin: 0; }
+
+  /* ============================================================
+     9. NASIL ÇALIŞIR (3 Adım)
+     ============================================================ */
+  .steps { position: relative; }
+  .steps::before {
+    content: ''; position: absolute; z-index: 0;
+    left: 33px; top: 30px; bottom: 30px; width: 2px;
+    background: linear-gradient(180deg, transparent, var(--gold-primary), transparent);
+    opacity: 0.45;
+  }
+  .step { position: relative; z-index: 1; display: flex; gap: 20px; align-items: flex-start; }
+  .step__num {
+    flex: 0 0 auto; width: 66px; height: 66px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800;
+    color: var(--gold-primary);
+    background: var(--card-black);
+    border: 2px solid var(--gold-primary);
+    box-shadow: 0 0 22px -4px rgba(212, 175, 55, 0.5);
+  }
+  .step__body { padding-top: 8px; }
+  .step__title { font-size: 1.05rem; margin-bottom: 8px; }
+  .step__title i { color: var(--gold-primary); margin-right: 8px; font-size: 0.95rem; }
+  .step__desc { color: var(--text-gray); font-size: 0.94rem; margin: 0; }
+
+  /* ============================================================
+     10. FİYATLANDIRMA
+     ============================================================ */
+  .plans { grid-template-columns: 1fr; align-items: stretch; }
+
+  .plan {
+    position: relative; display: flex; flex-direction: column;
+    padding: 36px 28px;
+    border-radius: 20px;
+    border: 1px solid var(--hairline);
+    background: var(--card-black);
+    transition: transform var(--transition-speed) var(--transition-ease),
+                border-color var(--transition-speed) var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease);
+  }
+  .plan:hover { transform: translateY(-10px); }
+
+  .plan--featured {
+    border-color: var(--gold-primary);
+    background: linear-gradient(165deg, #1f1a12, var(--card-black) 55%);
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.25), 0 26px 60px -30px rgba(212, 175, 55, 0.7);
+  }
+  /* Öne çıkan kartın parlayan altın çizgisi */
+  .plan--featured::before {
+    content: ''; position: absolute; inset: -1px; border-radius: 20px; pointer-events: none;
+    padding: 1px;
+    background: linear-gradient(120deg, var(--gold-dark), var(--gold-light), var(--gold-dark), var(--gold-light));
+    background-size: 300% 100%;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: shimmer 5s linear infinite;
+  }
+  @keyframes shimmer { to { background-position: 300% 0; } }
+
+  .plan--enterprise {
+    background: var(--glass-bg);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-color: rgba(0, 212, 255, 0.28);
+  }
+
+  .plan__badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-heading); font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 6px 16px; border-radius: 999px; white-space: nowrap;
+    background: var(--secondary-black); border: 1px solid var(--hairline); color: var(--text-gray);
+  }
+  .plan--featured .plan__badge {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+    color: #0a0a0f; border-color: transparent;
+  }
+  .plan--enterprise .plan__badge { color: var(--accent-blue); border-color: rgba(0, 212, 255, 0.35); }
+
+  .plan__name {
+    font-size: 1.05rem; letter-spacing: 0.14em; text-transform: uppercase;
+    margin: 10px 0 4px;
+  }
+  .plan__tagline { color: var(--text-gray); font-size: 0.86rem; margin: 0 0 20px; min-height: 2.6em; }
+  .plan__price {
+    font-family: var(--font-heading); font-weight: 800; font-size: 2.5rem;
+    line-height: 1; margin-bottom: 4px;
+  }
+  .plan--featured .plan__price { color: var(--gold-primary); }
+  .plan__period { color: var(--text-gray); font-size: 0.82rem; margin-bottom: 26px; display: block; }
+
+  .plan__list { display: grid; gap: 12px; margin-bottom: 30px; flex: 1; }
+  .plan__list li { display: flex; align-items: flex-start; gap: 11px; font-size: 0.92rem; color: var(--text-gray); }
+  .plan__list li i { color: var(--gold-primary); font-size: 0.8rem; margin-top: 5px; flex: 0 0 auto; }
+  .plan--enterprise .plan__list li i { color: var(--accent-blue); }
+
+  .pricing__foot { text-align: center; margin-top: 34px; color: var(--text-gray); font-size: 0.84rem; }
+
+  /* ============================================================
+     11. FOOTER
+     ============================================================ */
+  .site-footer {
+    background: var(--secondary-black);
+    border-top: 1px solid var(--glass-border);
+    padding: 62px 0 26px;
+  }
+  .footer__grid { display: grid; gap: 40px; grid-template-columns: 1fr; }
+  .footer__about { max-width: 340px; }
+  .footer__about p { color: var(--text-gray); font-size: 0.9rem; margin: 18px 0 0; }
+  .footer__title {
+    font-family: var(--font-heading); font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-primary);
+    margin: 0 0 16px;
+  }
+  .footer__list { display: grid; gap: 11px; }
+  .footer__list a, .footer__list span { color: var(--text-gray); font-size: 0.9rem; transition: color var(--transition-speed) var(--transition-ease); }
+  .footer__list a:hover { color: var(--gold-primary); }
+
+  .socials { display: flex; gap: 11px; margin-top: 20px; }
+  .socials a {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--hairline); color: var(--text-gray);
+    transition: color var(--transition-speed) var(--transition-ease),
+                border-color var(--transition-speed) var(--transition-ease),
+                transform var(--transition-speed) var(--transition-ease);
+  }
+  .socials a:hover { color: var(--gold-primary); border-color: var(--gold-primary); transform: translateY(-3px); }
+
+  .footer__bottom {
+    margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--hairline);
+    display: flex; flex-direction: column; gap: 12px;
+    align-items: center; text-align: center;
+    color: var(--text-gray); font-size: 0.82rem;
+  }
+  .footer__legal { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .footer__legal a:hover { color: var(--gold-primary); }
+
+  /* ============================================================
+     12. MODAL (Kayıt)
+     ============================================================ */
+  .modal {
+    position: fixed; inset: 0; z-index: 400;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    background: rgba(4, 4, 8, 0.8);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; visibility: hidden;
+    transition: opacity var(--transition-speed) var(--transition-ease),
+                visibility var(--transition-speed) var(--transition-ease);
+  }
+  .modal.is-open { opacity: 1; visibility: visible; }
+
+  .modal__box {
+    position: relative; width: 100%; max-width: 440px;
+    max-height: calc(100svh - 40px); overflow-y: auto;
+    padding: 36px 28px 30px;
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    box-shadow: var(--shadow-deep);
+    transform: translateY(-28px); opacity: 0;
+    transition: transform 0.35s var(--transition-ease), opacity 0.35s var(--transition-ease);
+  }
+  .modal.is-open .modal__box { transform: none; opacity: 1; }
+
+  .modal__close {
+    position: absolute; top: 14px; right: 14px;
+    width: 36px; height: 36px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-gray); border: 1px solid transparent;
+    transition: color var(--transition-speed) var(--transition-ease),
+                border-color var(--transition-speed) var(--transition-ease);
+  }
+  .modal__close:hover { color: var(--gold-primary); border-color: var(--glass-border); }
+
+  .modal__title { font-size: 1.35rem; margin-bottom: 8px; }
+  .modal__subtitle { color: var(--text-gray); font-size: 0.9rem; margin-bottom: 26px; }
+
+  .field { display: grid; gap: 7px; margin-bottom: 16px; }
+  .field label {
+    font-family: var(--font-heading); font-size: 0.63rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-gray);
+  }
+  .field input[type="email"], .field input[type="password"] {
+    width: 100%; padding: 14px 15px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline);
+    background: var(--surface-raised);
+    color: var(--text-white); outline: none;
+    transition: border-color var(--transition-speed) var(--transition-ease);
+  }
+  .field input::placeholder { color: var(--text-gray); opacity: 0.65; }
+  .field input:focus { border-color: var(--gold-primary); }
+  .field input[aria-invalid="true"] { border-color: var(--sev-critical); }
+
+  .checkbox {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.86rem; color: var(--text-gray);
+    margin: 4px 0 22px; cursor: pointer;
+  }
+  .checkbox input { width: 17px; height: 17px; accent-color: var(--gold-primary); cursor: pointer; }
+
+  .modal__foot { margin: 18px 0 0; font-size: 0.75rem; color: var(--text-gray); text-align: center; }
+
+  /* ============================================================
+     13. TOAST BİLDİRİMLERİ
+     ============================================================ */
+  .toasts {
+    position: fixed; z-index: 500; left: 16px; right: 16px; bottom: 16px;
+    display: grid; gap: 10px; justify-items: center;
+    pointer-events: none;
+  }
+  .toast {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; max-width: 400px;
+    padding: 14px 18px; border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-deep);
+    font-size: 0.88rem; color: var(--text-white);
+    pointer-events: auto;
+    animation: toastIn 0.32s var(--transition-ease) both;
+  }
+  .toast.is-leaving { animation: toastOut 0.28s var(--transition-ease) both; }
+  .toast i { flex: 0 0 auto; }
+  .toast--info i { color: var(--accent-blue); }
+  .toast--success i { color: var(--sev-low); }
+  .toast--error i { color: var(--sev-critical); }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
+  @keyframes toastOut { to { opacity: 0; transform: translateY(10px) scale(0.97); } }
+
+  /* ============================================================
+     14. ÇEREZ BİLDİRİMİ + YUKARI ÇIK
+     ============================================================ */
+  .cookie {
+    position: fixed; z-index: 450; left: 16px; right: 16px; bottom: 16px;
+    max-width: 720px; margin: 0 auto;
+    display: none; flex-direction: column; gap: 14px;
+    padding: 20px; border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: var(--shadow-deep);
+  }
+  .cookie.is-open { display: flex; animation: toastIn 0.4s var(--transition-ease) both; }
+  .cookie p { margin: 0; font-size: 0.86rem; color: var(--text-gray); }
+  .cookie p a { color: var(--gold-primary); text-decoration: underline; }
+  .cookie__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .to-top {
+    position: fixed; right: 18px; bottom: 18px; z-index: 300;
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #0a0a0f;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+    box-shadow: 0 12px 28px -10px rgba(212, 175, 55, 0.75);
+    opacity: 0; visibility: hidden; transform: translateY(14px);
+    transition: opacity var(--transition-speed) var(--transition-ease),
+                visibility var(--transition-speed) var(--transition-ease),
+                transform var(--transition-speed) var(--transition-ease);
+  }
+  .to-top.is-visible { opacity: 1; visibility: visible; transform: none; }
+  .to-top:hover { transform: translateY(-3px); }
+
+  /* ============================================================
+     15. DUYARLI TASARIM (Responsive)
+     ============================================================ */
+  @media (min-width: 560px) {
+    .hero__actions { flex-direction: row; justify-content: center; }
+    .hero__stats { grid-template-columns: repeat(3, 1fr); }
+    .scan__form { grid-template-columns: 1fr auto; }
+    .footer__bottom { flex-direction: row; justify-content: space-between; text-align: left; }
+    .cookie { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+
+  @media (min-width: 768px) {
+    .section { padding: 104px 0; }
+    .nav { gap: 20px; }
+    .nav__actions { gap: 10px; }
+    .logo__mark { width: 38px; height: 38px; }
+    .logo__text { font-size: 0.95rem; letter-spacing: 0.13em; }
+    .icon-btn { width: 38px; height: 38px; }
+    .grid--2 { grid-template-columns: repeat(2, 1fr); }
+    .footer__grid { grid-template-columns: 1.6fr 1fr 1fr; }
+    .modal__box { padding: 40px 36px 34px; }
+    .toasts { left: auto; right: 20px; bottom: 20px; justify-items: end; }
+  }
+
+  @media (min-width: 1024px) {
+    :root { --nav-h: 84px; }
+    .nav__links { display: flex; }
+    .nav__links + .nav__actions { margin-left: 24px; }
+    .nav__cta { display: inline-flex; }
+    .nav__toggle { display: none; }
+    .nav__drawer { display: none; }
+    .grid--3 { grid-template-columns: repeat(3, 1fr); }
+    .plans { grid-template-columns: repeat(3, 1fr); gap: 26px; }
+    .plan--featured { transform: scale(1.045); z-index: 2; }
+    .plan--featured:hover { transform: scale(1.045) translateY(-10px); }
+    /* Adımlar yatay çizgi üzerinde */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; }
+    .steps::before { left: 12%; right: 12%; top: 33px; bottom: auto; width: auto; height: 2px;
+                     background: linear-gradient(90deg, transparent, var(--gold-primary), transparent); }
+    .step { flex-direction: column; align-items: center; text-align: center; gap: 22px; }
+    .step__body { padding-top: 0; }
+  }
+
+  @media (min-width: 1440px) {
+    .section { padding: 120px 0; }
+  }
+
+  @media (max-width: 359px) {
+    .container { padding: 0 14px; }
+    .logo__text small { display: none; }
+    .logo__text { font-size: 0.66rem; letter-spacing: 0.06em; }
+    .icon-btn { width: 33px; height: 33px; }
+    .lang-switch__btn { padding: 7px 7px; }
+  }
+
+  /* Hareket azaltma tercihi */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+    .reveal { opacity: 1; transform: none; }
+  }
+
+  /* Baskı */
+  @media print {
+    .site-header, .hero__canvas, .to-top, .cookie, .toasts, .modal { display: none !important; }
+    body { background: #fff; color: #000; }
+  }
+  </style>
+</head>
+
+<body>
+  <a class="skip-link" href="#main" data-i18n="a11y.skip">İçeriğe geç</a>
+
+  <!-- ==========================================================
+       ÜST MENÜ
+       ========================================================== -->
+  <header class="site-header" id="siteHeader">
+    <div class="container">
+      <nav class="nav" aria-label="Ana menü">
+
+        <a class="logo" href="#hero" aria-label="Cyber Lion AI">
+          <svg class="logo__mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+            <path class="shield" d="M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z" stroke-width="2.2" stroke-linejoin="round"/>
+            <path class="mane" d="M24 11 L26.07 14.27 L29.5 12.47 L29.66 16.34 L33.53 16.5 L31.73 19.93 L35 22 L31.73 24.07 L33.53 27.5 L29.66 27.66 L29.5 31.53 L26.07 29.73 L24 33 L21.93 29.73 L18.5 31.53 L18.34 27.66 L14.47 27.5 L16.27 24.07 L13 22 L16.27 19.93 L14.47 16.5 L18.34 16.34 L18.5 12.47 L21.93 14.27 Z"/>
+            <circle class="face" cx="24" cy="22" r="6.4"/>
+            <g class="line" stroke-width="1.5" stroke-linecap="round" fill="none">
+              <path d="M20.2 20.4 L22.4 21.2"/>
+              <path d="M27.8 20.4 L25.6 21.2"/>
+              <path d="M24 23.6 L25.5 24.8 L24 26.1 L22.5 24.8 Z"/>
+            </g>
+          </svg>
+          <span class="logo__text">
+            CYBER LION
+            <small>AI SECURITY</small>
+          </span>
+        </a>
+
+        <ul class="nav__links">
+          <li><a class="nav__link" href="#hero" data-i18n="nav.home">Ana Sayfa</a></li>
+          <li><a class="nav__link" href="#services" data-i18n="nav.services">Hizmetler</a></li>
+          <li><a class="nav__link" href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
+          <li><a class="nav__link" href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
+          <li><a class="nav__link" href="#contact" data-i18n="nav.contact">İletişim</a></li>
+        </ul>
+
+        <div class="nav__actions">
+          <div class="lang-switch" role="group" aria-label="Dil / Language">
+            <button type="button" class="lang-switch__btn" data-lang="tr" aria-pressed="true">TR</button>
+            <button type="button" class="lang-switch__btn" data-lang="en" aria-pressed="false">EN</button>
+          </div>
+
+          <button type="button" class="icon-btn" id="themeToggle" aria-label="Tema değiştir" data-i18n-aria="a11y.theme">
+            <i class="fa-solid fa-moon" aria-hidden="true"></i>
+          </button>
+
+          <button type="button" class="btn btn--gold btn--sm nav__cta" data-open-modal data-i18n="nav.upgrade">Premium'a Geç</button>
+
+          <button type="button" class="icon-btn nav__toggle" id="navToggle" aria-expanded="false" aria-controls="navDrawer" aria-label="Menü" data-i18n-aria="a11y.menu">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Mobil menü -->
+  <div class="nav__drawer" id="navDrawer">
+    <a href="#hero" data-i18n="nav.home">Ana Sayfa</a>
+    <a href="#services" data-i18n="nav.services">Hizmetler</a>
+    <a href="#how" data-i18n="nav.how">Nasıl Çalışır</a>
+    <a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a>
+    <a href="#contact" data-i18n="nav.contact">İletişim</a>
+    <button type="button" class="btn btn--gold btn--block" data-open-modal data-i18n="nav.upgrade">Premium'a Geç</button>
+  </div>
+
+  <main id="main">
+
+    <!-- ==========================================================
+         HERO
+         ========================================================== -->
+    <section class="hero" id="hero">
+      <canvas class="hero__canvas" id="emberCanvas" aria-hidden="true"></canvas>
+
+      <div class="container hero__inner">
+        <span class="hero__badge">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span data-i18n="hero.badge">Tarama motoru aktif</span>
+        </span>
+
+        <h1 class="hero__title">
+          <span class="gold-text" data-i18n="hero.title">GÜVENLİK AÇIKLARINIZI AVLIYORUZ</span><span class="caret" aria-hidden="true"></span>
+        </h1>
+
+        <p class="hero__subtitle" data-i18n="hero.subtitle">Yapay Zeka ile Güçlendirilmiş Otomatik Güvenlik Taraması</p>
+        <p class="hero__desc" data-i18n="hero.desc">Web sitenizdeki zafiyetleri tespit edin, raporlayın ve düzeltin.</p>
+
+        <!-- Canlı demo tarama -->
+        <div class="scan">
+          <form class="scan__form" id="scanForm" novalidate>
+            <div class="scan__field">
+              <i class="fa-solid fa-link" aria-hidden="true"></i>
+              <label class="sr-only" for="scanUrl" data-i18n="hero.scanLabel">Taranacak adres</label>
+              <input class="scan__input" type="text" id="scanUrl" name="url"
+                     placeholder="ornek.com" autocomplete="off" spellcheck="false"
+                     data-i18n-placeholder="hero.scanPlaceholder" />
+            </div>
+            <button type="submit" class="btn btn--fire" id="scanSubmit">
+              <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
+              <span data-i18n="hero.cta1">Hemen Tara</span>
+            </button>
+          </form>
+          <p class="scan__note">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <span data-i18n="hero.scanNote">Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.</span>
+          </p>
+
+          <div class="scan__output" id="scanOutput" aria-live="polite">
+            <div class="scan__progress"><div class="scan__bar" id="scanBar"></div></div>
+            <p class="scan__status" id="scanStatus"></p>
+            <ul class="scan__log" id="scanLog"></ul>
+            <div class="scan__summary" id="scanSummary" hidden>
+              <span class="scan__score" id="scanScore">--<span>/100</span></span>
+              <p data-i18n="scan.demoNote">Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.</p>
+              <button type="button" class="btn btn--gold btn--sm" data-open-modal data-i18n="scan.fullReport">Tam Raporu Al</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero__actions">
+          <button type="button" class="btn btn--gold" data-open-modal>
+            <i class="fa-solid fa-crown" aria-hidden="true"></i>
+            <span data-i18n="hero.cta2">Premium'a Geç</span>
+          </button>
+          <a class="btn btn--ghost" href="#services">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            <span data-i18n="hero.cta3">Nasıl Çalışır?</span>
+          </a>
+        </div>
+
+        <div class="hero__stats">
+          <div class="stat reveal">
+            <span class="stat__value" data-count="10000" data-suffix="+">10.000+</span>
+            <span class="stat__label" data-i18n="hero.stat1">Taranan Site</span>
+          </div>
+          <div class="stat reveal" style="--reveal-delay:120ms">
+            <span class="stat__value" data-count="98" data-suffix="%">98%</span>
+            <span class="stat__label" data-i18n="hero.stat2">Doğruluk Oranı</span>
+          </div>
+          <div class="stat reveal" style="--reveal-delay:240ms">
+            <span class="stat__value" data-i18n="hero.stat3v">7/24</span>
+            <span class="stat__label" data-i18n="hero.stat3">Aktif Koruma</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         HİZMETLER
+         ========================================================== -->
+    <section class="section" id="services">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="section__eyebrow" data-i18n="services.eyebrow">Yetenekler</span>
+          <h2 class="section__title" data-i18n="services.title">NEDEN CYBER LION AI?</h2>
+          <p class="section__subtitle" data-i18n="services.subtitle">Tek bir taramada, saldırganın gördüğü her yüzeyi analiz ediyoruz.</p>
+        </div>
+
+        <div class="grid grid--2">
+          <article class="feature reveal">
+            <div class="feature__icon"><i class="fa-solid fa-bug-slash" aria-hidden="true"></i></div>
+            <h3 class="feature__title" data-i18n="services.s1t">Otomatik Zafiyet Taraması</h3>
+            <p class="feature__desc" data-i18n="services.s1d">OWASP Top 10 ve diğer yaygın güvenlik açıklarını otomatik olarak tespit eder.</p>
+          </article>
+
+          <article class="feature reveal" style="--reveal-delay:100ms">
+            <div class="feature__icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></div>
+            <h3 class="feature__title" data-i18n="services.s2t">SSL/TLS Analizi</h3>
+            <p class="feature__desc" data-i18n="services.s2d">Sertifika geçerliliği, şifreleme gücü ve protokol uyumluluğunu kontrol eder.</p>
+          </article>
+
+          <article class="feature reveal" style="--reveal-delay:200ms">
+            <div class="feature__icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
+            <h3 class="feature__title" data-i18n="services.s3t">Güvenlik Başlıkları</h3>
+            <p class="feature__desc" data-i18n="services.s3d">CSP, HSTS, X-Frame-Options gibi kritik güvenlik başlıklarını analiz eder.</p>
+          </article>
+
+          <article class="feature reveal" style="--reveal-delay:300ms">
+            <div class="feature__icon"><i class="fa-solid fa-brain" aria-hidden="true"></i></div>
+            <h3 class="feature__title" data-i18n="services.s4t">AI Asistan</h3>
+            <p class="feature__desc" data-i18n="services.s4d">Tespit edilen zafiyetler için akıllı düzeltme önerileri sunar.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         NASIL ÇALIŞIR
+         ========================================================== -->
+    <section class="section section--alt" id="how">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="section__eyebrow" data-i18n="how.eyebrow">Süreç</span>
+          <h2 class="section__title" data-i18n="how.title">NASIL ÇALIŞIR?</h2>
+          <p class="section__subtitle" data-i18n="how.subtitle">Üç adım, ortalama 90 saniye. Kurulum, ajan ya da eklenti gerekmez.</p>
+          <div class="gold-rule"></div>
+        </div>
+
+        <div class="steps">
+          <div class="step reveal">
+            <div class="step__num">01</div>
+            <div class="step__body">
+              <h3 class="step__title"><i class="fa-solid fa-keyboard" aria-hidden="true"></i><span data-i18n="how.s1t">URL'yi Girin</span></h3>
+              <p class="step__desc" data-i18n="how.s1d">Taramak istediğiniz alan adını yazın. Doğrulama ve kapsam belirleme otomatik yapılır.</p>
+            </div>
+          </div>
+
+          <div class="step reveal" style="--reveal-delay:140ms">
+            <div class="step__num">02</div>
+            <div class="step__body">
+              <h3 class="step__title"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i><span data-i18n="how.s2t">AI Taramayı Başlatsın</span></h3>
+              <p class="step__desc" data-i18n="how.s2d">Motor; başlıkları, sertifikaları, açık uçları ve bilinen zafiyet imzalarını paralel olarak tarar.</p>
+            </div>
+          </div>
+
+          <div class="step reveal" style="--reveal-delay:280ms">
+            <div class="step__num">03</div>
+            <div class="step__body">
+              <h3 class="step__title"><i class="fa-solid fa-file-shield" aria-hidden="true"></i><span data-i18n="how.s3t">Detaylı Raporu Alın</span></h3>
+              <p class="step__desc" data-i18n="how.s3d">Önem derecesine göre sıralanmış bulgular, kanıtlar ve uygulanabilir düzeltme adımları.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         FİYATLANDIRMA
+         ========================================================== -->
+    <section class="section" id="pricing">
+      <div class="container">
+        <div class="section__head reveal">
+          <span class="section__eyebrow" data-i18n="pricing.eyebrow">Planlar</span>
+          <h2 class="section__title" data-i18n="pricing.title">SİZE UYGUN PLANI SEÇİN</h2>
+          <p class="section__subtitle" data-i18n="pricing.subtitle">Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.</p>
+        </div>
+
+        <div class="grid plans">
+
+          <!-- FREE -->
+          <article class="plan reveal">
+            <span class="plan__badge" data-i18n="pricing.free.badge">Deneme</span>
+            <h3 class="plan__name" data-i18n="pricing.free.name">Free</h3>
+            <p class="plan__tagline" data-i18n="pricing.free.tagline">Sitenizin güvenlik durumuna hızlı bir bakış.</p>
+            <div class="plan__price" data-i18n="pricing.free.price">₺0</div>
+            <span class="plan__period" data-i18n="pricing.free.period">Süresiz ücretsiz</span>
+            <ul class="plan__list">
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f1">5 Güvenlik Testi</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f2">Temel SSL Kontrolü</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f3">Basit Rapor (PDF)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f4">Kayıt Gerekmez</span></li>
+            </ul>
+            <button type="button" class="btn btn--muted btn--block" id="trialBtn" data-i18n="pricing.free.cta">Deneme Sürümü</button>
+          </article>
+
+          <!-- PRO (öne çıkan) -->
+          <article class="plan plan--featured reveal" style="--reveal-delay:120ms">
+            <span class="plan__badge" data-i18n="pricing.pro.badge">Popüler</span>
+            <h3 class="plan__name gold-text" data-i18n="pricing.pro.name">Pro</h3>
+            <p class="plan__tagline" data-i18n="pricing.pro.tagline">Üretim ortamını sürekli izleyen ekipler için.</p>
+            <div class="plan__price" data-i18n="pricing.pro.price">₺299/ay</div>
+            <span class="plan__period" data-i18n="pricing.pro.period">Aylık, istediğiniz zaman iptal</span>
+            <ul class="plan__list">
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f1">Sınırsız Güvenlik Testi</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f2">Gelişmiş Zafiyet Taraması</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f3">Detaylı Rapor + Düzeltme Önerileri</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f4">E-posta Bildirimleri</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">7/24 Destek</span></li>
+            </ul>
+            <button type="button" class="btn btn--gold btn--block" data-open-modal data-i18n="pricing.pro.cta">Premium'a Geç</button>
+          </article>
+
+          <!-- ENTERPRISE -->
+          <article class="plan plan--enterprise reveal" style="--reveal-delay:240ms">
+            <span class="plan__badge" data-i18n="pricing.ent.badge">Kurumsal</span>
+            <h3 class="plan__name" data-i18n="pricing.ent.name">Enterprise</h3>
+            <p class="plan__tagline" data-i18n="pricing.ent.tagline">Kendi altyapınıza uyarlanmış tarama ve raporlama.</p>
+            <div class="plan__price" data-i18n="pricing.ent.price">Özel Teklif</div>
+            <span class="plan__period" data-i18n="pricing.ent.period">Kullanımınıza göre fiyatlandırma</span>
+            <ul class="plan__list">
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">PRO'daki tüm özellikler</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Özel AI Model Entegrasyonu</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f3">API Erişimi</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f4">Öncelikli Destek</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Özel Raporlama</span></li>
+            </ul>
+            <button type="button" class="btn btn--blue btn--block" id="contactBtn" data-i18n="pricing.ent.cta">İletişime Geç</button>
+          </article>
+
+        </div>
+
+        <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================================
+       FOOTER
+       ========================================================== -->
+  <footer class="site-footer" id="contact">
+    <div class="container">
+      <div class="footer__grid">
+
+        <div class="footer__about">
+          <a class="logo" href="#hero" aria-label="Cyber Lion AI">
+            <svg class="logo__mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <path class="shield" d="M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z" stroke-width="2.2" stroke-linejoin="round"/>
+              <path class="mane" d="M24 11 L26.07 14.27 L29.5 12.47 L29.66 16.34 L33.53 16.5 L31.73 19.93 L35 22 L31.73 24.07 L33.53 27.5 L29.66 27.66 L29.5 31.53 L26.07 29.73 L24 33 L21.93 29.73 L18.5 31.53 L18.34 27.66 L14.47 27.5 L16.27 24.07 L13 22 L16.27 19.93 L14.47 16.5 L18.34 16.34 L18.5 12.47 L21.93 14.27 Z"/>
+              <circle class="face" cx="24" cy="22" r="6.4"/>
+              <g class="line" stroke-width="1.5" stroke-linecap="round" fill="none">
+                <path d="M20.2 20.4 L22.4 21.2"/>
+                <path d="M27.8 20.4 L25.6 21.2"/>
+                <path d="M24 23.6 L25.5 24.8 L24 26.1 L22.5 24.8 Z"/>
+              </g>
+            </svg>
+            <span class="logo__text">CYBER LION<small>AI SECURITY</small></span>
+          </a>
+          <p data-i18n="footer.about">Yapay zeka destekli sürekli güvenlik taraması. Zafiyetleri saldırganlardan önce bulun, önceliklendirin ve kapatın.</p>
+          <div class="socials">
+            <a href="https://www.linkedin.com/company/cyberlionai" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
+            <a href="https://x.com/cyberlionai" aria-label="X" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a>
+            <a href="https://github.com/cyberlionai" aria-label="GitHub" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github" aria-hidden="true"></i></a>
+            <a href="https://www.youtube.com/@cyberlionai" aria-label="YouTube" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer__title" data-i18n="footer.quick">Hızlı Linkler</h4>
+          <ul class="footer__list">
+            <li><a href="#hero" data-i18n="nav.home">Ana Sayfa</a></li>
+            <li><a href="#services" data-i18n="nav.services">Hizmetler</a></li>
+            <li><a href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
+            <li><a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer__title" data-i18n="footer.contact">İletişim</h4>
+          <ul class="footer__list">
+            <li><a href="mailto:info@cyberlionai.com"><i class="fa-solid fa-envelope" aria-hidden="true"></i> info@cyberlionai.com</a></li>
+            <li><a href="mailto:destek@cyberlionai.com"><i class="fa-solid fa-headset" aria-hidden="true"></i> destek@cyberlionai.com</a></li>
+            <li><span data-i18n="footer.hours">Destek: Hafta içi 09:00 – 18:00 (TSİ)</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span data-i18n="footer.rights">© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.</span>
+        <nav class="footer__legal" aria-label="Yasal">
+          <a href="/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a>
+          <a href="/kullanim-sartlari" data-i18n="footer.terms">Kullanım Şartları</a>
+          <a href="/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================
+       KAYIT MODALI
+       ========================================================== -->
+  <div class="modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" hidden>
+    <div class="modal__box" role="document">
+      <button type="button" class="modal__close" id="modalClose" aria-label="Kapat" data-i18n-aria="modal.close">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+
+      <h2 class="modal__title" id="authModalTitle" data-i18n="modal.title">Premium'a Geç</h2>
+      <p class="modal__subtitle" data-i18n="modal.subtitle">Hesabınızı oluşturun ve güvenlik avantajlarından yararlanın.</p>
+
+      <form id="authForm" novalidate>
+        <!-- CSRF yer tutucu: backend hazır olduğunda sunucudan doldurulacak -->
+        <input type="hidden" name="csrf_token" id="csrfToken" value="" />
+
+        <div class="field">
+          <label for="authEmail" data-i18n="modal.email">E-posta</label>
+          <input type="email" id="authEmail" name="email" placeholder="ornek@mail.com" autocomplete="email" required />
+        </div>
+
+        <div class="field">
+          <label for="authPass" data-i18n="modal.password">Şifre</label>
+          <input type="password" id="authPass" name="password" placeholder="••••••••" autocomplete="new-password" required minlength="8" />
+        </div>
+
+        <div class="field">
+          <label for="authPass2" data-i18n="modal.password2">Şifre Tekrar</label>
+          <input type="password" id="authPass2" name="password_confirm" placeholder="••••••••" autocomplete="new-password" required />
+        </div>
+
+        <label class="checkbox">
+          <input type="checkbox" id="authRemember" name="remember" />
+          <span data-i18n="modal.remember">Beni Hatırla</span>
+        </label>
+
+        <button type="submit" class="btn btn--gold btn--block" id="authSubmit" data-i18n="modal.submit">Hesap Oluştur</button>
+      </form>
+
+      <p class="modal__foot">
+        <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
+        <a href="/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Bildirimler -->
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <!-- Çerez bildirimi -->
+  <div class="cookie" id="cookieBar" role="region" aria-label="Çerez bildirimi">
+    <p>
+      <span data-i18n="cookie.text">Deneyiminizi iyileştirmek için çerez kullanıyoruz. Tercihinizi istediğiniz zaman değiştirebilirsiniz.</span>
+      <a href="/cerez-politikasi" data-i18n="cookie.more">Çerez Politikası</a>
+    </p>
+    <div class="cookie__actions">
+      <button type="button" class="btn btn--gold btn--sm" id="cookieAccept" data-i18n="cookie.accept">Kabul Et</button>
+      <button type="button" class="btn btn--muted btn--sm" id="cookieDecline" data-i18n="cookie.decline">Reddet</button>
+    </div>
+  </div>
+
+  <!-- Yukarı çık -->
+  <button type="button" class="to-top" id="toTop" aria-label="Yukarı çık" data-i18n-aria="a11y.toTop">
+    <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+  </button>
+
+  <!-- Yapısal veri (Schema.org) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://cyberlionai.com/#organization",
+        "name": "Cyber Lion AI",
+        "url": "https://cyberlionai.com/",
+        "description": "Yapay zeka destekli web güvenlik tarama platformu.",
+        "email": "info@cyberlionai.com"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://cyberlionai.com/#website",
+        "url": "https://cyberlionai.com/",
+        "name": "Cyber Lion AI",
+        "inLanguage": ["tr", "en"],
+        "publisher": { "@id": "https://cyberlionai.com/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Cyber Lion AI",
+        "applicationCategory": "SecurityApplication",
+        "operatingSystem": "Web",
+        "offers": [
+          { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "TRY" },
+          { "@type": "Offer", "name": "Pro", "price": "299", "priceCurrency": "TRY" }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ==========================================================
+       0. AYARLAR
+       ========================================================== */
+    var CONFIG = {
+      debug: false,                 // production'da false
+      apiBaseUrl: '',               // backend hazır olduğunda: 'https://api.cyberlionai.com'
+      useMockApi: true,             // backend bağlanınca false yapın
+      geoLookupUrl: 'https://ipapi.co/country_code/',
+      storageKeys: {
+        lang: 'preferredLang',
+        theme: 'preferredTheme',
+        cookie: 'cookieConsent',
+        token: 'authToken'
+      }
+    };
+
+    function log() {
+      if (CONFIG.debug && window.console) console.log.apply(console, arguments);
+    }
+
+    /* Güvenli localStorage sarmalayıcısı (gizli mod / kapalı depolama) */
+    var store = {
+      get: function (k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
+      set: function (k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* yok say */ } }
+    };
+
+    /* ==========================================================
+       1. DİL VERİLERİ (TR / EN) — tam kapsam
+       ========================================================== */
+    var translations = {
+      tr: {
+        meta: {
+          title: 'Cyber Lion AI - Yapay Zeka ile Güvenlik Taraması',
+          desc: 'Web sitenizdeki güvenlik açıklarını AI ile tespit edin. Ücretsiz deneme, profesyonel raporlama.'
+        },
+        a11y: { skip: 'İçeriğe geç', theme: 'Temayı değiştir', menu: 'Menüyü aç/kapat', toTop: 'Sayfanın başına dön' },
+        nav: {
+          home: 'Ana Sayfa', services: 'Hizmetler', how: 'Nasıl Çalışır',
+          pricing: 'Fiyatlandırma', contact: 'İletişim', upgrade: "Premium'a Geç"
+        },
+        hero: {
+          badge: 'Tarama motoru aktif',
+          title: 'GÜVENLİK AÇIKLARINIZI AVLIYORUZ',
+          subtitle: 'Yapay Zeka ile Güçlendirilmiş Otomatik Güvenlik Taraması',
+          desc: 'Web sitenizdeki zafiyetleri tespit edin, raporlayın ve düzeltin.',
+          scanLabel: 'Taranacak adres',
+          scanPlaceholder: 'ornek.com',
+          scanNote: 'Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.',
+          cta1: 'Hemen Tara', cta2: "Premium'a Geç", cta3: 'Nasıl Çalışır?',
+          stat1: 'Taranan Site', stat2: 'Doğruluk Oranı', stat3: 'Aktif Koruma', stat3v: '7/24'
+        },
+        scan: {
+          step1: 'Hedef doğrulanıyor',
+          step2: 'TLS/SSL el sıkışması analiz ediliyor',
+          step3: 'Güvenlik başlıkları taranıyor',
+          step4: 'Yapay zeka bulguları önceliklendiriyor',
+          done: 'Tarama tamamlandı',
+          demoNote: 'Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.',
+          fullReport: 'Tam Raporu Al',
+          sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Bilgi' },
+          findings: [
+            'Content-Security-Policy başlığı tanımlı değil',
+            'TLS 1.0 / 1.1 desteği hâlâ açık',
+            'Strict-Transport-Security (HSTS) başlığı eksik',
+            'X-Frame-Options tanımsız — clickjacking riski',
+            'Çerezlerde Secure / SameSite bayrağı eksik',
+            'Sunucu sürüm bilgisi yanıt başlığında ifşa ediliyor',
+            'SSL sertifikası geçerli — yenilemeye 87 gün var'
+          ]
+        },
+        services: {
+          eyebrow: 'Yetenekler',
+          title: 'NEDEN CYBER LION AI?',
+          subtitle: 'Tek bir taramada, saldırganın gördüğü her yüzeyi analiz ediyoruz.',
+          s1t: 'Otomatik Zafiyet Taraması',
+          s1d: 'OWASP Top 10 ve diğer yaygın güvenlik açıklarını otomatik olarak tespit eder.',
+          s2t: 'SSL/TLS Analizi',
+          s2d: 'Sertifika geçerliliği, şifreleme gücü ve protokol uyumluluğunu kontrol eder.',
+          s3t: 'Güvenlik Başlıkları',
+          s3d: 'CSP, HSTS, X-Frame-Options gibi kritik güvenlik başlıklarını analiz eder.',
+          s4t: 'AI Asistan',
+          s4d: 'Tespit edilen zafiyetler için akıllı düzeltme önerileri sunar.'
+        },
+        how: {
+          eyebrow: 'Süreç', title: 'NASIL ÇALIŞIR?',
+          subtitle: 'Üç adım, ortalama 90 saniye. Kurulum, ajan ya da eklenti gerekmez.',
+          s1t: "URL'yi Girin",
+          s1d: 'Taramak istediğiniz alan adını yazın. Doğrulama ve kapsam belirleme otomatik yapılır.',
+          s2t: 'AI Taramayı Başlatsın',
+          s2d: 'Motor; başlıkları, sertifikaları, açık uçları ve bilinen zafiyet imzalarını paralel olarak tarar.',
+          s3t: 'Detaylı Raporu Alın',
+          s3d: 'Önem derecesine göre sıralanmış bulgular, kanıtlar ve uygulanabilir düzeltme adımları.'
+        },
+        pricing: {
+          eyebrow: 'Planlar', title: 'SİZE UYGUN PLANI SEÇİN',
+          subtitle: 'Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.',
+          foot: 'Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur.',
+          free: {
+            badge: 'Deneme', name: 'Free', tagline: 'Sitenizin güvenlik durumuna hızlı bir bakış.',
+            price: '₺0', period: 'Süresiz ücretsiz',
+            f1: '5 Güvenlik Testi', f2: 'Temel SSL Kontrolü', f3: 'Basit Rapor (PDF)', f4: 'Kayıt Gerekmez',
+            cta: 'Deneme Sürümü'
+          },
+          pro: {
+            badge: 'Popüler', name: 'Pro', tagline: 'Üretim ortamını sürekli izleyen ekipler için.',
+            price: '₺299/ay', period: 'Aylık, istediğiniz zaman iptal',
+            f1: 'Sınırsız Güvenlik Testi', f2: 'Gelişmiş Zafiyet Taraması',
+            f3: 'Detaylı Rapor + Düzeltme Önerileri', f4: 'E-posta Bildirimleri', f5: '7/24 Destek',
+            cta: "Premium'a Geç"
+          },
+          ent: {
+            badge: 'Kurumsal', name: 'Enterprise', tagline: 'Kendi altyapınıza uyarlanmış tarama ve raporlama.',
+            price: 'Özel Teklif', period: 'Kullanımınıza göre fiyatlandırma',
+            f1: "PRO'daki tüm özellikler", f2: 'Özel AI Model Entegrasyonu', f3: 'API Erişimi',
+            f4: 'Öncelikli Destek', f5: 'Özel Raporlama',
+            cta: 'İletişime Geç'
+          }
+        },
+        footer: {
+          about: 'Yapay zeka destekli sürekli güvenlik taraması. Zafiyetleri saldırganlardan önce bulun, önceliklendirin ve kapatın.',
+          quick: 'Hızlı Linkler', contact: 'İletişim',
+          hours: 'Destek: Hafta içi 09:00 – 18:00 (TSİ)',
+          rights: '© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.',
+          privacy: 'Gizlilik Politikası', terms: 'Kullanım Şartları', cookies: 'Çerez Politikası'
+        },
+        modal: {
+          title: "Premium'a Geç",
+          subtitle: 'Hesabınızı oluşturun ve güvenlik avantajlarından yararlanın.',
+          email: 'E-posta', password: 'Şifre', password2: 'Şifre Tekrar',
+          remember: 'Beni Hatırla', submit: 'Hesap Oluştur', close: 'Kapat',
+          foot: "Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.",
+          termsLink: 'Şartları oku'
+        },
+        cookie: {
+          text: 'Deneyiminizi iyileştirmek için çerez kullanıyoruz. Tercihinizi istediğiniz zaman değiştirebilirsiniz.',
+          accept: 'Kabul Et', decline: 'Reddet', more: 'Çerez Politikası'
+        },
+        toast: {
+          trial: 'Ücretsiz sürüm zaten aktif — yukarıdaki alandan sitenizi hemen tarayabilirsiniz.',
+          contact: 'Kurumsal teklif için: info@cyberlionai.com',
+          urlEmpty: 'Lütfen taranacak bir adres girin.',
+          urlInvalid: 'Geçerli bir alan adı girin. Örnek: ornek.com',
+          scanBusy: 'Tarama zaten sürüyor, lütfen bekleyin.',
+          scanDone: 'Tarama tamamlandı — {n} bulgu listelendi.',
+          emailInvalid: 'Geçerli bir e-posta adresi girin.',
+          passShort: 'Şifreniz en az 8 karakter olmalı.',
+          passMismatch: 'Şifreler eşleşmiyor.',
+          registerOk: 'Hesabınız oluşturuldu. Doğrulama e-postasını gönderdik.',
+          registerFail: 'Kayıt tamamlanamadı. Lütfen tekrar deneyin.',
+          langChanged: 'Dil Türkçe olarak ayarlandı.'
+        }
+      },
+
+      en: {
+        meta: {
+          title: 'Cyber Lion AI - AI-Powered Security Scanning',
+          desc: 'Detect security vulnerabilities on your website with AI. Free trial, professional reporting.'
+        },
+        a11y: { skip: 'Skip to content', theme: 'Toggle theme', menu: 'Toggle menu', toTop: 'Back to top' },
+        nav: {
+          home: 'Home', services: 'Services', how: 'How It Works',
+          pricing: 'Pricing', contact: 'Contact', upgrade: 'Upgrade'
+        },
+        hero: {
+          badge: 'Scan engine online',
+          title: 'HUNTING YOUR VULNERABILITIES',
+          subtitle: 'AI-Powered Automated Security Scanning',
+          desc: 'Detect, report, and fix vulnerabilities in your website.',
+          scanLabel: 'Address to scan',
+          scanPlaceholder: 'example.com',
+          scanNote: 'No sign-up required — 5 free tests, results in seconds.',
+          cta1: 'Scan Now', cta2: 'Upgrade', cta3: 'How It Works',
+          stat1: 'Sites Scanned', stat2: 'Accuracy Rate', stat3: 'Active Protection', stat3v: '24/7'
+        },
+        scan: {
+          step1: 'Validating target',
+          step2: 'Analyzing TLS/SSL handshake',
+          step3: 'Scanning security headers',
+          step4: 'AI is prioritizing findings',
+          done: 'Scan complete',
+          demoNote: 'This is a demo output. Full reports and remediation steps unlock with PRO.',
+          fullReport: 'Get Full Report',
+          sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Info' },
+          findings: [
+            'Content-Security-Policy header is not defined',
+            'TLS 1.0 / 1.1 support is still enabled',
+            'Strict-Transport-Security (HSTS) header is missing',
+            'X-Frame-Options undefined — clickjacking risk',
+            'Cookies missing Secure / SameSite flags',
+            'Server version disclosed in response headers',
+            'SSL certificate valid — 87 days until renewal'
+          ]
+        },
+        services: {
+          eyebrow: 'Capabilities',
+          title: 'WHY CYBER LION AI?',
+          subtitle: 'One scan analyzes every surface an attacker can see.',
+          s1t: 'Automated Vulnerability Scanning',
+          s1d: 'Automatically detects OWASP Top 10 and other common security vulnerabilities.',
+          s2t: 'SSL/TLS Analysis',
+          s2d: 'Checks certificate validity, encryption strength, and protocol compliance.',
+          s3t: 'Security Headers',
+          s3d: 'Analyzes critical security headers like CSP, HSTS, X-Frame-Options.',
+          s4t: 'AI Assistant',
+          s4d: 'Provides intelligent remediation suggestions for detected vulnerabilities.'
+        },
+        how: {
+          eyebrow: 'Process', title: 'HOW IT WORKS',
+          subtitle: 'Three steps, 90 seconds on average. No install, agent, or plugin required.',
+          s1t: 'Enter Your URL',
+          s1d: 'Type the domain you want to scan. Validation and scoping happen automatically.',
+          s2t: 'Let the AI Scan',
+          s2d: 'The engine scans headers, certificates, exposed endpoints, and known vulnerability signatures in parallel.',
+          s3t: 'Get the Detailed Report',
+          s3d: 'Findings ranked by severity, with evidence and actionable remediation steps.'
+        },
+        pricing: {
+          eyebrow: 'Plans', title: 'CHOOSE YOUR PLAN',
+          subtitle: 'Start free. Upgrade when you are ready. No long-term commitment.',
+          foot: 'All prices exclude VAT. Corporate invoicing and annual billing are available.',
+          free: {
+            badge: 'Trial', name: 'Free', tagline: 'A fast look at your site security posture.',
+            price: '$0', period: 'Free forever',
+            f1: '5 Security Tests', f2: 'Basic SSL Check', f3: 'Simple Report (PDF)', f4: 'No Sign-Up Needed',
+            cta: 'Try Now'
+          },
+          pro: {
+            badge: 'Popular', name: 'Pro', tagline: 'For teams monitoring production continuously.',
+            price: '$29/mo', period: 'Monthly, cancel anytime',
+            f1: 'Unlimited Security Tests', f2: 'Advanced Vulnerability Scanning',
+            f3: 'Detailed Report + Remediation', f4: 'Email Notifications', f5: '24/7 Support',
+            cta: 'Upgrade'
+          },
+          ent: {
+            badge: 'Enterprise', name: 'Enterprise', tagline: 'Scanning and reporting tailored to your infrastructure.',
+            price: 'Custom', period: 'Usage-based pricing',
+            f1: 'Everything in PRO', f2: 'Custom AI Model Integration', f3: 'API Access',
+            f4: 'Priority Support', f5: 'Custom Reporting',
+            cta: 'Contact'
+          }
+        },
+        footer: {
+          about: 'AI-powered continuous security scanning. Find, prioritize, and close vulnerabilities before attackers do.',
+          quick: 'Quick Links', contact: 'Contact',
+          hours: 'Support: Weekdays 09:00 – 18:00 (GMT+3)',
+          rights: '© 2026 Cyber Lion AI — All Rights Reserved.',
+          privacy: 'Privacy Policy', terms: 'Terms of Use', cookies: 'Cookie Policy'
+        },
+        modal: {
+          title: 'Upgrade Now',
+          subtitle: 'Create your account and unlock security features.',
+          email: 'Email', password: 'Password', password2: 'Confirm Password',
+          remember: 'Remember Me', submit: 'Create Account', close: 'Close',
+          foot: 'By signing up you agree to the Terms of Use and Privacy Policy.',
+          termsLink: 'Read the terms'
+        },
+        cookie: {
+          text: 'We use cookies to improve your experience. You can change your preference at any time.',
+          accept: 'Accept', decline: 'Decline', more: 'Cookie Policy'
+        },
+        toast: {
+          trial: 'The free tier is already live — scan your site from the field above.',
+          contact: 'For an enterprise quote: info@cyberlionai.com',
+          urlEmpty: 'Please enter an address to scan.',
+          urlInvalid: 'Enter a valid domain. Example: example.com',
+          scanBusy: 'A scan is already running, please wait.',
+          scanDone: 'Scan complete — {n} findings listed.',
+          emailInvalid: 'Please enter a valid email address.',
+          passShort: 'Your password must be at least 8 characters.',
+          passMismatch: 'Passwords do not match.',
+          registerOk: 'Account created. We sent you a verification email.',
+          registerFail: 'Registration failed. Please try again.',
+          langChanged: 'Language set to English.'
+        }
+      }
+    };
+
+    /* ==========================================================
+       2. DİL MOTORU (i18n)
+       ========================================================== */
+    var currentLang = 'tr';
+
+    /**
+     * Nokta ile ayrılmış anahtarı çeviri ağacında çözer: t('hero.title')
+     * Bulunamazsa anahtarın kendisini döndürür (sessiz başarısızlık).
+     */
+    function t(key, params) {
+      var node = translations[currentLang];
+      var parts = String(key).split('.');
+      for (var i = 0; i < parts.length; i++) {
+        if (node && Object.prototype.hasOwnProperty.call(node, parts[i])) node = node[parts[i]];
+        else { log('Eksik çeviri:', key, currentLang); return key; }
+      }
+      if (typeof node === 'string' && params) {
+        node = node.replace(/\{(\w+)\}/g, function (m, p) {
+          return Object.prototype.hasOwnProperty.call(params, p) ? params[p] : m;
+        });
+      }
+      return node;
+    }
+
+    /**
+     * Sayfadaki tüm çevrilebilir düğümleri günceller.
+     * Not: XSS'e karşı yalnızca textContent / setAttribute kullanılır, innerHTML kullanılmaz.
+     */
+    function applyLanguage(lang, opts) {
+      if (!translations[lang]) lang = 'tr';
+      currentLang = lang;
+      opts = opts || {};
+
+      document.documentElement.setAttribute('lang', lang);
+
+      // Metinler
+      var nodes = document.querySelectorAll('[data-i18n]');
+      for (var i = 0; i < nodes.length; i++) {
+        var val = t(nodes[i].getAttribute('data-i18n'));
+        if (typeof val === 'string') nodes[i].textContent = val;
+      }
+      // Placeholder'lar
+      var ph = document.querySelectorAll('[data-i18n-placeholder]');
+      for (var j = 0; j < ph.length; j++) {
+        ph[j].setAttribute('placeholder', t(ph[j].getAttribute('data-i18n-placeholder')));
+      }
+      // Erişilebilirlik etiketleri
+      var ar = document.querySelectorAll('[data-i18n-aria]');
+      for (var k = 0; k < ar.length; k++) {
+        ar[k].setAttribute('aria-label', t(ar[k].getAttribute('data-i18n-aria')));
+      }
+
+      // SEO meta etiketleri
+      document.title = t('meta.title');
+      setMeta('name', 'description', t('meta.desc'));
+      setMeta('property', 'og:title', t('meta.title'));
+      setMeta('property', 'og:description', t('meta.desc'));
+      setMeta('property', 'og:locale', lang === 'tr' ? 'tr_TR' : 'en_US');
+
+      // Dil düğmelerinin durumu
+      var btns = document.querySelectorAll('.lang-switch__btn');
+      for (var m = 0; m < btns.length; m++) {
+        btns[m].setAttribute('aria-pressed', btns[m].getAttribute('data-lang') === lang ? 'true' : 'false');
+      }
+
+      // Sayaçları yeniden biçimlendir (10.000+ / 10,000+)
+      formatCounters();
+
+      if (!opts.silent) store.set(CONFIG.storageKeys.lang, lang);
+      log('Dil uygulandı:', lang);
+    }
+
+    function setMeta(attr, name, content) {
+      var el = document.querySelector('meta[' + attr + '="' + name + '"]');
+      if (el) el.setAttribute('content', content);
+    }
+
+    /**
+     * Dil algılama önceliği:
+     *   1) ?lang= parametresi   2) localStorage   3) /tr/ veya /en/ yolu
+     *   4) tarayıcı dili        5) Geo-IP (asenkron, yalnızca 1-3 yoksa)
+     */
+    function detectLanguage() {
+      var explicit = null;
+      var param = new URLSearchParams(window.location.search).get('lang');
+      if (param && translations[param]) explicit = param;
+
+      if (!explicit) {
+        var saved = store.get(CONFIG.storageKeys.lang);
+        if (saved && translations[saved]) explicit = saved;
+      }
+      if (!explicit) {
+        var path = window.location.pathname;
+        if (path.indexOf('/tr/') !== -1) explicit = 'tr';
+        else if (path.indexOf('/en/') !== -1) explicit = 'en';
+      }
+
+      if (explicit) return { lang: explicit, fromUser: true };
+
+      var browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+      return { lang: browserLang.indexOf('tr') === 0 ? 'tr' : 'en', fromUser: false };
+    }
+
+    /** Geo-IP ile ince ayar: kullanıcı bir tercih belirtmediyse ve Türkiye'den geliyorsa TR'ye geç. */
+    function refineLanguageByGeo() {
+      if (!window.fetch || !window.AbortController) return;
+      var ctrl = new AbortController();
+      var timer = setTimeout(function () { ctrl.abort(); }, 2000);
+
+      fetch(CONFIG.geoLookupUrl, { signal: ctrl.signal, cache: 'force-cache' })
+        .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+        .then(function (code) {
+          clearTimeout(timer);
+          var country = String(code).trim().toUpperCase();
+          var wanted = country === 'TR' ? 'tr' : 'en';
+          if (wanted !== currentLang) applyLanguage(wanted, { silent: true });
+        })
+        .catch(function () { clearTimeout(timer); /* geo başarısız — tarayıcı dili geçerli kalır */ });
+    }
+
+    /* ==========================================================
+       3. BİLDİRİMLER (Toast)
+       ========================================================== */
+    var toastHost = document.getElementById('toasts');
+    var TOAST_ICONS = { info: 'fa-circle-info', success: 'fa-circle-check', error: 'fa-triangle-exclamation' };
+
+    function toast(message, type, ms) {
+      if (!toastHost) return;
+      type = type || 'info';
+      var box = document.createElement('div');
+      box.className = 'toast toast--' + type;
+
+      var icon = document.createElement('i');
+      icon.className = 'fa-solid ' + (TOAST_ICONS[type] || TOAST_ICONS.info);
+      icon.setAttribute('aria-hidden', 'true');
+
+      var text = document.createElement('span');
+      text.textContent = message; // XSS güvenli
+
+      box.appendChild(icon);
+      box.appendChild(text);
+      toastHost.appendChild(box);
+
+      setTimeout(function () {
+        box.classList.add('is-leaving');
+        setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 300);
+      }, ms || 4200);
+    }
+
+    /* ==========================================================
+       4. ÜST MENÜ: scroll durumu + mobil çekmece
+       ========================================================== */
+    var header = document.getElementById('siteHeader');
+    var drawer = document.getElementById('navDrawer');
+    var navToggle = document.getElementById('navToggle');
+    var toTop = document.getElementById('toTop');
+
+    function onScroll() {
+      var y = window.pageYOffset || document.documentElement.scrollTop;
+      if (header) header.classList.toggle('is-scrolled', y > 24);
+      if (toTop) toTop.classList.toggle('is-visible', y > 600);
+    }
+
+    /** Scroll olayları için throttle — her karede en fazla bir kez çalışır. */
+    function rafThrottle(fn) {
+      var ticking = false;
+      return function () {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(function () { fn(); ticking = false; });
+      };
+    }
+
+    window.addEventListener('scroll', rafThrottle(onScroll), { passive: true });
+    onScroll();
+
+    function closeDrawer() {
+      if (!drawer) return;
+      drawer.classList.remove('is-open');
+      if (navToggle) {
+        navToggle.setAttribute('aria-expanded', 'false');
+        navToggle.querySelector('i').className = 'fa-solid fa-bars';
+      }
+    }
+
+    if (navToggle && drawer) {
+      navToggle.addEventListener('click', function () {
+        var open = drawer.classList.toggle('is-open');
+        navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        navToggle.querySelector('i').className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+      });
+      drawer.addEventListener('click', function (e) {
+        if (e.target.tagName === 'A' || e.target.closest('button')) closeDrawer();
+      });
+    }
+
+    if (toTop) {
+      toTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    /* ==========================================================
+       5. KAYDIRMA ANİMASYONLARI + SAYAÇLAR
+       ========================================================== */
+    var revealItems = document.querySelectorAll('.reveal');
+
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+          var counter = entry.target.querySelector('[data-count]');
+          if (counter) animateCounter(counter);
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+      for (var r = 0; r < revealItems.length; r++) io.observe(revealItems[r]);
+    } else {
+      for (var r2 = 0; r2 < revealItems.length; r2++) revealItems[r2].classList.add('is-visible');
+    }
+
+    function localeOf(lang) { return lang === 'tr' ? 'tr-TR' : 'en-US'; }
+
+    function animateCounter(el) {
+      if (el.dataset.done === '1') return;
+      var target = parseInt(el.getAttribute('data-count'), 10);
+      var suffix = el.getAttribute('data-suffix') || '';
+      if (isNaN(target)) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        el.textContent = target.toLocaleString(localeOf(currentLang)) + suffix;
+        el.dataset.done = '1';
+        return;
+      }
+      var start = performance.now(), dur = 1400;
+      (function tick(now) {
+        var p = Math.min((now - start) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+        el.textContent = Math.round(target * eased).toLocaleString(localeOf(currentLang)) + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+        else el.dataset.done = '1';
+      })(performance.now());
+    }
+
+    /** Dil değişince tamamlanmış sayaçları yeni yerel biçime çevirir. */
+    function formatCounters() {
+      var cs = document.querySelectorAll('[data-count]');
+      for (var i = 0; i < cs.length; i++) {
+        if (cs[i].dataset.done !== '1') continue;
+        var n = parseInt(cs[i].getAttribute('data-count'), 10);
+        cs[i].textContent = n.toLocaleString(localeOf(currentLang)) + (cs[i].getAttribute('data-suffix') || '');
+      }
+    }
+
+    /* ==========================================================
+       6. TEMA (Karanlık / Aydınlık)
+       ========================================================== */
+    var themeToggle = document.getElementById('themeToggle');
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      if (themeToggle) {
+        themeToggle.querySelector('i').className = theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+      }
+      setMeta('name', 'theme-color', theme === 'dark' ? '#0a0a0f' : '#f7f4ec');
+      store.set(CONFIG.storageKeys.theme, theme);
+      if (window.CyberLionEmbers) window.CyberLionEmbers.refreshPalette();
+    }
+
+    if (themeToggle) {
+      themeToggle.addEventListener('click', function () {
+        var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+      });
+    }
+
+    /* ==========================================================
+       7. ALEV & KÜL PARÇACIK SİSTEMİ (Canvas)
+       --------------------------------------------------------
+       Performans notları:
+       - Her parçacık için gradyan çizmek pahalıdır; bunun yerine
+         renk başına bir kez "sprite" (küçük offscreen canvas) üretilir
+         ve drawImage ile ölçeklenerek çizilir. Bu, 200+ parçacıkta bile
+         60 FPS sağlar.
+       - Kare süresi sürekli ölçülür; cihaz yetişemiyorsa parçacık
+         sayısı otomatik düşürülür.
+       - Sekme gizliyken veya hero görünür değilken döngü durdurulur.
+       ========================================================== */
+    (function embers() {
+      var canvas = document.getElementById('emberCanvas');
+      if (!canvas || !canvas.getContext) return;
+
+      var ctx = canvas.getContext('2d', { alpha: true });
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var W = 0, H = 0, dpr = 1;
+      var particles = [];
+      var sprites = [];
+      var palette = [];
+      var mouse = { x: -9999, y: -9999, active: false };
+      var rafId = null, running = false, lastTime = 0, slowFrames = 0;
+      var maxCount = 0;
+
+      /* Ekran boyutuna göre hedef parçacık sayısı */
+      function targetCount() {
+        var w = window.innerWidth;
+        if (w < 600) return 80;
+        if (w < 1024) return 150;
+        return 220;
+      }
+
+      /* Tema duyarlı renk paleti: %60 altın, %30 ateş, %10 beyaz */
+      function buildPalette() {
+        var dark = document.documentElement.getAttribute('data-theme') !== 'light';
+        palette = dark
+          ? [
+              { rgb: '212,175,55', weight: 0.60 },
+              { rgb: '255,77,0',   weight: 0.30 },
+              { rgb: '255,255,255', weight: 0.10 }
+            ]
+          : [
+              { rgb: '154,116,17', weight: 0.60 },
+              { rgb: '209,58,0',   weight: 0.30 },
+              { rgb: '120,90,10',  weight: 0.10 }
+            ];
+        sprites = palette.map(function (p) { return makeSprite(p.rgb); });
+      }
+
+      /* Tek seferlik yumuşak ışık sprite'ı */
+      function makeSprite(rgb) {
+        var size = 64;
+        var c = document.createElement('canvas');
+        c.width = c.height = size;
+        var g = c.getContext('2d');
+        var grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+        grad.addColorStop(0, 'rgba(' + rgb + ',1)');
+        grad.addColorStop(0.35, 'rgba(' + rgb + ',0.55)');
+        grad.addColorStop(1, 'rgba(' + rgb + ',0)');
+        g.fillStyle = grad;
+        g.fillRect(0, 0, size, size);
+        return c;
+      }
+
+      function pickColorIndex() {
+        var r = Math.random(), acc = 0;
+        for (var i = 0; i < palette.length; i++) {
+          acc += palette[i].weight;
+          if (r <= acc) return i;
+        }
+        return 0;
+      }
+
+      function spawn(p, initial) {
+        p.x = Math.random() * W;
+        p.y = initial ? Math.random() * H : H + Math.random() * 60;
+        p.size = 2 + Math.random() * 4;                 // 2–6 px
+        p.vx = (Math.random() - 0.5) * 0.22;            // yanal sürüklenme
+        p.vy = -(0.22 + Math.random() * 0.65);          // yukarı süzülme
+        p.maxLife = 240 + Math.random() * 420;
+        p.life = initial ? Math.random() * p.maxLife : p.maxLife;
+        p.color = pickColorIndex();
+        p.sway = 0.25 + Math.random() * 0.7;            // salınım genliği
+        p.phase = Math.random() * Math.PI * 2;
+        p.speed = 0.012 + Math.random() * 0.02;
+        return p;
+      }
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var rect = canvas.getBoundingClientRect();
+        W = rect.width; H = rect.height;
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function build() {
+        maxCount = targetCount();
+        particles = [];
+        for (var i = 0; i < maxCount; i++) particles.push(spawn({}, true));
+      }
+
+      function step(now) {
+        rafId = requestAnimationFrame(step);
+
+        // Kare süresi ölçümü — cihaz zorlanıyorsa parçacık sayısını düşür
+        var dt = now - lastTime;
+        lastTime = now;
+        if (dt > 26 && particles.length > 50) {
+          slowFrames++;
+          if (slowFrames > 45) { particles.length = Math.floor(particles.length * 0.75); slowFrames = 0; }
+        } else if (slowFrames > 0) slowFrames--;
+
+        draw(now);
+      }
+
+      function draw(now) {
+        ctx.clearRect(0, 0, W, H);
+        var dark = document.documentElement.getAttribute('data-theme') !== 'light';
+        ctx.globalCompositeOperation = dark ? 'lighter' : 'source-over';
+
+        for (var i = 0; i < particles.length; i++) {
+          var p = particles[i];
+
+          p.life--;
+          if (p.life <= 0 || p.y < -40) { spawn(p, false); continue; }
+
+          // Alev hareketi: yukarı süzülme + yanal salınım (Brownian hissi)
+          p.phase += p.speed;
+          p.x += p.vx + Math.sin(p.phase) * p.sway * 0.35;
+          p.y += p.vy;
+          p.vy -= 0.0016;                                 // hafif ivmelenme
+
+          // Fare etkileşimi: parçacıklar imlece doğru yumuşakça çekilir
+          if (mouse.active) {
+            var dx = mouse.x - p.x, dy = mouse.y - p.y;
+            var d2 = dx * dx + dy * dy;
+            if (d2 < 26000 && d2 > 1) {
+              var d = Math.sqrt(d2);
+              p.x += (dx / d) * 0.5;
+              p.y += (dy / d) * 0.5;
+            }
+          }
+
+          // Ekran kenarlarında sar
+          if (p.x < -30) p.x = W + 30;
+          else if (p.x > W + 30) p.x = -30;
+
+          // Ömrün sonuna doğru sön, biraz büyü (kül efekti)
+          var ratio = p.life / p.maxLife;
+          var alpha = ratio > 0.85 ? (1 - ratio) / 0.15 : Math.min(ratio * 1.35, 1);
+          var flicker = 0.78 + Math.sin(p.phase * 3.1) * 0.22;
+          var size = p.size * (1 + (1 - ratio) * 0.5);
+
+          ctx.globalAlpha = Math.max(0, alpha * flicker) * (dark ? 0.9 : 0.5);
+          var s = size * 4;
+          ctx.drawImage(sprites[p.color], p.x - s / 2, p.y - s / 2, s, s);
+        }
+
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      function start() {
+        if (running || reduceMotion) return;
+        running = true; lastTime = performance.now();
+        rafId = requestAnimationFrame(step);
+      }
+      function stop() {
+        running = false;
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+
+      /* Kurulum */
+      buildPalette();
+      resize();
+      build();
+
+      if (reduceMotion) {
+        draw(0); // hareketsiz tek kare
+      } else {
+        start();
+      }
+
+      var resizeTimer = null;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+          resize();
+          if (Math.abs(targetCount() - maxCount) > 40) build();
+          if (reduceMotion) draw(0);
+        }, 180);
+      }, { passive: true });
+
+      window.addEventListener('pointermove', function (e) {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY - canvas.getBoundingClientRect().top;
+        mouse.active = true;
+      }, { passive: true });
+
+      window.addEventListener('pointerleave', function () { mouse.active = false; });
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stop(); else start();
+      });
+
+      // Hero ekrandan çıkınca animasyonu durdur (pil/CPU tasarrufu)
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (entries) {
+          if (entries[0].isIntersecting) start(); else stop();
+        }, { threshold: 0 }).observe(canvas);
+      }
+
+      window.CyberLionEmbers = {
+        refreshPalette: function () { buildPalette(); if (reduceMotion) draw(0); }
+      };
+    })();
+
+    /* ==========================================================
+       8. API KATMANI (backend entegrasyonuna hazır)
+       --------------------------------------------------------
+       Backend yayına alındığında CONFIG.useMockApi = false yapın ve
+       CONFIG.apiBaseUrl değerini ayarlayın; arayüz kodu değişmez.
+       ========================================================== */
+    var API = {
+      request: function (path, options) {
+        options = options || {};
+        var headers = { 'Content-Type': 'application/json' };
+        var csrf = document.getElementById('csrfToken');
+        if (csrf && csrf.value) headers['X-CSRF-Token'] = csrf.value;
+        var token = store.get(CONFIG.storageKeys.token);
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        return fetch(CONFIG.apiBaseUrl + path, {
+          method: options.method || 'GET',
+          headers: headers,
+          body: options.body ? JSON.stringify(options.body) : undefined,
+          credentials: 'same-origin'
+        }).then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        });
+      },
+
+      /** POST /api/scan */
+      startScan: function (url, type) {
+        if (CONFIG.useMockApi) {
+          return new Promise(function (resolve) {
+            setTimeout(function () {
+              resolve({ scanId: 'demo-' + Date.now(), url: url, type: type || 'quick', status: 'queued' });
+            }, 220);
+          });
+        }
+        return API.request('/api/scan', { method: 'POST', body: { url: url, type: type || 'quick' } });
+      },
+
+      /** GET /api/scan/{scanId} */
+      getScan: function (scanId) {
+        if (CONFIG.useMockApi) return Promise.resolve(mockScanResult());
+        return API.request('/api/scan/' + encodeURIComponent(scanId));
+      },
+
+      /** POST /api/auth/register */
+      register: function (email, password) {
+        if (CONFIG.useMockApi) {
+          return new Promise(function (resolve) {
+            setTimeout(function () { resolve({ ok: true, email: email, token: null }); }, 900);
+          });
+        }
+        return API.request('/api/auth/register', { method: 'POST', body: { email: email, password: password } });
+      },
+
+      /** POST /api/auth/login */
+      login: function (email, password) {
+        if (CONFIG.useMockApi) return Promise.resolve({ ok: true, token: null });
+        return API.request('/api/auth/login', { method: 'POST', body: { email: email, password: password } });
+      }
+    };
+
+    /* Demo bulguları — backend gelene kadar tutarlı bir örnek çıktı üretir */
+    function mockScanResult() {
+      var sevs = ['high', 'critical', 'medium', 'medium', 'medium', 'low', 'low'];
+      var items = [];
+      for (var i = 0; i < sevs.length; i++) {
+        items.push({ index: i, severity: sevs[i], passed: i === 6 });
+      }
+      return { status: 'completed', score: 62, findings: items };
+    }
+
+    /* ==========================================================
+       9. CANLI DEMO TARAMA
+       ========================================================== */
+    var scanForm = document.getElementById('scanForm');
+    var scanInput = document.getElementById('scanUrl');
+    var scanOutput = document.getElementById('scanOutput');
+    var scanBar = document.getElementById('scanBar');
+    var scanStatus = document.getElementById('scanStatus');
+    var scanLog = document.getElementById('scanLog');
+    var scanSummary = document.getElementById('scanSummary');
+    var scanScore = document.getElementById('scanScore');
+    var scanning = false;
+
+    /** Girdi temizliği: protokol/yol atılır, yalnızca alan adı doğrulanır. */
+    function normalizeDomain(raw) {
+      var v = String(raw || '').trim().toLowerCase();
+      v = v.replace(/^https?:\/\//, '').replace(/^www\./, '');
+      v = v.split(/[\/?#]/)[0];
+      if (!v) return null;
+      if (v.length > 253) return null;
+      return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/.test(v) ? v : null;
+    }
+
+    function setStatus(textKey, iconClass) {
+      if (!scanStatus) return;
+      scanStatus.textContent = '';
+      var i = document.createElement('i');
+      i.className = iconClass;
+      i.setAttribute('aria-hidden', 'true');
+      var s = document.createElement('span');
+      s.textContent = t(textKey);
+      scanStatus.appendChild(i);
+      scanStatus.appendChild(s);
+    }
+
+    function addLogRow(text, icon, iconColorVar) {
+      var li = document.createElement('li');
+      var i = document.createElement('i');
+      i.className = icon;
+      i.setAttribute('aria-hidden', 'true');
+      if (iconColorVar) i.style.color = 'var(' + iconColorVar + ')';
+      var b = document.createElement('b');
+      b.textContent = text;
+      li.appendChild(i);
+      li.appendChild(b);
+      scanLog.appendChild(li);
+      return li;
+    }
+
+    function addFinding(index, severity, passed) {
+      var li = addLogRow(
+        t('scan.findings')[index],
+        passed ? 'fa-solid fa-circle-check' : 'fa-solid fa-triangle-exclamation',
+        '--sev-' + severity
+      );
+      var tag = document.createElement('span');
+      tag.className = 'sev sev--' + severity;
+      tag.textContent = t('scan.sev.' + severity);
+      li.appendChild(tag);
+    }
+
+    if (scanForm) {
+      scanForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (scanning) { toast(t('toast.scanBusy'), 'info'); return; }
+
+        var raw = scanInput ? scanInput.value : '';
+        if (!raw.trim()) { toast(t('toast.urlEmpty'), 'error'); scanInput.focus(); return; }
+
+        var domain = normalizeDomain(raw);
+        if (!domain) { toast(t('toast.urlInvalid'), 'error'); scanInput.focus(); return; }
+
+        runScan(domain);
+      });
+    }
+
+    function runScan(domain) {
+      scanning = true;
+      scanOutput.classList.add('is-active');
+      scanLog.textContent = '';
+      scanSummary.hidden = true;
+      scanBar.style.width = '0%';
+
+      var steps = ['scan.step1', 'scan.step2', 'scan.step3', 'scan.step4'];
+      var stepIndex = 0;
+
+      setStatus(steps[0], 'fa-solid fa-spinner fa-spin');
+      addLogRow(domain, 'fa-solid fa-globe', '--gold-primary');
+
+      API.startScan(domain, 'quick').catch(function (err) { log('scan error', err); });
+
+      var timer = setInterval(function () {
+        stepIndex++;
+        scanBar.style.width = Math.min(stepIndex * 25, 100) + '%';
+
+        if (stepIndex < steps.length) {
+          setStatus(steps[stepIndex], 'fa-solid fa-spinner fa-spin');
+          return;
+        }
+
+        clearInterval(timer);
+        finishScan();
+      }, 850);
+    }
+
+    function finishScan() {
+      API.getScan('demo').then(function (result) {
+        setStatus('scan.done', 'fa-solid fa-circle-check');
+        var issues = 0;
+        result.findings.forEach(function (f, n) {
+          setTimeout(function () { addFinding(f.index, f.severity, f.passed); }, n * 110);
+          if (!f.passed) issues++;
+        });
+
+        setTimeout(function () {
+          scanScore.textContent = '';
+          scanScore.appendChild(document.createTextNode(String(result.score)));
+          var sub = document.createElement('span');
+          sub.textContent = '/100';
+          scanScore.appendChild(sub);
+          scanSummary.hidden = false;
+          scanning = false;
+          toast(t('toast.scanDone', { n: issues }), 'success');
+        }, result.findings.length * 110 + 150);
+      }).catch(function () {
+        scanning = false;
+        toast(t('toast.registerFail'), 'error');
+      });
+    }
+
+    /* ==========================================================
+       10. KAYIT MODALI
+       ========================================================== */
+    var modal = document.getElementById('authModal');
+    var modalClose = document.getElementById('modalClose');
+    var authForm = document.getElementById('authForm');
+    var lastFocused = null;
+    var hideTimer = null;   // kapanış geçişinin sonunda hidden'ı ayarlayan zamanlayıcı
+
+    function focusables() {
+      return modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    }
+
+    function openModal() {
+      if (!modal) return;
+      // Önceki kapanışın bekleyen zamanlayıcısı, yeni açılan modalı gizlemesin
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      lastFocused = document.activeElement;
+      modal.hidden = false;
+      void modal.offsetWidth;            // geçişin çalışması için reflow
+      modal.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+      var first = modal.querySelector('input');
+      if (first) setTimeout(function () { first.focus(); }, 120);
+    }
+
+    function closeModal() {
+      if (!modal) return;
+      if (hideTimer) clearTimeout(hideTimer);
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+      hideTimer = setTimeout(function () { modal.hidden = true; hideTimer = null; }, 320);
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+
+    var openers = document.querySelectorAll('[data-open-modal]');
+    for (var o = 0; o < openers.length; o++) openers[o].addEventListener('click', openModal);
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+
+    if (modal) {
+      // Modal dışına tıklayınca kapat
+      modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+
+      // ESC ile kapat + odak tuzağı (focus trap)
+      document.addEventListener('keydown', function (e) {
+        if (modal.hidden) return;
+        if (e.key === 'Escape') { closeModal(); return; }
+        if (e.key !== 'Tab') return;
+
+        var list = focusables();
+        if (!list.length) return;
+        var first = list[0], last = list[list.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      });
+    }
+
+    /* Form doğrulama + kayıt isteği */
+    if (authForm) {
+      authForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var email = document.getElementById('authEmail');
+        var pass = document.getElementById('authPass');
+        var pass2 = document.getElementById('authPass2');
+        var submit = document.getElementById('authSubmit');
+
+        [email, pass, pass2].forEach(function (f) { f.setAttribute('aria-invalid', 'false'); });
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
+          email.setAttribute('aria-invalid', 'true');
+          toast(t('toast.emailInvalid'), 'error'); email.focus(); return;
+        }
+        if (pass.value.length < 8) {
+          pass.setAttribute('aria-invalid', 'true');
+          toast(t('toast.passShort'), 'error'); pass.focus(); return;
+        }
+        if (pass.value !== pass2.value) {
+          pass2.setAttribute('aria-invalid', 'true');
+          toast(t('toast.passMismatch'), 'error'); pass2.focus(); return;
+        }
+
+        var original = submit.textContent;
+        submit.disabled = true;
+        submit.textContent = '…';
+
+        API.register(email.value.trim(), pass.value)
+          .then(function () {
+            toast(t('toast.registerOk'), 'success');
+            authForm.reset();
+            closeModal();
+          })
+          .catch(function (err) {
+            log('register error', err);
+            toast(t('toast.registerFail'), 'error');
+          })
+          .then(function () {
+            submit.disabled = false;
+            submit.textContent = original;
+          });
+      });
+    }
+
+    /* ==========================================================
+       11. PLAN BUTONLARI
+       ========================================================== */
+    var trialBtn = document.getElementById('trialBtn');
+    if (trialBtn) {
+      // "Deneme Sürümü": modal AÇMAZ — yalnızca bilgilendirme verir
+      trialBtn.addEventListener('click', function () {
+        toast(t('toast.trial'), 'info');
+        var hero = document.getElementById('hero');
+        if (hero) hero.scrollIntoView({ behavior: 'smooth' });
+        setTimeout(function () { if (scanInput) scanInput.focus(); }, 700);
+      });
+    }
+
+    var contactBtn = document.getElementById('contactBtn');
+    if (contactBtn) {
+      contactBtn.addEventListener('click', function () {
+        toast(t('toast.contact'), 'info', 6000);
+        window.location.href = 'mailto:info@cyberlionai.com?subject=Enterprise';
+      });
+    }
+
+    /* ==========================================================
+       12. ÇEREZ BİLDİRİMİ (GDPR / KVKK)
+       ========================================================== */
+    var cookieBar = document.getElementById('cookieBar');
+    if (cookieBar && !store.get(CONFIG.storageKeys.cookie)) {
+      setTimeout(function () { cookieBar.classList.add('is-open'); }, 1400);
+    }
+    function answerCookie(value) {
+      store.set(CONFIG.storageKeys.cookie, value);
+      if (cookieBar) cookieBar.classList.remove('is-open');
+    }
+    var ca = document.getElementById('cookieAccept');
+    var cd = document.getElementById('cookieDecline');
+    if (ca) ca.addEventListener('click', function () { answerCookie('accepted'); });
+    if (cd) cd.addEventListener('click', function () { answerCookie('declined'); });
+
+    /* ==========================================================
+       13. DİL DEĞİŞTİRİCİ
+       ========================================================== */
+    var langBtns = document.querySelectorAll('.lang-switch__btn');
+    for (var lb = 0; lb < langBtns.length; lb++) {
+      langBtns[lb].addEventListener('click', function () {
+        var lang = this.getAttribute('data-lang');
+        if (lang === currentLang) return;
+        applyLanguage(lang);
+
+        // URL'yi tercihe göre güncelle (sayfa yeniden yüklenmez)
+        try {
+          var url = new URL(window.location.href);
+          url.searchParams.set('lang', lang);
+          window.history.replaceState({}, '', url);
+        } catch (err) { log('history error', err); }
+
+        toast(t('toast.langChanged'), 'success', 2600);
+      });
+    }
+
+    /* ==========================================================
+       14. BAŞLATMA
+       ========================================================== */
+    try {
+      var savedTheme = store.get(CONFIG.storageKeys.theme);
+      applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark');
+
+      var detected = detectLanguage();
+      applyLanguage(detected.lang, { silent: !detected.fromUser });
+      if (!detected.fromUser) refineLanguageByGeo();
+
+      log('Cyber Lion AI hazır.', detected);
+    } catch (err) {
+      if (window.console) console.error('Başlatma hatası:', err);
+    }
+
+  })();
+  </script>
+</body>
+</html>
