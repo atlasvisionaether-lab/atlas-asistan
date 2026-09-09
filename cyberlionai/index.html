@@ -1940,7 +1940,9 @@
             rate_limited: 'Çok fazla istek gönderdiniz. Lütfen biraz sonra tekrar deneyin.',
             method_not_allowed: 'Geçersiz istek.',
             scan_failed: 'Tarama tamamlanamadı. Lütfen tekrar deneyin.',
-            network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.'
+            network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.',
+            service_unavailable: 'Tarama servisi şu anda yapılandırılıyor. Kısa süre sonra tekrar deneyin.',
+            quota_exceeded: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.'
           },
           note: {
             unsafe_inline: "script-src 'unsafe-inline' içeriyor; koruma büyük ölçüde etkisiz",
@@ -2237,7 +2239,9 @@
             rate_limited: 'Too many requests. Please try again shortly.',
             method_not_allowed: 'Invalid request.',
             scan_failed: 'The scan could not be completed. Please try again.',
-            network: 'Could not reach the server. Check your connection.'
+            network: 'Could not reach the server. Check your connection.',
+            service_unavailable: 'The scanning service is being configured. Please try again shortly.',
+            quota_exceeded: 'You have used your free scans. Upgrade to Premium for unlimited scanning.'
           },
           note: {
             unsafe_inline: "script-src allows 'unsafe-inline'; most of the protection is lost",
@@ -3025,6 +3029,7 @@
         }).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
+            // Sunucu kotayı yanıtla birlikte bildirir; istemci sayacı buna uyar.
             return data;
           });
         }, function () {
@@ -3144,14 +3149,21 @@
     }
 
     /* ---- Ücretsiz tarama hakkı -------------------------------------------
-       Sayaç tarayıcıda tutulur; kullanıcı depolamayı temizleyerek sıfırlayabilir.
-       Kötüye kullanımı asıl engelleyen, sunucudaki IP başına hız sınırıdır.    */
-    function scansUsed() {
+       Karar sunucuda verilir: kota, sunucunun verdiği HttpOnly oturum çerezine
+       bağlı olarak kalıcı depoda tutulur. Buradaki değer yalnızca son sunucu
+       yanıtının gösterimidir; tarayıcı verisi silinse bile sunucudaki sayaç
+       ve IP hız sınırı yerinde kalır.                                        */
+    function scansLeft() {
       var raw = parseInt(store.get(CONFIG.storageKeys.quota), 10);
-      return isNaN(raw) || raw < 0 ? 0 : raw;
+      return isNaN(raw) || raw < 0 ? CONFIG.freeScanLimit : Math.min(raw, CONFIG.freeScanLimit);
     }
-    function scansLeft() { return Math.max(0, CONFIG.freeScanLimit - scansUsed()); }
-    function consumeScan() { store.set(CONFIG.storageKeys.quota, String(scansUsed() + 1)); renderQuota(); }
+
+    /** Sunucunun bildirdiği kalan hakkı gösterime yazar. */
+    function setQuotaFromServer(quota) {
+      if (!quota || typeof quota.remaining !== 'number') return;
+      store.set(CONFIG.storageKeys.quota, String(quota.remaining));
+      renderQuota();
+    }
 
     function renderQuota() {
       var el = document.getElementById('scanQuota');
@@ -3269,12 +3281,9 @@
         var domain = normalizeDomain(raw);
         if (!domain) { toast(t('scan.err.invalid_url'), 'error'); scanInput.focus(); return; }
 
-        if (scansLeft() <= 0) {
-          toast(t('scan.quotaOut'), 'info', 6000);
-          openModal();
-          return;
-        }
-
+        // Yerel sayaç yalnızca gösterim; hak kontrolünü sunucu yapar. Burada
+        // engellenirse, iade edilmiş bir hak yüzünden kullanıcı haksız yere
+        // durdurulabilirdi.
         runScan(domain);
       });
     }
@@ -3359,12 +3368,22 @@
       }
       scanSummary.hidden = false;
 
-      consumeScan();
+      setQuotaFromServer(result.quota);
       toast(t('toast.scanDone', { n: result.summary.failed }), result.summary.failed ? 'info' : 'success');
     }
 
     function renderScanError(err) {
       var code = (err && err.code) || 'scan_failed';
+
+      // Kota sunucuda bitti: gösterimi güncelle ve kayıt modalını aç.
+      if (code === 'quota_exceeded') {
+        setQuotaFromServer({ remaining: 0 });
+        toast(t('scan.quotaOut'), 'info', 6000);
+        openModal();
+        scanOutput.classList.remove('is-active');
+        return;
+      }
+
       scanBar.style.width = '100%';
       scanBar.style.background = 'var(--sev-critical)';
       setStatus(t('scan.err.' + code), 'fa-solid fa-circle-exclamation');

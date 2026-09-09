@@ -259,3 +259,32 @@ SSRF açısından hassastır. `api/_lib/guard.js` şunları reddeder:
 Doğrulama **her yönlendirme adımında yeniden** yapılır: ilk adres güvenli olsa
 bile sonraki adım özel bir IP'ye gidemez. Yanıt gövdesi 512 KB'de kesilir,
 istekler 9 saniyede zaman aşımına uğrar, en fazla 4 yönlendirme izlenir.
+
+---
+
+## Sınırlar (kalıcı, sunucu tarafında)
+
+| Sınır | Anahtar | Değer | Aşılınca |
+|---|---|---|---|
+| IP hız sınırı | `cl:rl:<sha256(ip)[:32]>` | 10 dk / 12 tarama | `429 rate_limited` + `Retry-After` |
+| Ücretsiz kota | `cl:quota:<oturum kimliği>` | 5 tarama | `402 quota_exceeded` |
+
+Depo: Upstash Redis REST. Gerekli ortam değişkenleri
+`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
+**Depo yapılandırılmamışsa uç `503 service_unavailable` döner ve tarama yapılmaz.**
+
+### Başarılı yanıta eklenen alan
+```json
+"quota": { "used": 2, "limit": 5, "remaining": 3 }
+```
+
+### Yeni hata kodları
+| Kod | HTTP | Anlamı |
+|---|---|---|
+| `quota_exceeded` | 402 | Ücretsiz hak bitti; arayüz kayıt modalını açar |
+| `service_unavailable` | 503 | Sınır deposu yapılandırılmamış veya ulaşılamıyor |
+
+### Oturum çerezi
+`cl_sid` — sunucunun ürettiği 256 bit rastgele kimlik,
+`HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=1 yıl`.
+Kota ve (ileride) tarama geçmişi bu kimliğe bağlanır.
