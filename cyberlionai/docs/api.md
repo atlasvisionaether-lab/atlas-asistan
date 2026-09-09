@@ -288,3 +288,84 @@ Depo: Upstash Redis REST. Gerekli ortam değişkenleri
 `cl_sid` — sunucunun ürettiği 256 bit rastgele kimlik,
 `HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=1 yıl`.
 Kota ve (ileride) tarama geçmişi bu kimliğe bağlanır.
+
+---
+
+## Tarama geçmişi
+
+Kayıtlar `public.cl_scans` tablosunda tutulur. Sahiplik, sunucunun verdiği
+`cl_sid` çerezine (anonim oturum) veya ileride giriş yapan kullanıcıya bağlıdır.
+
+**Erişim modeli:** tarayıcı veritabanına hiç bağlanmaz. Tüm okuma ve yazma
+`service_role` kullanan sunucu uçlarından geçer ve sahiplik filtresi **her
+sorgunun içine** gömülür. `service_role` RLS'i baypas ettiği için bu uygulama
+katmanı kontrolü zorunludur; tabloda ayrıca RLS açık ve `anon` için hiçbir
+politika yoktur.
+
+### `GET /api/history?limit=&offset=`
+```json
+{ "items": [ { "id": "uuid", "host": "ornek.com", "score": 64,
+               "checks_total": 13, "checks_passed": 7, "checks_failed": 5,
+               "checks_skipped": 1, "scanned_at": "...", "duration_ms": 812,
+               "scanner_version": "1.1.0" } ],
+  "limit": 10, "offset": 0, "hasMore": false }
+```
+`limit` en fazla 50, varsayılan 10.
+
+### `DELETE /api/history?id=<uuid>`
+Tek kayıt siler. Kayıt bu oturuma ait değilse `404 not_found` döner —
+başka bir oturumun kimliğini bilmek işe yaramaz.
+
+### `DELETE /api/history?all=1`
+Oturumun tüm geçmişini siler. Yanıt: `{ "deleted": 3 }`
+
+### Hata kodları
+| Kod | HTTP |
+|---|---|
+| `invalid_id` | 400 |
+| `not_found` | 404 |
+| `method_not_allowed` | 405 |
+| `history_unavailable` | 503 (Supabase yapılandırılmamış veya ulaşılamıyor) |
+
+Supabase yapılandırılmamışsa **tarama çalışmaya devam eder**, yalnızca kayıt
+yapılmaz ve `scanId` `null` döner. Burada güvenlik kontrolü değil kolaylık
+kaybı olduğu için fail-closed uygulanmaz.
+
+---
+
+## PDF raporu
+
+### `GET /api/report?id=<uuid>&lang=tr|en`
+
+Yanıt: `application/pdf`,
+`Content-Disposition: attachment; filename="cyberlionai-security-report-<host>-<YYYY-MM-DD>.pdf"`
+
+**Erişim kontrolü zorunlu.** Rapor yalnızca isteği yapan oturuma ait bir
+kayıttan üretilir. Kayıt yoksa da başka bir oturuma aitse de aynı `404` döner;
+kaydın varlığı sızdırılmaz.
+
+**İçerik kaynağı:** yalnızca veritabanındaki satır. İstemciden gönderilen skor
+veya bulgu verisine güvenilmez.
+
+Rapor içeriği: marka başlığı, rapor tarihi, taranan host, skor, risk seviyesi,
+kontrol özeti, kontrol tablosu, başarısız her kontrol için etki açıklaması ve
+kopyalanabilir yapılandırma satırı, kapsam/sınır beyanı, motor ve rapor sürümü.
+
+**Risk eşikleri** (raporda da yazılı): 85–100 Düşük · 70–84 Orta ·
+50–69 Yüksek · 0–49 Kritik.
+
+**Gizlilik:** kayıtta ham başlık değeri tutulmadığı için raporda da yoktur.
+URL path, query string, çerez ve token hiçbir aşamada yazılmaz.
+
+### Teknik not — neden elle yazılmış PDF
+
+Türkçe karakterler (ı, İ, ş, ğ) PDF'in yerleşik base-14 fontlarının WinAnsi
+kodlamasında yoktur. Doğru görünmeleri için gerçek bir TrueType font gömmek
+gerekir; bu da Identity-H kodlamalı Type0 / CIDFontType2 yapısı demektir.
+Hazır kütüphane eklemek yerine `api/_lib/pdf.js` içinde yalnızca gereken kadarı
+yazıldı: cmap (format 4) ve hmtx ayrıştırma, glif kimlikleriyle metin yazımı,
+kullanılan glifler için `W` dizisi, `ToUnicode` CMap (metin kopyalanabilir ve
+aranabilir), Flate sıkıştırma.
+
+Font: **Work Sans** (OFL, lisans dosyası `api/_assets/` içinde). DejaVu Sans'a
+göre dörtte bir boyut (189 KB), Türkçe kapsaması tam. Üretilen rapor ~185 KB.

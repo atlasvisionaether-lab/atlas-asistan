@@ -374,3 +374,32 @@ yazılabilir (statik dosyalar + `api/scan.js`'i doğrudan require eden bir yol).
 - **Tarama geçmişi:** `GET /api/scan/{id}` ve veritabanına yazma; şu an sonuç
   yalnızca tarayıcıda gösteriliyor, saklanmıyor.
 - **PDF rapor:** tarama sonucu ekranda; indirilebilir rapor henüz yok.
+
+
+## Tarama geçmişi ve PDF raporu
+
+Tarama sonuçları `public.cl_scans` tablosuna kaydedilir; tarama kutusundaki
+**Geçmiş** bağlantısı bu oturuma ait taramaları listeler. Her kayıt için PDF
+raporu indirilebilir; kayıtlar tek tek veya toptan silinebilir.
+
+**Sahiplik:** sunucunun verdiği `cl_sid` çerezi (256 bit rastgele, HttpOnly).
+Tarayıcı veritabanına hiç bağlanmaz — okuma ve yazma yalnızca `service_role`
+kullanan sunucu uçlarından geçer ve sahiplik filtresi her sorgunun içindedir.
+`service_role` RLS'i baypas ettiği için bu uygulama katmanı kontrolü zorunludur.
+
+**Gizlilik:** yalnızca normalize edilmiş host saklanır. Tam URL, path, query
+string, çerez ve ham başlık değerleri hiçbir aşamada yazılmaz. Bulgulardan
+`detail` alanı bilerek çıkarılır; yalnızca `id/severity/status/note` kaydedilir.
+
+**PDF:** `api/_lib/pdf.js` bağımlılıksız bir PDF yazıcıdır. Türkçe karakterler
+için gerçek TrueType font gömer (Work Sans, OFL). Rapor yalnızca kaydedilmiş
+satırdan üretilir; istemciden gelen skora güvenilmez. Dosya adı
+`cyberlionai-security-report-<host>-<YYYY-MM-DD>.pdf`.
+
+Ayrıntılı uç sözleşmeleri: `docs/api.md`.
+
+### Supabase yoksa
+
+Tarama çalışmaya devam eder, yalnızca geçmiş kaydı yapılmaz (`scanId: null`)
+ve geçmiş paneli "kullanılamıyor" durumunu gösterir. Hız sınırının aksine
+burada fail-closed uygulanmaz: geçmiş bir kolaylıktır, güvenlik kontrolü değil.
