@@ -9,6 +9,7 @@
  */
 
 const crypto = require('node:crypto');
+const auth = require('./auth.js');
 
 const COOKIE_NAME = 'cl_sid';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;   // 1 yıl
@@ -89,4 +90,36 @@ function ipKey(ip) {
   return crypto.createHash('sha256').update(String(ip)).digest('hex').slice(0, 32);
 }
 
-module.exports = { resolveSession, clientIp, ipKey, COOKIE_NAME };
+/**
+ * İsteğin sahibini çözer.
+ *
+ * Giriş yapmışsa sahiplik kullanıcı kimliğine, aksi hâlde sunucunun verdiği
+ * anonim oturum çerezine bağlanır. Her iki durumda da değer **sunucunun
+ * doğruladığı** bir kaynaktan gelir; istemcinin gövdede veya başlıkta
+ * gönderdiği hiçbir kimlik dikkate alınmaz.
+ *
+ * Anonim çerez giriş yapmış kullanıcıda da okunmaya devam eder: çıkış
+ * yapıldığında aynı anonim geçmişe dönülür ve kota sayacı korunur.
+ *
+ * Dönüş: { userId, sessionId, isAuthenticated }
+ */
+async function resolveOwner(req, res) {
+  const anon = resolveSession(req, res);
+  let user = null;
+  try { user = await auth.resolveUser(req, res); } catch (e) { user = null; }
+
+  return {
+    userId: user ? user.id : null,
+    email: user ? user.email : null,
+    sessionId: anon.id,
+    isNewSession: anon.isNew,
+    isAuthenticated: !!user
+  };
+}
+
+/** Veri katmanının beklediği sahiplik nesnesi (tam olarak bir alan dolu). */
+function ownerRef(owner) {
+  return owner.userId ? { userId: owner.userId } : { sessionId: owner.sessionId };
+}
+
+module.exports = { resolveSession, clientIp, ipKey, resolveOwner, ownerRef, COOKIE_NAME };

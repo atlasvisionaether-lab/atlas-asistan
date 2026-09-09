@@ -403,3 +403,28 @@ Ayrıntılı uç sözleşmeleri: `docs/api.md`.
 Tarama çalışmaya devam eder, yalnızca geçmiş kaydı yapılmaz (`scanId: null`)
 ve geçmiş paneli "kullanılamıyor" durumunu gösterir. Hız sınırının aksine
 burada fail-closed uygulanmaz: geçmiş bir kolaylıktır, güvenlik kontrolü değil.
+
+## Kullanıcı hesapları (Supabase Auth)
+
+E-posta + şifre ile kayıt ve giriş, e-posta doğrulama, şifre sıfırlama ve
+magic link. Kurulum, Supabase Dashboard adımları ve mimari gerekçeler:
+**[docs/auth.md](docs/auth.md)**.
+
+**Tarayıcıda Supabase JS yok.** Kimlik işlemleri kendi sunucu uçlarımızdan
+GoTrue REST arayüzüne gider; oturum `HttpOnly; Secure; SameSite=Lax`
+çerezlerde taşınır. Token hiçbir zaman `localStorage`'a veya JavaScript'in
+erişebileceği bir yere yazılmaz, dış script yüklenmez, paket bağımlılığı
+eklenmez.
+
+**Anonim geçmiş hesaba taşınır.** Kayıt veya giriş anında, aynı tarayıcının
+anonim oturumundaki taramalar hesaba devredilir — tek bir atomik `UPDATE` ile,
+yalnızca isteğin kendi doğrulanmış `cl_sid` çerezi için, tekrar çalıştırılsa
+bile çift saymadan.
+
+**Kota hesaba bağlanır.** Giriş yapmış kullanıcıda sayaç `cl:quota:u:<id>`
+anahtarında tutulur; çerez silmek onu sıfırlamaz. Devralınan taramalar da bu
+kotaya işlenir, aksi hâlde çıkış yapıp yeniden kaydolarak hak üretmek mümkün
+olurdu. IP hız sınırı her iki durumda da aynı şekilde uygulanır.
+
+**Yeni ortam değişkeni:** `SUPABASE_ANON_KEY`. Tanımlı değilken kimlik uçları
+`503` döner; tarama, geçmiş ve PDF etkilenmez, site anonim modda çalışır.

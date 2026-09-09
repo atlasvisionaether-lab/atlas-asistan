@@ -13,7 +13,7 @@
  */
 
 const db = require('./_lib/db.js');
-const { resolveSession } = require('./_lib/session.js');
+const { resolveOwner, ownerRef } = require('./_lib/session.js');
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -32,12 +32,13 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: { code: 'history_unavailable' } });
   }
 
-  const session = resolveSession(req, res);
-  const owner = { sessionId: session.id };
+  const who = await resolveOwner(req, res);
+  const owner = ownerRef(who);
   const query = (req.query && typeof req.query === 'object') ? req.query : {};
 
-  // Yeni bir oturumda geçmiş zaten boştur; sorguya hiç gitmeye gerek yok.
-  if (session.isNew) {
+  // Giriş yapılmamış ve oturum yeni ise geçmiş zaten boştur; sorguya gerek yok.
+  // Giriş yapılmışsa bu kestirme geçerli değil: hesabın kaydı olabilir.
+  if (!who.isAuthenticated && who.isNewSession) {
     if (req.method === 'GET') return res.status(200).json({ items: [], limit: DEFAULT_LIMIT, offset: 0, hasMore: false });
     if (req.method === 'DELETE') return res.status(200).json({ deleted: 0 });
   }

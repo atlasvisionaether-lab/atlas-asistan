@@ -15,12 +15,10 @@
 const { scanSite, SCANNER_VERSION, REPORT_VERSION } = require('./_lib/scanner.js');
 const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
-const { resolveSession, clientIp, ipKey } = require('./_lib/session.js');
-
-const RATE_WINDOW_SECONDS = 10 * 60;
-const RATE_MAX = 12;
-const FREE_SCAN_LIMIT = 5;
-const QUOTA_TTL_SECONDS = 60 * 60 * 24 * 365;
+const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
+const {
+  RATE_WINDOW_SECONDS, RATE_MAX, FREE_SCAN_LIMIT, QUOTA_TTL_SECONDS
+} = require('./_lib/limits.js');
 
 /** Motorun fırlattığı teknik hataları istemcinin çevirebileceği kodlara eşler. */
 const ERROR_STATUS = {
@@ -47,9 +45,9 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: { code: 'service_unavailable' } });
   }
 
-  const session = resolveSession(req, res);
+  // IP sınırı önce: yalnızca isteğin kendisine bakar, kimlik çözümü için
+  // ağ turu gerektirmez. Kötüye kullanım en ucuz noktada durur.
   const rateKey = 'cl:rl:' + ipKey(clientIp(req));
-  const quotaKey = 'cl:quota:' + session.id;
 
   let rate;
   try {
@@ -67,6 +65,11 @@ module.exports = async function handler(req, res) {
   }
   res.setHeader('X-RateLimit-Limit', String(RATE_MAX));
   res.setHeader('X-RateLimit-Remaining', String(Math.max(0, RATE_MAX - rate.count)));
+
+  // Sahiplik: giriş yapmışsa hesap, değilse anonim oturum. Kota da buna bağlı;
+  // hesabın kotası çerez silinerek sıfırlanamaz.
+  const owner = await resolveOwner(req, res);
+  const quotaKey = store.quotaKey(owner);
 
   let body = req.body;
   if (typeof body === 'string') {
@@ -100,14 +103,15 @@ module.exports = async function handler(req, res) {
     result.quota = {
       used: quota.used,
       limit: FREE_SCAN_LIMIT,
-      remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used)
+      remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used),
+      scope: owner.isAuthenticated ? 'account' : 'anonymous'
     };
 
     // Geçmişe kaydet. Kayıt başarısız olursa tarama sonucu yine döner:
     // geçmiş bir kolaylık, taramanın kendisi değil.
     if (db.isConfigured()) {
       try {
-        result.scanId = await db.saveScan(result, { sessionId: session.id },
+        result.scanId = await db.saveScan(result, ownerRef(owner),
           { scanner: SCANNER_VERSION, report: REPORT_VERSION });
       } catch (err) {
         if (console && console.error) console.error('history save failed:', err.message);

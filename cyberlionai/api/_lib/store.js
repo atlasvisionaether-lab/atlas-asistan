@@ -100,10 +100,47 @@ async function refundQuota(key) {
   await command(['EVAL', QUOTA_REFUND_SCRIPT, '1', key]);
 }
 
+/**
+ * Devralınan taramaları kotaya ekler; üst sınırı aşmaz.
+ *
+ * Anonim oturumundan hesabına geçen kullanıcı, o taramaları ücretsiz haktan
+ * harcamış sayılır. Aksi hâlde çıkış yapıp yeniden kaydolarak hak üretmek
+ * mümkün olurdu.
+ */
+const QUOTA_ADD_SCRIPT =
+  "local used = tonumber(redis.call('GET', KEYS[1]) or '0') " +
+  "local total = used + tonumber(ARGV[1]) " +
+  "local cap = tonumber(ARGV[2]) " +
+  "if total > cap then total = cap end " +
+  "redis.call('SET', KEYS[1], tostring(total), 'EX', ARGV[3]) " +
+  "return total";
+
+async function addToQuota(key, amount, limit, ttlSeconds) {
+  if (!(amount > 0)) return readQuota(key);
+  const result = await command(['EVAL', QUOTA_ADD_SCRIPT, '1', key,
+    String(amount), String(limit), String(ttlSeconds)]);
+  return Number(result);
+}
+
 async function readQuota(key) {
   const value = await command(['GET', key]);
   const used = parseInt(value, 10);
   return isNaN(used) ? 0 : used;
 }
 
-module.exports = { isConfigured, hitRateLimit, reserveQuota, refundQuota, readQuota };
+/**
+ * Kota anahtarı.
+ *
+ * Kullanıcı anahtarları `u:` önekiyle ayrılır. Anonim oturum kimliği 64 haneli
+ * onaltılık, kullanıcı kimliği tireli UUID olduğu için biçimleri zaten
+ * çakışmaz; önek bunu ayrıca açık hale getirir ve ileride başka bir kimlik
+ * türü eklenirse çakışma riski doğmaz.
+ */
+function quotaKey(owner) {
+  return owner.userId ? 'cl:quota:u:' + owner.userId : 'cl:quota:' + owner.sessionId;
+}
+
+module.exports = {
+  isConfigured, hitRateLimit, reserveQuota, refundQuota, readQuota,
+  addToQuota, quotaKey
+};

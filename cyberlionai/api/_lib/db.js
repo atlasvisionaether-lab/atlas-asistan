@@ -17,6 +17,7 @@
 
 const TABLE = 'cl_scans';
 const TIMEOUT_MS = 5000;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function config() {
   const url = process.env.SUPABASE_URL;
@@ -139,4 +140,40 @@ async function deleteAllScans(owner) {
   return rows ? rows.length : 0;
 }
 
-module.exports = { isConfigured, saveScan, listScans, getScan, deleteScan, deleteAllScans, sanitizeFindings };
+/**
+ * Anonim oturumun kayıtlarını hesaba devreder.
+ *
+ * Tek bir UPDATE ifadesi: PostgreSQL onu kendi içinde atomik uygular, ayrı
+ * okuma + yazma turuna gerek yok. Filtre yalnızca `anonymous_session_id`
+ * üzerinden kurulur; bu değer çağıran ucun **doğrulanmış çerezinden** gelir,
+ * istekten okunan bir gövde alanından değil. Başka bir oturumun kimliğini
+ * bilmek işe yaramaz çünkü onu isteğe koyacak bir yol yok.
+ *
+ * Tekrar çalıştırılabilir: ikinci çağrıda eşleşen satır kalmadığı için 0 döner.
+ * Çağıran kota devrini bu sayıya dayandırır, böylece tekrar sayım olmaz.
+ *
+ * `anonymous_session_id` NULL'a çekilir: tablodaki `cl_scans_single_owner`
+ * kısıtı tam olarak bir sahip ister, dolayısıyla kayıt iki sahibe birden
+ * bağlı kalamaz.
+ *
+ * Dönüş: devredilen satır sayısı.
+ */
+async function claimAnonymousScans(sessionId, userId) {
+  if (!/^[0-9a-f]{64}$/.test(String(sessionId || ''))) return 0;
+  if (!UUID_RE.test(String(userId || ''))) return 0;
+
+  const rows = await request(
+    TABLE + '?anonymous_session_id=eq.' + encodeURIComponent(sessionId) + '&select=id',
+    {
+      method: 'PATCH',
+      body: { user_id: userId, anonymous_session_id: null },
+      headers: { 'Prefer': 'return=representation' }
+    }
+  );
+  return rows ? rows.length : 0;
+}
+
+module.exports = {
+  isConfigured, saveScan, listScans, getScan, deleteScan, deleteAllScans,
+  sanitizeFindings, claimAnonymousScans
+};
