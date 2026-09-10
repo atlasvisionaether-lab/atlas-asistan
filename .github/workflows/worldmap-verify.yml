@@ -1,0 +1,42 @@
+name: Dünya haritası doğrulaması
+
+# /api/worldmap ucunu GERÇEK beslemelere karşı doğrular.
+#
+# Neden gerekiyor: tools/worldmap-test.js ağa çıkmaz, yalnızca ayrıştırıcıları
+# ölçülmüş fikstürlere karşı sınar. Bir besleme biçim değiştirirse o sınamalar
+# yeşil kalır ama harita sessizce boşalır. Bu iş akışı tam olarak onu yakalar.
+#
+# Salt-okunur: hesap açmaz, kayıt oluşturmaz, hiçbir şey silmez. Yalnızca kendi
+# ucumuzu çağırır; beslemelere sunucu tarafı önbellek üzerinden dokunur.
+#
+# Elle çalıştırılır. Preview için bypass secret'ı gerekir; üretim için gerekmez.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Doğrulanacak adres (sonunda / olmadan)
+        required: true
+        default: https://cyberlionai-git-claude-epic-turing-gu2xf8-atlas-asistan.vercel.app
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Araçları kur
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
+
+      - name: Ayrıştırıcı sınamaları (ağsız)
+        run: node cyberlionai/tools/worldmap-test.js
+
+      - name: Uç doğrulaması (gerçek beslemeler)
+        env:
+          BASE: ${{ inputs.base }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: bash cyberlionai/tools/worldmap-verify.sh
