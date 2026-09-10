@@ -140,7 +140,32 @@ function quotaKey(owner) {
   return owner.userId ? 'cl:quota:u:' + owner.userId : 'cl:quota:' + owner.sessionId;
 }
 
+/* ------------------------------------------------------------------
+   Genel önbellek.
+
+   Sayaçlardan ayrı tutuluyor: sayaçlar atomik olmak zorunda ve kaybolurlarsa
+   sınır delinir. Önbellek ise tam tersi — kaybolursa yalnızca bir kaynak
+   yeniden çekilir. Bu yüzden burada Lua yok, düz SET/GET yeterli.
+   ------------------------------------------------------------------ */
+
+/** Önbellekten JSON okur. Anahtar yoksa veya değer bozuksa null döner. */
+async function cacheGet(key) {
+  const value = await command(['GET', key]);
+  if (typeof value !== 'string') return null;
+  try {
+    return JSON.parse(value);
+  } catch (err) {
+    // Bozuk değer, önbellek kaybı gibi ele alınır: çağıran taze veri çeker.
+    return null;
+  }
+}
+
+/** JSON'u verilen ömürle önbelleğe yazar. */
+async function cacheSet(key, value, ttlSeconds) {
+  await command(['SET', key, JSON.stringify(value), 'EX', String(ttlSeconds)]);
+}
+
 module.exports = {
   isConfigured, hitRateLimit, reserveQuota, refundQuota, readQuota,
-  addToQuota, quotaKey
+  addToQuota, quotaKey, cacheGet, cacheSet
 };
