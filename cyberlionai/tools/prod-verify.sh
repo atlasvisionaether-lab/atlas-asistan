@@ -255,7 +255,12 @@ leak_check() {
 leak_check 'service_role'                  "service_role geçmiyor"
 leak_check 'eyJ[A-Za-z0-9_-]{10,}'         "JWT benzeri dizge yok (anon/servis anahtarı)"
 leak_check 'supabase\.co'                  "Supabase host adresi yok"
-leak_check 'SUPABASE_[A-Z_]*KEY'           "anahtar değişken adı yok"
+# Aranan sey degisken ADI degil, ona ATANMIS bir deger. Yalin ad fazla genis
+# bir olcut: index.html'de kisitli modu anlatan bir yorum satiri
+# ("SUPABASE_ANON_KEY yok") bu kontrolu yanlis yere kirmiziya dusuruyordu.
+# Gercek bir sizinti anahtari bir degere baglar (SUPABASE_ANON_KEY = "eyJ...",
+# "SUPABASE_ANON_KEY":"..." gibi); desen artik o bagi ariyor.
+leak_check 'SUPABASE_[A-Z_]*KEY[\"'"'"']?[[:space:]]*[:=]' "anahtar bir degere atanmiyor"
 leak_check 'UPSTASH_'                      "Upstash değişkeni yok"
 leak_check 'localStorage\.setItem\([^)]*token' "token localStorage'a yazılmıyor"
 
