@@ -34,6 +34,23 @@ const UA = 'CyberLionAI-WorldMap/1.0 (+https://www.cyberlionai.com)';
 
 const ISO2_RE = /^[A-Z]{2}$/;
 
+/**
+ * Besleme tarihi → epoch ms.
+ *
+ * Ölçülen biçim `"2026-09-10 21:45:25 UTC"` — boşluklu ve sondaki "UTC" ile,
+ * yani Date'in güvenilir ayrıştırdığı bir biçim DEĞİL. Araya "T" konup sonek
+ * "Z" yapılmadan tarayıcı/Node bunu yerel saat sanabilir ve kovalar saatlerce
+ * kayar. Ayrıştırılamayan değer null döner ve kovalara hiç girmez —
+ * uydurulmuş bir zamana yerleştirmektense saymamak doğru.
+ */
+function parseFeedDate(value) {
+  if (typeof value !== 'string') return null;
+  const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})/.exec(value.trim());
+  if (!m) return null;
+  const ms = Date.parse(m[1] + 'T' + m[2] + 'Z');
+  return isNaN(ms) ? null : ms;
+}
+
 /* ------------------------------------------------------------------
    Çekme
    ------------------------------------------------------------------ */
@@ -149,6 +166,13 @@ function parseUrlhaus(text) {
   let total = 0;
   let online = 0;
 
+  /* Zaman kovaları. Arayüzdeki 1s/24s/7g filtresi BU beslemeden besleniyor:
+     ölçümde `dateadded` gerçekten güncel damgalar taşıyor (örnek kayıt aynı
+     günün 21:45'i). feodo ise anlık bir blokaj listesi — orada aynı filtre
+     neredeyse her zaman boş dönerdi, o yüzden oraya bağlanmadı. */
+  const now = Date.now();
+  const buckets = { h1: 0, h24: 0, d7: 0 };
+
   for (const key of Object.keys(root)) {
     const bucket = root[key];
     const row = Array.isArray(bucket) ? bucket[0] : bucket;
@@ -158,11 +182,22 @@ function parseUrlhaus(text) {
     if (row.url_status === 'online') online++;
     const threat = typeof row.threat === 'string' && row.threat ? row.threat : 'bilinmiyor';
     byThreat.set(threat, (byThreat.get(threat) || 0) + 1);
+
+    const added = parseFeedDate(row.dateadded);
+    if (added !== null) {
+      const age = now - added;
+      if (age >= 0) {
+        if (age <= 3600e3) buckets.h1++;
+        if (age <= 86400e3) buckets.h24++;
+        if (age <= 7 * 86400e3) buckets.d7++;
+      }
+    }
   }
 
   return {
     total: total,
     online: online,
+    windows: buckets,
     threats: Array.from(byThreat.entries())
       .sort(function (a, b) { return b[1] - a[1]; })
       .slice(0, 6)
