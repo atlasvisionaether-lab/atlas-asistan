@@ -40,12 +40,16 @@ module.exports = async function handler(req, res) {
   }
 
   if (!r.ok) {
-    const code = auth.mapError(r.status, r.body);
-    if (code === 'signup_unavailable' && console && console.error) {
-      // Sunucu tarafi teshis: e-posta veya sifre loglanmaz.
-      console.error('signup blocked by database trigger; status=' + r.status);
-    }
-    return res.status(code === 'signup_unavailable' ? 503 : 400).json({ error: { code: code } });
+    const code = auth.mapError(r.status, r.body, 'signup');
+    // Her basarisiz kayit loglanir. E-posta ve sifre YAZILMAZ; yalnizca HTTP
+    // durumu ve GoTrue'nun kendi hata kodu. Uretimde kayit bozuldugunda
+    // elimizde hicbir kayit olmamasi tam olarak bu yuzden duzeltildi.
+    auth.logFailure('signup', r.status, r.body, code);
+    // Bizden kaynaklanan durumlar 503: kullanicinin girdisi kusurlu degil,
+    // tekrar denemesi de bir sey degistirmez.
+    const bizde = code === 'signup_unavailable' || code === 'signup_disabled'
+               || code === 'redirect_not_allowed' || code === 'signup_rejected';
+    return res.status(bizde ? 503 : 400).json({ error: { code: code } });
   }
 
   // Oturum döndüyse e-posta onayı kapalı demektir: doğrudan giriş yapılır.

@@ -264,8 +264,22 @@ function passwordProblem(value) {
  * Giriş ve şifre sıfırlamada "bu e-posta kayıtlı değil" ile "şifre yanlış"
  * ayrımı dışarı sızdırılmaz: ikisi de aynı kodu döndürür. Aksi hâlde uç, hangi
  * e-postaların sistemde olduğunu sayan bir araca dönüşür.
+ *
+ * BAĞLAM ZORUNLU. Eskiden sondaki kural "tanımadığın her 400/401/403 →
+ * invalid_credentials" diyordu ve bu, kayıt akışında yalan söylüyordu: yepyeni
+ * bir e-postayla kayıt olmaya çalışan kullanıcı, kaydı reddedilmesinin
+ * sebebinden bağımsız olarak "E-posta veya şifre hatalı" görüyordu. Şifresi
+ * gayet doğruyken. Üretimde tam olarak bu yaşandı.
+ *
+ * "Şifre yanlış" YALNIZCA bir kimlik doğrulama denemesi için anlamlı bir
+ * cevaptır. Kayıtta bilinmeyen bir 4xx, kullanıcının hatası olmayabilir —
+ * ve öyle sunulmamalı.
+ *
+ * @param {number} status  GoTrue HTTP durumu
+ * @param {object} body    GoTrue gövdesi
+ * @param {string} context 'signin' (giriş/şifre denemesi) veya 'signup' (kayıt)
  */
-function mapError(status, body) {
+function mapError(status, body, context) {
   const code = (body && (body.error_code || body.code)) || '';
   const msg = String((body && (body.msg || body.message || body.error_description)) || '');
 
@@ -296,8 +310,60 @@ function mapError(status, body) {
     return 'signup_unavailable';
   }
 
-  if (status === 400 || status === 401 || status === 403) return 'invalid_credentials';
+  /* Kaydın reddedilme sebepleri — hiçbiri "şifren yanlış" değil.
+     Bunlar açıkça ayrılıyor ki kullanıcı doğru şeyi görsün, biz de logdan
+     gerçek sebebi okuyabilelim. */
+  if (code === 'signup_disabled' || /signups not allowed/i.test(msg)) return 'signup_disabled';
+  if (code === 'email_provider_disabled' || /email( logins| signups)? (are )?disabled/i.test(msg)) {
+    return 'signup_disabled';
+  }
+  if (code === 'email_address_not_authorized' || /not authorized/i.test(msg)) return 'email_not_allowed';
+  if (code === 'email_address_invalid' || /email address.*invalid/i.test(msg)) return 'invalid_email';
+  if (code === 'captcha_failed' || /captcha/i.test(msg)) return 'captcha_failed';
+  /* Yönlendirme adresi Supabase'in izinli listesinde değilse GoTrue kaydı
+     400 ile reddeder. Ortam adresi değiştiğinde (yeni alan adı, yeni preview)
+     tam olarak bu olur ve eski kod bunu "şifreniz hatalı" diye gösteriyordu. */
+  if (/redirect|invalid.*url/i.test(msg)) return 'redirect_not_allowed';
+  if (code === 'validation_failed') {
+    return context === 'signup' ? 'signup_rejected' : 'invalid_credentials';
+  }
+
+  if (status === 400 || status === 401 || status === 403) {
+    /* Bağlam olmadan bu satır tahmin yürütür. Kayıtta tahmin etmiyoruz. */
+    return context === 'signup' ? 'signup_rejected' : 'invalid_credentials';
+  }
   return 'auth_failed';
+}
+
+/**
+ * Başarısız bir GoTrue çağrısını sunucu günlüğüne yazar.
+ *
+ * E-POSTA VE ŞİFRE ASLA YAZILMAZ. Yazılan şey yalnızca akış adı, HTTP durumu
+ * ve GoTrue'nun kendi hata kodu/mesajı — yani sorunu teşhis etmeye yetecek
+ * kadarı, kullanıcının kimliğini açığa çıkarmadan.
+ *
+ * Neden gerekiyordu: üretimde kayıt bozulduğunda elimizde tek bir kayıt yoktu.
+ * Hata mesajı sebebi maskeliyordu ve arkasında ne olduğunu görmenin yolu yoktu.
+ */
+function logFailure(flow, status, body, mappedCode) {
+  if (!console || !console.error) return;
+  const code = (body && (body.error_code || body.code)) || '-';
+  const msg = String((body && (body.msg || body.message || body.error_description)) || '-');
+  console.error('auth ' + flow + ' failed: http=' + status +
+                ' gotrue_code=' + code +
+                ' mapped=' + mappedCode +
+                ' msg=' + redact(msg).slice(0, 200));
+}
+
+/**
+ * Günlüğe yazılacak metinden e-posta adreslerini siler.
+ *
+ * GoTrue bazı hatalarda adresi mesajın içine koyuyor ("Email address X is
+ * invalid" gibi). Teşhis için hata kodu yeterli; adres değil. Bu olmadan
+ * teşhis günlüğü, çözmeye çalıştığı sorundan daha kötü bir soruna dönerdi.
+ */
+function redact(text) {
+  return String(text).replace(/[^\s<>()"']+@[^\s<>()"']+/g, '[e-posta]');
 }
 
 /**
@@ -313,7 +379,7 @@ function siteUrl() {
 
 module.exports = {
   isConfigured, call,
-  validEmail, passwordProblem, mapError, siteUrl, PASSWORD_MIN, PASSWORD_MAX,
+  validEmail, passwordProblem, mapError, logFailure, siteUrl, PASSWORD_MIN, PASSWORD_MAX,
   signUp, signInPassword, signInMagicLink, recover, verifyOtp,
   refresh, getUser, updatePassword, logout,
   setSessionCookies, clearSessionCookies, readTokens, resolveUser,

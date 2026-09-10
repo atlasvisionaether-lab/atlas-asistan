@@ -42,7 +42,9 @@ module.exports = async function handler(req, res) {
   }
 
   if (!r.ok || !r.body || !r.body.access_token) {
-    return res.status(400).json({ error: { code: auth.mapError(r.status, r.body) } });
+    const code = auth.mapError(r.status, r.body, 'signup');
+    auth.logFailure('verify', r.status, r.body, code);
+    return res.status(400).json({ error: { code: code } });
   }
 
   auth.setSessionCookies(res, r.body);
