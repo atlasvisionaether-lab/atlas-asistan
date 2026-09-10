@@ -286,6 +286,14 @@ function mapError(status, body, context) {
   if (status === 429 || code === 'over_request_rate_limit' || code === 'over_email_send_rate_limit') {
     return 'too_many_requests';
   }
+  /* Geçersiz veya eksik API anahtarı. Bu ASLA kullanıcının hatası değildir ve
+     bağlamdan bağımsızdır: ne şifresi yanlıştır, ne e-postası. Ayrı bir kod
+     olması şart, çünkü eski yakala-hepsini kural bunu 'invalid_credentials'a
+     çeviriyordu ve üretim doğrulaması "hatalı giriş reddedildi" kontrolünü
+     GEÇİYORDU — arıza tam oradayken. Bir kez yaşandı, tekrarlamasın. */
+  if (/invalid api key|no api key found/i.test(msg) || code === 'no_authorization') {
+    return 'auth_misconfigured';
+  }
   if (code === 'user_already_exists' || /already registered/i.test(msg)) return 'email_taken';
   if (code === 'email_not_confirmed' || /not confirmed/i.test(msg)) return 'email_not_confirmed';
   if (code === 'weak_password') return 'weak_password';

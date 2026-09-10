@@ -48,7 +48,8 @@ module.exports = async function handler(req, res) {
     // Bizden kaynaklanan durumlar 503: kullanicinin girdisi kusurlu degil,
     // tekrar denemesi de bir sey degistirmez.
     const bizde = code === 'signup_unavailable' || code === 'signup_disabled'
-               || code === 'redirect_not_allowed' || code === 'signup_rejected';
+               || code === 'redirect_not_allowed' || code === 'signup_rejected'
+               || code === 'auth_misconfigured';
     return res.status(bizde ? 503 : 400).json({ error: { code: code } });
   }
 
