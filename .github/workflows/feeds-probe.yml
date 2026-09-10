@@ -1,0 +1,30 @@
+name: Besleme biçim ölçümü
+
+# Açık tehdit beslemelerinin gerçek biçimini ölçer.
+#
+# Neden gerekiyor: geliştirme ortamının giden bağlantısı kısıtlı, beslemelere
+# oradan ulaşılamıyor. Şemayı tahmin edip parser yazmak yerine gerçek yanıt
+# burada ölçülür ve parser ona göre yazılır.
+#
+# Salt-okunur: hiçbir secret kullanmaz, hiçbir yere yazmaz, üretime dokunmaz.
+# Elle çalıştırılır; bir besleme biçim değiştirdiğinden şüphelenildiğinde de
+# tekrar koşulabilir.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Araçları kur
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq jq file
+
+      - name: Beslemeleri ölç
+        run: bash cyberlionai/tools/feeds-probe.sh
