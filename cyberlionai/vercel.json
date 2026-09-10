@@ -6,6 +6,10 @@
     "api/scan.js": {
       "maxDuration": 30,
       "memory": 512
+    },
+    "api/worldmap.js": {
+      "maxDuration": 20,
+      "memory": 512
     }
   },
   "headers": [
