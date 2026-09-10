@@ -290,80 +290,68 @@ devreye girer.
 
 ---
 
-## 8. ⚠️ Paylaşılan Supabase projesi — kayıt akışını engelleyen tetikleyici
+## 8. Kendi Supabase projesi — neden ayrıldık, nasıl çözüldü
 
-Bu Supabase projesi **birden fazla uygulamayla paylaşılıyor**. `auth.users`
-tablosunda başka uygulamalara ait iki tetikleyici var:
+**Durum: çözüldü (2026-09-10).** Cyber Lion AI artık kendi Supabase projesinde:
+`cyberlionai` / `aohsgagiyaseinhmyfub` (eu-central-1). Geçişin tam planı ve
+etki analizi [`supabase-ayrisma.md`](supabase-ayrisma.md) içinde.
 
-| Tetikleyici | Fonksiyon | Yazdığı tablo | Cyber Lion AI kaydını etkiler mi |
+### Sorun neydi
+
+Proje başlangıçta `atlas-vision` (`nqvuayhedqpgwftonesl`) ile paylaşılıyordu ve
+`auth.users` üzerinde başka uygulamalara ait iki tetikleyici vardı:
+
+| Tetikleyici | Fonksiyon | Yazdığı tablo | Cyber Lion AI kaydını etkiliyor muydu |
 |---|---|---|---|
-| `chess_on_auth_user_created` | `chess_handle_new_user` | `chess_profiles` | Hayır — `ON CONFLICT DO NOTHING` ve tüm alanları isteğe bağlı |
-| `on_auth_user_created` | `handle_new_user` | `profiles` | **Evet — kaydı tamamen engelliyor** |
+| `chess_on_auth_user_created` | `chess_handle_new_user` | `chess_profiles` | Hayır — `ON CONFLICT DO NOTHING`, tüm alanlar isteğe bağlı |
+| `on_auth_user_created` | `handle_new_user` | `profiles` | **Evet — kaydı tamamen engelliyordu** |
 
-`handle_new_user` şunu yapıyor:
+`handle_new_user`, `public.profiles`'a yazıyordu ve `profiles.birth_date`
+NOT NULL'dı; fonksiyonda hata yakalama yoktu. Cyber Lion AI doğum tarihi
+sormadığı için `raw_user_meta_data` boş geliyor, INSERT patlıyor ve tetikleyici
+`auth.users` INSERT'ünün parçası olduğu için kullanıcı hiç oluşturulamıyordu.
+GoTrue `500 "Database error saving new user"` döndürüyordu.
 
-```sql
-INSERT INTO public.profiles (id, full_name, mother_name, father_name,
-                             birth_date, birth_time, birth_city)
-VALUES (new.id,
-        COALESCE(new.raw_user_meta_data->>'full_name', ''),
-        ...
-        (new.raw_user_meta_data->>'birth_date')::date,   -- profiles.birth_date NOT NULL
-        ...);
+İkinci bulgu: `profiles_id_fkey`'de `ON DELETE CASCADE` yoktu, dolayısıyla o
+projede **hiçbir kullanıcı silinemiyordu** — KVKK'daki silme hakkı açısından tek
+başına yeterli bir gerekçe.
+
+### Çözüm
+
+Ayrı proje. Kod değişikliği gerekmedi; yalnızca üç ortam değişkeni
+(`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) yeni projeye
+çevrildi. Yeni projede `auth.users` üzerinde **hiçbir tetikleyici yok** — Cyber
+Lion AI'nın kullanıcı profiline ihtiyacı yok, sahiplik doğrudan
+`cl_scans.user_id` üzerinden kuruluyor.
+
+Eski projeye hiç dokunulmadı: ne şema, ne tetikleyici, ne veri, ne ayar.
+Oradaki `cl_scans` satırları yerinde duruyor.
+
+### Doğrulama
+
+Gerçek preview dağıtımında, gerçek Supabase projesiyle, gerçek e-posta
+adresiyle uçtan uca koşuldu ve tüm kontroller geçti: anonim geçmişin devri (2
+kayıt), devrin idempotanlığı (ikinci girişte 0 — çift sayım yok), kotanın hesaba
+geçmesi ve devralınanların sayılması, geçmiş, PDF (Türkçe büyük harf dahil),
+çıkış, çıkıştan sonra kendi raporuna erişilememesi (404), kullanıcı sayımına
+karşı tek tip hata, şifre sıfırlama e-postası.
+
+`ON DELETE CASCADE` yeni projede gerçekten sınandı: test kullanıcısı tek bir
+`DELETE FROM auth.users` ile silindiğinde ona bağlı 3 tarama kaydı, identity ve
+oturum satırları da gitti. Eski projede bu hiç mümkün değildi.
+
+### `signup_unavailable` kodu neden duruyor
+
+Artık tetiklenmiyor. Kodda kalmasının nedeni: bir gün yine bir veritabanı
+tetikleyicisi araya girerse, genel `auth_failed` yerine teşhis edilebilir bir
+sinyal versin. `mapError` şu koşulda döndürüyor:
+
+```js
+if (code === 'unexpected_failure' || /database error/i.test(msg)) {
+  return 'signup_unavailable';   // HTTP 503
+}
 ```
 
-`profiles.birth_date` NOT NULL ve fonksiyonda hata yakalama yok. Cyber Lion AI
-kaydı doğum tarihi sormadığı için `raw_user_meta_data` boş gelir, `birth_date`
-NULL olur ve **INSERT başarısız olur**. Tetikleyici `auth.users` INSERT'ünün
-parçası olduğu için kullanıcı hiç oluşturulamaz; GoTrue `500 "Database error
-saving new user"` döndürür.
-
-Doğrulandı: `INSERT INTO auth.users(id, email)` denemesi tam olarak bu hatayı
-verdi (`null value in column "birth_date" of relation "profiles"`).
-
-### İkinci bulgu: hesap silinemiyor
-
-`profiles_id_fkey` kısıtında `ON DELETE CASCADE` **yok**:
-
-```
-profiles.id → auth.users(id)          (cascade yok)
-chess_profiles.id → auth.users(id)     ON DELETE CASCADE
-cl_scans.user_id → auth.users(id)      ON DELETE CASCADE
-```
-
-Bu yüzden bu projedeki **hiçbir kullanıcı silinemiyor** — `profiles` satırı
-referansı tutuyor. Migration 004'ün cascade davranışı doğru tanımlı ve katalogda
-doğrulanmış durumda, ancak `profiles` engeli kalktığında devreye girecek.
-KVKK'daki silme hakkı açısından da bu ayrıca ele alınmalı.
-
-### Bunun anlamı
-
-Bu blokaj çözülene kadar **üretimde hiç kimse kayıt olamaz.** Giriş, şifre
-sıfırlama, magic link ve oturum yenileme etkilenmez — yalnızca yeni hesap
-oluşturma. Kod bu durumu ayrı bir kodla (`signup_unavailable`, HTTP 503)
-raporlar ve kullanıcıya anlamlı bir mesaj gösterir; sunucu logunda da
-`signup blocked by database trigger` satırı görünür.
-
-### Seçenekler
-
-Üçü de bu deponun dışında karar gerektiriyor; hiçbiri uygulanmadı.
-
-**A — Cyber Lion AI için ayrı Supabase projesi.**
-En temiz ayrım. İki uygulamanın kullanıcı tabanları, tetikleyicileri ve
-kotaları birbirine karışmaz. Maliyet: yeni proje, `cl_scans` şemasının oraya
-taşınması, yeni ortam değişkenleri. Mevcut 5 anonim kayıt taşınabilir ya da
-bırakılabilir.
-
-**B — `handle_new_user` fonksiyonunu dayanıklı hale getirmek.**
-Örneğin `birth_date` yoksa satırı hiç yazmamak veya `ON CONFLICT DO NOTHING`
-eklemek. Küçük bir değişiklik ama **Atlas Asistan'a ait bir fonksiyon**;
-onların akışını bozabilir ve o uygulamanın sahibinin onayı gerekir.
-
-**C — Kayıt sırasında sahte metadata göndermek.**
-`signUp` çağrısına `data: { full_name: '', birth_date: '1970-01-01',
-birth_city: '' }` eklemek tetikleyiciyi memnun eder. Kod tarafında tek satır,
-ama Atlas Asistan'ın `profiles` tablosuna **gerçek olmayan doğum tarihleri**
-yazar. Veri kalitesi açısından kötü; önerilmez.
-
-Tercih **A**. Ayrı proje, paylaşılan bir veritabanında iki ürünün birbirinin
-kimlik akışını kırmasını kalıcı olarak önler.
+Kullanıcı anlamlı bir Türkçe mesaj görür; sunucu logunda
+`signup blocked by database trigger` satırı belirir. E-posta ve şifre
+loglanmaz.

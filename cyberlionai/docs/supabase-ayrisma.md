@@ -1,7 +1,8 @@
 # Cyber Lion AI için ayrı Supabase projesi — plan ve etki analizi
 
-**Durum: 1–2. adımlar tamamlandı (2026-09-09).** Kalan adımlar § 9'da.
-Her yazma/oluşturma adımı ayrı onay gerektirir.
+**Durum: geçiş tamamlandı (2026-09-10).** Adım durumları § 9'da.
+Kalan tek iş, eski projedeki `cl_scans` satırlarının silinmesi (adım 11) —
+en az bir hafta bekletilecek.
 
 | Yeni proje | `cyberlionai` · ref `aohsgagiyaseinhmyfub` · eu-central-1 · aylık 0 ₺ |
 |---|---|
@@ -364,31 +365,57 @@ ekleyeyim.
 
 ---
 
-## 9. Onay noktaları ve değişecek kaynakların tam listesi
-
-Hiçbiri uygulanmadı. Her biri ayrı onay bekliyor.
+## 9. Adımlar ve durumları
 
 | # | Adım | Kim | Durum |
 |---|---|---|---|
 | 1 | Yeni Supabase projesi (`eu-central-1`, aylık 0 ₺) | Claude | ✅ `aohsgagiyaseinhmyfub` |
 | 2 | Migration 003 + 003b + 003c + 004 | Claude | ✅ doğrulandı |
-| 3 | Auth ayarları: Site URL, Redirect URLs, şifre min. 10, e-posta onayı | **Kullanıcı** | ⏳ araç yok (aşağıya bakın) |
-| 4 | E-posta şablonları (§ 5) | **Kullanıcı** | ⏳ araç yok |
-| 5 | Vercel **Preview** env: üç değişken | **Kullanıcı** | ⏳ araç yok |
-| 5b | Protection Bypass for Automation token'ı + GitHub secret | **Kullanıcı** | ⏳ araç yok |
-| 6 | Preview doğrulaması (iş akışı hazır) | Claude | ⏳ 3–5b bekliyor |
-| 7 | PR #14 merge | **Kullanıcı** | ⏳ 6'dan sonra |
-| 8 | `cl_scans` 5 satırın kopyalanması | Claude | ⏳ onay bekler |
-| 9 | Vercel **Production** env + deploy | **Kullanıcı** | ⏳ onay bekler |
-| 10 | `prod-verify.sh` çalıştırma | Claude | ⏳ |
+| 3 | Auth ayarları: Site URL, Redirect URLs, şifre min. 10, e-posta onayı | **Kullanıcı** | ✅ |
+| 4 | E-posta şablonları (§ 5) | **Kullanıcı** | ✅ onay ve sıfırlama e-postaları teslim edildi |
+| 5 | Vercel **Preview** env: üç değişken | **Kullanıcı** | ✅ |
+| 5b | Protection Bypass for Automation token'ı + GitHub secret | **Kullanıcı** | ✅ |
+| 6 | Preview doğrulaması | Claude | ✅ tüm kontroller geçti |
+| 7 | PR #14 merge | **Kullanıcı** | ✅ `cd1830a` |
+| 8 | `cl_scans` 5 satırın kopyalanması | Claude | ❌ yapılmadı — gerek kalmadı (aşağıya bakın) |
+| 9 | Vercel **Production** env + yeniden dağıtım | **Kullanıcı** | ✅ env / ⏳ dağıtım |
+| 10 | `prod-verify.sh` çalıştırma | Claude | ⏳ 9'un dağıtımından sonra |
 | 11 | Eski `cl_scans`'in silinmesi | **Kullanıcı** | ⏳ en az bir hafta sonra |
 
-### Claude'un yapamadığı iki iş
+### Adım 8 neden yapılmadı
+
+Plan, eski projedeki 5 anonim satırı yeni projeye kopyalamaktı (§ 2a). Doğrulama
+sürecinde tarayıcıdaki `cl_sid` çerezi değişti ve kayıtlar zaten o çereze bağlı
+olduğu için kopyalamanın sağlayacağı süreklilik ortadan kalktı. Satırlar eski
+projede duruyor; adım 11'e kadar orada kalacaklar. İhtiyaç doğarsa § 2a'daki
+SQL hâlâ geçerli.
+
+### `ON DELETE CASCADE` — yeni projede gerçekten sınandı
+
+§ 4'te "yeni projede ek olarak doğrulanacak" denen madde tamamlandı. Test
+kullanıcısı tek bir `DELETE FROM auth.users` ile silindi:
+
+```
+                silmeden once   sonra
+auth.users            1           0
+cl_scans (hesaba)     3           0
+auth.identities       -           0
+auth.sessions         -           0
+```
+
+Kullanıcı silme, ona bağlı tarama kayıtlarını da götürüyor. Eski projede
+`profiles_id_fkey` buna hiç izin vermiyordu.
+
+### Claude'un yapamadığı işler
 
 Araç listesinde arandı, mevcut değiller:
 
 - **Protection Bypass token'ı üretme.** Vercel MCP'sinin koruma aracı yalnızca
   `passwordProtection`, `ssoProtection` ve `trustedIps` alanlarını yönetiyor.
+- **Vercel ortam değişkeni yazma.** Okuma veya yazma ucu yok.
+- **Vercel yeniden dağıtım tetikleme.** `list_deployments`, `get_deployment`,
+  `get_deployment_build_logs` var; redeploy yok. Git'e commit ederek dolaylı
+  olarak tetiklenebiliyor.
 - **Supabase Auth yapılandırması.** Supabase MCP'si veritabanı tarafını
   (SQL, migration, advisor, edge function) yönetiyor; Site URL, Redirect URLs
   ve e-posta şablonları için uç sunmuyor.
@@ -412,6 +439,11 @@ devri).
 olarak bırakır; 2. faz e-postadaki `token_hash` ile devam eder. Onay bağlantısı
 posta kutusuna düştüğü için otomasyon tek başına tamamlayamaz.
 
+Onay bağlantısına tarayıcıdan tıklanırsa token tükenir ve `token_hash` boş
+kalır. Bu durumda 2. faz **giriş** üzerinden koşar: devir kodu (`claimForUser`)
+hem `verify` hem `login` ucunda çalıştığı için devir, kota ve geçmiş yine uçtan
+uca sınanır; yalnızca `verify` ucunun kendisi o koşuda kapsam dışı kalır.
+
 CI'da yalnızca bypass secret'ı bulunur — Supabase ve Upstash anahtarları oraya
 konmadı. Veritabanı doğrulaması ve test kullanıcısının temizliği Supabase
 yönetim erişimi olan taraftan yapılır.
@@ -429,10 +461,8 @@ tetikleyici, ne veri, ne ayar. Adım 11'e kadar `cl_scans` de olduğu gibi kalı
 (önce Preview, sonra Production). Opsiyonel: `vercel.json` içinde fonksiyon
 bölgesi.
 
-**Depo:** kod değişikliği **gerekmiyor**. Yalnızca dokümantasyon güncellemesi
-(`docs/auth.md` § 8'in "çözüldü" olarak revize edilmesi, proje referansının
-yenilenmesi). § 8'deki bayrak seçilirse `index.html` içinde küçük bir
-değişiklik.
+**Depo:** kod değişikliği gerekmedi; öngörüldüğü gibi yalnızca dokümantasyon
+güncellendi (`docs/auth.md` § 8 "çözüldü" olarak revize edildi).
 
 **Etkilenmeyenler:** Upstash (kota, hız sınırı), tarama motoru, SSRF koruması,
 PDF üretimi, `cl_sid` anonim oturum çerezi, alan adı ve DNS.
@@ -447,4 +477,5 @@ Kod değişikliği gerekmiyor; üç ortam değişkeni değişiyor.
 
 Kazanç kalıcı: Cyber Lion AI'nın kimlik akışı bir daha başka bir uygulamanın
 tetikleyicisine bağlı olmayacak ve kullanıcı silme (dolayısıyla KVKK'daki
-silme hakkı) gerçekten çalışacak.
+silme hakkı) gerçekten çalışıyor — bu artık varsayım değil, § 9'da ölçülmüş
+bir sonuç.
