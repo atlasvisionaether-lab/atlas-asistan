@@ -38,7 +38,9 @@ module.exports = async function handler(req, res) {
   }
 
   if (!r.ok) {
-    return res.status(400).json({ error: { code: auth.mapError(r.status, r.body) } });
+    const code = auth.mapError(r.status, r.body, 'signin');
+    auth.logFailure('password', r.status, r.body, code);
+    return res.status(400).json({ error: { code: code } });
   }
 
   return res.status(200).json({ ok: true });

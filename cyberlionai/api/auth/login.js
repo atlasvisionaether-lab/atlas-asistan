@@ -36,7 +36,8 @@ module.exports = async function handler(req, res) {
   }
 
   if (!r.ok || !r.body || !r.body.access_token) {
-    const code = auth.mapError(r.status, r.body);
+    const code = auth.mapError(r.status, r.body, 'signin');
+    auth.logFailure('signin', r.status, r.body, code);
     // Onaylanmamış e-posta ayrı bir durum: kullanıcının ne yapacağını bilmesi
     // gerekiyor ve bu bilgi zaten kayıt sırasında kendisine verilmişti.
     const status = code === 'too_many_requests' ? 429 : 401;
