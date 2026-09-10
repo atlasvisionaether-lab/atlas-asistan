@@ -1,0 +1,50 @@
+name: Kayıt ucu teşhisi
+
+# Kayıt ucuna TEK istek atar ve dönen durumu/kodu raporlar.
+#
+# Neden gerekiyor: üretimde kayıt bozulduğunda GoTrue'nun neden reddettiğini
+# gösteren hiçbir kaydımız yoktu ve teşhis için kullanıcıdan tekrar denemesini
+# istemek zorunda kaldık. Bu iş akışı o bağımlılığı kaldırır.
+#
+# DİKKAT: kayıt başarılı olursa gerçek hesap açılır ve gerçek onay e-postası
+# gider. Üretim hedefi için ayrıca confirm=evet gerekir; açılan hesabın
+# silinmesi gerektiği çıktıda hatırlatılır.
+#
+# Test şifresi girdi DEĞİLDİR: workflow_dispatch girdileri çalışma sayfasında
+# açıkça görünür. Şifre koşu sırasında üretilir ve hiçbir yere yazılmaz.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Hedef adres (sonunda / olmadan)
+        required: true
+        default: https://cyberlionai-git-claude-epic-turing-gu2xf8-atlas-asistan.vercel.app
+      test_email:
+        description: Kullanılacak e-posta adresi
+        required: true
+      confirm:
+        description: Hedef ÜRETİM ise 'evet' yazın (gerçek hesap açılabilir)
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Araçları kur
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
+
+      - name: Kayıt ucunu yokla
+        env:
+          BASE: ${{ inputs.base }}
+          TEST_EMAIL: ${{ inputs.test_email }}
+          CONFIRM: ${{ inputs.confirm }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: bash cyberlionai/tools/signup-probe.sh
