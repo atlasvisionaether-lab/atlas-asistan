@@ -369,3 +369,49 @@ aranabilir), Flate sıkıştırma.
 
 Font: **Work Sans** (OFL, lisans dosyası `api/_assets/` içinde). DejaVu Sans'a
 göre dörtte bir boyut (189 KB), Türkçe kapsaması tam. Üretilen rapor ~185 KB.
+
+---
+
+## Kimlik doğrulama
+
+Uçların tam listesi, deneme sınırları, hata kodları ve Supabase Dashboard
+adımları için: **[docs/auth.md](auth.md)**.
+
+Özet: oturum `HttpOnly` çerezlerde taşınır (`cl_at`, `cl_rt`); tarayıcıda
+Supabase JS yoktur ve token hiçbir zaman JavaScript'in erişebileceği bir yere
+yazılmaz.
+
+### Sahiplik ve mevcut uçlar
+
+`/api/scan`, `/api/history` ve `/api/report` artık isteğin sahibini şöyle
+çözer:
+
+- Giriş yapılmışsa → `user_id`
+- Değilse → doğrulanmış `cl_sid` çerezi
+
+Sahiplik filtresi eskisi gibi **her sorgunun içinde** kalır. Değişen tek şey
+filtrenin hangi sütuna kurulduğu.
+
+`/api/scan` yanıtındaki `quota` nesnesine `scope` alanı eklendi:
+
+```json
+{ "quota": { "used": 2, "limit": 5, "remaining": 3, "scope": "account" } }
+```
+
+`scope`: `"anonymous"` veya `"account"`. Arayüz kalan hakkın kime ait olduğunu
+buna bakarak yazar — hesaba bağlı kota çerez silinerek sıfırlanmaz ve
+kullanıcının bunu bilmesi gerekir.
+
+### `GET /api/auth/me`
+
+Arayüzün açılışta "giriş yapılmış mı" sorusunu sorduğu uç. Token istemciye
+görünmediği için durumu yalnızca sunucu söyleyebilir.
+
+```json
+{ "authenticated": true, "available": true,
+  "user": { "id": "…", "email": "…" },
+  "quota": { "used": 2, "limit": 5, "remaining": 3, "scope": "account" } }
+```
+
+`available: false` → `SUPABASE_ANON_KEY` tanımlı değil; site anonim modda
+çalışır, giriş düğmesi gösterilmez.

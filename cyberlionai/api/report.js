@@ -12,7 +12,7 @@
  */
 
 const db = require('./_lib/db.js');
-const { resolveSession } = require('./_lib/session.js');
+const { resolveOwner, ownerRef } = require('./_lib/session.js');
 const { buildReport, reportFilename } = require('./_lib/report.js');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,16 +35,18 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: { code: 'invalid_id' } });
   }
 
-  const session = resolveSession(req, res);
+  const who = await resolveOwner(req, res);
 
-  // Yeni oturumun hiçbir kaydı olamaz; sorguya gitmeye gerek yok.
-  if (session.isNew) return res.status(404).json({ error: { code: 'not_found' } });
+  // Giriş yapılmamış yeni oturumun hiçbir kaydı olamaz; sorguya gerek yok.
+  if (!who.isAuthenticated && who.isNewSession) {
+    return res.status(404).json({ error: { code: 'not_found' } });
+  }
 
   const lang = query.lang === 'en' ? 'en' : 'tr';
 
   let scan;
   try {
-    scan = await db.getScan({ sessionId: session.id }, String(id));
+    scan = await db.getScan(ownerRef(who), String(id));
   } catch (err) {
     if (console && console.error) console.error('report lookup failed:', err.message);
     return res.status(503).json({ error: { code: 'report_unavailable' } });

@@ -34,10 +34,16 @@ scan() {
     --data "{\"url\":\"$TARGET\"}")
 }
 
-api() { # api JAR METHOD PATH -> STATUS, BODY
+api() { # api JAR METHOD PATH [JSON_GOVDE] -> STATUS, BODY, HDR
   BODY="$WORK/body.json"; HDR="$WORK/hdr.txt"
-  STATUS=$(curl -sS -o "$BODY" -D "$HDR" -w '%{http_code}' \
-    -c "$1" -b "$1" -X "$2" "$BASE$3")
+  if [ $# -ge 4 ]; then
+    STATUS=$(curl -sS -o "$BODY" -D "$HDR" -w '%{http_code}' \
+      -c "$1" -b "$1" -X "$2" "$BASE$3" \
+      -H 'content-type: application/json' --data "$4")
+  else
+    STATUS=$(curl -sS -o "$BODY" -D "$HDR" -w '%{http_code}' \
+      -c "$1" -b "$1" -X "$2" "$BASE$3")
+  fi
 }
 
 hdr() { grep -i "^$1:" "$HDR" | tail -1 | cut -d' ' -f2- | tr -d '\r'; }
@@ -190,6 +196,73 @@ SSTATUS=$(curl -sS -o "$BODY" -w '%{http_code}' -c "$JAR_C" -b "$JAR_C" \
   -H 'X-Forwarded-For: 1.2.3.4' -H 'X-Real-IP: 1.2.3.4' \
   --data "{\"url\":\"$TARGET\"}")
 check "$SSTATUS" "429" "sahte X-Forwarded-For / X-Real-IP sınırı atlatamadı"
+
+
+################################################################################
+head1 "9. Kimlik doğrulama (üretimde hesap OLUŞTURMADAN)"
+################################################################################
+# Üretimde kayıt yapmıyoruz: gerçek e-posta gönderir ve auth.users'tan
+# silinmesi service_role gerektirir; o anahtarı CI'ya koymak, doğrulamanın
+# kazandırdığından fazlasını riske atardı. Bu yüzden yalnızca hesap
+# yaratmayan kontroller.
+
+api "$JAR_A" GET /api/auth/me
+check "$STATUS" "200" "me ucu yanıt veriyor"
+check "$(jq -r '.available' "$BODY")" "true" "SUPABASE_ANON_KEY tanımlı (kimlik servisi açık)"
+check "$(jq -r '.authenticated' "$BODY")" "false" "çerezsiz istek anonim"
+
+# Kullanıcı sayımına karşı: var olmayan iki farklı adres AYNI kodu almalı.
+api "$JAR_A" POST /api/auth/login '{"email":"yok-1@cyberlionai-test.invalid","password":"HerhangiBirSifre123"}'
+C1=$(jq -r '.error.code' "$BODY"); S1=$STATUS
+api "$JAR_A" POST /api/auth/login '{"email":"yok-2@cyberlionai-test.invalid","password":"BaskaBirSifre1234"}'
+C2=$(jq -r '.error.code' "$BODY")
+check "$S1" "401" "hatalı giriş reddedildi"
+check "$C1" "invalid_credentials" "genel hata kodu"
+check "$C2" "$C1" "farklı adresler aynı kodu alıyor (hesap varlığı sızmıyor)"
+
+api "$JAR_A" POST /api/auth/recover '{"email":"kesinlikle-yok@cyberlionai-test.invalid"}'
+check "$STATUS" "200" "sıfırlama isteği: kayıtsız adres için de 200"
+
+api "$JAR_A" POST /api/auth/register '{"email":"bozuk-adres","password":"YeterinceUzunSifre1"}'
+check "$(jq -r '.error.code' "$BODY")" "invalid_email" "bozuk e-posta reddedildi"
+
+api "$JAR_A" POST /api/auth/password '{"password":"OturumsuzSifre12345"}'
+check "$STATUS" "401" "oturumsuz şifre değişikliği reddedildi"
+check "$(jq -r '.error.code' "$BODY")" "not_authenticated" "kod"
+
+api "$JAR_A" POST /api/auth/verify '{"token_hash":"gecersiz-kod","type":"recovery"}'
+check "$STATUS" "400" "geçersiz bağlantı kodu reddedildi"
+check "$(jq -r '.error.code' "$BODY")" "link_invalid" "kod"
+
+api "$JAR_A" GET /api/auth/login
+check "$STATUS" "405" "GET ile giriş denemesi reddedildi"
+
+################################################################################
+head1 "10. İstemciye secret sızmıyor"
+################################################################################
+# Sayfanın tamamı indirilir ve secret'a benzeyen her şey aranır. Bu, "servis
+# rolü anahtarı tarayıcıya asla gitmez" kuralının kanıtı.
+curl -sS "$BASE/" -o "$WORK/sayfa.html"
+echo "  indirilen sayfa: $(wc -c < "$WORK/sayfa.html") bayt"
+
+leak_check() {
+  if grep -qE "$1" "$WORK/sayfa.html"; then
+    fail "$2 — SAYFADA BULUNDU"
+  else
+    pass "$2"
+  fi
+}
+leak_check 'service_role'                  "service_role geçmiyor"
+leak_check 'eyJ[A-Za-z0-9_-]{10,}'         "JWT benzeri dizge yok (anon/servis anahtarı)"
+leak_check 'supabase\.co'                  "Supabase host adresi yok"
+leak_check 'SUPABASE_[A-Z_]*KEY'           "anahtar değişken adı yok"
+leak_check 'UPSTASH_'                      "Upstash değişkeni yok"
+leak_check 'localStorage\.setItem\([^)]*token' "token localStorage'a yazılmıyor"
+
+# Kimlik uçlarının yanıtları da secret taşımamalı.
+api "$JAR_A" GET /api/auth/me
+grep -qE 'eyJ[A-Za-z0-9_-]{10,}|service_role' "$BODY" \
+  && fail "me yanıtında secret var" || pass "me yanıtında secret yok"
 
 ################################################################################
 head1 "8. Temizlik — bırakılan tüm kayıtlar siliniyor"

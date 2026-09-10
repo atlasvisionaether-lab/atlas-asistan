@@ -840,7 +840,11 @@
      12. MODAL (Kayıt)
      ============================================================ */
   .modal {
-    position: fixed; inset: 0; z-index: 400;
+    /* Çerez çubuğunun (450) ÜSTÜNDE olmalı. Altında kaldığında çubuk, açık
+       modalın düğmelerini örtüyordu: 1280x700 gibi yaygın bir dizüstü
+       boyutunda ilk ziyaretçi "Hesap Oluştur" düğmesine tıklayamıyordu.
+       Bildirimler (500) modalın da üstünde kalmaya devam ediyor. */
+    position: fixed; inset: 0; z-index: 460;
     display: flex; align-items: center; justify-content: center;
     padding: 20px;
     background: rgba(4, 4, 8, 0.8);
@@ -904,6 +908,81 @@
   .checkbox input { width: 17px; height: 17px; accent-color: var(--gold-primary); cursor: pointer; }
 
   .modal__foot { margin: 18px 0 0; font-size: 0.75rem; color: var(--text-gray); text-align: center; }
+
+  /* --- Kimlik doğrulama --- */
+  .auth__tabs {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+    background: var(--surface-raised); border: 1px solid var(--hairline);
+    border-radius: 10px; padding: 4px; margin: 20px 0 18px;
+  }
+  .auth__tab {
+    background: none; border: 0; border-radius: 7px; cursor: pointer;
+    padding: 9px 10px; font: inherit; font-size: 0.85rem; font-weight: 600;
+    color: var(--text-gray); transition: background .18s, color .18s;
+  }
+  .auth__tab:hover { color: var(--text-white); }
+  .auth__tab.is-active {
+    background: var(--card-black); color: var(--gold-primary);
+    box-shadow: inset 0 0 0 1px rgba(212,175,55,.35);
+  }
+  .auth__tab:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: 2px; }
+
+  .auth__hint { margin: 0 0 16px; font-size: 0.82rem; color: var(--text-gray); line-height: 1.5; }
+  .field__hint { display: block; margin-top: 5px; font-size: 0.72rem; color: var(--text-gray); }
+
+  .auth__msg {
+    margin: 0 0 16px; padding: 11px 13px; border-radius: 9px;
+    font-size: 0.82rem; line-height: 1.45; border: 1px solid transparent;
+  }
+  .auth__msg--error   { background: rgba(211,47,47,.10);  border-color: rgba(211,47,47,.35);  color: #ff8a80; }
+  .auth__msg--success { background: rgba(46,125,50,.10);  border-color: rgba(46,125,50,.35);  color: #81c784; }
+  .auth__msg--info    { background: rgba(212,175,55,.09); border-color: rgba(212,175,55,.30); color: var(--gold-primary); }
+
+  .auth__links { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 16px; }
+  .auth__link {
+    background: none; border: 0; padding: 0; cursor: pointer;
+    font: inherit; font-size: 0.78rem; color: var(--text-gray);
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .auth__link:hover { color: var(--gold-primary); }
+  .auth__link:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: 3px; border-radius: 3px; }
+
+  /* --- Hesap menüsü --- */
+  .account { position: relative; }
+  .account__btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface-raised); border: 1px solid var(--hairline); border-radius: 999px;
+    padding: 7px 13px 7px 10px; cursor: pointer;
+    font: inherit; font-size: 0.8rem; color: var(--text-white);
+    max-width: 190px; transition: border-color .18s;
+  }
+  .account__btn:hover { border-color: var(--gold-primary); }
+  .account__btn:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: 2px; }
+  .account__btn i { color: var(--gold-primary); font-size: 1rem; }
+  /* E-posta uzun olabilir; menüyü genişletmek yerine kısaltılır. */
+  .account__email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .account__menu {
+    position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
+    min-width: 210px; padding: 6px;
+    background: var(--card-black); border: 1px solid var(--hairline);
+    border-radius: 11px; box-shadow: 0 18px 40px rgba(0,0,0,.42);
+  }
+  .account__item {
+    display: block; width: 100%; text-align: left;
+    background: none; border: 0; border-radius: 7px; cursor: pointer;
+    padding: 9px 11px; font: inherit; font-size: 0.82rem; color: var(--text-white);
+  }
+  .account__item:hover { background: var(--surface-raised); color: var(--gold-primary); }
+  .account__item:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: -2px; }
+  .account__item--danger:hover { color: #ff8a80; }
+
+  @media (max-width: 640px) {
+    /* Dar ekranda e-posta yerine yalnızca simge; menü tam genişliğe yayılır. */
+    .account__email { display: none; }
+    .account__btn { padding: 7px 10px; }
+    .account__menu { right: -6px; min-width: 200px; }
+  }
 
   /* ============================================================
      13. TOAST BİLDİRİMLERİ
@@ -1292,6 +1371,22 @@
           </button>
 
           <button type="button" class="btn btn--gold btn--sm nav__cta" data-open-modal data-i18n="nav.upgrade">Premium'a Geç</button>
+
+          <!-- Giriş yapılmamışken: giriş düğmesi. Yapılmışken: hesap menüsü.
+               Hangisinin görüneceğine sunucu karar verir (/api/auth/me). -->
+          <button type="button" class="btn btn--ghost btn--sm nav__cta" id="authOpen" hidden data-i18n="auth.signIn">Giriş Yap</button>
+
+          <div class="account" id="accountBox" hidden>
+            <button type="button" class="account__btn" id="accountToggle" aria-expanded="false" aria-controls="accountMenu">
+              <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+              <span class="account__email" id="accountEmail"></span>
+            </button>
+            <div class="account__menu" id="accountMenu" hidden>
+              <button type="button" class="account__item" id="accountHistory" data-i18n="history.title">Tarama Geçmişi</button>
+              <button type="button" class="account__item" id="accountPassword" data-i18n="auth.changePassword">Şifreyi Değiştir</button>
+              <button type="button" class="account__item account__item--danger" id="accountLogout" data-i18n="auth.signOut">Çıkış Yap</button>
+            </div>
+          </div>
 
           <button type="button" class="icon-btn nav__toggle" id="navToggle" aria-expanded="false" aria-controls="navDrawer" aria-label="Menü" data-i18n-aria="a11y.menu">
             <i class="fa-solid fa-bars" aria-hidden="true"></i>
@@ -1733,40 +1828,89 @@
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
 
-      <h2 class="modal__title" id="authModalTitle" data-i18n="modal.title">Premium'a Geç</h2>
-      <p class="modal__subtitle" data-i18n="modal.subtitle">Hesabınızı oluşturun ve güvenlik avantajlarından yararlanın.</p>
+      <!-- Başlık ve alt başlık görünüme göre değişir; metni setView() yazar. -->
+      <h2 class="modal__title" id="authModalTitle">Hesabınıza Girin</h2>
+      <p class="modal__subtitle" id="authModalSubtitle">Tarama geçmişiniz ve raporlarınız hesabınıza bağlanır.</p>
 
-      <form id="authForm" novalidate>
-        <!-- CSRF yer tutucu: backend hazır olduğunda sunucudan doldurulacak -->
-        <input type="hidden" name="csrf_token" id="csrfToken" value="" />
+      <div class="auth__tabs" role="tablist" id="authTabs" aria-label="Giriş veya kayıt" data-i18n-aria="auth.tabsLabel">
+        <button type="button" class="auth__tab is-active" role="tab" id="tabLogin"
+                aria-selected="true" aria-controls="viewLogin" data-view="login" data-i18n="auth.signIn">Giriş Yap</button>
+        <button type="button" class="auth__tab" role="tab" id="tabRegister"
+                aria-selected="false" aria-controls="viewRegister" data-view="register" data-i18n="auth.signUp">Hesap Oluştur</button>
+      </div>
 
+      <!-- Durum satırı: yükleniyor / hata / başarı. Tek yerde toplandı ki
+           ekran okuyucu her formda ayrı bölge taramak zorunda kalmasın. -->
+      <p class="auth__msg" id="authMsg" role="status" aria-live="polite" hidden></p>
+
+      <!-- ---- Giriş ---- -->
+      <form id="viewLogin" class="auth__view" role="tabpanel" aria-labelledby="tabLogin" novalidate>
         <div class="field">
-          <label for="authEmail" data-i18n="modal.email">E-posta</label>
-          <input type="email" id="authEmail" name="email" placeholder="ornek@mail.com" autocomplete="email" required />
+          <label for="loginEmail" data-i18n="modal.email">E-posta</label>
+          <input type="email" id="loginEmail" name="email" placeholder="ornek@mail.com" autocomplete="email" required />
         </div>
-
         <div class="field">
-          <label for="authPass" data-i18n="modal.password">Şifre</label>
-          <input type="password" id="authPass" name="password" placeholder="••••••••" autocomplete="new-password" required minlength="8" />
+          <label for="loginPass" data-i18n="modal.password">Şifre</label>
+          <input type="password" id="loginPass" name="password" placeholder="••••••••" autocomplete="current-password" required />
         </div>
-
-        <div class="field">
-          <label for="authPass2" data-i18n="modal.password2">Şifre Tekrar</label>
-          <input type="password" id="authPass2" name="password_confirm" placeholder="••••••••" autocomplete="new-password" required />
+        <button type="submit" class="btn btn--gold btn--block" data-i18n="auth.signIn">Giriş Yap</button>
+        <div class="auth__links">
+          <button type="button" class="auth__link" data-view="forgot" data-i18n="auth.forgot">Şifremi unuttum</button>
+          <button type="button" class="auth__link" id="magicLinkBtn" data-i18n="auth.magic">E-posta ile bağlantı gönder</button>
         </div>
-
-        <label class="checkbox">
-          <input type="checkbox" id="authRemember" name="remember" />
-          <span data-i18n="modal.remember">Beni Hatırla</span>
-        </label>
-
-        <button type="submit" class="btn btn--gold btn--block" id="authSubmit" data-i18n="modal.submit">Hesap Oluştur</button>
       </form>
 
-      <p class="modal__foot">
-        <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
-        <a href="/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
-      </p>
+      <!-- ---- Kayıt ---- -->
+      <form id="viewRegister" class="auth__view" role="tabpanel" aria-labelledby="tabRegister" hidden novalidate>
+        <div class="field">
+          <label for="regEmail" data-i18n="modal.email">E-posta</label>
+          <input type="email" id="regEmail" name="email" placeholder="ornek@mail.com" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="regPass" data-i18n="modal.password">Şifre</label>
+          <input type="password" id="regPass" name="password" placeholder="••••••••" autocomplete="new-password" required minlength="10"
+                 aria-describedby="regPassHint" />
+          <span class="field__hint" id="regPassHint" data-i18n="auth.passHint">En az 10 karakter.</span>
+        </div>
+        <div class="field">
+          <label for="regPass2" data-i18n="modal.password2">Şifre Tekrar</label>
+          <input type="password" id="regPass2" name="password_confirm" placeholder="••••••••" autocomplete="new-password" required />
+        </div>
+        <button type="submit" class="btn btn--gold btn--block" data-i18n="auth.signUp">Hesap Oluştur</button>
+        <p class="modal__foot">
+          <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
+          <a href="/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
+        </p>
+      </form>
+
+      <!-- ---- Şifre sıfırlama isteği ---- -->
+      <form id="viewForgot" class="auth__view" hidden novalidate>
+        <p class="auth__hint" data-i18n="auth.forgotHint">Kayıtlı e-posta adresinizi girin; sıfırlama bağlantısı gönderelim.</p>
+        <div class="field">
+          <label for="forgotEmail" data-i18n="modal.email">E-posta</label>
+          <input type="email" id="forgotEmail" name="email" placeholder="ornek@mail.com" autocomplete="email" required />
+        </div>
+        <button type="submit" class="btn btn--gold btn--block" data-i18n="auth.sendReset">Sıfırlama Bağlantısı Gönder</button>
+        <div class="auth__links">
+          <button type="button" class="auth__link" data-view="login" data-i18n="auth.backToSignIn">Girişe dön</button>
+        </div>
+      </form>
+
+      <!-- ---- Yeni şifre ---- -->
+      <form id="viewNewPass" class="auth__view" hidden novalidate>
+        <p class="auth__hint" data-i18n="auth.newPassHint">Yeni şifrenizi belirleyin.</p>
+        <div class="field">
+          <label for="newPass" data-i18n="auth.newPassword">Yeni şifre</label>
+          <input type="password" id="newPass" name="password" placeholder="••••••••" autocomplete="new-password" required minlength="10"
+                 aria-describedby="newPassHint" />
+          <span class="field__hint" id="newPassHint" data-i18n="auth.passHint">En az 10 karakter.</span>
+        </div>
+        <div class="field">
+          <label for="newPass2" data-i18n="modal.password2">Şifre Tekrar</label>
+          <input type="password" id="newPass2" name="password_confirm" placeholder="••••••••" autocomplete="new-password" required />
+        </div>
+        <button type="submit" class="btn btn--gold btn--block" data-i18n="auth.savePassword">Şifreyi Kaydet</button>
+      </form>
     </div>
   </div>
 
@@ -2002,6 +2146,8 @@
           summary: '{passed} geçti · {failed} kaldı · {skipped} ölçülemedi',
           quota: 'Kalan ücretsiz tarama: {n}/5',
           quotaOut: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.',
+          quotaOutAccount: 'Hesabınızın ücretsiz tarama hakkı doldu. Sınırsız tarama için Premium\'a geçin.',
+          quotaAccount: 'Hesabınızda {n} ücretsiz tarama kaldı',
           fixLabel: 'Düzeltme',
           downloadPdf: 'PDF Raporu İndir',
           warn: {
@@ -2250,6 +2396,64 @@
           rights: '© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.',
           privacy: 'Gizlilik Politikası', terms: 'Kullanım Şartları', cookies: 'Çerez Politikası'
         },
+        auth: {
+          signIn: 'Giriş Yap', signUp: 'Hesap Oluştur', signOut: 'Çıkış Yap',
+          tabsLabel: 'Giriş veya kayıt',
+          changePassword: 'Şifreyi Değiştir',
+          forgot: 'Şifremi unuttum',
+          magic: 'E-posta ile bağlantı gönder',
+          forgotHint: 'Kayıtlı e-posta adresinizi girin; sıfırlama bağlantısı gönderelim.',
+          sendReset: 'Sıfırlama Bağlantısı Gönder',
+          backToSignIn: 'Girişe dön',
+          newPassHint: 'Yeni şifrenizi belirleyin.',
+          newPassword: 'Yeni şifre',
+          savePassword: 'Şifreyi Kaydet',
+          passHint: 'En az 10 karakter.',
+          working: 'Bekleyin…',
+          title: {
+            login: 'Hesabınıza Girin', register: 'Hesap Oluşturun',
+            forgot: 'Şifrenizi mi Unuttunuz?', newpass: 'Yeni Şifre'
+          },
+          subtitle: {
+            login: 'Tarama geçmişiniz ve raporlarınız hesabınıza bağlanır.',
+            register: 'Bu tarayıcıdaki taramalarınız hesabınıza aktarılır.',
+            forgot: 'Size bir sıfırlama bağlantısı gönderelim.',
+            newpass: 'Şifreniz en az 10 karakter olmalı.'
+          },
+          msg: {
+            confirmSent: '{email} adresine bir onay bağlantısı gönderdik. Bağlantıya tıkladıktan sonra girişiniz tamamlanır.',
+            resetSent: 'Adres kayıtlıysa sıfırlama bağlantısı gönderildi. Posta kutunuzu kontrol edin.',
+            magicSent: 'Adres kayıtlıysa giriş bağlantısı gönderildi. Posta kutunuzu kontrol edin.',
+            setNewPassword: 'Bağlantı doğrulandı. Şimdi yeni şifrenizi belirleyin.'
+          },
+          toast: {
+            signedIn: 'Giriş yapıldı.',
+            signedInClaimed: 'Giriş yapıldı. {count} tarama hesabınıza aktarıldı.',
+            signedUp: 'Hesabınız oluşturuldu.',
+            signedUpClaimed: 'Hesabınız oluşturuldu. {count} tarama hesabınıza aktarıldı.',
+            verified: 'E-postanız doğrulandı.',
+            verifiedClaimed: 'E-postanız doğrulandı. {count} tarama hesabınıza aktarıldı.',
+            signedOut: 'Çıkış yapıldı.',
+            passwordChanged: 'Şifreniz güncellendi.'
+          },
+          err: {
+            invalid_email: 'Geçerli bir e-posta adresi girin.',
+            invalid_credentials: 'E-posta veya şifre hatalı.',
+            email_taken: 'Bu e-posta zaten kayıtlı. Giriş yapmayı deneyin.',
+            email_not_confirmed: 'E-postanızı henüz doğrulamadınız. Posta kutunuzu kontrol edin.',
+            password_too_short: 'Şifre en az 10 karakter olmalı.',
+            password_too_long: 'Şifre en fazla 72 karakter olabilir.',
+            weak_password: 'Bu şifre yeterince güçlü değil. Daha uzun bir şifre deneyin.',
+            link_invalid: 'Bağlantı geçersiz veya süresi dolmuş. Yeni bir bağlantı isteyin.',
+            too_many_requests: 'Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.',
+            not_authenticated: 'Oturumunuz sonlanmış. Tekrar giriş yapın.',
+            auth_unavailable: 'Giriş servisi şu anda kullanılamıyor.',
+            signup_unavailable: 'Kayıt şu anda tamamlanamıyor. Kısa süre içinde düzeltilecek; lütfen sonra tekrar deneyin.',
+            service_unavailable: 'Servis şu anda kullanılamıyor.',
+            network: 'Bağlantı kurulamadı. İnternetinizi kontrol edin.',
+            auth_failed: 'İşlem tamamlanamadı. Lütfen tekrar deneyin.'
+          }
+        },
         modal: {
           title: "Premium'a Geç",
           subtitle: 'Hesabınızı oluşturun ve güvenlik avantajlarından yararlanın.',
@@ -2316,6 +2520,8 @@
           summary: '{passed} passed · {failed} failed · {skipped} not measured',
           quota: 'Free scans left: {n}/5',
           quotaOut: 'You have used your free scans. Upgrade to Premium for unlimited scanning.',
+          quotaOutAccount: 'Your account has used its free scans. Upgrade to Premium for unlimited scanning.',
+          quotaAccount: '{n} free scans left on your account',
           fixLabel: 'Fix',
           downloadPdf: 'Download PDF Report',
           warn: {
@@ -2564,6 +2770,64 @@
           rights: '© 2026 Cyber Lion AI — All Rights Reserved.',
           privacy: 'Privacy Policy', terms: 'Terms of Use', cookies: 'Cookie Policy'
         },
+        auth: {
+          signIn: 'Sign In', signUp: 'Create Account', signOut: 'Sign Out',
+          tabsLabel: 'Sign in or register',
+          changePassword: 'Change Password',
+          forgot: 'Forgot password',
+          magic: 'Send me a sign-in link',
+          forgotHint: 'Enter your registered email address and we will send a reset link.',
+          sendReset: 'Send Reset Link',
+          backToSignIn: 'Back to sign in',
+          newPassHint: 'Choose your new password.',
+          newPassword: 'New password',
+          savePassword: 'Save Password',
+          passHint: 'At least 10 characters.',
+          working: 'Please wait…',
+          title: {
+            login: 'Sign In', register: 'Create an Account',
+            forgot: 'Forgot Your Password?', newpass: 'New Password'
+          },
+          subtitle: {
+            login: 'Your scan history and reports stay with your account.',
+            register: 'Scans from this browser move to your account.',
+            forgot: 'We will send you a reset link.',
+            newpass: 'Your password must be at least 10 characters.'
+          },
+          msg: {
+            confirmSent: 'We sent a confirmation link to {email}. Follow it to finish signing up.',
+            resetSent: 'If that address is registered, a reset link is on its way. Check your inbox.',
+            magicSent: 'If that address is registered, a sign-in link is on its way. Check your inbox.',
+            setNewPassword: 'Link verified. Now choose a new password.'
+          },
+          toast: {
+            signedIn: 'Signed in.',
+            signedInClaimed: 'Signed in. {count} scans moved to your account.',
+            signedUp: 'Account created.',
+            signedUpClaimed: 'Account created. {count} scans moved to your account.',
+            verified: 'Email verified.',
+            verifiedClaimed: 'Email verified. {count} scans moved to your account.',
+            signedOut: 'Signed out.',
+            passwordChanged: 'Password updated.'
+          },
+          err: {
+            invalid_email: 'Enter a valid email address.',
+            invalid_credentials: 'Email or password is incorrect.',
+            email_taken: 'That email is already registered. Try signing in.',
+            email_not_confirmed: 'Your email is not verified yet. Check your inbox.',
+            password_too_short: 'Password must be at least 10 characters.',
+            password_too_long: 'Password can be at most 72 characters.',
+            weak_password: 'That password is not strong enough. Try a longer one.',
+            link_invalid: 'The link is invalid or has expired. Request a new one.',
+            too_many_requests: 'Too many attempts. Please try again later.',
+            not_authenticated: 'Your session ended. Please sign in again.',
+            auth_unavailable: 'The sign-in service is unavailable right now.',
+            signup_unavailable: 'Sign-up cannot be completed right now. This is being fixed; please try again later.',
+            service_unavailable: 'The service is unavailable right now.',
+            network: 'Could not connect. Check your internet connection.',
+            auth_failed: 'Could not complete the request. Please try again.'
+          }
+        },
         modal: {
           title: 'Upgrade Now',
           subtitle: 'Create your account and unlock security features.',
@@ -2646,6 +2910,12 @@
       var ar = document.querySelectorAll('[data-i18n-aria]');
       for (var k = 0; k < ar.length; k++) {
         ar[k].setAttribute('aria-label', t(ar[k].getAttribute('data-i18n-aria')));
+      }
+
+      // Dil değişince JS'in yazdığı metinler de yenilenmeli: data-i18n ile
+      // eşlenemeyen, duruma göre değişen başlıklar (kimlik modalı, kota) burada.
+      if (window.__clOnLanguageChange) {
+        try { window.__clOnLanguageChange(); } catch (e) { log('dil kancası hatası', e); }
       }
 
       // SEO meta etiketleri
@@ -3155,20 +3425,34 @@
         return API.request('/api/scan/' + encodeURIComponent(scanId));
       },
 
-      /** POST /api/auth/register */
-      register: function (email, password) {
-        if (CONFIG.useMockApi) {
-          return new Promise(function (resolve) {
-            setTimeout(function () { resolve({ ok: true, email: email, token: null }); }, 900);
+      /* ---- Kimlik doğrulama ----
+         Oturum HttpOnly çerezlerde taşınır; bu katman hiçbir token görmez ve
+         saklamaz. Bu yüzden isteklerde Authorization başlığı yok, sadece
+         credentials: 'same-origin'. */
+      auth: {
+        call: function (path, body) {
+          return fetch(CONFIG.apiBaseUrl + '/api/auth/' + path, {
+            method: body === undefined ? 'GET' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: body === undefined ? undefined : JSON.stringify(body)
+          }).then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (data) {
+              if (!res.ok) throw (data && data.error) || { code: 'auth_failed' };
+              return data;
+            });
+          }, function () {
+            throw { code: 'network' };
           });
-        }
-        return API.request('/api/auth/register', { method: 'POST', body: { email: email, password: password } });
-      },
-
-      /** POST /api/auth/login */
-      login: function (email, password) {
-        if (CONFIG.useMockApi) return Promise.resolve({ ok: true, token: null });
-        return API.request('/api/auth/login', { method: 'POST', body: { email: email, password: password } });
+        },
+        me:        function ()      { return API.auth.call('me'); },
+        login:     function (e, p)  { return API.auth.call('login', { email: e, password: p }); },
+        register:  function (e, p)  { return API.auth.call('register', { email: e, password: p }); },
+        logout:    function ()      { return API.auth.call('logout', {}); },
+        recover:   function (e)     { return API.auth.call('recover', { email: e }); },
+        magicLink: function (e)     { return API.auth.call('magiclink', { email: e }); },
+        verify:    function (h, ty) { return API.auth.call('verify', { token_hash: h, type: ty }); },
+        setPassword: function (p)   { return API.auth.call('password', { password: p }); }
       },
 
       /* ---- Düzeltme (remediation) uçları ---- */
@@ -3295,16 +3579,24 @@
       return isNaN(raw) || raw < 0 ? CONFIG.freeScanLimit : Math.min(raw, CONFIG.freeScanLimit);
     }
 
+    /* Kotanın kime ait olduğu: 'anonymous' veya 'account'. Sunucu her tarama
+       yanıtında bildirir; gösterim metni buna göre değişir çünkü hesaba bağlı
+       kota çerez silinerek sıfırlanmaz ve kullanıcının bunu bilmesi gerekir. */
+    var quotaScope = 'anonymous';
+
     /** Sunucunun bildirdiği kalan hakkı gösterime yazar. */
     function setQuotaFromServer(quota) {
       if (!quota || typeof quota.remaining !== 'number') return;
+      if (quota.scope) quotaScope = quota.scope;
       store.set(CONFIG.storageKeys.quota, String(quota.remaining));
       renderQuota();
     }
 
     function renderQuota() {
       var el = document.getElementById('scanQuota');
-      if (el) el.textContent = t('scan.quota', { n: scansLeft() });
+      if (!el) return;
+      var key = quotaScope === 'account' ? 'scan.quotaAccount' : 'scan.quota';
+      el.textContent = t(key, { n: scansLeft() });
     }
 
     function setStatus(text, iconClass) {
@@ -3528,12 +3820,18 @@
     function renderScanError(err) {
       var code = (err && err.code) || 'scan_failed';
 
-      // Kota sunucuda bitti: gösterimi güncelle ve kayıt modalını aç.
+      // Kota sunucuda bitti.
       if (code === 'quota_exceeded') {
         setQuotaFromServer({ remaining: 0 });
-        toast(t('scan.quotaOut'), 'info', 6000);
-        openModal();
         scanOutput.classList.remove('is-active');
+        if (authManager.isSignedIn()) {
+          // Zaten kayıtlı: kayıt modalını açmak yanlış olurdu. Hakkı biten
+          // hesap için doğru adım Premium'a geçmek.
+          toast(t('scan.quotaOutAccount'), 'info', 7000);
+        } else {
+          toast(t('scan.quotaOut'), 'info', 6000);
+          authManager.open('register');
+        }
         return;
       }
 
@@ -3611,61 +3909,430 @@
     }
 
     var modal = document.getElementById('authModal');
-    var authForm = document.getElementById('authForm');
     var authModal = createModal(modal);
     var modeModal = createModal(document.getElementById('modeModal'));
 
     function openModal() { if (authModal) authModal.open(); }
     function closeModal() { if (authModal) authModal.close(); }
 
-    var openers = document.querySelectorAll('[data-open-modal]');
-    for (var o = 0; o < openers.length; o++) openers[o].addEventListener('click', openModal);
+    /* ==========================================================
+       10a. KİMLİK DOĞRULAMA
+       --------------------------------------------------------
+       Oturum tamamen sunucu tarafında, HttpOnly çerezlerde durur.
+       Bu modül hiçbir token görmez ve saklamaz; "giriş yapılmış mı"
+       sorusunun cevabını da sunucudan alır (/api/auth/me).
 
-    /* Form doğrulama + kayıt isteği */
-    if (authForm) {
-      authForm.addEventListener('submit', function (e) {
-        e.preventDefault();
+       Tarayıcıdaki tek durum: gösterilecek e-posta adresi.
+       ========================================================== */
+    var authManager = (function () {
+      var VIEWS = {
+        login:    document.getElementById('viewLogin'),
+        register: document.getElementById('viewRegister'),
+        forgot:   document.getElementById('viewForgot'),
+        newpass:  document.getElementById('viewNewPass')
+      };
+      var tabs = document.getElementById('authTabs');
+      var tabButtons = tabs ? tabs.querySelectorAll('.auth__tab') : [];
+      var msgEl = document.getElementById('authMsg');
+      var titleEl = document.getElementById('authModalTitle');
+      var subtitleEl = document.getElementById('authModalSubtitle');
 
-        var email = document.getElementById('authEmail');
-        var pass = document.getElementById('authPass');
-        var pass2 = document.getElementById('authPass2');
-        var submit = document.getElementById('authSubmit');
+      var accountBox = document.getElementById('accountBox');
+      var accountToggle = document.getElementById('accountToggle');
+      var accountMenu = document.getElementById('accountMenu');
+      var accountEmail = document.getElementById('accountEmail');
+      var authOpen = document.getElementById('authOpen');
 
-        [email, pass, pass2].forEach(function (f) { f.setAttribute('aria-invalid', 'false'); });
+      var currentUser = null;
+      var currentView = 'login';
+      /* Kimlik servisi yapılandırılmamışsa (SUPABASE_ANON_KEY yok) site anonim
+         modda çalışır. O hâlde giriş düğmesini göstermek, tıklayınca hata veren
+         bir düğme sunmak olurdu. */
+      var available = true;
 
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
-          email.setAttribute('aria-invalid', 'true');
-          toast(t('toast.emailInvalid'), 'error'); email.focus(); return;
+      /* ---- Durum satırı ---- */
+      function clearMsg() {
+        if (!msgEl) return;
+        msgEl.hidden = true;
+        msgEl.textContent = '';
+        msgEl.className = 'auth__msg';
+      }
+      function showMsg(text, kind) {
+        if (!msgEl) return;
+        msgEl.textContent = text;                       // metin, HTML değil
+        msgEl.className = 'auth__msg auth__msg--' + (kind || 'info');
+        msgEl.hidden = false;
+      }
+
+      /** Sunucu hata kodunu kullanıcıya gösterilecek metne çevirir. */
+      function errText(err) {
+        var code = (err && err.code) || 'auth_failed';
+        var key = 'auth.err.' + code;
+        var text = t(key);
+        return text === key ? t('auth.err.auth_failed') : text;
+      }
+
+      /* ---- Görünüm değiştirme ---- */
+
+      /** Yalnızca metinleri ve sekme durumunu yazar; mesajı ve odağı değiştirmez.
+          Dil değiştiğinde bu çağrılır: açık bir uyarı silinmemeli. */
+      function renderViewTexts() {
+        var tabbed = (currentView === 'login' || currentView === 'register');
+        if (tabs) tabs.hidden = !tabbed;
+        for (var i = 0; i < tabButtons.length; i++) {
+          var active = tabButtons[i].getAttribute('data-view') === currentView;
+          tabButtons[i].classList.toggle('is-active', active);
+          tabButtons[i].setAttribute('aria-selected', active ? 'true' : 'false');
         }
-        if (pass.value.length < 8) {
-          pass.setAttribute('aria-invalid', 'true');
-          toast(t('toast.passShort'), 'error'); pass.focus(); return;
-        }
-        if (pass.value !== pass2.value) {
-          pass2.setAttribute('aria-invalid', 'true');
-          toast(t('toast.passMismatch'), 'error'); pass2.focus(); return;
-        }
+        if (titleEl) titleEl.textContent = t('auth.title.' + currentView);
+        if (subtitleEl) subtitleEl.textContent = t('auth.subtitle.' + currentView);
+      }
 
-        var original = submit.textContent;
-        submit.disabled = true;
-        submit.textContent = '…';
+      function setView(name) {
+        if (!VIEWS[name]) return;
+        currentView = name;
+        clearMsg();
+        Object.keys(VIEWS).forEach(function (k) {
+          if (VIEWS[k]) VIEWS[k].hidden = (k !== name);
+        });
+        renderViewTexts();
 
-        API.register(email.value.trim(), pass.value)
-          .then(function () {
-            toast(t('toast.registerOk'), 'success');
-            authForm.reset();
-            closeModal();
-          })
-          .catch(function (err) {
-            log('register error', err);
-            toast(t('toast.registerFail'), 'error');
-          })
-          .then(function () {
-            submit.disabled = false;
-            submit.textContent = original;
+        var first = VIEWS[name].querySelector('input');
+        if (first) { try { first.focus(); } catch (e) {} }
+      }
+
+      /* ---- Gönderim yardımcıları ---- */
+      function busy(form, on) {
+        var btn = form.querySelector('button[type="submit"]');
+        if (!btn) return;
+        if (on) {
+          btn.dataset.label = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = t('auth.working');
+        } else {
+          btn.disabled = false;
+          if (btn.dataset.label) btn.textContent = btn.dataset.label;
+        }
+      }
+
+      function markInvalid(field, messageKey) {
+        field.setAttribute('aria-invalid', 'true');
+        showMsg(t(messageKey), 'error');
+        try { field.focus(); } catch (e) {}
+      }
+      function clearInvalid(fields) {
+        fields.forEach(function (f) { if (f) f.setAttribute('aria-invalid', 'false'); });
+      }
+
+      var EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+      var PASS_MIN = 10;
+
+      /* ---- Oturum durumu ---- */
+      function applyUser(user) {
+        currentUser = user || null;
+        var signedIn = !!currentUser;
+
+        if (accountBox) accountBox.hidden = !signedIn;
+        if (authOpen) authOpen.hidden = signedIn || !available;
+        if (accountEmail && signedIn) accountEmail.textContent = currentUser.email || '';
+        if (!signedIn) closeAccountMenu();
+
+        // Geçmiş paneli sahibi değiştiği için baştan yüklenmeli.
+        if (window.__clHistoryReset) window.__clHistoryReset();
+      }
+
+      function refresh() {
+        return API.auth.me().then(function (data) {
+          if (data && typeof data.available === 'boolean') available = data.available;
+          applyUser(data && data.authenticated ? data.user : null);
+          // Kalan hak sunucudan gelir; localStorage yalnızca gösterim önbelleği.
+          if (data && data.quota) setQuotaFromServer(data.quota);
+          return data;
+        }, function () {
+          applyUser(null);
+          return null;
+        });
+      }
+
+      /* ---- Hesap menüsü ---- */
+      function openAccountMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = false;
+        accountToggle.setAttribute('aria-expanded', 'true');
+      }
+      function closeAccountMenu() {
+        if (!accountMenu) return;
+        accountMenu.hidden = true;
+        if (accountToggle) accountToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      // Menüdeki her seçim menüyü kapatır. Tek yerde: tek tek eklenen
+      // dinleyicilerin bunu unutması kolay ve açık kalan menü hataya benziyor.
+      if (accountMenu) {
+        accountMenu.addEventListener('click', function (e) {
+          if (e.target.closest('.account__item')) closeAccountMenu();
+        });
+      }
+
+      if (accountToggle) {
+        accountToggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (accountMenu.hidden) openAccountMenu(); else closeAccountMenu();
+        });
+        document.addEventListener('click', function (e) {
+          if (accountMenu && !accountMenu.hidden && !accountBox.contains(e.target)) closeAccountMenu();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') closeAccountMenu();
+        });
+      }
+
+      var logoutBtn = document.getElementById('accountLogout');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function () {
+          closeAccountMenu();
+          API.auth.logout().then(function () {
+            applyUser(null);
+            refresh();
+            toast(t('auth.toast.signedOut'), 'success');
+          }, function () {
+            toast(t('auth.err.network'), 'error');
           });
-      });
+        });
+      }
+
+      var pwBtn = document.getElementById('accountPassword');
+      if (pwBtn) {
+        pwBtn.addEventListener('click', function () {
+          closeAccountMenu();
+          setView('newpass');
+          openModal();
+        });
+      }
+
+      /* ---- Sekmeler ve görünüm bağlantıları ---- */
+      for (var b = 0; b < tabButtons.length; b++) {
+        tabButtons[b].addEventListener('click', function () {
+          setView(this.getAttribute('data-view'));
+        });
+      }
+      var viewLinks = modal ? modal.querySelectorAll('.auth__link[data-view]') : [];
+      for (var v = 0; v < viewLinks.length; v++) {
+        viewLinks[v].addEventListener('click', function () {
+          setView(this.getAttribute('data-view'));
+        });
+      }
+
+      /* ---- Giriş ---- */
+      if (VIEWS.login) {
+        VIEWS.login.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var email = document.getElementById('loginEmail');
+          var pass = document.getElementById('loginPass');
+          clearInvalid([email, pass]); clearMsg();
+
+          if (!EMAIL_RE.test(email.value.trim())) return markInvalid(email, 'toast.emailInvalid');
+          if (!pass.value) return markInvalid(pass, 'auth.err.invalid_credentials');
+
+          busy(this, true);
+          var form = this;
+          API.auth.login(email.value.trim(), pass.value).then(function (data) {
+            busy(form, false);
+            form.reset();
+            applyUser(data.user);
+            closeModal();
+            refresh();
+            toast(data.claimed > 0
+              ? t('auth.toast.signedInClaimed', { count: data.claimed })
+              : t('auth.toast.signedIn'), 'success');
+          }, function (err) {
+            busy(form, false);
+            showMsg(errText(err), 'error');
+          });
+        });
+      }
+
+      /* ---- Kayıt ---- */
+      if (VIEWS.register) {
+        VIEWS.register.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var email = document.getElementById('regEmail');
+          var pass = document.getElementById('regPass');
+          var pass2 = document.getElementById('regPass2');
+          clearInvalid([email, pass, pass2]); clearMsg();
+
+          if (!EMAIL_RE.test(email.value.trim())) return markInvalid(email, 'toast.emailInvalid');
+          if (pass.value.length < PASS_MIN) return markInvalid(pass, 'auth.err.password_too_short');
+          if (pass.value !== pass2.value) return markInvalid(pass2, 'toast.passMismatch');
+
+          busy(this, true);
+          var form = this;
+          API.auth.register(email.value.trim(), pass.value).then(function (data) {
+            busy(form, false);
+            form.reset();
+            if (data.needsConfirmation) {
+              // Onay bekleniyor: modal açık kalır, kullanıcı ne yapacağını görür.
+              showMsg(t('auth.msg.confirmSent', { email: data.email }), 'success');
+              return;
+            }
+            applyUser(data.user);
+            closeModal();
+            refresh();
+            toast(data.claimed > 0
+              ? t('auth.toast.signedUpClaimed', { count: data.claimed })
+              : t('auth.toast.signedUp'), 'success');
+          }, function (err) {
+            busy(form, false);
+            showMsg(errText(err), 'error');
+          });
+        });
+      }
+
+      /* ---- Şifre sıfırlama isteği ---- */
+      if (VIEWS.forgot) {
+        VIEWS.forgot.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var email = document.getElementById('forgotEmail');
+          clearInvalid([email]); clearMsg();
+          if (!EMAIL_RE.test(email.value.trim())) return markInvalid(email, 'toast.emailInvalid');
+
+          busy(this, true);
+          var form = this;
+          API.auth.recover(email.value.trim()).then(function () {
+            busy(form, false);
+            form.reset();
+            // Sunucu adresin kayıtlı olup olmadığını söylemez; mesaj da söylemez.
+            showMsg(t('auth.msg.resetSent'), 'success');
+          }, function (err) {
+            busy(form, false);
+            showMsg(errText(err), 'error');
+          });
+        });
+      }
+
+      /* ---- Magic link ---- */
+      var magicBtn = document.getElementById('magicLinkBtn');
+      if (magicBtn) {
+        magicBtn.addEventListener('click', function () {
+          var email = document.getElementById('loginEmail');
+          clearInvalid([email]); clearMsg();
+          if (!EMAIL_RE.test(email.value.trim())) return markInvalid(email, 'toast.emailInvalid');
+
+          magicBtn.disabled = true;
+          API.auth.magicLink(email.value.trim()).then(function () {
+            magicBtn.disabled = false;
+            showMsg(t('auth.msg.magicSent'), 'success');
+          }, function (err) {
+            magicBtn.disabled = false;
+            showMsg(errText(err), 'error');
+          });
+        });
+      }
+
+      /* ---- Yeni şifre ---- */
+      if (VIEWS.newpass) {
+        VIEWS.newpass.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var pass = document.getElementById('newPass');
+          var pass2 = document.getElementById('newPass2');
+          clearInvalid([pass, pass2]); clearMsg();
+
+          if (pass.value.length < PASS_MIN) return markInvalid(pass, 'auth.err.password_too_short');
+          if (pass.value !== pass2.value) return markInvalid(pass2, 'toast.passMismatch');
+
+          busy(this, true);
+          var form = this;
+          API.auth.setPassword(pass.value).then(function () {
+            busy(form, false);
+            form.reset();
+            closeModal();
+            toast(t('auth.toast.passwordChanged'), 'success');
+            refresh();
+          }, function (err) {
+            busy(form, false);
+            showMsg(errText(err), 'error');
+          });
+        });
+      }
+
+      /**
+       * E-posta bağlantısıyla dönüş.
+       *
+       * Supabase'in `token_hash` akışı kullanılıyor: adres çubuğunda gerçek
+       * token değil, tek kullanımlık bir kod taşınır ve oturuma sunucuda
+       * çevrilir. Kod işlendikten sonra adres çubuğu temizlenir; kullanıcı
+       * sayfayı yenilediğinde veya bağlantıyı paylaştığında tekrar kullanılmaz.
+       */
+      function handleEmailLink() {
+        var params = new URLSearchParams(window.location.search);
+        var hash = params.get('token_hash');
+        var type = params.get('type');
+        var errCode = params.get('error_code') || params.get('error');
+
+        if (!hash && !errCode) return Promise.resolve(false);
+
+        // Kod ne olursa olsun adres çubuğundan hemen silinir.
+        var clean = window.location.pathname + window.location.hash;
+        try { window.history.replaceState({}, '', clean); } catch (e) {}
+
+        if (errCode) {
+          openModal(); setView('login');
+          showMsg(t('auth.err.link_invalid'), 'error');
+          return Promise.resolve(false);
+        }
+
+        return API.auth.verify(hash, type || 'signup').then(function (data) {
+          applyUser(data.user);
+          if (data.needsNewPassword) {
+            openModal();
+            setView('newpass');
+            showMsg(t('auth.msg.setNewPassword'), 'info');
+            return true;
+          }
+          toast(data.claimed > 0
+            ? t('auth.toast.verifiedClaimed', { count: data.claimed })
+            : t('auth.toast.verified'), 'success');
+          return true;
+        }, function (err) {
+          openModal(); setView('login');
+          showMsg(errText(err), 'error');
+          return false;
+        });
+      }
+
+      function init() {
+        // Dil değiştiğinde başlıklar ve kota metni yeniden yazılır.
+        window.__clOnLanguageChange = function () {
+          renderViewTexts();
+          renderQuota();
+        };
+        setView('login');
+        // Önce e-posta bağlantısı işlenir; oturum orada açılmış olabilir.
+        handleEmailLink().then(function (handled) {
+          if (!handled) refresh();
+        });
+      }
+
+      return {
+        init: init,
+        refresh: refresh,
+        open: function (view) {
+          if (!available) { toast(t('auth.err.auth_unavailable'), 'error', 5000); return; }
+          setView(view || 'login');
+          openModal();
+        },
+        isAvailable: function () { return available; },
+        isSignedIn: function () { return !!currentUser; },
+        user: function () { return currentUser; }
+      };
+    })();
+
+    var openers = document.querySelectorAll('[data-open-modal]');
+    for (var o = 0; o < openers.length; o++) {
+      openers[o].addEventListener('click', function () { authManager.open('register'); });
     }
+    var authOpenBtn = document.getElementById('authOpen');
+    if (authOpenBtn) authOpenBtn.addEventListener('click', function () { authManager.open('login'); });
 
     /* ==========================================================
        10b. DÜZELTME YÖNTEMİ SEÇİMİ (3 Mod)
@@ -3935,7 +4602,18 @@
         if (clearBtn) clearBtn.addEventListener('click', clearAll);
       }
 
-      return { init: init, reload: function () { if (modal) load(true); } };
+      /* Oturum sahibi değiştiğinde (giriş/çıkış) liste artık başkasına ait.
+         Kimlik modülü bu kancayı çağırır; iki modül birbirini doğrudan
+         tanımasın diye bağlantı window üzerinden kuruldu. */
+      window.__clHistoryReset = function () {
+        offset = 0;
+        if (listEl) listEl.textContent = '';
+        if (moreBtn) moreBtn.hidden = true;
+        if (clearBtn) clearBtn.hidden = true;
+        if (modal && modal.el && !modal.el.hidden) load(true);
+      };
+
+      return { init: init, reload: function () { if (modal) load(true); }, open: function () { if (modal) { modal.open(); load(true); } } };
     })();
 
     /* ==========================================================
@@ -4289,6 +4967,15 @@
       modeManager.init();
       assistant.init();
       historyManager.init();
+
+      // Hesap menüsündeki geçmiş bağlantısı: iki modül de kurulduktan sonra
+      // bağlanır, aksi hâlde authManager henüz olmayan bir modüle uzanırdı.
+      var accountHistoryBtn = document.getElementById('accountHistory');
+      if (accountHistoryBtn) {
+        accountHistoryBtn.addEventListener('click', function () { historyManager.open(); });
+      }
+
+      authManager.init();
 
       var detected = detectLanguage();
       applyLanguage(detected.lang, { silent: !detected.fromUser });
