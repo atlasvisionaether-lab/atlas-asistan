@@ -30,12 +30,12 @@ on:
       test_email:
         description: Gerçek, erişilebilir test e-posta adresi
         required: true
-      token_hash:
-        description: 2. faz — onay bağlantısındaki token_hash (1. fazda boş bırakın)
+      phase1_run_id:
+        description: 2. faz — 1. fazın çalışma numarası (bu doluysa 2. faz koşar)
         required: false
         default: ''
-      phase1_run_id:
-        description: 2. faz — 1. fazın çalışma numarası (çerezler ve şifre oradan alınır)
+      token_hash:
+        description: 2. faz — onay bağlantısındaki token_hash (boşsa giriş üzerinden koşar)
         required: false
         default: ''
       ref:
@@ -62,7 +62,8 @@ jobs:
       - name: Girdileri doğrula
         run: |
           if [ -n "${{ inputs.token_hash }}" ] && [ -z "${{ inputs.phase1_run_id }}" ]; then
-            echo "2. faz için phase1_run_id zorunlu: çerezler ve şifre o çalışmadan alınıyor." >&2
+            echo "token_hash verildiyse phase1_run_id de zorunlu: 1. fazin anonim" >&2
+            echo "oturumu olmadan devir sinanamaz." >&2
             exit 1
           fi
 
@@ -70,7 +71,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils jq
 
       - name: 1. fazın durumunu indir
-        if: inputs.token_hash != ''
+        if: inputs.phase1_run_id != ''
         uses: actions/download-artifact@v4
         with:
           name: preview-state
@@ -82,7 +83,7 @@ jobs:
         id: pw
         run: |
           set -euo pipefail
-          if [ -n "${{ inputs.token_hash }}" ]; then
+          if [ -n "${{ inputs.phase1_run_id }}" ]; then
             if [ ! -f preview-password.txt ]; then
               echo "preview-password.txt yok — 1. fazın artefaktı indirilemedi." >&2
               exit 1
@@ -103,11 +104,12 @@ jobs:
           TEST_EMAIL: ${{ inputs.test_email }}
           TEST_PASSWORD: ${{ steps.pw.outputs.value }}
           TOKEN_HASH: ${{ inputs.token_hash }}
+          PHASE1_RUN_ID: ${{ inputs.phase1_run_id }}
           COOKIE_JAR: ${{ github.workspace }}/preview-cookies.txt
         run: bash cyberlionai/tools/preview-verify.sh
 
       - name: Durumu sakla (1. faz)
-        if: always() && inputs.token_hash == ''
+        if: always() && inputs.phase1_run_id == ''
         uses: actions/upload-artifact@v4
         with:
           name: preview-state

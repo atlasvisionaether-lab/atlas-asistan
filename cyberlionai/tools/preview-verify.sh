@@ -37,6 +37,12 @@ TEST_PASSWORD="${TEST_PASSWORD:?test sifresi gerekli}"
 # gecersiz kilar; deger zaten alfanumerik oldugu icin bosluklari atmak guvenli.
 BYPASS="$(printf '%s' "$BYPASS" | tr -d '[:space:]')"
 TOKEN_HASH="${TOKEN_HASH:-}"
+# Faz secimi token_hash'e degil, 1. fazin calisma numarasina bagli.
+# Kullanici onay baglantisina tarayicidan tiklarsa token tukenir ve
+# token_hash bos kalir; ama 2. faz yine de kosabilmeli, cunku login de
+# ayni devir kodunu (claimForUser) calistiriyor.
+PHASE1_RUN_ID="${PHASE1_RUN_ID:-}"
+if [ -n "$PHASE1_RUN_ID" ]; then PHASE=2; else PHASE=1; fi
 # Taranacak hedef. Varsayilan kendi alan adimiz; yerel provada degistirilir.
 TARGET="${TARGET:-cyberlionai.com}"
 COOKIE_JAR="${COOKIE_JAR:-$PWD/preview-cookies.txt}"
@@ -71,7 +77,8 @@ mask() { printf '%s' "$1" | sed -E 's/(.{2}).*(.{2})/\1***\2/'; }
 
 echo "Hedef        : $BASE"
 echo "Test adresi  : $(printf '%s' "$TEST_EMAIL" | sed -E 's/(.).*(@.*)/\1***\2/')"
-echo "Faz          : $([ -z "$TOKEN_HASH" ] && echo '1 (kayit)' || echo '2 (onay ve sonrasi)')"
+echo "Faz          : $([ "$PHASE" = "1" ] && echo '1 (kayit)' \
+  || { [ -n "$TOKEN_HASH" ] && echo '2 (onay baglantisi ile)' || echo '2 (giris ile)'; })"
 # Degerin kendisi degil, yalnizca uzunlugu: yanlis/eksik secret'i ayirt etmeye yeter.
 echo "Bypass       : ${#BYPASS} karakter (Vercel'in urettigi deger 32'dir)"
 
@@ -107,7 +114,7 @@ check "$(jq -r '.authenticated' "$BODY")" "false" "başlangıçta anonim"
 # 1. fazda sunucu yeni bir anonim oturum verir. 2. fazda oturum kavanozdan
 # geldiği için sunucu yeniden vermez — bu doğru davranış, o yüzden orada
 # kavanozun kendisine bakılır. Fark gözetilmezse 2. faz boş yere kırmızı olur.
-if [ -z "$TOKEN_HASH" ]; then
+if [ "$PHASE" = "1" ]; then
   grep -qi 'cl_sid=' "$HDR" && pass "anonim oturum çerezi verildi" || fail "cl_sid yok"
 else
   grep -qi 'cl_sid' "$COOKIE_JAR" 2>/dev/null \
@@ -115,7 +122,7 @@ else
     || fail "çerez kavanozunda cl_sid yok — devir test edilemez"
 fi
 
-if [ -z "$TOKEN_HASH" ]; then
+if [ "$PHASE" = "1" ]; then
   ############################################################################
   head1 "1. FAZ — anonim geçmiş oluştur"
   ############################################################################
@@ -157,10 +164,19 @@ if [ -z "$TOKEN_HASH" ]; then
 fi
 
 ################################################################################
-head1 "2. FAZ — onay bağlantısı"
+if [ -n "$TOKEN_HASH" ]; then
+  head1 "2. FAZ — onay bağlantısı"
+  api POST /api/auth/verify "{\"token_hash\":\"$TOKEN_HASH\",\"type\":\"signup\"}"
+  check "$STATUS" "200" "onay bağlantısı doğrulandı"
+else
+  # Onay tarayicidan yapildiysa token tukenmistir. Giris de ayni devir kodunu
+  # calistirdigi icin devir yine ucdan uca sinaniyor; yalnizca verify ucunun
+  # kendisi bu kosuda kapsam disi kaliyor.
+  head1 "2. FAZ — giriş (onay tarayıcıdan yapıldı)"
+  api POST /api/auth/login "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}"
+  check "$STATUS" "200" "giriş yapıldı"
+fi
 ################################################################################
-api POST /api/auth/verify "{\"token_hash\":\"$TOKEN_HASH\",\"type\":\"signup\"}"
-check "$STATUS" "200" "onay bağlantısı doğrulandı"
 if [ "$STATUS" != "200" ]; then echo "  gövde: $(cat "$BODY")"; exit 1; fi
 CLAIMED=$(jq -r '.claimed' "$BODY")
 check "$CLAIMED" "2" "anonim geçmiş hesaba devredildi"
