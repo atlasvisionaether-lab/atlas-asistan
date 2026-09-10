@@ -32,14 +32,24 @@ const FEODO = JSON.stringify([
   null
 ]);
 
+/* Zaman kovaları sınanabilsin diye damgalar koşma anına göre üretiliyor;
+   sabit tarih yazsak fikstür birkaç gün sonra kendiliğinden bayatlar ve
+   sınama sebepsiz kırmızıya döner. */
+function damga(msOnce) {
+  const d = new Date(Date.now() - msOnce);
+  return d.toISOString().slice(0, 10) + ' ' + d.toISOString().slice(11, 19) + ' UTC';
+}
+
 const URLHAUS = JSON.stringify({
-  '3901218': [{ dateadded: '2026-09-10 21:45:25 UTC', url: 'http://61.54.41.118:40394/i',
+  '3901218': [{ dateadded: damga(10 * 60e3), url: 'http://61.54.41.118:40394/i',
                 url_status: 'online', threat: 'malware_download', tags: ['elf', 'Mozi'],
                 urlhaus_link: 'https://urlhaus.abuse.ch/url/3915021/', reporter: 'geenensp' }],
-  '3901219': [{ dateadded: '2026-09-10 21:45:26 UTC', url: 'http://example.invalid/x',
+  '3901219': [{ dateadded: damga(5 * 3600e3), url: 'http://example.invalid/x',
                 url_status: 'offline', threat: 'malware_download' }],
-  '3901220': [{ dateadded: '2026-09-10 21:45:27 UTC', url: 'http://example.invalid/y',
-                url_status: 'online' }]
+  '3901220': [{ dateadded: damga(3 * 86400e3), url: 'http://example.invalid/y',
+                url_status: 'online' }],
+  '3901221': [{ dateadded: 'bozuk tarih', url: 'http://example.invalid/z',
+                url_status: 'offline', threat: 'malware_download' }]
 });
 
 const TOREXIT = '171.25.193.25\n80.67.167.81\n\n# yorum\n198.98.51.189\n';
@@ -59,12 +69,18 @@ ok(JSON.stringify(f).indexOf('162.243') === -1, 'IP adresi çıktıya SIZMIYOR')
 
 head('urlhaus — ülke yok, konum uydurulmuyor');
 const u = feeds.findSource('urlhaus').parse(URLHAUS);
-ok(u.total === 3, 'sayısal anahtarlı nesne kökü çözüldü (gelen: ' + u.total + ')');
+ok(u.total === 4, 'sayısal anahtarlı nesne kökü çözüldü (gelen: ' + u.total + ')');
 ok(u.online === 2, 'online sayısı 2');
-ok(u.threats[0].name === 'malware_download' && u.threats[0].count === 2, 'tehdit türü sayıldı');
+ok(u.threats[0].name === 'malware_download' && u.threats[0].count === 3, 'tehdit türü sayıldı');
 ok(u.threats.some(function (t) { return t.name === 'bilinmiyor'; }), 'threat alanı yoksa "bilinmiyor"');
 ok(JSON.stringify(u).indexOf('61.54.41.118') === -1, 'zararlı URL çıktıya SIZMIYOR');
 ok(u.countries === undefined, 'ülke alanı üretilmiyor');
+
+head('urlhaus zaman kovaları — 1s/24s/7g filtresinin gerçek dayanağı');
+ok(u.windows.h1 === 1, '1 saat kovası: yalnızca 10 dk önceki (gelen: ' + u.windows.h1 + ')');
+ok(u.windows.h24 === 2, '24 saat kovası: 10 dk + 5 saat (gelen: ' + u.windows.h24 + ')');
+ok(u.windows.d7 === 3, '7 gün kovası: üçü de (gelen: ' + u.windows.d7 + ')');
+ok(u.windows.d7 < u.total, 'ayrıştırılamayan tarih hiçbir kovaya konmadı — uydurulmuş zamana yerleştirilmedi');
 
 head('torexit — düz metin');
 const t = feeds.findSource('torexit').parse(TOREXIT);
