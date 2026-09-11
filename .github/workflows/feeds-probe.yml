@@ -28,3 +28,7 @@ jobs:
 
       - name: Beslemeleri ölç
         run: bash cyberlionai/tools/feeds-probe.sh
+
+      - name: Coğrafi kaynakları ölç
+        if: always()
+        run: bash cyberlionai/tools/geo-probe.sh
