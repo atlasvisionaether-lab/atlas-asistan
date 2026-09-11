@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Set-Cookie", "value": "zayif_sinama=1; Path=/" },
+        { "key": "X-Powered-By", "value": "TestFixture/0.1" }
+      ]
+    }
+  ]
+}
