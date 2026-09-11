@@ -18,6 +18,7 @@
 
 const store = require('./_lib/store.js');
 const feeds = require('./_lib/feeds.js');
+const geo = require('./_lib/geo.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
 
 /* Uç herkese açık ve her istek Redis'e dokunuyor; ayrıca bayat önbellekte
@@ -94,19 +95,30 @@ module.exports = async function handler(req, res) {
      gerekmez ve bir beslemenin düşmesi diğerlerini götürmez. */
   const results = await Promise.all(feeds.SOURCES.map(loadCached));
 
-  /* Harita işaretleri yalnızca ülke taşıyan kaynaklardan üretilir. Ülkesi
-     olmayan beslemeye konum ATFEDİLMEZ — uydurulmuş bir nokta, boş bir
-     haritadan daha yanıltıcıdır. */
+  /* Harita işaretleri ülke taşıyan kaynaklardan üretilir. Ülke ya beslemenin
+     kendi alanından (`native`) ya da IP→ülke tablosundan (`resolved`) gelir;
+     hangisi olduğu her kaynakta beyan edilir. Çözülemeyen kayda konum
+     ATFEDİLMEZ — uydurulmuş bir nokta, boş bir haritadan daha yanıltıcıdır;
+     onun yerine "konumu bilinmeyen" olarak ayrıca sayılır. */
   const countries = new Map();
+  const threatTypes = new Map();
+  let unresolved = 0;
+
   for (const r of results) {
-    if (!r.ok || !r.geo || !r.data || !Array.isArray(r.data.countries)) continue;
+    if (!r.ok || !r.data) continue;
+    if (typeof r.data.unresolved === 'number') unresolved += r.data.unresolved;
+    (r.data.threats || []).forEach(function (t) {
+      threatTypes.set(t.name, (threatTypes.get(t.name) || 0) + t.count);
+    });
+    if (!r.geo || !Array.isArray(r.data.countries)) continue;
+
     for (const c of r.data.countries) {
       let entry = countries.get(c.country);
       if (!entry) { entry = { country: c.country, total: 0, sources: [] }; countries.set(c.country, entry); }
       entry.total += c.count;
       entry.sources.push({
-        id: r.id, label: r.label,
-        count: c.count, online: c.online, malware: c.malware
+        id: r.id, label: r.label, geoSource: r.geoSource,
+        count: c.count, online: c.online, malware: c.malware, threats: c.threats
       });
     }
   }
@@ -114,11 +126,35 @@ module.exports = async function handler(req, res) {
   const markers = Array.from(countries.values())
     .sort(function (a, b) { return b.total - a.total; });
 
+  /* Isı haritası için normalleştirilmiş yoğunluk. Doğrusal ölçek en yoğun bir
+     iki ülkeyi kırmızı, kalan yüzlercesini ayırt edilemez kılardı; bu yüzden
+     logaritmik. Değer 0..1 aralığında ve arayüzde renge çevriliyor. */
+  const enYogun = markers.length ? markers[0].total : 0;
+  const lnMax = Math.log(enYogun + 1) || 1;
+  markers.forEach(function (m) { m.intensity = Math.round((Math.log(m.total + 1) / lnMax) * 1000) / 1000; });
+
   return res.status(200).json({
     generatedAt: new Date().toISOString(),
 
     /* Haritaya nokta koyulabilen katman. */
     markers: markers,
+
+    /* En yoğun on ülke — arayüzdeki sıralama listesi bunu kullanır. */
+    topCountries: markers.slice(0, 10).map(function (m) {
+      return { country: m.country, total: m.total, intensity: m.intensity };
+    }),
+
+    /* Tehdit türü filtresi için birleşik dağılım. */
+    threatTypes: Array.from(threatTypes.entries())
+      .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 10)
+      .map(function (p) { return { name: p[0], count: p[1] }; }),
+
+    /* Konumu çözülemeyen kayıt sayısı. Haritada görünmeyen kayıt da kayıttır
+       ve saklanmaz. */
+    unresolved: unresolved,
+
+    /* IP→ülke tablosunun durumu; arayüz kaynağını dürüstçe gösterebilsin. */
+    geoTable: geo.tableInfo(),
 
     /* Kaynak durumu — arayüz hangi beslemenin düştüğünü DÜRÜSTÇE göstersin
        diye başarısızlar da listede kalır. */
@@ -129,7 +165,15 @@ module.exports = async function handler(req, res) {
         fetchedAt: r.fetchedAt,
         error: r.ok ? undefined : r.error,
         /* Ülkesiz kaynakların özeti: haritada nokta değil, sayaç olarak sunulur. */
-        summary: r.ok && !r.geo ? r.data : undefined
+        /* Özet her kaynak için veriliyor; artık dördü de coğrafi.
+           Ülke listesi `markers` içinde birleştirildiği için burada
+           tekrarlanmıyor — yanıt gereksiz büyümesin. */
+        summary: r.ok && r.data ? {
+          total: r.data.total, online: r.data.online,
+          windows: r.data.windows, threats: r.data.threats,
+          unresolved: r.data.unresolved,
+          countries: Array.isArray(r.data.countries) ? r.data.countries.length : 0
+        } : undefined
       };
     }),
 

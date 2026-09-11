@@ -23,6 +23,8 @@
  * yeniden yayını yasaklıyor.
  */
 
+const geo = require('./geo.js');
+
 const FETCH_TIMEOUT_MS = 5000;
 
 /* Bir beslemeden okunacak azami gövde. urlhaus ölçümde 6.6 MB geldi; sınır
@@ -99,6 +101,64 @@ async function fetchBody(url) {
   return Buffer.concat(chunks).toString('utf8');
 }
 
+/**
+ * Büyük bir beslemeyi BELLEĞE ALMADAN tarar ve ülke kodlarını sayar.
+ *
+ * Neden gerekiyor: PhishTank'in toplu indirmesi ölçümde 41.6 MB geldi. Onu
+ * JSON.parse'a vermek, sunucusuz bir fonksiyonda yüzlerce MB'lık bir nesne
+ * demek. Bize gereken tek şey ülke sayıları olduğu için gövde parça parça
+ * okunup desen sayılıyor: bellek kullanımı gövde boyutundan bağımsız.
+ *
+ * Parçalar arasında bölünen eşleşmeleri kaçırmamak için parçanın sonundan
+ * küçük bir kuyruk bir sonrakine taşınıyor.
+ */
+async function fetchCountingCountries(url, limitBytes) {
+  const controller = new AbortController();
+  const timer = setTimeout(function () { controller.abort(); }, FETCH_TIMEOUT_MS * 4);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      signal: controller.signal, redirect: 'follow',
+      headers: { 'User-Agent': UA, 'Accept': '*/*' }
+    });
+  } catch (err) { clearTimeout(timer); throw new Error('feed_unreachable'); }
+  if (!response.ok) { clearTimeout(timer); throw new Error('feed_status_' + response.status); }
+
+  const CC = /"country"\s*:\s*"([A-Za-z]{2})"/g;
+  const sayac = new Map();
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf8');
+  let kuyruk = '';
+  let toplamBayt = 0;
+  let toplamEslesme = 0;
+
+  try {
+    for (;;) {
+      const adim = await reader.read();
+      if (adim.done) break;
+      toplamBayt += adim.value.length;
+      if (toplamBayt > limitBytes) { reader.cancel().catch(function () {}); throw new Error('feed_too_large'); }
+
+      const metin = kuyruk + decoder.decode(adim.value, { stream: true });
+      CC.lastIndex = 0;
+      let m;
+      let sonBitis = 0;
+      while ((m = CC.exec(metin)) !== null) {
+        const cc = m[1].toUpperCase();
+        if (ISO2_RE.test(cc)) { sayac.set(cc, (sayac.get(cc) || 0) + 1); toplamEslesme++; }
+        sonBitis = CC.lastIndex;
+      }
+      // Parcalar arasinda bolunmus olabilecek eslesme icin kuyruk birak.
+      kuyruk = metin.slice(Math.max(sonBitis, metin.length - 64));
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+
+  return { sayac: sayac, toplam: toplamEslesme, bayt: toplamBayt };
+}
+
 /* ------------------------------------------------------------------
    Ayrıştırıcılar — her biri ölçülmüş biçime birebir yazıldı
    ------------------------------------------------------------------ */
@@ -132,22 +192,9 @@ function parseFeodo(text) {
     }
   }
 
-  const countries = Array.from(byCountry.values())
-    .map(function (e) {
-      return {
-        country: e.country,
-        count: e.count,
-        online: e.online,
-        /* En sık üç aile yeter; kuyruk hem gürültü hem gereksiz yük. */
-        malware: Array.from(e.malware.entries())
-          .sort(function (a, b) { return b[1] - a[1]; })
-          .slice(0, 3)
-          .map(function (p) { return { name: p[0], count: p[1] }; })
-      };
-    })
-    .sort(function (a, b) { return b.count - a.count; });
-
-  return { total: rows.length, skipped: skipped, countries: countries };
+  /* En sık üç zararlı yazılım ailesi yeter; kuyruk hem gürültü hem gereksiz yük. */
+  return { total: rows.length, skipped: skipped, unresolved: skipped,
+           countries: ulkeListesi(byCountry) };
 }
 
 /**
@@ -163,6 +210,12 @@ function parseUrlhaus(text) {
   if (!root || typeof root !== 'object' || Array.isArray(root)) throw new Error('feed_shape');
 
   const byThreat = new Map();
+  /* Ulke kirilimini IP->ulke cozumu veriyor. urlhaus'un kendi semasinda ulke
+     YOK (olculdu); URL'deki ciplak IP cozuluyor. Alan adi tasiyan kayitlar
+     cozulemez ve "konumu bilinmeyen" olarak AYRICA sayilir — haritada
+     gorunmeyen kayit da kayittir. */
+  const byCountry = new Map();
+  let cozulemeyen = 0;
   let total = 0;
   let online = 0;
 
@@ -183,6 +236,18 @@ function parseUrlhaus(text) {
     const threat = typeof row.threat === 'string' && row.threat ? row.threat : 'bilinmiyor';
     byThreat.set(threat, (byThreat.get(threat) || 0) + 1);
 
+    const ip = geo.ipFromUrl(row.url);
+    const cc = ip ? geo.countryOfIp(ip) : null;
+    if (cc) {
+      let e = byCountry.get(cc);
+      if (!e) { e = { country: cc, count: 0, online: 0, threats: new Map() }; byCountry.set(cc, e); }
+      e.count++;
+      if (row.url_status === 'online') e.online++;
+      e.threats.set(threat, (e.threats.get(threat) || 0) + 1);
+    } else {
+      cozulemeyen++;
+    }
+
     const added = parseFeedDate(row.dateadded);
     if (added !== null) {
       const age = now - added;
@@ -198,11 +263,34 @@ function parseUrlhaus(text) {
     total: total,
     online: online,
     windows: buckets,
+    unresolved: cozulemeyen,
+    countries: ulkeListesi(byCountry),
     threats: Array.from(byThreat.entries())
       .sort(function (a, b) { return b[1] - a[1]; })
       .slice(0, 6)
       .map(function (p) { return { name: p[0], count: p[1] }; })
   };
+}
+
+/** Ülke haritasını, en yoğundan aza sıralı düz listeye çevirir. */
+function ulkeListesi(m) {
+  return Array.from(m.values())
+    .map(function (e) {
+      const o = { country: e.country, count: e.count };
+      if (e.online !== undefined) o.online = e.online;
+      if (e.malware) {
+        o.malware = Array.from(e.malware.entries())
+          .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 3)
+          .map(function (p) { return { name: p[0], count: p[1] }; });
+      }
+      if (e.threats) {
+        o.threats = Array.from(e.threats.entries())
+          .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 3)
+          .map(function (p) { return { name: p[0], count: p[1] }; });
+      }
+      return o;
+    })
+    .sort(function (a, b) { return b.count - a.count; });
 }
 
 /**
@@ -212,12 +300,23 @@ function parseUrlhaus(text) {
  * sunuluyor; IP listesi dışarı verilmiyor.
  */
 function parseTorExit(text) {
+  const byCountry = new Map();
   let count = 0;
+  let cozulemeyen = 0;
   for (const line of text.split('\n')) {
     const v = line.trim();
-    if (v && v.charAt(0) !== '#') count++;
+    if (!v || v.charAt(0) === '#') continue;
+    count++;
+    const cc = geo.countryOfIp(v);
+    if (cc) {
+      let e = byCountry.get(cc);
+      if (!e) { e = { country: cc, count: 0 }; byCountry.set(cc, e); }
+      e.count++;
+    } else {
+      cozulemeyen++;
+    }
   }
-  return { total: count };
+  return { total: count, unresolved: cozulemeyen, countries: ulkeListesi(byCountry) };
 }
 
 /* ------------------------------------------------------------------
@@ -239,6 +338,7 @@ const SOURCES = [
     attribution: 'abuse.ch — Feodo Tracker',
     url: 'https://feodotracker.abuse.ch/downloads/ipblocklist.json',
     geo: true,
+    geoSource: 'native',
     ttl: 5 * 60,
     parse: parseFeodo
   },
@@ -247,7 +347,10 @@ const SOURCES = [
     label: 'URLhaus',
     attribution: 'abuse.ch — URLhaus',
     url: 'https://urlhaus.abuse.ch/downloads/json_recent/',
-    geo: false,
+    /* Beslemenin kendi semasinda ulke YOK; ulke IP->ulke tablosundan
+       cozuluyor. Alan adi tasiyan kayitlar cozulemiyor ve ayrica sayiliyor. */
+    geo: true,
+    geoSource: 'resolved',
     ttl: 30 * 60,
     parse: parseUrlhaus
   },
@@ -256,9 +359,28 @@ const SOURCES = [
     label: 'Tor çıkış düğümleri',
     attribution: 'Tor Project',
     url: 'https://check.torproject.org/torbulkexitlist',
-    geo: false,
+    geo: true,
+    geoSource: 'resolved',
     ttl: 30 * 60,
     parse: parseTorExit
+  },
+  {
+    id: 'phishtank',
+    label: 'PhishTank',
+    attribution: 'PhishTank / OpenDNS',
+    /* HTTPS zorunlu: duz HTTP uzerinden cekilen bir besleme yolda
+       degistirilebilir ve biz onu haritada yayinliyoruz. Olcum http ile
+       yapilmisti; https calismazsa kaynak ok:false doner ve harita diger
+       uclerle calismaya devam eder — sessizce HTTP'ye dusmez. */
+    url: 'https://data.phishtank.com/data/online-valid.json',
+    geo: true,
+    geoSource: 'native',
+    /* Olcumde 41.6 MB geldi ve kayitlarinda `details[].country` var. Bu boyut
+       JSON.parse'a verilemez; akis halinde sayiliyor (bkz. stream:true). */
+    stream: true,
+    maxBytes: 80 * 1024 * 1024,
+    ttl: 6 * 60 * 60,
+    parse: null
   }
 ];
 
@@ -271,15 +393,29 @@ const SOURCES = [
  */
 async function loadSource(source) {
   try {
-    const text = await fetchBody(source.url);
+    let data;
+    if (source.stream) {
+      const r = await fetchCountingCountries(source.url, source.maxBytes || MAX_BYTES);
+      data = {
+        total: r.toplam,
+        bytes: r.bayt,
+        unresolved: 0,
+        countries: Array.from(r.sayac.entries())
+          .map(function (p) { return { country: p[0], count: p[1] }; })
+          .sort(function (a, b) { return b.count - a.count; })
+      };
+    } else {
+      data = source.parse(await fetchBody(source.url));
+    }
     return {
       id: source.id,
       label: source.label,
       attribution: source.attribution,
       geo: source.geo,
+      geoSource: source.geoSource || null,
       ok: true,
       fetchedAt: new Date().toISOString(),
-      data: source.parse(text)
+      data: data
     };
   } catch (err) {
     const code = err && err.message ? String(err.message) : 'feed_error';
@@ -288,6 +424,7 @@ async function loadSource(source) {
       label: source.label,
       attribution: source.attribution,
       geo: source.geo,
+      geoSource: source.geoSource || null,
       ok: false,
       fetchedAt: new Date().toISOString(),
       error: /^feed_/.test(code) ? code : 'feed_error'
@@ -299,4 +436,4 @@ function findSource(id) {
   return SOURCES.find(function (s) { return s.id === id; }) || null;
 }
 
-module.exports = { SOURCES, loadSource, findSource };
+module.exports = { SOURCES, loadSource, findSource, ulkeListesi };
