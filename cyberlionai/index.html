@@ -816,17 +816,10 @@
   .footer__list a, .footer__list span { color: var(--text-gray); font-size: 0.9rem; transition: color var(--transition-speed) var(--transition-ease); }
   .footer__list a:hover { color: var(--gold-primary); }
 
-  .socials { display: flex; gap: 11px; margin-top: 20px; }
-  .socials a {
-    width: 40px; height: 40px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    border: 1px solid var(--hairline); color: var(--text-gray);
-    transition: color var(--transition-speed) var(--transition-ease),
-                border-color var(--transition-speed) var(--transition-ease),
-                transform var(--transition-speed) var(--transition-ease);
-  }
-  .socials a:hover { color: var(--gold-primary); border-color: var(--gold-primary); transform: translateY(-3px); }
-
+  .footer__contact { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; }
+  .footer__contact i { color: var(--gold-primary); }
+  .footer__contact a { color: var(--text-white); text-decoration: none; border-bottom: 1px solid var(--glass-border); }
+  .footer__contact a:hover { color: var(--gold-light); border-bottom-color: var(--gold-primary); }
   .footer__bottom {
     margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--hairline);
     display: flex; flex-direction: column; gap: 12px;
@@ -1997,12 +1990,14 @@
             <span class="logo__text">CYBER LION<small>AI SECURITY</small></span>
           </a>
           <p data-i18n="footer.about">Yapay zeka destekli sürekli güvenlik taraması. Zafiyetleri saldırganlardan önce bulun, önceliklendirin ve kapatın.</p>
-          <div class="socials">
-            <a href="https://www.linkedin.com/company/cyberlionai" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
-            <a href="https://x.com/cyberlionai" aria-label="X" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a>
-            <a href="https://github.com/cyberlionai" aria-label="GitHub" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github" aria-hidden="true"></i></a>
-            <a href="https://www.youtube.com/@cyberlionai" aria-label="YouTube" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
-          </div>
+          <!-- Sosyal medya bağlantısı BİLEREK yok. Buradaki dört bağlantı
+               marka adından kalıp üretilerek yazılmıştı; hiçbiri doğrulanmamıştı
+               ve en az biri başkasına ait bir hesaba gidiyordu. Doğrulanmamış
+               bağlantı koymaktansa hiç koymamak doğru. -->
+          <p class="footer__contact">
+            <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+            <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a>
+          </p>
         </div>
 
         <div>

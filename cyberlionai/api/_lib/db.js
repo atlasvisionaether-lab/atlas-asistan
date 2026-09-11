@@ -173,36 +173,8 @@ async function claimAnonymousScans(sessionId, userId) {
   return rows ? rows.length : 0;
 }
 
-/* ------------------------------------------------------------------
-   Genel amaçlı PostgREST yardımcıları.
-
-   Yalnızca sunucu tarafındaki diğer modüller (örn. telegram-store.js) için.
-   Tablo adı ve sorgu dizesi ÇAĞIRANDAN gelir; bu yüzden bu fonksiyonlar
-   istemciden gelen bir değerle ASLA çağrılmamalıdır.
-   ------------------------------------------------------------------ */
-
-function rawSelect(table, query) {
-  return request(table + '?' + query);
-}
-
-function rawInsert(table, rows) {
-  return request(table, { method: 'POST', body: rows, headers: { Prefer: 'return=minimal' } });
-}
-
-function rawPatch(table, query, patch) {
-  return request(table + '?' + query, { method: 'PATCH', body: patch, headers: { Prefer: 'return=minimal' } });
-}
-
-function rawDelete(table, query) {
-  return request(table + '?' + query, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
-}
-
-function rawRpc(fn, args) {
-  return request('rpc/' + fn, { method: 'POST', body: args });
-}
-
 module.exports = {
-  rawSelect, rawInsert, rawPatch, rawDelete, rawRpc,
+
   isConfigured, saveScan, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans
 };
