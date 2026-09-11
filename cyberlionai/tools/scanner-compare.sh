@@ -36,6 +36,36 @@ printf 'Bizim : %s\n' "$BASE"
 printf 'Zaman : %s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
 # ---------------------------------------------------------------------------
+head1 "0. Hedef gerçekten taranabilir mi"
+# Hedef bir kimlik duvarinin arkasindaysa Observatory ve SSL Labs asil sayfayi
+# degil giris ekranini olcer; uretilecek mutabakat orani anlamsiz olur. Bu
+# yuzden kontrol ZINCIRIN BASINDA — boylece uretimde tarama kaydi da olusmaz
+# (o kayit 1. adimda olusuyor). Algilama tools/auth-wall.sh icinde, sinamasi
+# tools/wall-test.sh icinde.
+. "$(dirname "$0")/auth-wall.sh"
+
+DURUM="$(curl -sS -m 30 -A "$UA" -o "$WORK/ham.gov" -D "$WORK/ham.bas" \
+  -w '%{http_code} %{redirect_url}' "https://$HOST/" 2>/dev/null)" || DURUM="000 "
+HKOD="${DURUM%% *}"
+HYON="${DURUM#* }"
+note "anonim istek: HTTP $HKOD${HYON:+  → $HYON}"
+
+if DUVAR="$(kimlik_duvari "$HKOD" "$HYON" "$WORK/ham.bas" "$HOST")"; then
+  printf '   \033[31mHEDEF SSO/GİRİŞ KORUMALI — TEST GEÇERSİZ\033[0m\n'
+  note "belirti: $DUVAR"
+  note ""
+  note "Observatory ve SSL Labs bu adrese anonim erişiyor; asıl sayfayı değil"
+  note "giriş ekranını ölçerler. Üretilecek her mutabakat oranı anlamsız olurdu,"
+  note "bu yüzden tablo üretilmiyor ve tarama yapılmıyor."
+  note ""
+  note "Yapılacak: hedefi dış araçlara açık bir adrese taşıyın (örn. özel alan"
+  note "adı), sonra tekrar koşun. Koruma bypass'ı çözüm değil — o anahtar bizim"
+  note "API'mize gider, hedefi getiren üçüncü taraflara değil."
+  exit 2
+fi
+note "kimlik duvarı belirtisi yok; karşılaştırmaya geçiliyor"
+
+# ---------------------------------------------------------------------------
 head1 "1. Bizim taramamız"
 # Cerez kavanozu: tarama kaydini sonunda AYNI oturumla silebilmek icin.
 # prod-verify.sh ile ayni kural — uretimde test kaydi birakilmaz.
