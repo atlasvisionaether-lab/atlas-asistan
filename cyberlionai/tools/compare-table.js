@@ -43,10 +43,30 @@ function oku(yol) {
   try { return JSON.parse(fs.readFileSync(yol, 'utf8')); } catch (e) { return null; }
 }
 
+/**
+ * Observatory test listesini ada gore aranabilir bir haritaya cevirir.
+ *
+ * v2 API'nin test ucunun dizi mi nesne mi dondurdugu ONCEDEN BILINMIYOR;
+ * ikisini de kabul ediyoruz. Dizi gelirse .name / .test_name alanindan
+ * anahtar uretilir. Tanimadigimiz bir bicim gelirse harita bos kalir ve
+ * satirlar "—" olur — sessiz yanlis eslemeden iyidir.
+ */
+function obsHarita(obs) {
+  const ham = (obs && (obs.tests || obs.details)) || null;
+  if (!ham) return {};
+  if (!Array.isArray(ham)) return ham;
+  const harita = {};
+  ham.forEach(function (t) {
+    const ad = t && (t.name || t.test_name || t.test || t.id);
+    if (ad) harita[ad] = t;
+  });
+  return harita;
+}
+
 /** Observatory testinin sonucunu pass/fail/null'a indirger. */
 function obsSonuc(obs, ad) {
   if (!obs || !ad) return null;
-  const tests = obs.tests || obs.details || {};
+  const tests = obsHarita(obs);
   const t = tests[ad];
   if (!t) return null;
   if (typeof t.pass === 'boolean') return t.pass ? 'pass' : 'fail';

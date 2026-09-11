@@ -62,16 +62,30 @@ head1 "2. Mozilla Observatory"
 OKOD=$(curl -sS -m 90 -A "$UA" -X POST -o "$WORK/obs.json" -w '%{http_code}' \
   "https://observatory-api.mdn.mozilla.net/api/v2/scan?host=$HOST" 2>/dev/null) || OKOD=000
 
-# POST sonucu testleri icermiyorsa ayri sonuc ucunu dene; hangi yolun ise
-# yaradigi cikti ile gorunsun.
-if ! jq -e '.tests // .details' "$WORK/obs.json" >/dev/null 2>&1; then
-  note "POST yanitinda test listesi yok; sonuc ucu deneniyor"
-  OKOD2=$(curl -sSL -m 60 -A "$UA" -o "$WORK/obs2.json" -w '%{http_code}' \
-    "https://observatory-api.mdn.mozilla.net/api/v2/results?host=$HOST" 2>/dev/null) || OKOD2=000
-  note "sonuc ucu: HTTP $OKOD2  $(wc -c < "$WORK/obs2.json" 2>/dev/null || echo 0) bayt"
-  if jq -e '.tests // .details' "$WORK/obs2.json" >/dev/null 2>&1; then
-    mv "$WORK/obs2.json" "$WORK/obs.json"; OKOD=$OKOD2
-  fi
+# OLCULDU (kosu 34559696176): POST yaniti yalnizca OZET donuyor —
+# grade/score/id/tests_passed var, per-test listesi YOK. Bu yuzden tablodaki
+# yedi Observatory satiri "—" cikiyordu. Ozet icindeki .id ile ayri bir test
+# ucu yoklanir; hangi adresin ise yaradigi ciktida gorunur ki eslemenin
+# sessizce bozulmasi mumkun olmasin.
+OBS_ID=$(jq -r '.id // empty' "$WORK/obs.json" 2>/dev/null)
+if ! jq -e '(.tests // .details) | objects | length > 0' "$WORK/obs.json" >/dev/null 2>&1; then
+  note "POST yaniti yalnizca ozet ( id=${OBS_ID:--} ); test listesi ayrica isteniyor"
+  for uc in \
+    "https://observatory-api.mdn.mozilla.net/api/v2/tests?scan=$OBS_ID" \
+    "https://observatory-api.mdn.mozilla.net/api/v2/scan/$OBS_ID/tests" \
+    "https://observatory-api.mdn.mozilla.net/api/v2/results?host=$HOST"
+  do
+    [ -z "$OBS_ID" ] && case "$uc" in *scan=*|*/scan/*) continue ;; esac
+    TKOD=$(curl -sSL -m 60 -A "$UA" -o "$WORK/obs_t.json" -w '%{http_code}' "$uc" 2>/dev/null) || TKOD=000
+    note "test ucu: HTTP $TKOD  $(wc -c < "$WORK/obs_t.json" 2>/dev/null || echo 0) bayt  ${uc#https://observatory-api.mdn.mozilla.net}"
+    if [ "$TKOD" = "200" ] && jq -e 'objects | length > 0' "$WORK/obs_t.json" >/dev/null 2>&1; then
+      # Test listesi ozetin yanina .tests olarak eklenir; tablo scripti
+      # .tests bekliyor, ozetteki grade/score da korunur.
+      jq -s '.[0] + {tests: (.[1].tests // .[1])}' "$WORK/obs.json" "$WORK/obs_t.json" \
+        > "$WORK/obs_m.json" 2>/dev/null && mv "$WORK/obs_m.json" "$WORK/obs.json"
+      break
+    fi
+  done
 fi
 note "HTTP $OKOD  $(wc -c < "$WORK/obs.json") bayt"
 if [ "$OKOD" = "200" ] && jq -e . "$WORK/obs.json" >/dev/null 2>&1; then
