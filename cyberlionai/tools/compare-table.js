@@ -63,15 +63,30 @@ function obsHarita(obs) {
   return harita;
 }
 
-/** Observatory testinin sonucunu pass/fail/null'a indirger. */
+/**
+ * Observatory testinin sonucunu pass/fail/skipped/null'a indirger.
+ *
+ * OLCULDU (kosu 34560332453): Observatory'de `pass` UC DEGERLI.
+ *
+ *   cookies: pass=null result=cookies-not-found m=0
+ *   subresource-integrity: pass=null result=sri-not-implemented-but-...
+ *
+ * `pass: null`, "kaldi" demek DEGIL — Observatory'nin kendi ozeti ayni
+ * taramada tests_failed: 0 diyor ve puan etkisi sifir (m=0). Yani test
+ * uygulanamadi. Onceki surum result metnini duzenli ifadeyle okuyup bunu
+ * "fail" sayiyordu ve cerez satirini yanlis kirmiziya boyuyordu.
+ *
+ * Kural: yalnizca mantiksal `pass` baglayicidir. null ise "olculemedi" —
+ * bizim `skipped` durumumuzun tam karsiligi, mutabakata girmez.
+ */
 function obsSonuc(obs, ad) {
   if (!obs || !ad) return null;
   const tests = obsHarita(obs);
   const t = tests[ad];
   if (!t) return null;
-  if (typeof t.pass === 'boolean') return t.pass ? 'pass' : 'fail';
-  if (typeof t.result === 'string') return /pass|implemented|enabled/i.test(t.result) ? 'pass' : 'fail';
-  return null;
+  if (t.pass === true) return 'pass';
+  if (t.pass === false) return 'fail';
+  return 'skipped';
 }
 
 /** SSL Labs yanıtından üç TLS gerçeğini çıkarır. */
@@ -133,7 +148,8 @@ function main() {
     /* Mutabakat yalnizca IKI TARAFIN DA olctugu kontrolde anlamli. */
     let mutabakat = '—';
     const dis = o !== null ? o : s;
-    if (b && (b === 'pass' || b === 'fail') && dis !== null) {
+    /* Iki taraf da OLCMUS olmali: 'skipped' bir yargi degil, olcum yoklugu. */
+    if (b && (b === 'pass' || b === 'fail') && (dis === 'pass' || dis === 'fail')) {
       karsilastirilabilir++;
       if (b === dis) { uyusan++; mutabakat = '✅'; }
       else mutabakat = '❌';
