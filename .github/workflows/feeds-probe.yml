@@ -17,6 +17,10 @@ on:
         description: IP→ülke tablosunu yeniden üret ve dala işle
         type: boolean
         default: false
+      compare_host:
+        description: "Tarama motorunu Observatory ve SSL Labs ile karşılaştır (boş = atla)"
+        required: false
+        default: ''
 
 # contents: write yalnizca coğrafi tabloyu isleyebilmek icin. Tablo uretilmis
 # bir dosyadir ve elle duzenlenmez; kaynagi kamu malı RIR delegasyon dosyalari.
@@ -39,6 +43,17 @@ jobs:
       - name: Coğrafi kaynakları ölç
         if: always()
         run: bash cyberlionai/tools/geo-probe.sh
+
+      # --- Tarama motoru karşılaştırması -----------------------------------
+      # Skor değil KONTROL karşılaştırılıyor: üç araç farklı kapsamları ölçüyor,
+      # skorlarının tutması tesadüf olurdu.
+      - name: Motoru bağımsız araçlarla karşılaştır
+        if: inputs.compare_host != ''
+        env:
+          BASE: https://www.cyberlionai.com
+          HOST: ${{ inputs.compare_host }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: bash cyberlionai/tools/scanner-compare.sh
 
       # --- IP→ülke tablosu -------------------------------------------------
       # Kaynak: bes bolgesel kayit kurulusunun delegasyon dosyalari. Kamu mali,
