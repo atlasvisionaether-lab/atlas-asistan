@@ -70,11 +70,18 @@ OKOD=$(curl -sS -m 90 -A "$UA" -X POST -o "$WORK/obs.json" -w '%{http_code}' \
 OBS_ID=$(jq -r '.id // empty' "$WORK/obs.json" 2>/dev/null)
 if ! jq -e '(.tests // .details) | objects | length > 0' "$WORK/obs.json" >/dev/null 2>&1; then
   note "POST yaniti yalnizca ozet ( id=${OBS_ID:--} ); test listesi ayrica isteniyor"
+  # Ozet cok kucuk (˜280 bayt) ve gizli bilgi icermiyor; tamamini yazmak,
+  # ucun hangi alanlari verdigini tahmine birakmiyor.
+  note "ozet: $(tr -d '\n' < "$WORK/obs.json" | head -c 400)"
+  OBS_DETAY=$(jq -r '.details_url // empty' "$WORK/obs.json" 2>/dev/null)
   for uc in \
     "https://observatory-api.mdn.mozilla.net/api/v2/tests?scan=$OBS_ID" \
     "https://observatory-api.mdn.mozilla.net/api/v2/scan/$OBS_ID/tests" \
-    "https://observatory-api.mdn.mozilla.net/api/v2/results?host=$HOST"
+    "https://observatory-api.mdn.mozilla.net/api/v2/analyze?host=$HOST" \
+    "https://observatory-api.mdn.mozilla.net/api/v2/results?host=$HOST" \
+    "$OBS_DETAY"
   do
+    [ -z "$uc" ] && continue
     [ -z "$OBS_ID" ] && case "$uc" in *scan=*|*/scan/*) continue ;; esac
     TKOD=$(curl -sSL -m 60 -A "$UA" -o "$WORK/obs_t.json" -w '%{http_code}' "$uc" 2>/dev/null) || TKOD=000
     note "test ucu: HTTP $TKOD  $(wc -c < "$WORK/obs_t.json" 2>/dev/null || echo 0) bayt  ${uc#https://observatory-api.mdn.mozilla.net}"
