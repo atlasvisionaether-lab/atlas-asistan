@@ -110,7 +110,7 @@ if (vardi) {
 } else {
   head('Gerçek tablo');
   process.stdout.write('  \x1b[33mYOK\x1b[0m  geo-table.js üretilmemiş; yapısal sınama atlandı.\n');
-  process.stdout.write('        Üretmek için: .github/workflows/geo-table.yml\n');
+  process.stdout.write('        Üretmek için: .github/workflows/feeds-probe.yml (build_geo_table=true)\n');
 }
 
 process.stdout.write('\n\x1b[1m' + (failed ? 'SONUÇ: BAŞARISIZ' : 'SONUÇ: HEPSİ GEÇTİ') + '\x1b[0m\n');

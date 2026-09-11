@@ -67,15 +67,44 @@ function main() {
 
   rows.sort(function (x, y) { return x[0] - y[0]; });
 
+  /* Once CAKISMALARI coz, sonra birlestir.
+   *
+   * RIR dosyalarinda arada cakisan aralik cikiyor (olcumde 1 tane). Cakisma,
+   * ikili aramanin temel varsayimini bozar: ayni adres iki arliga duserse
+   * hangi ulkenin donecegi arama yoluna bagli olur — yani sonuc belirsizlesir.
+   * Bu yuzden tolere edilmiyor.
+   *
+   * Cozum kurali: once baslayan aralik kazanir, sonraki kirpilir. Tamamen
+   * icerilen aralik dusulur. Kac tanesinin duzeltildigi raporlanir; sessiz
+   * duzeltme, duzeltmeme kadar kotu olurdu. */
+  const temiz = [];
+  let kirpilan = 0, dusen = 0;
+  for (const r of rows) {
+    const son = temiz[temiz.length - 1];
+    if (son && r[0] <= son[1]) {
+      if (r[1] <= son[1]) { dusen++; continue; }      // tamamen iceriliyor
+      r[0] = son[1] + 1; kirpilan++;                  // kismi cakisma: kirp
+    }
+    temiz.push(r);
+  }
+
   /* Bitisik ve ayni ulkeye ait araliklari birlestir. Tablo boyutunu ciddi
      olcude dusuruyor ve cozum sonucunu hic degistirmiyor. */
   const merged = [];
-  for (const r of rows) {
+  for (const r of temiz) {
     const son = merged[merged.length - 1];
     if (son && son[2] === r[2] && r[0] <= son[1] + 1) {
       if (r[1] > son[1]) son[1] = r[1];
     } else {
       merged.push([r[0], r[1], r[2]]);
+    }
+  }
+
+  /* Uretim sirasinda da dogrula: cakisma kalmadigi kanitlanmadan yazma. */
+  for (let i = 1; i < merged.length; i++) {
+    if (merged[i][0] <= merged[i - 1][1]) {
+      console.error('HATA: cakisma kaldi, indeks ' + i);
+      process.exit(1);
     }
   }
 
@@ -100,7 +129,7 @@ function main() {
  *
  * Kaynak: RIR delegasyon dosyaları (RIPE NCC, ARIN, APNIC, LACNIC, AFRINIC).
  * Kamu malı, anahtar gerektirmez. Yeniden üretmek için:
- *   .github/workflows/geo-table.yml iş akışını çalıştırın.
+ *   .github/workflows/feeds-probe.yml (build_geo_table=true)
  *
  * Üretim tarihi : ${uretim}
  * Aralık sayısı : ${merged.length} (birleştirme öncesi ${rows.length})
@@ -119,6 +148,8 @@ module.exports = {
 
   process.stdout.write('okunan ham kayit : ' + rows.length + '\n');
   process.stdout.write('atlanan satir    : ' + atlanan + '\n');
+  process.stdout.write('cakisma-kirpilan : ' + kirpilan + '\n');
+  process.stdout.write('cakisma-dusen    : ' + dusen + '\n');
   process.stdout.write('birlestirilmis   : ' + merged.length + '\n');
   process.stdout.write('ulke sayisi      : ' + ulkeler.length + '\n');
   process.stdout.write('ikili boyut      : ' + buf.length + ' bayt\n');
