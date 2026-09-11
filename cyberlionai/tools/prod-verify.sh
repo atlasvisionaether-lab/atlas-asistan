@@ -224,7 +224,10 @@ check "$(jq -r '.authenticated' "$BODY")" "false" "çerezsiz istek anonim"
 # Anahtar geçersizse GoTrue isteği hiç değerlendirmeden reddeder ve
 # auth_misconfigured döner — arıza böyle görünür olur.
 api "$JAR_A" POST /api/auth/verify '{"token_hash":"gecersiz-kod","type":"recovery"}'
-VKOD=$(jq -r '.error.code' "$BODY")
+# Hem kodu hem durumu HEMEN yakala. $STATUS her `api` cagrisinda uzerine
+# yaziliyor; bu degerleri asagida kullanmak, araya giren baska bir cagrinin
+# durumunu okumak demek olurdu. Bir kez oldu.
+VKOD=$(jq -r '.error.code' "$BODY"); VSTATUS="$STATUS"
 if [ "$VKOD" = "auth_misconfigured" ]; then
   fail "SUPABASE_ANON_KEY GEÇERSİZ — GoTrue anahtarı reddediyor (kod: $VKOD)"
   printf '        Değişken tanımlı ama bu projeye ait değil ya da bozuk.\n'
@@ -233,6 +236,8 @@ if [ "$VKOD" = "auth_misconfigured" ]; then
 else
   pass "SUPABASE_ANON_KEY geçerli (GoTrue anahtarı kabul ediyor)"
 fi
+check "$VSTATUS" "400" "geçersiz bağlantı kodu reddedildi"
+check "$VKOD" "link_invalid" "geçersiz bağlantı kodunun kodu"
 
 # Kullanıcı sayımına karşı: var olmayan iki farklı adres AYNI kodu almalı.
 api "$JAR_A" POST /api/auth/login '{"email":"yok-1@cyberlionai-test.invalid","password":"HerhangiBirSifre123"}'
@@ -252,9 +257,6 @@ check "$(jq -r '.error.code' "$BODY")" "invalid_email" "bozuk e-posta reddedildi
 api "$JAR_A" POST /api/auth/password '{"password":"OturumsuzSifre12345"}'
 check "$STATUS" "401" "oturumsuz şifre değişikliği reddedildi"
 check "$(jq -r '.error.code' "$BODY")" "not_authenticated" "kod"
-
-check "$STATUS" "400" "geçersiz bağlantı kodu reddedildi"
-check "$VKOD" "link_invalid" "kod"
 
 api "$JAR_A" GET /api/auth/login
 check "$STATUS" "405" "GET ile giriş denemesi reddedildi"
