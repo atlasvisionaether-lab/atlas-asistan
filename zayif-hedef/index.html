@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zayıf hedef — tarama motoru sınama sayfası</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 0 auto;
+         padding-block: 3rem; padding-left: 1rem; padding-right: 1rem;
+         background: #111; color: #eee; line-height: 1.6; }
+  code { background: #222; padding: .15em .4em; border-radius: 3px; }
+  h1 { font-size: 1.4rem; }
+</style>
+</head>
+<body>
+<h1>Zayıf hedef — sınama sayfası</h1>
+
+<p>Bu sayfa <strong>kasten güvensiz</strong> yapılandırılmıştır. Amacı tek:
+tarama motorumuzun bir kontrolü <em>geçemediğinde</em> bağımsız araçlarla
+(Mozilla Observatory, SSL Labs) aynı sonucu verip vermediğini ölçmek.</p>
+
+<p>Kendi sitemiz her kontrolü geçtiği için, orada mutabakatsızlık görünmez —
+hepsi ✅ olan bir tabloda hata da ✅ görünürdü. Ayrışmayı görebilmek için
+başarısız olan bir hedef gerekiyor.</p>
+
+<p>Bilerek <strong>yok</strong>: <code>Content-Security-Policy</code>,
+<code>Strict-Transport-Security</code>, <code>X-Frame-Options</code>,
+<code>X-Content-Type-Options</code>, <code>Referrer-Policy</code>,
+<code>Permissions-Policy</code>. Ayrıca <code>Secure</code>,
+<code>HttpOnly</code> ve <code>SameSite</code> bayrakları olmayan bir çerez
+set ediliyor.</p>
+
+<p>Burada hiçbir gerçek veri, hesap veya müşteri bilgisi yok ve hiçbir zaman
+olmayacak. Kullanıcı girdisi alınmıyor.</p>
+</body>
+</html>

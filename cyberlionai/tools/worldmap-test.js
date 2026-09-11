@@ -74,7 +74,14 @@ ok(u.online === 2, 'online sayısı 2');
 ok(u.threats[0].name === 'malware_download' && u.threats[0].count === 3, 'tehdit türü sayıldı');
 ok(u.threats.some(function (t) { return t.name === 'bilinmiyor'; }), 'threat alanı yoksa "bilinmiyor"');
 ok(JSON.stringify(u).indexOf('61.54.41.118') === -1, 'zararlı URL çıktıya SIZMIYOR');
-ok(u.countries === undefined, 'ülke alanı üretilmiyor');
+
+// Artik ulke var: beslemenin kendi semasindan degil, IP->ulke cozumunden.
+// Fikstürdeki ilk kayit ciplak IP tasiyor, digerleri alan adi.
+ok(Array.isArray(u.countries), 'ülke kırılımı üretiliyor (IP→ülke çözümünden)');
+ok(typeof u.unresolved === 'number', 'çözülemeyen kayıt sayısı bildiriliyor');
+ok(u.unresolved >= 1, 'alan adı taşıyan kayıtlar çözülemeyen olarak SAYILIYOR, sessizce atılmıyor');
+ok(u.countries.every(function (c) { return /^[A-Z]{2}$/.test(c.country); }),
+   'üretilen tüm ülke kodları ISO-2');
 
 head('urlhaus zaman kovaları — 1s/24s/7g filtresinin gerçek dayanağı');
 ok(u.windows.h1 === 1, '1 saat kovası: yalnızca 10 dk önceki (gelen: ' + u.windows.h1 + ')');
@@ -97,8 +104,16 @@ ok(throwsWith(function () { feeds.findSource('urlhaus').parse('[1,2,3]'); }, 'fe
 
 head('kaynak tanımları ölçümle tutarlı');
 ok(feeds.findSource('feodo').geo === true, 'feodo geo=true (ölçümde .country var)');
-ok(feeds.findSource('urlhaus').geo === false, 'urlhaus geo=false (ölçümde ülke yok)');
-ok(feeds.findSource('torexit').geo === false, 'torexit geo=false (düz IP listesi)');
+ok(feeds.findSource('urlhaus').geoSource === 'resolved',
+   'urlhaus ülkeyi ÇÖZÜMDEN alıyor (kendi şemasında yok)');
+ok(feeds.findSource('torexit').geoSource === 'resolved',
+   'torexit ülkeyi ÇÖZÜMDEN alıyor');
+ok(feeds.findSource('feodo').geoSource === 'native',
+   'feodo ülkeyi KENDİ alanından alıyor');
+ok(feeds.SOURCES.every(function (s) { return s.geo === true; }),
+   'dört kaynağın dördü de haritaya işaret koyabiliyor');
+ok(feeds.SOURCES.every(function (s) { return s.geoSource === 'native' || s.geoSource === 'resolved'; }),
+   'her kaynağın ülke kaynağı açıkça beyan edilmiş — belirsiz kaynak yok');
 ok(feeds.findSource('urlhaus').ttl > feeds.findSource('feodo').ttl,
    'urlhaus TTL daha uzun — 6.6 MB indirme seyreltiliyor');
 ok(feeds.SOURCES.every(function (s) { return /^https:\/\//.test(s.url); }), 'tüm kaynaklar HTTPS');

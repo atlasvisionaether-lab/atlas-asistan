@@ -1,4 +1,4 @@
-name: Besleme biçim ölçümü
+name: Veri kaynakları — ölçüm ve coğrafi tablo
 
 # Açık tehdit beslemelerinin gerçek biçimini ölçer.
 #
@@ -12,9 +12,20 @@ name: Besleme biçim ölçümü
 
 on:
   workflow_dispatch:
+    inputs:
+      build_geo_table:
+        description: IP→ülke tablosunu yeniden üret ve dala işle
+        type: boolean
+        default: false
+      compare_host:
+        description: "Tarama motorunu Observatory ve SSL Labs ile karşılaştır (boş = atla)"
+        required: false
+        default: ''
 
+# contents: write yalnizca coğrafi tabloyu isleyebilmek icin. Tablo uretilmis
+# bir dosyadir ve elle duzenlenmez; kaynagi kamu malı RIR delegasyon dosyalari.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   probe:
@@ -28,3 +39,67 @@ jobs:
 
       - name: Beslemeleri ölç
         run: bash cyberlionai/tools/feeds-probe.sh
+
+      - name: Coğrafi kaynakları ölç
+        if: always()
+        run: bash cyberlionai/tools/geo-probe.sh
+
+      # --- Tarama motoru karşılaştırması -----------------------------------
+      # Skor değil KONTROL karşılaştırılıyor: üç araç farklı kapsamları ölçüyor,
+      # skorlarının tutması tesadüf olurdu.
+      - name: Motoru bağımsız araçlarla karşılaştır
+        if: inputs.compare_host != ''
+        env:
+          BASE: https://www.cyberlionai.com
+          HOST: ${{ inputs.compare_host }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: bash cyberlionai/tools/scanner-compare.sh
+
+      # --- IP→ülke tablosu -------------------------------------------------
+      # Kaynak: bes bolgesel kayit kurulusunun delegasyon dosyalari. Kamu mali,
+      # anahtar gerektirmez. Uretilen tablo dala islenir; calisma zamaninda
+      # indirme YAPILMAZ, boylece uretimde dis bir kaynaga baglilik olusmaz.
+      - name: RIR dosyalarını indir
+        if: inputs.build_geo_table
+        run: |
+          mkdir -p /tmp/rir
+          set -e
+          for u in \
+            https://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-latest \
+            https://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest \
+            https://ftp.apnic.net/stats/apnic/delegated-apnic-latest \
+            https://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-latest \
+            https://ftp.afrinic.net/stats/afrinic/delegated-afrinic-latest
+          do
+            ad=$(basename "$u")
+            curl -sSL -m 120 -o "/tmp/rir/$ad" "$u"
+            printf '%-45s %s bayt\n' "$ad" "$(wc -c < /tmp/rir/$ad)"
+          done
+
+      - name: Tabloyu üret
+        if: inputs.build_geo_table
+        run: node cyberlionai/tools/build-geo-table.js /tmp/rir cyberlionai/api/_lib/geo-table.js
+
+      - name: Çözücüyü sına
+        if: inputs.build_geo_table
+        run: node cyberlionai/tools/geo-test.js
+
+      - name: Dala işle
+        if: inputs.build_geo_table
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # ONCE ekle, SONRA karsilastir. `git diff` izlenmeyen dosyayi gormez;
+          # tablo ilk kez uretildiginde "degismedi" deyip sessizce cikiyordu.
+          git add cyberlionai/api/_lib/geo-table.js
+          if git diff --cached --quiet; then
+            echo "Tablo degismedi; islenecek bir sey yok."
+            exit 0
+          fi
+          printf '%s\n\n%s\n%s\n' \
+            "IP-ulke tablosunu yeniden uret" \
+            "Kaynak: RIR delegasyon dosyalari (RIPE NCC, ARIN, APNIC, LACNIC, AFRINIC)." \
+            "Kamu mali, anahtar gerektirmez. Uretilmis dosya - elle duzenlenmez." > /tmp/geo-msg.txt
+          git commit -F /tmp/geo-msg.txt
+          git push origin "HEAD:${GITHUB_REF_NAME}"

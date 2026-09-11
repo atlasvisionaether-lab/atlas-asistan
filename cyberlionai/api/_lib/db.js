@@ -174,6 +174,7 @@ async function claimAnonymousScans(sessionId, userId) {
 }
 
 module.exports = {
+
   isConfigured, saveScan, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans
 };

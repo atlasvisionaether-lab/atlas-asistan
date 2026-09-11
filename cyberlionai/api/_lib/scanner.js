@@ -404,4 +404,7 @@ async function scanSite(rawUrl) {
   };
 }
 
-module.exports = { scanSite, WEIGHTS, SCANNER_VERSION, REPORT_VERSION };
+/* buildChecks ve scoreOf, kalibrasyon sinamasi icin disari aciliyor
+   (tools/calibration-test.js). Skorun dogrulugu ancak bilinen girdilerle
+   olculebilir; agdan gecen bir sinama bunu yapamaz. */
+module.exports = { scanSite, buildChecks, scoreOf, WEIGHTS, SCANNER_VERSION, REPORT_VERSION };
