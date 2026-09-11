@@ -211,6 +211,29 @@ check "$STATUS" "200" "me ucu yanıt veriyor"
 check "$(jq -r '.available' "$BODY")" "true" "SUPABASE_ANON_KEY tanımlı (kimlik servisi açık)"
 check "$(jq -r '.authenticated' "$BODY")" "false" "çerezsiz istek anonim"
 
+# ---------------------------------------------------------------------------
+# Anahtarın GEÇERLİ olduğunu kanıtla — tanımlı olduğunu değil.
+#
+# Yukarıdaki `.available` yalnızca ortam değişkeninin VAR olduğuna bakar; ağa
+# çıkmaz. 2026-09-10'da üretimdeki anon anahtarı başka bir projeye aitti:
+# değişken tanımlıydı, GoTrue ise her çağrıya 401 "Invalid API key" dönüyordu.
+# Kayıt ve giriş tamamen çalışmıyordu, bu doğrulama ise YEŞİL geçiyordu.
+#
+# Bu kontrol hesap açmadan anahtarı sınar: geçersiz bir bağlantı koduyla
+# doğrulama istenir. Anahtar geçerliyse GoTrue "kod geçersiz" der (link_invalid).
+# Anahtar geçersizse GoTrue isteği hiç değerlendirmeden reddeder ve
+# auth_misconfigured döner — arıza böyle görünür olur.
+api "$JAR_A" POST /api/auth/verify '{"token_hash":"gecersiz-kod","type":"recovery"}'
+VKOD=$(jq -r '.error.code' "$BODY")
+if [ "$VKOD" = "auth_misconfigured" ]; then
+  fail "SUPABASE_ANON_KEY GEÇERSİZ — GoTrue anahtarı reddediyor (kod: $VKOD)"
+  printf '        Değişken tanımlı ama bu projeye ait değil ya da bozuk.\n'
+  printf '        Supabase > Settings > API > anon anahtarını Vercel Production ile karşılaştırın.\n'
+  printf '        Bu haldeyken kayıt ve giriş TAMAMEN çalışmaz.\n'
+else
+  pass "SUPABASE_ANON_KEY geçerli (GoTrue anahtarı kabul ediyor)"
+fi
+
 # Kullanıcı sayımına karşı: var olmayan iki farklı adres AYNI kodu almalı.
 api "$JAR_A" POST /api/auth/login '{"email":"yok-1@cyberlionai-test.invalid","password":"HerhangiBirSifre123"}'
 C1=$(jq -r '.error.code' "$BODY"); S1=$STATUS
@@ -230,9 +253,8 @@ api "$JAR_A" POST /api/auth/password '{"password":"OturumsuzSifre12345"}'
 check "$STATUS" "401" "oturumsuz şifre değişikliği reddedildi"
 check "$(jq -r '.error.code' "$BODY")" "not_authenticated" "kod"
 
-api "$JAR_A" POST /api/auth/verify '{"token_hash":"gecersiz-kod","type":"recovery"}'
 check "$STATUS" "400" "geçersiz bağlantı kodu reddedildi"
-check "$(jq -r '.error.code' "$BODY")" "link_invalid" "kod"
+check "$VKOD" "link_invalid" "kod"
 
 api "$JAR_A" GET /api/auth/login
 check "$STATUS" "405" "GET ile giriş denemesi reddedildi"

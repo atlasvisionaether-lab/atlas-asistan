@@ -40,7 +40,10 @@ module.exports = async function handler(req, res) {
     auth.logFailure('signin', r.status, r.body, code);
     // Onaylanmamış e-posta ayrı bir durum: kullanıcının ne yapacağını bilmesi
     // gerekiyor ve bu bilgi zaten kayıt sırasında kendisine verilmişti.
-    const status = code === 'too_many_requests' ? 429 : 401;
+    // auth_misconfigured bizim tarafımızda: 401 dönmek kullanıcıya "şifren
+    // yanlış" demenin başka bir yoludur ve yanlıştır.
+    const status = code === 'too_many_requests' ? 429
+                 : code === 'auth_misconfigured' ? 503 : 401;
     return res.status(status).json({ error: { code: code } });
   }
 

@@ -32,6 +32,23 @@ ok(belirti === 'signup_rejected', 'kayıt için signup_rejected dönüyor');
 ok(esle(401, {}, 'signup') !== 'invalid_credentials', 'tanınmayan 401 de kayıtta credential hatası değil');
 ok(esle(403, {}, 'signup') !== 'invalid_credentials', 'tanınmayan 403 de kayıtta credential hatası değil');
 
+head('GEÇERSİZ API ANAHTARI — kullanıcının hatası değil, ayrı kod');
+// 2026-09-10 uretim arizasi: anon anahtari baska bir projeye aitti. GoTrue her
+// cagriya 401 "Invalid API key" donuyordu; eski kural bunu invalid_credentials
+// yapiyor, uretim dogrulamasi da "hatali giris reddedildi" kontrolunu GECIYORDU.
+ok(esle(401, { msg: 'Invalid API key' }, 'signup') === 'auth_misconfigured',
+   'kayıtta geçersiz anahtar → auth_misconfigured');
+ok(esle(401, { msg: 'Invalid API key' }, 'signin') === 'auth_misconfigured',
+   'girişte de auth_misconfigured — "şifren yanlış" DEĞİL');
+ok(esle(401, { msg: 'Invalid API key' }, 'signin') !== 'invalid_credentials',
+   'üretim doğrulamasının yeşil geçmesine sebep olan eşleme geri gelmedi');
+ok(esle(401, { msg: 'No API key found in request' }, 'signin') === 'auth_misconfigured',
+   'eksik anahtar da aynı kod');
+// Baglantida gecersiz kod ile gecersiz anahtar ayirt edilebilmeli: prod-verify
+// anahtarin GECERLI oldugunu tam olarak bu ayrimla kanitliyor.
+ok(esle(401, { error_code: 'otp_expired' }, 'signup') === 'link_invalid',
+   'anahtar geçerliyken geçersiz bağlantı kodu hâlâ link_invalid');
+
 head('Giriş bağlamı korunuyor — orada "şifre yanlış" doğru cevap');
 ok(esle(400, { msg: 'Invalid login credentials' }, 'signin') === 'invalid_credentials',
    'GoTrue credential hatası hâlâ invalid_credentials');
