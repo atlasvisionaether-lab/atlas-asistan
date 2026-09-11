@@ -73,13 +73,15 @@ jobs:
         if: inputs.build_geo_table
         run: |
           cd "$GITHUB_WORKSPACE"
-          if git diff --quiet -- cyberlionai/api/_lib/geo-table.js; then
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # ONCE ekle, SONRA karsilastir. `git diff` izlenmeyen dosyayi gormez;
+          # tablo ilk kez uretildiginde "degismedi" deyip sessizce cikiyordu.
+          git add cyberlionai/api/_lib/geo-table.js
+          if git diff --cached --quiet; then
             echo "Tablo degismedi; islenecek bir sey yok."
             exit 0
           fi
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cyberlionai/api/_lib/geo-table.js
           printf '%s\n\n%s\n%s\n' \
             "IP-ulke tablosunu yeniden uret" \
             "Kaynak: RIR delegasyon dosyalari (RIPE NCC, ARIN, APNIC, LACNIC, AFRINIC)." \
