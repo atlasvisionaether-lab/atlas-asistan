@@ -98,6 +98,11 @@ note "HTTP $OKOD  $(wc -c < "$WORK/obs.json") bayt"
 if [ "$OKOD" = "200" ] && jq -e . "$WORK/obs.json" >/dev/null 2>&1; then
   note "ust duzey anahtarlar: $(jq -r 'keys | join(", ")' "$WORK/obs.json" | head -c 250)"
   note "tests anahtarlari   : $(jq -r '(.tests // {}) | keys | join(", ")' "$WORK/obs.json" | head -c 400)"
+  # Her testin ham sonucu yaziliyor. Observatory "gecti/kaldi"yi tek alanda
+  # tasimiyor; pass, result ve score_modifier birlikte anlamli. Tabloda bir
+  # satir beklenmedik cikarsa sebebi burada gorunur, tahmin gerekmez.
+  jq -r '(.tests // {}) | to_entries[] | "     \(.key): pass=\(.value.pass) result=\(.value.result) m=\(.value.score_modifier)"' \
+    "$WORK/obs.json" 2>/dev/null | head -20
   note "derece/skor         : $(jq -r '[.grade // "-", (.score|tostring)] | join(" / ")' "$WORK/obs.json" 2>/dev/null)"
 else
   note "Observatory sonucu alinamadi; ilk satir: $(head -c 200 "$WORK/obs.json" | tr -d '\n')"
