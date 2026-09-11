@@ -80,8 +80,9 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add cyberlionai/api/_lib/geo-table.js
-          git commit -m "IP→ülke tablosunu yeniden üret
-
-Kaynak: RIR delegasyon dosyaları (RIPE NCC, ARIN, APNIC, LACNIC, AFRINIC).
-Kamu malı, anahtar gerektirmez. Üretilmiş dosya — elle düzenlenmez."
+          printf '%s\n\n%s\n%s\n' \
+            "IP-ulke tablosunu yeniden uret" \
+            "Kaynak: RIR delegasyon dosyalari (RIPE NCC, ARIN, APNIC, LACNIC, AFRINIC)." \
+            "Kamu mali, anahtar gerektirmez. Uretilmis dosya - elle duzenlenmez." > /tmp/geo-msg.txt
+          git commit -F /tmp/geo-msg.txt
           git push origin "HEAD:${GITHUB_REF_NAME}"
