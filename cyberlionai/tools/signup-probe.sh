@@ -23,9 +23,58 @@
 set -uo pipefail
 
 BASE="${BASE:?BASE gerekli}"
-TEST_EMAIL="${TEST_EMAIL:?TEST_EMAIL gerekli}"
 BYPASS="$(printf '%s' "${BYPASS:-}" | tr -d '[:space:]')"
 CONFIRM="${CONFIRM:-}"
+MODE="${MODE:-signup}"
+
+WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+BODY="$WORK/body.json"
+
+istek() {  # istek <yol> <govde>
+  local a=(-sS -o "$BODY" -w '%{http_code}' -m 30 -X POST
+           -H 'Content-Type: application/json' --data "$2")
+  [ -n "$BYPASS" ] && a+=(-H "x-vercel-protection-bypass: $BYPASS")
+  curl "${a[@]}" "$BASE$1" 2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# ANAHTAR MODU — hesap AÇMAZ, e-posta GÖNDERMEZ.
+#
+# Anon anahtarının geçerli olup olmadığını, hiçbir yan etki bırakmadan sınar:
+# geçersiz bir bağlantı koduyla doğrulama istenir.
+#   anahtar geçerli   → GoTrue "bu kod geçersiz" der      → link_invalid
+#   anahtar geçersiz  → GoTrue isteği değerlendirmez      → auth_misconfigured
+#
+# Neden ayrı mod: kayıt denemesi, anahtar düzeltilmişse gerçek bir hesap açar
+# ve o hesabı silmek için burada yetki yok. Durum kontrolünün yan etkisi
+# olmamalı.
+if [ "$MODE" = "key" ]; then
+  printf '\033[1mAnon anahtarı geçerlilik kontrolü\033[0m\n'
+  printf 'Hedef : %s\n' "$BASE"
+  printf 'Zaman : %s\n\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+  STATUS="$(istek /api/auth/verify '{"token_hash":"gecersiz-kod","type":"recovery"}')"
+  KOD="$(jq -r '.error.code // "-"' "$BODY" 2>/dev/null || echo '?')"
+  printf 'HTTP durumu : %s\n' "$STATUS"
+  printf 'Kod         : %s\n\n' "$KOD"
+
+  case "$KOD" in
+    auth_misconfigured)
+      printf '\033[31mANAHTAR GEÇERSİZ\033[0m  GoTrue anahtarı reddediyor.\n'
+      printf 'Kayıt ve giriş bu haldeyken TAMAMEN çalışmaz.\n'
+      printf 'Supabase > Settings > API > anon anahtarını Vercel Production ile karşılaştırın.\n'
+      exit 1 ;;
+    link_invalid)
+      printf '\033[32mANAHTAR GEÇERLİ\033[0m  GoTrue anahtarı kabul ediyor.\n'
+      printf 'Bağlantı kodu beklendiği gibi reddedildi; kimlik servisi ayakta.\n'
+      exit 0 ;;
+    *)
+      printf '\033[33mBELİRSİZ\033[0m  Beklenmeyen kod. Yanıt: %s\n' "$(head -c 300 "$BODY")"
+      exit 1 ;;
+  esac
+fi
+
+TEST_EMAIL="${TEST_EMAIL:?TEST_EMAIL gerekli (MODE=signup icin)}"
 
 case "$BASE" in
   *cyberlionai.com*)
@@ -37,9 +86,6 @@ case "$BASE" in
     printf '\033[33mUYARI\033[0m  Hedef ÜRETİM. Kayıt başarılı olursa açılan hesabın silinmesi gerekir.\n\n'
     ;;
 esac
-
-WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
-BODY="$WORK/body.json"
 
 # Sifre burada uretiliyor ve HICBIR YERE yazilmiyor: ne loga, ne ciktiya, ne
 # workflow girdisine. Kayit basarili olursa hesap zaten silinecek.

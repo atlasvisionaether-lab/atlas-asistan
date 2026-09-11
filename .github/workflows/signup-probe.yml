@@ -6,9 +6,12 @@ name: Kayıt ucu teşhisi
 # gösteren hiçbir kaydımız yoktu ve teşhis için kullanıcıdan tekrar denemesini
 # istemek zorunda kaldık. Bu iş akışı o bağımlılığı kaldırır.
 #
-# DİKKAT: kayıt başarılı olursa gerçek hesap açılır ve gerçek onay e-postası
-# gider. Üretim hedefi için ayrıca confirm=evet gerekir; açılan hesabın
-# silinmesi gerektiği çıktıda hatırlatılır.
+# İki mod:
+#   key    (VARSAYILAN) Anon anahtarı geçerli mi? Hesap AÇMAZ, e-posta GÖNDERMEZ.
+#          Durum kontrolü için bu kullanılır — kontrolün yan etkisi olmamalı.
+#   signup Gerçek kayıt denemesi. Başarılı olursa gerçek hesap açılır ve gerçek
+#          onay e-postası gider. Üretim hedefi için ayrıca confirm=evet gerekir;
+#          açılan hesabın silinmesi gerektiği çıktıda hatırlatılır.
 #
 # Test şifresi girdi DEĞİLDİR: workflow_dispatch girdileri çalışma sayfasında
 # açıkça görünür. Şifre koşu sırasında üretilir ve hiçbir yere yazılmaz.
@@ -16,13 +19,20 @@ name: Kayıt ucu teşhisi
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: "key = anahtar geçerli mi (yan etkisiz) · signup = gerçek kayıt denemesi"
+        required: true
+        default: key
+        type: choice
+        options: [key, signup]
       base:
         description: Hedef adres (sonunda / olmadan)
         required: true
-        default: https://cyberlionai-git-claude-epic-turing-gu2xf8-atlas-asistan.vercel.app
+        default: https://www.cyberlionai.com
       test_email:
-        description: Kullanılacak e-posta adresi
-        required: true
+        description: E-posta adresi (yalnızca mode=signup için gerekli)
+        required: false
+        default: ''
       confirm:
         description: Hedef ÜRETİM ise 'evet' yazın (gerçek hesap açılabilir)
         required: false
@@ -43,6 +53,7 @@ jobs:
 
       - name: Kayıt ucunu yokla
         env:
+          MODE: ${{ inputs.mode }}
           BASE: ${{ inputs.base }}
           TEST_EMAIL: ${{ inputs.test_email }}
           CONFIRM: ${{ inputs.confirm }}
