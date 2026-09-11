@@ -57,12 +57,22 @@ note "kontroller: $(jq -r '[.checks[] | .id + "=" + .status] | join(" ")' "$WORK
 
 # ---------------------------------------------------------------------------
 head1 "2. Mozilla Observatory"
-# v2 API: POST tarama baslatir, ayni adres GET ile sonucu verir.
-curl -sS -m 60 -A "$UA" -X POST -o "$WORK/obs.json" -w '' \
-  "https://observatory-api.mdn.mozilla.net/api/v2/scan?host=$HOST" 2>/dev/null || true
-sleep 3
-OKOD=$(curl -sSL -m 60 -A "$UA" -o "$WORK/obs.json" -w '%{http_code}' \
+# OLCULDU: /api/v2/scan yalnizca POST kabul ediyor; GET 404 donuyor
+# ("Route GET:/api/v2/scan not found"). Sonuc dogrudan POST yanitinda.
+OKOD=$(curl -sS -m 90 -A "$UA" -X POST -o "$WORK/obs.json" -w '%{http_code}' \
   "https://observatory-api.mdn.mozilla.net/api/v2/scan?host=$HOST" 2>/dev/null) || OKOD=000
+
+# POST sonucu testleri icermiyorsa ayri sonuc ucunu dene; hangi yolun ise
+# yaradigi cikti ile gorunsun.
+if ! jq -e '.tests // .details' "$WORK/obs.json" >/dev/null 2>&1; then
+  note "POST yanitinda test listesi yok; sonuc ucu deneniyor"
+  OKOD2=$(curl -sSL -m 60 -A "$UA" -o "$WORK/obs2.json" -w '%{http_code}' \
+    "https://observatory-api.mdn.mozilla.net/api/v2/results?host=$HOST" 2>/dev/null) || OKOD2=000
+  note "sonuc ucu: HTTP $OKOD2  $(wc -c < "$WORK/obs2.json" 2>/dev/null || echo 0) bayt"
+  if jq -e '.tests // .details' "$WORK/obs2.json" >/dev/null 2>&1; then
+    mv "$WORK/obs2.json" "$WORK/obs.json"; OKOD=$OKOD2
+  fi
+fi
 note "HTTP $OKOD  $(wc -c < "$WORK/obs.json") bayt"
 if [ "$OKOD" = "200" ] && jq -e . "$WORK/obs.json" >/dev/null 2>&1; then
   note "ust duzey anahtarlar: $(jq -r 'keys | join(", ")' "$WORK/obs.json" | head -c 250)"
@@ -74,10 +84,26 @@ fi
 
 # ---------------------------------------------------------------------------
 head1 "3. SSL Labs"
-# Taze tarama dakikalar surer; onbellekten okunabiliyorsa o kullanilir.
-SKOD=$(curl -sSL -m 60 -A "$UA" -o "$WORK/ssl.json" -w '%{http_code}' \
-  "https://api.ssllabs.com/api/v3/analyze?host=$HOST&fromCache=on&maxAge=24&all=done" 2>/dev/null) || SKOD=000
-note "HTTP $SKOD  $(wc -c < "$WORK/ssl.json") bayt"
+# OLCULDU: API asenkron. Ilk cagri taramayi kuyruga alip status=DNS donuyor;
+# sonuc icin READY olana kadar yoklamak gerekiyor. Tek okuyup gecmek, bos
+# tablo uretiyordu.
+SSL_URL="https://api.ssllabs.com/api/v3/analyze?host=$HOST&fromCache=on&maxAge=24&all=done"
+SKOD=000; SDURUM="-"
+for deneme in $(seq 1 12); do
+  SKOD=$(curl -sSL -m 60 -A "$UA" -o "$WORK/ssl.json" -w '%{http_code}' "$SSL_URL" 2>/dev/null) || SKOD=000
+  SDURUM=$(jq -r '.status // "-"' "$WORK/ssl.json" 2>/dev/null)
+  printf '   deneme %2s: HTTP %s  durum %s\n' "$deneme" "$SKOD" "$SDURUM"
+  case "$SDURUM" in
+    READY|ERROR) break ;;
+  esac
+  [ "$SKOD" = "429" ] && { note "hiz siniri; yoklama durduruldu"; break; }
+  sleep 15
+done
+note "son durum: $SDURUM  ($(wc -c < "$WORK/ssl.json") bayt)"
+if [ "$SDURUM" != "READY" ]; then
+  note "SSL Labs sonucu HAZIR DEGIL — TLS satirlari karsilastirilamayacak."
+  note "Taze tarama birkac dakika surebiliyor; koşuyu tekrarlayin."
+fi
 if [ "$SKOD" = "200" ] && jq -e . "$WORK/ssl.json" >/dev/null 2>&1; then
   note "durum   : $(jq -r '.status // "-"' "$WORK/ssl.json")"
   note "anahtar : $(jq -r 'keys | join(", ")' "$WORK/ssl.json" | head -c 250)"
