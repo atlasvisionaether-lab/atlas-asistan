@@ -26,6 +26,11 @@ jobs:
       - name: Kimlik duvarı algılaması
         run: bash cyberlionai/tools/wall-test.sh
 
+      # Akis sayaci girdi basina mi sayiyor. Bu bozulursa haritadaki sayi
+      # sessizce sisir ve ulke siralamasi bozulur.
+      - name: Akış sayacı (girdi başına sayım)
+        run: node cyberlionai/tools/counter-test.js
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do

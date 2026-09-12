@@ -123,15 +123,30 @@ if [ "$(jq -r 'any(.sources[]; .cached)' "$BODY")" = "true" ]
   else printf '  \033[33mNOT\033[0m  hiçbir kaynak önbellekten gelmedi; TTL dolmuş olabilir.\n'; fi
 
 head1 "8. Hız sınırı uygulanıyor"
-# Ucun sinirI dakikada 30. Sunucu tarafi onbellek dolu oldugu icin bu istekler
-# beslemelere DOKUNMAZ; yalnizca kendi ucumuzu yoklar.
+# ÖLÇÜLDÜ (koşu 34662353758): üretimde 34 istek attık, hiçbiri 429 almadı.
+# Sebep hız sınırının bozuk olması DEĞİL: uç `Cache-Control: public,
+# max-age=150` döndürüyor ve CDN aynı isteği önbellekten karşılıyor —
+# fonksiyon hiç çalışmıyor, dolayısıyla sayaç da artmıyor.
+#
+# Sınamanın ölçmek istediği şey CDN'in değil FONKSİYONUN davranışı, bu yüzden
+# her istek benzersiz bir sorgu dizisiyle gidiyor. Bu, önbelleği atlatır ve
+# isteği gerçekten fonksiyona ulaştırır.
+#
+# Not: CDN'den dönen istekler ne bize ne beslemelere yük bindirdiği için
+# önbelleklenen trafiğin sınırlanmaması bir açık değil; sınır, önbelleği
+# atlatan trafikte devreye giriyor ve asıl korunması gereken de o.
 KOD=""
-for i in $(seq 1 34); do
-  args=(-sS -o /dev/null -w '%{http_code}' -m 20)
+VURUS=0
+TOHUM="$(date +%s)-$$"
+for i in $(seq 1 40); do
+  args=(-sS -o /dev/null -D "$WORK/rl.h" -w '%{http_code}' -m 20)
   [ -n "$BYPASS" ] && args+=(-H "x-vercel-protection-bypass: $BYPASS")
-  KOD="$(curl "${args[@]}" "$BASE/api/worldmap" 2>/dev/null)"
+  KOD="$(curl "${args[@]}" "$BASE/api/worldmap?_rl=$TOHUM-$i" 2>/dev/null)"
+  VURUS=$((VURUS + 1))
   [ "$KOD" = "429" ] && break
 done
+CDN="$(grep -i '^x-vercel-cache:' "$WORK/rl.h" 2>/dev/null | tr -d '\r' | head -1)"
+printf '   %s istek atıldı; son durum %s%s\n' "$VURUS" "$KOD" "${CDN:+  ($CDN)}"
 check "$KOD" "429" "sınır aşımında 429"
 
 head1 "9. Sayfa haritayı içeriyor"
