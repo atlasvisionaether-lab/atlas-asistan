@@ -31,6 +31,10 @@ on:
         description: Doğrulanacak adres (boş = üretim)
         required: false
         default: ''
+      bildirim:
+        description: "Sağlık konusunu da güncelle (bildirim yolunu sınamak için)"
+        type: boolean
+        default: false
 
 # issues: write yalnizca saglik konusunu acip kapatmak icin. Depo icerigine
 # yazma yetkisi YOK.
@@ -90,8 +94,11 @@ jobs:
             echo "durum dosyası yok — betik erken sonlandı"
           fi
 
+      # Gunluk kosuda her zaman; elle kosuda yalnizca acikca istendiginde.
+      # Sebep: bildirim yolunun kendisi de sinanabilmeli — ilk kez yarin sabah
+      # 09:00'da, kimse bakmazken calismasi iyi bir fikir degil.
       - name: Sağlık konusunu güncelle
-        if: always() && github.event_name == 'schedule'
+        if: always() && (github.event_name == 'schedule' || inputs.bildirim)
         uses: actions/github-script@v7
         env:
           SAGLIK_DURUM: ${{ steps.durum.outputs.durum }}
