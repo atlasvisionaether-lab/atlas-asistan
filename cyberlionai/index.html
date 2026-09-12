@@ -1412,6 +1412,10 @@
   .wmap__src[data-ok="true"] i { color: var(--sev-low); }
   .wmap__src[data-ok="false"] i { color: var(--sev-critical); }
   .wmap__srcNote { color: var(--text-gray); font-size: 0.78rem; }
+  /* Kendi tarama etkinligimiz: ici bos kare. Besleme isaretleri dolu daire;
+     bicim farki renk korlugunde de ayirt edilebilsin diye renge EK olarak var. */
+  .wmap__ownDot { fill: none; stroke: var(--gold-light, #e8c86a); stroke-width: 1.6; opacity: 0.9; }
+  .wmap__ownDot:hover { stroke-width: 2.4; }
   .wmap__rangeNote { color: var(--text-gray); font-size: 0.78rem; margin: 8px 0 0; line-height: 1.5; flex-basis: 100%; }
 
   .wmap__note { color: var(--text-gray); font-size: 0.82rem; line-height: 1.6; margin: 12px 0 0; }
@@ -1868,6 +1872,12 @@
               <g id="wmHeat" aria-hidden="true"></g>
               <g id="wmArcs" aria-hidden="true"></g>
               <g id="wmDots"></g>
+              <!-- Kendi tarama etkinligimiz AYRI bir katman ve AYRI bir bicim:
+                   besleme kayitlariyla ayni havuza karistirilmiyor. Ikisi farkli
+                   seyler — biri acik tehdit beslemelerinde gorulen altyapi, digeri
+                   bizim musterilerimizin taradigi hedefler. Ayni renkte gostermek
+                   iki sayiyi toplanabilirmis gibi gosterirdi. -->
+              <g id="wmOwn"></g>
             </svg>
             <div class="wmap__tip" id="wmTip" role="status" hidden></div>
           </div>
@@ -2362,6 +2372,10 @@
           rangeIncluded: 'Bu görünümde sayılan',
           rangeExcluded: 'Sayılmayan (zaman damgası yok)',
           rangeNone: 'Hiçbir kaynak zaman damgası taşımıyor; bu görünümde gösterilecek kayıt yok.',
+          ownTitle: 'Cyber Lion AI tarama etkinliği',
+          ownNote: 'Müşterilerimizin taradığı hedeflerin barındırma ülkesi. Beslemelerden ayrı sayılır; iki sayı toplanmaz.',
+          ownEmpty: 'Henüz konumu çözülmüş tarama yok.',
+          ownRangeNote: 'Zaman filtresi bu katmanı kapsamıyor; yalnızca “Tümü” görünümünde gösterilir.',
           srcTorexit: 'Tor çıkış düğümleri',
           disclaimer: 'Harita, açık tehdit beslemelerinde kayıtlı altyapının bulunduğu ülkeleri gösterir; bir saldırının kaynağını veya hedefini göstermez. Kara parçaları temsilîdir. Kendi tarama etkinliğimiz gizlilik gereği konum bilgisi taşımadığından şimdilik haritada yer almaz.'
         },
@@ -2775,6 +2789,10 @@
           rangeIncluded: 'Counted in this view',
           rangeExcluded: 'Not counted (no timestamps)',
           rangeNone: 'No source carries timestamps, so there is nothing to show in this view.',
+          ownTitle: 'Cyber Lion AI scan activity',
+          ownNote: 'Hosting country of targets our customers scanned. Counted separately from the feeds; the two are not additive.',
+          ownEmpty: 'No scan with a resolved location yet.',
+          ownRangeNote: 'The time filter does not cover this layer; it is shown only in the “All” view.',
           srcTorexit: 'Tor exit nodes',
           disclaimer: 'The map shows countries hosting infrastructure recorded in open threat feeds; it does not show the source or target of an attack. Landmasses are stylised. Our own scan activity carries no location data by design, so it is not on the map yet.'
         },
@@ -5369,7 +5387,8 @@
       country: document.getElementById('wmCountry'),
       live: document.getElementById('wmLive'),
       liveText: document.getElementById('wmLiveText'),
-      rangeNote: document.getElementById('wmRangeNote')
+      rangeNote: document.getElementById('wmRangeNote'),
+      own: document.getElementById('wmOwn')
     };
 
     /* range: 'all' | 'h1' | 'h24' | 'd7'. Varsayilan 'all' — ÖLÇÜLDÜ (koşu
@@ -5690,6 +5709,25 @@
       /* Konumu çözülemeyen kayıtlar: hem sunucunun bildirdiği (alan adı taşıyan
          urlhaus kayıtları gibi) hem de merkez koordinatı bilinmeyen ülke kodları.
          İkisi de saklanmıyor — haritada görünmeyen kayıt da kayıttır. */
+      /* Kendi tarama etkinliğimiz AYRI bir blokta: beslemelerin satırlarıyla
+         aynı listede olsaydı toplanabilir bir bütünün parçası gibi görünürdü.
+         Başlık ve not, ikisinin ayrı şeyler olduğunu açıkça söylüyor. */
+      var oa = d.ownActivity;
+      if (oa && oa.available && Array.isArray(oa.countries) && oa.countries.length) {
+        html += '<p class="wmap__srcNote" style="margin:10px 0 4px"><b>' +
+                esc(t('ownTitle')) + '</b></p>';
+        if (state.range !== 'all') {
+          html += '<p class="wmap__srcNote" style="margin:0 0 6px">' +
+                  esc(t('ownRangeNote')) + '</p>';
+        }
+        oa.countries.slice(0, 5).forEach(function (c) {
+          html += '<div class="wmap__row"><span>' + esc(countryName(c.country)) +
+                  '</span><span>' + c.count + '</span></div>';
+        });
+        html += '<p class="wmap__srcNote" style="margin:2px 0 8px">' +
+                esc(t('ownNote')) + '</p>';
+      }
+
       /* `d.unresolved` sunucunun TOPLAM üzerinden verdiği sayı; pencere
          kırılımı yok. Pencere seçiliyken onu eklemek, filtrelenmiş görünüme
          filtrelenmemiş bir sayı karıştırmak olurdu. */
@@ -5784,6 +5822,50 @@
       if (keep) els.country.value = keep;
     }
 
+    /* Kendi tarama etkinligimiz: AYRI katman, AYRI bicim.
+       Besleme isaretleriyle ayni havuza katilmiyor — biri acik beslemelerde
+       gorulen altyapi, digeri bizim musterilerimizin taradigi hedefler. Ayni
+       renkte gostermek iki sayiyi toplanabilirmis gibi gosterirdi.
+
+       Zaman filtresi bu katmani KAPSAMIYOR: `cl_scans` icin pencere kirilimi
+       uretmiyoruz. Bu yuzden pencere seciliyken katman gizleniyor; filtrelenmis
+       bir gorunume filtrelenmemis bir katman karistirmak yaniltici olurdu. */
+    function drawOwn() {
+      if (!els.own) return;
+      els.own.textContent = '';
+      var oa = state.data && state.data.ownActivity;
+      if (!oa || !oa.available || !Array.isArray(oa.countries)) return;
+      if (state.range !== 'all') return;
+
+      oa.countries.forEach(function (c) {
+        if (state.country && c.country !== state.country) return;
+        var merkez = CENTROIDS[c.country];
+        if (!merkez) return;
+        var x = projX(merkez[0]), y = projY(merkez[1]);
+        var r = 3 + Math.min(5, Math.sqrt(c.count));
+
+        var kare = document.createElementNS(SVG_NS, 'rect');
+        kare.setAttribute('class', 'wmap__ownDot');
+        kare.setAttribute('x', x - r); kare.setAttribute('y', y - r);
+        kare.setAttribute('width', r * 2); kare.setAttribute('height', r * 2);
+        kare.setAttribute('tabindex', '0');
+        kare.setAttribute('role', 'img');
+        kare.setAttribute('aria-label',
+          t('ownTitle') + ' — ' + countryName(c.country) + ': ' + c.count);
+        var goster = function () {
+          els.tip.textContent = t('ownTitle') + ' — ' +
+            countryName(c.country) + ': ' + c.count;
+          els.tip.style.left = x + 'px'; els.tip.style.top = (y - 16) + 'px';
+          els.tip.hidden = false;
+        };
+        kare.addEventListener('mouseenter', goster);
+        kare.addEventListener('focus', goster);
+        kare.addEventListener('mouseleave', hideTip);
+        kare.addEventListener('blur', hideTip);
+        els.own.appendChild(kare);
+      });
+    }
+
     /* Zaman filtresinin KAPSAMINI yazar. Bu not olmadan filtre yanıltıcı
        olurdu: "24s" seçen ziyaretçi sayının neden düştüğünü bilemez ve eksik
        bir görünümü tam sanardı. */
@@ -5808,6 +5890,7 @@
       drawTop();
       drawCounters();
       drawSources();
+      drawOwn();
       drawRangeNote();
       if (state.selected) select(state.selected);
     }
