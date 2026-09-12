@@ -87,11 +87,20 @@ function normalizeTarget(raw) {
   return { url: parsed, host: host, port: port };
 }
 
-/** Alan adının çözümlendiği tüm adresleri kontrol eder; biri bile özel ise reddeder. */
+/**
+ * Alan adının çözümlendiği tüm adresleri kontrol eder; biri bile özel ise
+ * reddeder. Çözülen adresleri DÖNDÜRÜR.
+ *
+ * Adresleri döndürmesinin sebebi: tarama kaydına ülke yazılacak ve ülke bu
+ * adreslerden türetiliyor. Çağıran taraf ayrı bir DNS sorgusu yapsaydı hem
+ * gereksiz bir istek olurdu hem de iki sorgu arasında adres değişirse
+ * güvenlik kontrolünden GEÇEN adresle ülkesi YAZILAN adres farklı olabilirdi.
+ * Tek çözüm, tek gerçek.
+ */
 async function assertPublicHost(host) {
   if (net.isIP(host)) {
     if (isBlockedAddress(host)) throw new Error('blocked_target');
-    return;
+    return [host];
   }
 
   let records;
@@ -105,6 +114,7 @@ async function assertPublicHost(host) {
   for (const record of records) {
     if (isBlockedAddress(record.address)) throw new Error('blocked_target');
   }
+  return records.map(function (r) { return r.address; });
 }
 
 module.exports = { normalizeTarget, assertPublicHost, isBlockedAddress };

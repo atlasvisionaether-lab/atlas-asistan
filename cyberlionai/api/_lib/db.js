@@ -79,6 +79,12 @@ async function saveScan(result, owner, versions) {
     user_id: owner.userId || null,
     anonymous_session_id: owner.userId ? null : owner.sessionId,
     host: result.host,
+    /* ISO-2 ulke ya da NULL. IP adresi BURAYA YAZILMIYOR ve hicbir yerde
+       saklanmiyor; ulke, taramanin zaten yaptigi DNS cozumunden turetilen iki
+       harften ibaret. Bicim kisiti veritabaninda da var (006). */
+    country: typeof result.country === 'string' && /^[A-Z]{2}$/.test(result.country)
+      ? result.country
+      : null,
     score: typeof result.score === 'number' ? result.score : null,
     checks_total: result.summary.total,
     checks_passed: result.summary.passed,
@@ -99,6 +105,45 @@ async function saveScan(result, owner, versions) {
     headers: { 'Prefer': 'return=representation' }
   });
   return rows && rows[0] ? rows[0].id : null;
+}
+
+/* Haritadaki "kendi tarama etkinligimiz" katmani icin ulke sayilari.
+
+   SAHIPSIZ ve KIMLIKSIZ bir toplam: hangi kullanicinin neyi taradigi buradan
+   cikmiyor, yalnizca ulke basina kac tarama yapildigi. Host da donmuyor.
+
+   Neden SQL tarafinda GROUP BY degil: PostgREST'in toplama (aggregate) destegi
+   surume bagli ve bu depoda "surum tahmin etme" kurali var. Ulke sutunu tek
+   basina cekilip burada sayiliyor; sayim tam ve dogru, yalnizca UST SINIRA
+   kadar. Sinira dayanildiginda bunu SAKLAMIYORUZ: `truncated` ile disari
+   bildiriliyor ve o noktada isin dogrusu bir veritabani gorunumu/RPC'ye
+   gecmektir. Bugun tabloda avuc ici kadar kayit var. */
+const OWN_ACTIVITY_LIMIT = 10000;
+
+async function countryCounts() {
+  const query = TABLE
+    + '?select=country'
+    + '&country=not.is.null'
+    + '&limit=' + (OWN_ACTIVITY_LIMIT + 1);
+
+  const rows = await request(query, {});
+  const list = Array.isArray(rows) ? rows : [];
+  const truncated = list.length > OWN_ACTIVITY_LIMIT;
+  const sayilan = truncated ? list.slice(0, OWN_ACTIVITY_LIMIT) : list;
+
+  const sayac = new Map();
+  sayilan.forEach(function (r) {
+    const cc = r && typeof r.country === 'string' ? r.country : null;
+    if (cc && /^[A-Z]{2}$/.test(cc)) sayac.set(cc, (sayac.get(cc) || 0) + 1);
+  });
+
+  return {
+    total: sayilan.length,
+    truncated: truncated,
+    countries: Array.from(sayac.entries())
+      .map(function (p) { return { country: p[0], count: p[1] }; })
+      .sort(function (a, b) { return b.count - a.count; })
+  };
 }
 
 function ownerFilter(owner) {
@@ -175,6 +220,6 @@ async function claimAnonymousScans(sessionId, userId) {
 
 module.exports = {
 
-  isConfigured, saveScan, listScans, getScan, deleteScan, deleteAllScans,
+  isConfigured, saveScan, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans
 };

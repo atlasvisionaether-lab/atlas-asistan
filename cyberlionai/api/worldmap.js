@@ -17,6 +17,7 @@
  */
 
 const store = require('./_lib/store.js');
+const db = require('./_lib/db.js');
 const feeds = require('./_lib/feeds.js');
 const geo = require('./_lib/geo.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
@@ -142,6 +143,26 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  /* Kendi tarama etkinligimiz. Beslemelerden BAGIMSIZ: bu sorgu duserse
+     harita yine cizilir, yalnizca bu katman kapanir. Bu yuzden ayri bir
+     try/catch icinde ve hatasi yutulmuyor, sebebi disari yaziliyor. */
+  let ownActivity = { available: false, reason: 'db_not_configured', countries: [] };
+  if (db.isConfigured()) {
+    try {
+      const own = await db.countryCounts();
+      ownActivity = {
+        available: own.countries.length > 0,
+        reason: own.countries.length > 0 ? null : 'no_located_scans',
+        total: own.total,
+        truncated: own.truncated,
+        countries: own.countries
+      };
+    } catch (err) {
+      if (console && console.error) console.error('ownActivity query failed:', err.message);
+      ownActivity = { available: false, reason: 'query_failed', countries: [] };
+    }
+  }
+
   const markers = Array.from(countries.values())
     .sort(function (a, b) { return b.total - a.total; });
 
@@ -200,10 +221,13 @@ module.exports = async function handler(req, res) {
       };
     }),
 
-    /* Kendi tarama etkinliğimiz. Şu an BOŞ ve bu bilerek böyle:
-       `cl_scans` gizlilik gereği ülke bilgisi tutmuyor (bkz. 003_scan_history).
-       Konum türetmeden bu katmana veri koymak uydurma olurdu. Alan, ön yüz
-       sözleşmesi sabit kalsın diye şimdiden burada. */
-    ownActivity: { available: false, reason: 'no_geo_in_scan_history', countries: [] }
+    /* Kendi tarama etkinliğimiz. 006 göçünden sonra `cl_scans` ISO-2 ülke
+       tutuyor; bu katman artık gerçek veriyle doluyor. Sayılar SAHİPSİZ ve
+       KİMLİKSİZ: yalnızca ülke başına tarama adedi. Host, IP, kullanıcı ya da
+       oturum bilgisi bu yanıtta YOK.
+
+       Depo yapılandırılmamışsa ya da sorgu düşerse katman `available: false`
+       ile kapanır — sebebi de yazılır. Haritanın kalanı bundan etkilenmez. */
+    ownActivity: ownActivity
   });
 };

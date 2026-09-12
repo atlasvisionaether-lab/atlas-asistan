@@ -12,6 +12,7 @@
 
 const tls = require('node:tls');
 const { normalizeTarget, assertPublicHost } = require('./guard.js');
+const geo = require('./geo.js');
 
 const FETCH_TIMEOUT_MS = 9000;
 const TLS_TIMEOUT_MS = 6000;
@@ -35,9 +36,12 @@ const REPORT_VERSION = '1';
 async function guardedFetch(startUrl, options) {
   let current = startUrl;
   const chain = [];
+  /* Son atlamanin cozulen adresleri. Ulke bundan turetiliyor: guvenlik
+     kontrolunden GECEN adresin ta kendisi, ayrica sorulmus bir adres degil. */
+  let adresler = [];
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    await assertPublicHost(current.hostname.replace(/^\[|\]$/g, ''));
+    adresler = await assertPublicHost(current.hostname.replace(/^\[|\]$/g, ''));
 
     const controller = new AbortController();
     const timer = setTimeout(function () { controller.abort(); }, FETCH_TIMEOUT_MS);
@@ -76,7 +80,7 @@ async function guardedFetch(startUrl, options) {
       continue;
     }
 
-    return { response: response, finalUrl: current, chain: chain };
+    return { response: response, finalUrl: current, chain: chain, addresses: adresler };
   }
 
   throw new Error('too_many_redirects');
@@ -424,7 +428,7 @@ async function scanSite(rawUrl) {
   if (target.error) throw new Error(target.error);
 
   const started = Date.now();
-  const { response, finalUrl, chain } = await guardedFetch(target.url, {});
+  const { response, finalUrl, chain, addresses } = await guardedFetch(target.url, {});
 
   const contentType = response.headers.get('content-type') || '';
   const html = /html|xml|text\/plain/i.test(contentType) ? await readBodyCapped(response) : null;
@@ -462,6 +466,20 @@ async function scanSite(rawUrl) {
     legacyTls: legacyInfo
   });
 
+  /* Ulke: SON atlamanin cozulmus adreslerinden, kamu mali RIR tablosuyla.
+     Ucuncu taraf bir cografi konum servisine cikilmiyor — taradigimiz adresi
+     disariya bildirmemek bu projenin acik bir karari (bkz. _lib/geo.js).
+
+     Yalnizca IPv4 cozuluyor: tablo IPv4. Cozulemeyen kayit NULL kaliyor;
+     uydurulmus bir ulke, bos bir alandan daha kotu olurdu.
+
+     IP'nin kendisi HICBIR YERE yazilmiyor; buradan yalnizca iki harf cikiyor. */
+  let country = null;
+  for (const adres of (addresses || [])) {
+    const cc = geo.countryOfIp(adres);
+    if (cc) { country = cc; break; }
+  }
+
   const failed = checks.filter(function (c) { return c.status === 'fail'; });
 
   // Hedef hata sayfası döndürdüyse başlıklar normal sayfanınkinden farklı
@@ -474,6 +492,7 @@ async function scanSite(rawUrl) {
     url: finalUrl.href,
     warnings: warnings,
     host: host,
+    country: country,
     httpStatus: response.status,
     redirects: chain.length - 1,
     score: scoreOf(checks),

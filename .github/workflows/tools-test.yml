@@ -51,6 +51,11 @@ jobs:
       - name: Zaman penceresi filtresi
         run: node cyberlionai/tools/window-test.js
 
+      # Kendi tarama etkinligimiz katmani: gizlilik (yalnizca ulke disari
+      # cikiyor), bicim ve iki sayinin birbirine karismamasi.
+      - name: Kendi tarama etkinliği katmanı
+        run: node cyberlionai/tools/ownactivity-test.js
+
       # Puanlama kalibrasyonu: bantlar ve beyan edilen onem dereceleri.
       - name: Puanlama kalibrasyonu
         run: node cyberlionai/tools/calibration-test.js
