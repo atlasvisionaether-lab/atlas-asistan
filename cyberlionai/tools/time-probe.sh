@@ -52,7 +52,8 @@ if [ "$KOD" = "200" ] && jq -e 'type == "array"' "$WORK/feodo.json" >/dev/null 2
     note "$alan pencereleri: $(jq -r --arg a "$alan" '
       (now) as $n
       | [ .[] | (.[$a] // "") | select(type=="string" and . != "")
-          | (sub(" "; "T") + "Z") | try fromdateiso8601 catch empty ] as $t
+          | select(length >= 19) | (.[0:19] | sub(" "; "T") + "Z")
+          | try fromdateiso8601 catch empty ] as $t
       | "1s=\([$t[]|select($n - . <= 3600)]|length)  " +
         "24s=\([$t[]|select($n - . <= 86400)]|length)  " +
         "7g=\([$t[]|select($n - . <= 604800)]|length)  " +
@@ -75,7 +76,8 @@ if [ "$KOD" = "200" ] && jq -e 'type == "object"' "$WORK/urlhaus.json" >/dev/nul
     (now) as $n
     | [ .[] | (if type=="array" then .[0] else . end) | (.dateadded // "")
         | select(type=="string" and . != "")
-        | (sub(" "; "T") + "Z") | try fromdateiso8601 catch empty ] as $t
+        | select(length >= 19) | (.[0:19] | sub(" "; "T") + "Z")
+          | try fromdateiso8601 catch empty ] as $t
     | "1s=\([$t[]|select($n - . <= 3600)]|length)  " +
       "24s=\([$t[]|select($n - . <= 86400)]|length)  " +
       "7g=\([$t[]|select($n - . <= 604800)]|length)  " +
@@ -104,8 +106,12 @@ fi
 head1 "4. phishtank (online-valid.json)"
 # Besleme 40 MB'tan buyuk; tamami indirilmiyor. Ilk birkac megabayt bir girdiyi
 # eksiksiz icermeye fazlasiyla yeter ve alan adlarini gormek icin o kadari lazim.
-curl -sSL -m 90 -A "$UA" -r 0-3000000 -o "$WORK/pt.part" \
-  'https://data.phishtank.com/data/online-valid.json' 2>/dev/null
+# OLCULDU (kosu 34667892768): `-r 0-3000000` araligi sunucu tarafindan
+# uygulanmadi, 17 KB geldi ve tek bir girdi bile tamamlanmadi. Bu yuzden
+# akistan kirpiliyor: curl indirmeye devam ederken head ilk parcayi alip
+# borusu kapaniyor.
+curl -sSL -m 120 -A "$UA" 'https://data.phishtank.com/data/online-valid.json' 2>/dev/null \
+  | head -c 3000000 > "$WORK/pt.part" 2>/dev/null || :
 note "indirilen parça: $(wc -c < "$WORK/pt.part" 2>/dev/null || echo 0) bayt"
 if [ -s "$WORK/pt.part" ]; then
   # Ilk tam girdiyi ayikla: ikinci "phish_id"den oncesini al, son tamamlanmis
