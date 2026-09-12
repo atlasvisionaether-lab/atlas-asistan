@@ -18,8 +18,9 @@
  * Parca boyutlari kasten uc noktalari iceriyor: 7 bayt her eslesmeyi ikiye
  * boler, tek parca hic bolmez. Ikisi de ayni sonucu vermeli.
  */
-const path = '/home/user/atlas-asistan/cyberlionai/api/_lib/feeds.js';
-const src = require('fs').readFileSync(path, 'utf8');
+/* Yol __dirname'e gore cozuluyor: betik hangi dizinden cagrilirsa cagrilsin
+   ayni dosyayi bulur. Mutlak yol yazmak yerelde calisir, CI'da patlar. */
+const path = require('path').join(__dirname, '..', 'api', '_lib', 'feeds.js');
 
 /* Fonksiyonu modulden yalitip sahte fetch ile calistirmak icin kucuk bir
    kosum: modul fetch'i global'den aliyor, biz onu degistiriyoruz. */
