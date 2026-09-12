@@ -276,26 +276,39 @@ function parseUrlhaus(text) {
     const threat = typeof row.threat === 'string' && row.threat ? row.threat : 'bilinmiyor';
     byThreat.set(threat, (byThreat.get(threat) || 0) + 1);
 
+    /* Kaydin yasi ULKE KIRILIMINDEN ONCE hesaplaniyor: arayuzdeki 1s/24s/7g
+       filtresi haritayi da degistirebilsin diye pencereler ulke basina da
+       tutuluyor. Eskiden yalnizca genel toplam vardi ve o toplamin tek
+       tuketicisi arayuzden dusunce filtre sessizce islevsiz kaldi. */
+    const added = parseFeedDate(row.dateadded);
+    const yas = added === null ? null : now - added;
+    const kova = { h1: false, h24: false, d7: false };
+    if (yas !== null && yas >= 0) {
+      kova.h1 = yas <= 3600e3;
+      kova.h24 = yas <= 86400e3;
+      kova.d7 = yas <= 7 * 86400e3;
+      if (kova.h1) buckets.h1++;
+      if (kova.h24) buckets.h24++;
+      if (kova.d7) buckets.d7++;
+    }
+
     const ip = geo.ipFromUrl(row.url);
     const cc = ip ? geo.countryOfIp(ip) : null;
     if (cc) {
       let e = byCountry.get(cc);
-      if (!e) { e = { country: cc, count: 0, online: 0, threats: new Map() }; byCountry.set(cc, e); }
+      if (!e) {
+        e = { country: cc, count: 0, online: 0, threats: new Map(),
+              windows: { h1: 0, h24: 0, d7: 0 } };
+        byCountry.set(cc, e);
+      }
       e.count++;
       if (row.url_status === 'online') e.online++;
       e.threats.set(threat, (e.threats.get(threat) || 0) + 1);
+      if (kova.h1) e.windows.h1++;
+      if (kova.h24) e.windows.h24++;
+      if (kova.d7) e.windows.d7++;
     } else {
       cozulemeyen++;
-    }
-
-    const added = parseFeedDate(row.dateadded);
-    if (added !== null) {
-      const age = now - added;
-      if (age >= 0) {
-        if (age <= 3600e3) buckets.h1++;
-        if (age <= 86400e3) buckets.h24++;
-        if (age <= 7 * 86400e3) buckets.d7++;
-      }
     }
   }
 
@@ -318,6 +331,10 @@ function ulkeListesi(m) {
     .map(function (e) {
       const o = { country: e.country, count: e.count };
       if (e.online !== undefined) o.online = e.online;
+      /* Zaman pencereleri yalnizca damga TASIYAN kaynaklarda var. Yoklugu
+         "sifir" degil "olculemedi" demek; bu yuzden alan hic eklenmiyor ve
+         arayuz farki gorebiliyor. */
+      if (e.windows) o.windows = e.windows;
       if (e.malware) {
         o.malware = Array.from(e.malware.entries())
           .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 3)
@@ -379,6 +396,11 @@ const SOURCES = [
     url: 'https://feodotracker.abuse.ch/downloads/ipblocklist.json',
     geo: true,
     geoSource: 'native',
+    /* OLCULDU (kosu 34668079640): beslemede su an 5 kayit var ve first_seen
+       degerleri 2022'den; last_online ise saat tasimiyor ("2026-03-07"), yani
+       parseFeedDate onu okuyamaz. Zaman filtresi bu kaynakta anlamli bir sonuc
+       uretemez — destekleniyormus gibi gostermek yaniltici olurdu. */
+    supportsWindows: false,
     ttl: 5 * 60,
     parse: parseFeodo
   },
@@ -391,6 +413,10 @@ const SOURCES = [
        cozuluyor. Alan adi tasiyan kayitlar cozulemiyor ve ayrica sayiliyor. */
     geo: true,
     geoSource: 'resolved',
+    /* OLCULDU (kosu 34668079640): 12.408 kaydin TAMAMINDA dateadded
+       ayristirilabiliyor; 1s=9, 24s=352, 7g=2.919. Zaman filtresini gercekten
+       destekleyen tek kaynak bu. */
+    supportsWindows: true,
     ttl: 30 * 60,
     parse: parseUrlhaus
   },
@@ -401,6 +427,8 @@ const SOURCES = [
     url: 'https://check.torproject.org/torbulkexitlist',
     geo: true,
     geoSource: 'resolved',
+    /* Duz IP listesi; OLCULDU, tek bir tarih bile yok. */
+    supportsWindows: false,
     ttl: 30 * 60,
     parse: parseTorExit
   },
@@ -421,6 +449,10 @@ const SOURCES = [
     /* Girdi siniri. PhishTank'te `phish_id` her girdide tam bir kez gecer;
        sayac girdileri bununla ayirir. */
     entryMarker: '"phish_id"',
+    /* Akis halinde yalnizca ulke sayiliyor; girdi basina zaman damgasi
+       ayristirilmiyor. Destekleniyor demek icin once o damganin olculmesi
+       gerekir. */
+    supportsWindows: false,
     maxBytes: 80 * 1024 * 1024,
     ttl: 6 * 60 * 60,
     parse: null
@@ -461,6 +493,7 @@ async function loadSource(source) {
       attribution: source.attribution,
       geo: source.geo,
       geoSource: source.geoSource || null,
+      supportsWindows: source.supportsWindows === true,
       ok: true,
       fetchedAt: new Date().toISOString(),
       data: data
@@ -473,6 +506,7 @@ async function loadSource(source) {
       attribution: source.attribution,
       geo: source.geo,
       geoSource: source.geoSource || null,
+      supportsWindows: source.supportsWindows === true,
       ok: false,
       fetchedAt: new Date().toISOString(),
       error: /^feed_/.test(code) ? code : 'feed_error'

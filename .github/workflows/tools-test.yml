@@ -46,6 +46,11 @@ jobs:
       - name: Harita doğrulamasının karar mantığı
         run: bash cyberlionai/tools/worldmap-verify-test.sh
 
+      # Zaman penceresi: ayristirici ulke basina pencere uretiyor mu ve on yuz
+      # onu gercekten tuketiyor mu. Bu bozulursa filtre yine sessizce olur.
+      - name: Zaman penceresi filtresi
+        run: node cyberlionai/tools/window-test.js
+
       # Puanlama kalibrasyonu: bantlar ve beyan edilen onem dereceleri.
       - name: Puanlama kalibrasyonu
         run: node cyberlionai/tools/calibration-test.js
