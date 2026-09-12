@@ -41,6 +41,11 @@ jobs:
       - name: Mutabakat tablosu eşlemesi
         run: node cyberlionai/tools/compare-map-test.js
 
+      # Gunluk besleme sagligi kosusunun karar mantigi. Bu bozulursa dusen bir
+      # besleme "temiz" gorunur ve harita sessizce zayiflar.
+      - name: Harita doğrulamasının karar mantığı
+        run: bash cyberlionai/tools/worldmap-verify-test.sh
+
       # Puanlama kalibrasyonu: bantlar ve beyan edilen onem dereceleri.
       - name: Puanlama kalibrasyonu
         run: node cyberlionai/tools/calibration-test.js
