@@ -50,6 +50,7 @@ const MOTOR = fs.readFileSync(path.join(KOK, 'api', '_lib', 'scanner.js'), 'utf8
    alanıyla) ve oradan motora geçiyor. Yalnızca scanner.js'e bakmak, tam da
    bu sınamanın doğduğu boşluğu yeniden açardı. */
 const POSTA = fs.readFileSync(path.join(KOK, 'api', '_lib', 'mail.js'), 'utf8');
+const BOLGE = fs.readFileSync(path.join(KOK, 'api', '_lib', 'dnszone.js'), 'utf8');
 const RAPOR_KONTROL = RAPOR.slice(RAPOR.indexOf('const CHECKS'));
 
 /** `['a', 'b']` biçimindeki bir dizi değişmezini okur. */
@@ -67,6 +68,7 @@ process.stdout.write(KALIN + 'Motorun ürettiği her not çevrilmiş mi' + SIFIR
 const NOTLAR = Array.from(new Set(
   (MOTOR.match(/note:\s*'([a-z_]+)'/g) || [])
     .concat(POSTA.match(/not:\s*'([a-z_]+)'/g) || [])
+    .concat(BOLGE.match(/(?:not|sebep):\s*'([a-z_]+)'/g) || [])
     .map(function (x) { return /'([a-z_]+)'/.exec(x)[1]; })
 ));
 
@@ -74,9 +76,13 @@ dene('motor en az on beş farklı not üretiyor (okuma doğru çalışıyor)', f
   assert.ok(NOTLAR.length >= 15, 'yalnızca ' + NOTLAR.length + ' not okundu: ' + NOTLAR.join(', '));
 });
 
-dene('e-posta modülünün notları da okunuyor', function () {
-  ['spf_multiple', 'dmarc_monitor_only'].forEach(function (n) {
-    assert.ok(NOTLAR.indexOf(n) !== -1, n + ' okunamadı — mail.js taranmıyor olabilir');
+dene('yardımcı modüllerin notları da okunuyor', function () {
+  /* Notlar üç dosyada üretiliyor. Biri taranmazsa o dosyanın notları
+     çevrilmemiş kalır ve kullanıcı ham anahtarı görür — sınamanın doğduğu
+     kusurun ta kendisi. */
+  [['spf_multiple', 'mail.js'], ['dmarc_monitor_only', 'mail.js'],
+   ['not_a_domain', 'mail.js']].forEach(function (c) {
+    assert.ok(NOTLAR.indexOf(c[0]) !== -1, c[0] + ' okunamadı — ' + c[1] + ' taranmıyor olabilir');
   });
 });
 

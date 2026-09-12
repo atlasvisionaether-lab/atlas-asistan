@@ -14,6 +14,7 @@ const tls = require('node:tls');
 const { normalizeTarget, assertPublicHost } = require('./guard.js');
 const geo = require('./geo.js');
 const mail = require('./mail');
+const dnszone = require('./dnszone');
 
 const FETCH_TIMEOUT_MS = 9000;
 const TLS_TIMEOUT_MS = 6000;
@@ -22,7 +23,7 @@ const MAX_REDIRECTS = 4;
 
 /* Rapor ve motor sürümü: kaydedilen her taramaya ve PDF'e yazılır, böylece
    eski bir sonuç hangi kural setiyle üretildiği bilinerek okunabilir. */
-const SCANNER_VERSION = '1.2.0';
+const SCANNER_VERSION = '1.3.0';
 const REPORT_VERSION = '1';
 
 /* ============================================================
@@ -456,6 +457,40 @@ function buildChecks(context) {
     }
   }
 
+  /* --- Alan adı bölgesi: CAA ve DNSSEC --------------------------------
+     İkisinde de YOKLUK başarısızlık değil "uygulanmamış" sayılıyor ve bu,
+     SPF/DMARC'tan bilinçli bir ayrım: orada yokluk bugün herkesin
+     yapabileceği somut bir açıktı (sahte e-posta). Burada yokluk, saldırı
+     için başka bir şeyin de gerekmesini şart koşuyor — bir sertifika
+     makamının ihlali ya da DNS yolunda araya girme. COOP/COEP kararıyla
+     aynı çizgi. Ağırlık: info (0). */
+  const z = context.zone;
+
+  if (!z || !z.ok) {
+    const sebep = (z && z.sebep) || 'not_measured';
+    ['caa', 'dnssec'].forEach(function (id) {
+      checks.push(check(id, 'info', 'skipped', null, { note: sebep }));
+    });
+  } else {
+    const caa = dnszone.caaDegerlendir(z.caa);
+    if (caa.durum === 'none') {
+      checks.push(check('caa', 'info', 'skipped', null, { note: 'not_implemented' }));
+    } else {
+      checks.push(check('caa', 'info', 'pass', caa.detay || null));
+    }
+
+    const sec = dnszone.dnssecDegerlendir(z.ds);
+    if (sec.durum === 'pass') {
+      checks.push(check('dnssec', 'info', 'pass', sec.detay || null));
+    } else if (sec.durum === 'none') {
+      checks.push(check('dnssec', 'info', 'skipped', null, { note: 'not_implemented' }));
+    } else {
+      /* UDP/53 kapalıysa ya da yanıt yorumlanamıyorsa: BİLMİYORUZ.
+         "DNSSEC yok" demek burada yalan olurdu. */
+      checks.push(check('dnssec', 'info', 'skipped', null, { note: sec.not || 'not_measured' }));
+    }
+  }
+
   return checks;
 }
 
@@ -495,6 +530,10 @@ async function scanSite(rawUrl) {
     return { ok: false, sebep: 'query_failed', hata: e && e.message };
   });
 
+  const bolgeSozu = dnszone.bolgeKayitlari(host).catch(function (e) {
+    return { ok: false, sebep: 'query_failed', hata: e && e.message };
+  });
+
   let tlsInfo = null;
   let legacyInfo = null;
   if (isHttps) {
@@ -517,6 +556,7 @@ async function scanSite(rawUrl) {
   }
 
   const mailInfo = await mailSozu;
+  const bolgeInfo = await bolgeSozu;
 
   const checks = buildChecks({
     headers: response.headers,
@@ -524,7 +564,8 @@ async function scanSite(rawUrl) {
     html: html,
     tls: tlsInfo,
     legacyTls: legacyInfo,
-    mail: mailInfo
+    mail: mailInfo,
+    zone: bolgeInfo
   });
 
   /* Ulke: SON atlamanin cozulmus adreslerinden, kamu mali RIR tablosuyla.
