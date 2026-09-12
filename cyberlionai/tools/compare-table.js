@@ -92,6 +92,19 @@ function obsSonuc(obs, ad) {
   const tests = obsHarita(obs);
   const t = tests[ad];
   if (!t) return null;
+  /* "Yoklugu gecti sayma" duzeltmesi.
+     OLCULDU (kosu 34666166719): Observatory `cross-origin-resource-sharing`
+     icin BASLIK YOKKEN `pass=true result=...-not-implemented` donuyor;
+     `coep-not-implemented` de oyle. Biz ayni durumda `skipped` diyoruz —
+     yoklugu kusur da basari da saymiyoruz. Iki taraf da "pass" harfi
+     uretince tablo bunu MUTABAKAT sayiyordu; oysa ayni harf ayni gercek
+     degil: bizimki "baslik var ve makul", onlarinki "baslik hic yok".
+     Bu yuzden pass=true + "not-implemented" sonucu olcum YOKLUGU sayilir.
+     pass=false olan yokluklar (ornegin x-frame-options) bundan etkilenmez:
+     orada yokluk gercekten bir yargidir ve iki taraf da ayni sekilde
+     basarisiz sayar. */
+  const sonuc = String(t.result || '');
+  if (t.pass === true && /not-implemented/.test(sonuc)) return 'skipped';
   if (t.pass === true) return 'pass';
   if (t.pass === false) return 'fail';
   return 'skipped';
