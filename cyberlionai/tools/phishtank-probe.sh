@@ -30,19 +30,30 @@ printf '\033[1mPhishTank sayim ölçümü\033[0m\n'
 printf 'Adres: %s\n' "$URL"
 printf 'Zaman: %s\n\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
-KOD="$(curl -sSL -m 180 -A "$UA" -o "$GOVDE" -w '%{http_code}' "$URL" 2>/dev/null)" || KOD=000
-BAYT="$(wc -c < "$GOVDE" 2>/dev/null || echo 0)"
-printf '   HTTP %s   %s bayt\n' "$KOD" "$BAYT"
-if [ "$KOD" != "200" ]; then
-  printf '   \033[31mIndirilemedi; olcum yapilamiyor.\033[0m\n'
-  head -c 200 "$GOVDE" 2>/dev/null | sed 's/^/     /'
+# Iki semayi da dene. geo-probe.sh olcumu (03:46 UTC) http:// uzerinden 200 ve
+# 41.6 MB almisti; feeds.js ise https:// kullaniyor. Ikisi ayni davranmiyor
+# olabilir ve bu, beslemenin neden bazen dustugunu acikliyor olabilir.
+INDIRILDI=""
+for SEMA in https http; do
+  ADRES="$SEMA://data.phishtank.com/data/online-valid.json"
+  KOD="$(curl -sSL -m 180 -A "$UA" -o "$WORK/$SEMA.json" -w '%{http_code}' "$ADRES" 2>/dev/null)" || KOD=000
+  BAYT="$(wc -c < "$WORK/$SEMA.json" 2>/dev/null || echo 0)"
+  TUR="$(file -b --mime-type "$WORK/$SEMA.json" 2>/dev/null || echo '?')"
+  printf '   %-5s  HTTP %s  %9s bayt  %s\n' "$SEMA" "$KOD" "$BAYT" "$TUR"
+  if [ "$KOD" = "200" ] && jq -e 'type == "array"' "$WORK/$SEMA.json" >/dev/null 2>&1; then
+    [ -z "$INDIRILDI" ] && { cp "$WORK/$SEMA.json" "$GOVDE"; INDIRILDI="$SEMA"; }
+  fi
+done
+
+if [ -z "$INDIRILDI" ]; then
+  printf '\n   \033[31mHicbir sema kullanilabilir JSON vermedi.\033[0m\n'
+  printf '   Bu, beslemenin anahtarsiz toplu indirmeyi kapattigi anlamina gelebilir.\n'
+  printf '   Ilk 200 bayt (https):\n'
+  head -c 200 "$WORK/https.json" 2>/dev/null | tr -c '[:print:]' '.' | sed 's/^/     /'
+  printf '\n'
   exit 1
 fi
-if ! jq -e 'type == "array"' "$GOVDE" >/dev/null 2>&1; then
-  printf '   \033[31mKok tur dizi degil; sema degismis olabilir.\033[0m\n'
-  jq -r 'type' "$GOVDE" 2>/dev/null | sed 's/^/     kok: /'
-  exit 1
-fi
+printf '\n   Olcum "%s" govdesi uzerinden yapiliyor.\n' "$INDIRILDI"
 
 printf '\n\033[1m== Gerçek sayılar (jq ile kesin)\033[0m\n'
 GIRDI="$(jq 'length' "$GOVDE")"

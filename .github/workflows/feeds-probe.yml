@@ -59,6 +59,14 @@ jobs:
 
       # Kimlik duvari algilamasinin sinamasi. Ag gerektirmiyor; her kosuda
       # calisir ki algilama sessizce bozulmasin.
+      # Uretimdeki toplamin kaynak bazinda dagilimi. "Sayi neden degisti"
+      # sorusu tahminle degil dokumle cevaplansin.
+      - name: Haritanın kaynak dökümü
+        if: inputs.phishtank_count
+        env:
+          BASE: https://www.cyberlionai.com
+        run: bash cyberlionai/tools/worldmap-breakdown.sh
+
       - name: Kimlik duvarı algılamasını sına
         run: bash cyberlionai/tools/wall-test.sh
 
