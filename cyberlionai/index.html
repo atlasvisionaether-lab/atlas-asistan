@@ -2448,6 +2448,21 @@
             not_implemented: 'başlık uygulanmamış (tavsiye edilen ek katman)',
             no_external_scripts: 'sayfada dış kaynaklı script yok',
             wildcard_with_credentials: "'*' ile kimlik bilgisi birlikte kullanılamaz",
+            spf_missing: 'SPF kaydı yok — bu alan adı adına herkes e-posta gönderebilir',
+            spf_multiple: 'birden fazla SPF kaydı var; alıcı sunucu hepsini geçersiz sayar',
+            spf_no_all: "kayıt 'all' mekanizmasıyla bitmiyor; kapsam belirsiz",
+            spf_allows_all: "'+all' herkese bu alan adı adına gönderme yetkisi veriyor",
+            spf_neutral: "'?all' alıcıya hiçbir dayanak vermiyor",
+            dmarc_missing: 'DMARC kaydı yok — sahte e-posta engellenmiyor',
+            dmarc_monitor_only: 'p=none yalnızca izleme; sahte e-posta yine teslim ediliyor',
+            dmarc_partial: 'pct 100 değil; politika iletilerin yalnızca bir kısmına uygulanıyor',
+            dmarc_no_policy: 'kayıtta p= yok; DMARC geçersiz',
+            dmarc_multiple: 'birden fazla DMARC kaydı var',
+            dkim_not_enumerable: 'yaygın seçicilerde anahtar bulunamadı; DKIM seçicileri DNS\'ten listelenemez',
+            dkim_wildcard: 'alan adında joker _domainkey kaydı var; seçici taraması güvenilir değil',
+            domain_not_found: 'alan adı DNS\'te bulunamadı',
+            not_a_domain: 'hedef bir alan adı değil (IP adresi)',
+            query_failed: 'DNS sorgusu yanıt vermedi',
             expired: 'sertifika süresi dolmuş',
             expiring_soon: 'sertifikanın süresi yakında doluyor',
             untrusted: 'sertifika doğrulanamadı'
@@ -2470,7 +2485,10 @@
             coep:          { name: 'Çapraz köken gömücü politikası', fix: 'Cross-Origin-Embedder-Policy: require-corp' },
             corp:          { name: 'Çapraz köken kaynak politikası', fix: 'Cross-Origin-Resource-Policy: same-origin' },
             cors:          { name: 'Çapraz köken paylaşımı (CORS)', fix: 'Access-Control-Allow-Origin: * ile birlikte Allow-Credentials: true kullanmayın; belirli bir köken yazın.' },
-            sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' }
+            sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
+            spf:           { name: 'SPF kaydı', fix: 'TXT kaydı ekleyin:  v=spf1 include:&lt;posta sağlayıcınız&gt; -all' },
+            dmarc:         { name: 'DMARC politikası', fix: '_dmarc.&lt;alan adınız&gt; altında TXT kaydı:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;alan adınız&gt;' },
+            dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını &lt;seçici&gt;._domainkey.&lt;alan adınız&gt; altında yayınlayın.' }
           }
         },
         history: {
@@ -2869,6 +2887,21 @@
             not_implemented: 'header not implemented (recommended extra layer)',
             no_external_scripts: 'the page loads no external scripts',
             wildcard_with_credentials: "'*' cannot be combined with credentials",
+            spf_missing: 'no SPF record — anyone can send email as this domain',
+            spf_multiple: 'more than one SPF record; receivers treat all of them as invalid',
+            spf_no_all: "the record does not end with an 'all' mechanism; scope is undefined",
+            spf_allows_all: "'+all' authorises anyone to send as this domain",
+            spf_neutral: "'?all' gives the receiver no basis to act on",
+            dmarc_missing: 'no DMARC record — forged email is not blocked',
+            dmarc_monitor_only: 'p=none is monitoring only; forged email is still delivered',
+            dmarc_partial: 'pct is below 100; the policy applies to only part of the mail',
+            dmarc_no_policy: 'the record has no p= tag; DMARC is invalid',
+            dmarc_multiple: 'more than one DMARC record',
+            dkim_not_enumerable: 'no key found at common selectors; DKIM selectors cannot be listed from DNS',
+            dkim_wildcard: 'the domain has a wildcard _domainkey record; selector probing is unreliable',
+            domain_not_found: 'the domain was not found in DNS',
+            not_a_domain: 'the target is not a domain name (IP address)',
+            query_failed: 'the DNS query did not answer',
             expired: 'the certificate has expired',
             expiring_soon: 'the certificate expires soon',
             untrusted: 'the certificate could not be validated'
@@ -2891,7 +2924,10 @@
             coep:          { name: 'Cross-Origin-Embedder-Policy', fix: 'Cross-Origin-Embedder-Policy: require-corp' },
             corp:          { name: 'Cross-Origin-Resource-Policy', fix: 'Cross-Origin-Resource-Policy: same-origin' },
             cors:          { name: 'Cross-origin sharing (CORS)', fix: 'Do not combine Access-Control-Allow-Origin: * with Allow-Credentials: true; name a specific origin.' },
-            sri:           { name: 'Subresource Integrity (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' }
+            sri:           { name: 'Subresource Integrity (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
+            spf:           { name: 'SPF record', fix: 'Add a TXT record:  v=spf1 include:&lt;your mail provider&gt; -all' },
+            dmarc:         { name: 'DMARC policy', fix: 'TXT record at _dmarc.&lt;your domain&gt;:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;your domain&gt;' },
+            dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at &lt;selector&gt;._domainkey.&lt;your domain&gt;.' }
           }
         },
         history: {

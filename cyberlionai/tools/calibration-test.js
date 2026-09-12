@@ -41,7 +41,12 @@ const SEVERITY = {
   sri: 'low',
   /* Capraz koken sertlestirmesi: agirlik 0 (info). Yoklugu kusur sayilmadigi
      icin skoru kaydirmiyorlar; bkz. tools/crossorigin-test.js */
-  coop: 'info', coep: 'info', corp: 'info', cors: 'info'
+  coop: 'info', coep: 'info', corp: 'info', cors: 'info',
+  /* E-posta kimlik dogrulamasi: agirlik 0 (info). POSTA yuzeyini olcuyorlar,
+     skor ise WEB yuzeyi icin kalibre edilmis; agirlik vermek hicbir seyini
+     degistirmemis musterilerin skorunu dusururdu. Bunun gercekten boyle
+     oldugu asagida AYRICA sinaniyor (bolum 7). */
+  spf: 'info', dmarc: 'info', dkim: 'info'
 };
 
 function ctx(o) {
@@ -55,7 +60,10 @@ function ctx(o) {
     headers: h,
     html: o.html === undefined ? '<html></html>' : o.html,
     tls: 'tls' in o ? o.tls : { ok: true, protocol: 'TLSv1.3', authorized: true, daysLeft: 90 },
-    legacyTls: 'legacyTls' in o ? o.legacyTls : { tested: true, accepted: false }
+    legacyTls: 'legacyTls' in o ? o.legacyTls : { tested: true, accepted: false },
+    /* Belirtilmemisse UNDEFINED birakiliyor: "olculmedi" demek, uydurma bir
+       kayit vermek degil. */
+    mail: o.mail
   };
 }
 
@@ -117,7 +125,9 @@ const s1 = profil('1. GÜVENLİ site', {
   /* Capraz koken sertlestirmesi: fiksturlerin hicbiri bu basliklari
      gondermiyor ve dis kokenli script tasimiyor, dolayisiyla hepsi atlanir.
      Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
-  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped'
+  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped',
+  /* ctx() mail verisi vermiyor: olculmemis demektir, uydurma degil. */
+  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped'
 }, [95, 100]);
 
 const s2 = profil('2. ORTA site', {
@@ -133,7 +143,9 @@ const s2 = profil('2. ORTA site', {
   /* Capraz koken sertlestirmesi: fiksturlerin hicbiri bu basliklari
      gondermiyor ve dis kokenli script tasimiyor, dolayisiyla hepsi atlanir.
      Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
-  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped'
+  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped',
+  /* ctx() mail verisi vermiyor: olculmemis demektir, uydurma degil. */
+  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped'
 }, [60, 80]);
 
 // Gercekten zayif bir site eski TLS surumlerini de kabul eder; fikstur bunu
@@ -152,7 +164,9 @@ const s3 = profil('3. ZAYIF site', {
   /* Capraz koken sertlestirmesi: fiksturlerin hicbiri bu basliklari
      gondermiyor ve dis kokenli script tasimiyor, dolayisiyla hepsi atlanir.
      Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
-  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped'
+  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped',
+  /* ctx() mail verisi vermiyor: olculmemis demektir, uydurma degil. */
+  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped'
 }, [20, 40]);
 
 const s4 = profil('4. ÇOK ZAYIF site (HTTP)', {
@@ -166,7 +180,9 @@ const s4 = profil('4. ÇOK ZAYIF site (HTTP)', {
   /* Capraz koken sertlestirmesi: fiksturlerin hicbiri bu basliklari
      gondermiyor ve dis kokenli script tasimiyor, dolayisiyla hepsi atlanir.
      Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
-  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped'
+  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped',
+  /* ctx() mail verisi vermiyor: olculmemis demektir, uydurma degil. */
+  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped'
 }, [0, 20]);
 
 head('5. Bantlar ayrık ve sıralı');
@@ -192,6 +208,37 @@ ok(tlsIyi > tlsYok,
 // kazandirdigi puani da kazandirmiyor. Rapor bunu 'skipped' diye gosteriyor.
 ok(tlsIyi === 58 && tlsYok === 40 && tlsKotu === 28,
    'payda etkisi belgelendiği gibi: ölçüldü=' + tlsIyi + ', ölçülemedi=' + tlsYok + ', başarısız=' + tlsKotu);
+
+head('7. E-posta kontrolleri skoru KAYDIRMIYOR');
+/* Bu bolum bir soz veriyor: SPF/DMARC/DKIM eklenmesi, hicbir seyini
+   degistirmemis bir musterinin skorunu degistirmez. Ayni site uc kez
+   puanlaniyor — kayitlar olculmemis, hepsi gecmis ve hepsi kalmis halleriyle.
+   Uc skor da AYNI cikmali. */
+const mailYok = scoreOf(buildChecks(ctx({ headers: {} })));
+const mailIyi = scoreOf(buildChecks(ctx({ headers: {}, mail: {
+  ok: true, alan: 'ornek.test',
+  spf: ['v=spf1 include:_spf.ornek.test -all'],
+  dmarc: ['v=DMARC1; p=reject; rua=mailto:a@ornek.test'],
+  dkimSecici: 'google', dkimJoker: false
+} })));
+const mailKotu = scoreOf(buildChecks(ctx({ headers: {}, mail: {
+  ok: true, alan: 'ornek.test', spf: [], dmarc: [], dkimSecici: null, dkimJoker: false
+} })));
+
+ok(mailYok === mailIyi && mailIyi === mailKotu,
+   'skor uc durumda da ayni (' + [mailYok, mailIyi, mailKotu].join(' = ') + ')');
+
+/* Ama RAPORDA gorunuyorlar: agirliksiz olmak, gorunmez olmak degil. */
+const kotuKontroller = buildChecks(ctx({ headers: {}, mail: {
+  ok: true, alan: 'ornek.test', spf: [], dmarc: [], dkimSecici: null, dkimJoker: false
+} }));
+const spfDurum = kotuKontroller.find(function (c) { return c.id === 'spf'; });
+const dmarcDurum = kotuKontroller.find(function (c) { return c.id === 'dmarc'; });
+const dkimDurum = kotuKontroller.find(function (c) { return c.id === 'dkim'; });
+ok(spfDurum.status === 'fail' && dmarcDurum.status === 'fail',
+   'SPF ve DMARC yoklugu BULGU olarak raporlaniyor (' + spfDurum.status + '/' + dmarcDurum.status + ')');
+ok(dkimDurum.status === 'skipped',
+   'DKIM bulunamadiginda BASARISIZ degil ATLANMIS sayiliyor (' + dkimDurum.status + ')');
 
 process.stdout.write('\n\x1b[1m' + (failed ? 'SONUÇ: BAŞARISIZ' : 'SONUÇ: HEPSİ GEÇTİ') + '\x1b[0m\n');
 process.stdout.write('\nKalibrasyon tablosu:\n');

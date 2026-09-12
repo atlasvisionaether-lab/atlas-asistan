@@ -56,6 +56,16 @@ jobs:
       - name: Kendi tarama etkinliği katmanı
         run: node cyberlionai/tools/ownactivity-test.js
 
+      # SPF/DMARC/DKIM ayristiricilari. Ornekler gercek alan adlarindan
+      # olculdu; sinama o olcumu sabit tutuyor.
+      - name: E-posta kimlik kayıtları
+        run: node cyberlionai/tools/mail-test.js
+
+      # "Puan disi" etiketleri ve cevirilerin eksiksizligi. Bir musteri
+      # raporunda ham anahtar ("scan_note_not_implemented") gorundugu icin var.
+      - name: Puan dışı etiketleri ve çeviriler
+        run: node cyberlionai/tools/skiplabel-test.js
+
       # Puanlama kalibrasyonu: bantlar ve beyan edilen onem dereceleri.
       - name: Puanlama kalibrasyonu
         run: node cyberlionai/tools/calibration-test.js

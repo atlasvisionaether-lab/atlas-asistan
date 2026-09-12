@@ -13,6 +13,7 @@
 const tls = require('node:tls');
 const { normalizeTarget, assertPublicHost } = require('./guard.js');
 const geo = require('./geo.js');
+const mail = require('./mail');
 
 const FETCH_TIMEOUT_MS = 9000;
 const TLS_TIMEOUT_MS = 6000;
@@ -21,7 +22,7 @@ const MAX_REDIRECTS = 4;
 
 /* Rapor ve motor sürümü: kaydedilen her taramaya ve PDF'e yazılır, böylece
    eski bir sonuç hangi kural setiyle üretildiği bilinerek okunabilir. */
-const SCANNER_VERSION = '1.1.0';
+const SCANNER_VERSION = '1.2.0';
 const REPORT_VERSION = '1';
 
 /* ============================================================
@@ -406,6 +407,55 @@ function buildChecks(context) {
       legacy.accepted ? 'TLS 1.0/1.1 kabul ediliyor' : 'Yalnızca modern TLS'));
   }
 
+  /* --- E-posta kimlik doğrulaması (SPF / DMARC / DKIM) --------------------
+     Ağırlık `info` (0): bu üçü POSTA yüzeyini ölçüyor, skor ise WEB yüzeyi
+     için kalibre edilmiş. Ağırlık vermek, hiçbir şeyini değiştirmemiş
+     müşterilerin skorunu bir gecede düşürürdü. Bulgu olarak görünüyorlar,
+     düzeltmesi raporda yazıyor, skor sabit kalıyor. Ayrıntılı gerekçe:
+     _lib/mail.js başlığı. */
+  const m = context.mail;
+
+  if (!m || !m.ok) {
+    /* Sebep saklanmıyor: alan adı yoksa "SPF yok" demek yanlış olur, sorgu
+       düştüyse de bilmiyoruz demektir. İkisi de ölçüm başarısızlığı. */
+    const sebep = (m && m.sebep) || 'not_measured';
+    ['spf', 'dmarc', 'dkim'].forEach(function (id) {
+      checks.push(check(id, 'info', 'skipped', null, { note: sebep }));
+    });
+  } else {
+    const spf = mail.spfDegerlendir(m.spf);
+    if (spf.durum === 'none') {
+      /* Yokluk BURADA başarısızlıktır ve bu, COOP/COEP'ten bilinçli bir
+         ayrım: orada yokluk zararsız bir eksik katmandı, burada yokluk
+         "herkes bu alan adı adına e-posta gönderebilir" demek. Üstelik
+         yokluğu ÖLÇTÜK (NOERROR/NODATA), varsayımda bulunmuyoruz. */
+      checks.push(check('spf', 'info', 'fail', null, { note: 'spf_missing' }));
+    } else {
+      checks.push(check('spf', 'info', spf.durum, spf.detay || null,
+        spf.not ? { note: spf.not } : null));
+    }
+
+    const dmarc = mail.dmarcDegerlendir(m.dmarc);
+    if (dmarc.durum === 'none') {
+      checks.push(check('dmarc', 'info', 'fail', null, { note: 'dmarc_missing' }));
+    } else {
+      checks.push(check('dmarc', 'info', dmarc.durum, dmarc.detay || null,
+        dmarc.not ? { note: dmarc.not } : null));
+    }
+
+    /* DKIM ASLA `fail` olmuyor. Bir alan adının seçicileri DNS'ten
+       numaralandırılamaz (ölçüldü); bulamamak "yok" demek değil, "bilmiyoruz"
+       demektir. Yokluğu başarısızlık saymak, ölçmediğimiz bir şeyi
+       cezalandırmak olurdu. */
+    if (m.dkimJoker) {
+      checks.push(check('dkim', 'info', 'skipped', null, { note: 'dkim_wildcard' }));
+    } else if (m.dkimSecici) {
+      checks.push(check('dkim', 'info', 'pass', m.dkimSecici + '._domainkey'));
+    } else {
+      checks.push(check('dkim', 'info', 'skipped', null, { note: 'dkim_not_enumerable' }));
+    }
+  }
+
   return checks;
 }
 
@@ -437,6 +487,14 @@ async function scanSite(rawUrl) {
   const host = finalUrl.hostname.replace(/^\[|\]$/g, '');
   const port = finalUrl.port ? Number(finalUrl.port) : 443;
 
+  /* E-posta kimlik kayitlari TLS ile ayni anda olculuyor: ikisi de agi
+     bekliyor ve sirayla yapilsaydi sureleri toplanirdi. Olculen gecikme
+     16-330 ms araliginda (kosu 34709562560). Sorgu duserse `ok:false` doner
+     ve kontroller "olculemedi" olur; tarama DUSMEZ. */
+  const mailSozu = mail.mailKayitlari(host).catch(function (e) {
+    return { ok: false, sebep: 'query_failed', hata: e && e.message };
+  });
+
   let tlsInfo = null;
   let legacyInfo = null;
   if (isHttps) {
@@ -458,12 +516,15 @@ async function scanSite(rawUrl) {
     }
   }
 
+  const mailInfo = await mailSozu;
+
   const checks = buildChecks({
     headers: response.headers,
     finalUrl: finalUrl,
     html: html,
     tls: tlsInfo,
-    legacyTls: legacyInfo
+    legacyTls: legacyInfo,
+    mail: mailInfo
   });
 
   /* Ulke: SON atlamanin cozulmus adreslerinden, kamu mali RIR tablosuyla.

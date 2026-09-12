@@ -46,6 +46,11 @@ const KOK = path.join(__dirname, '..');
 const SAYFA = fs.readFileSync(path.join(KOK, 'index.html'), 'utf8');
 const RAPOR = fs.readFileSync(path.join(KOK, 'api', '_lib', 'report.js'), 'utf8');
 const MOTOR = fs.readFileSync(path.join(KOK, 'api', '_lib', 'scanner.js'), 'utf8');
+/* Notların bir kısmı motorda değil, e-posta modülünde üretiliyor (`not:`
+   alanıyla) ve oradan motora geçiyor. Yalnızca scanner.js'e bakmak, tam da
+   bu sınamanın doğduğu boşluğu yeniden açardı. */
+const POSTA = fs.readFileSync(path.join(KOK, 'api', '_lib', 'mail.js'), 'utf8');
+const RAPOR_KONTROL = RAPOR.slice(RAPOR.indexOf('const CHECKS'));
 
 /** `['a', 'b']` biçimindeki bir dizi değişmezini okur. */
 function diziOku(kaynak, ad) {
@@ -60,13 +65,19 @@ process.stdout.write(KALIN + 'Motorun ürettiği her not çevrilmiş mi' + SIFIR
 /* Motorun GERÇEKTEN ürettiği notlar kaynaktan okunuyor; elle tutulan bir liste
    ile karşılaştırmak, listeyi güncellemeyi unutmak demek olurdu. */
 const NOTLAR = Array.from(new Set(
-  (MOTOR.match(/note:\s*'([a-z_]+)'/g) || []).map(function (x) {
-    return /'([a-z_]+)'/.exec(x)[1];
-  })
+  (MOTOR.match(/note:\s*'([a-z_]+)'/g) || [])
+    .concat(POSTA.match(/not:\s*'([a-z_]+)'/g) || [])
+    .map(function (x) { return /'([a-z_]+)'/.exec(x)[1]; })
 ));
 
-dene('motor en az beş farklı not üretiyor (okuma doğru çalışıyor)', function () {
-  assert.ok(NOTLAR.length >= 5, 'yalnızca ' + NOTLAR.length + ' not okundu: ' + NOTLAR.join(', '));
+dene('motor en az on beş farklı not üretiyor (okuma doğru çalışıyor)', function () {
+  assert.ok(NOTLAR.length >= 15, 'yalnızca ' + NOTLAR.length + ' not okundu: ' + NOTLAR.join(', '));
+});
+
+dene('e-posta modülünün notları da okunuyor', function () {
+  ['spf_multiple', 'dmarc_monitor_only'].forEach(function (n) {
+    assert.ok(NOTLAR.indexOf(n) !== -1, n + ' okunamadı — mail.js taranmıyor olabilir');
+  });
 });
 
 ['tr', 'en'].forEach(function (dil) {
@@ -82,6 +93,28 @@ dene('motor en az beş farklı not üretiyor (okuma doğru çalışıyor)', func
       assert.ok(new RegExp('(^|\\s)' + not + '\\s*:').test(govde),
         'çeviri yok — kullanıcı arayüzde ham anahtarı görür');
     });
+  });
+});
+
+process.stdout.write(KALIN + 'Her kontrolün adı iki yerde de var' + SIFIRLA + '\n');
+
+/* Motorun ürettiği kontrol kimlikleri. PDF'te karşılığı olmayan bir kimlik
+   raporda HAM olarak ("coop", "sri") yazdırılıyordu — bu sınama eklendiğinde
+   beş kontrol tam olarak bu durumdaydı. */
+const KIMLIKLER = Array.from(new Set(
+  (MOTOR.match(/check\('([a-z_]+)'/g) || []).map(function (x) { return /'([a-z_]+)'/.exec(x)[1]; })
+));
+
+dene('motor en az yirmi kontrol üretiyor (okuma doğru çalışıyor)', function () {
+  assert.ok(KIMLIKLER.length >= 20, 'yalnızca ' + KIMLIKLER.length + ' kimlik okundu');
+});
+
+KIMLIKLER.forEach(function (id) {
+  dene('"' + id + '" kontrolünün adı arayüzde ve PDF\'te tanımlı', function () {
+    assert.ok(new RegExp('\\b' + id + ':\\s*\\{\\s*name:').test(SAYFA),
+      'arayüz sözlüğünde adı yok');
+    assert.ok(new RegExp('\\b' + id + ':\\s*\\[').test(RAPOR_KONTROL),
+      'PDF sözlüğünde adı yok — raporda ham kimlik görünür');
   });
 });
 
