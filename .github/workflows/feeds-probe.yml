@@ -37,6 +37,10 @@ on:
         description: "E-posta kimlik kayıtlarını ölç (SPF/DMARC/DKIM)"
         type: boolean
         default: false
+      dns_caa:
+        description: "CAA ve DNSSEC ölç (UDP/53 gerekiyor)"
+        type: boolean
+        default: false
       dns_domains:
         description: "Hangi alan adları ölçülsün (boşlukla ayrılmış; boş = varsayılan liste)"
         required: false
@@ -93,6 +97,14 @@ jobs:
       - name: E-posta kimlik kayıtlarını ölç
         if: inputs.dns_mail
         run: node cyberlionai/tools/dns-mail-probe.js ${{ inputs.dns_domains }}
+
+      # CAA ve DNSSEC. Node'un dns modulunde DS sorgusu YOK; DNSSEC icin ham
+      # UDP paketi gerekiyor ve asil olculen sey UDP/53'un bu ortamda calisip
+      # calismadigi. Calismiyorsa kontrol yazilmaz ya da durustce 'olculemedi'
+      # der - UDP'yi VARSAYIP kontrol yazmak sessizce 'DNSSEC yok' derdi.
+      - name: CAA ve DNSSEC ölç
+        if: inputs.dns_caa
+        run: node cyberlionai/tools/dns-caa-probe.js ${{ inputs.dns_domains }}
 
       - name: PhishTank erişim durumunu ölç
         if: inputs.phishtank_access
