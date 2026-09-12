@@ -110,9 +110,20 @@ head1 "4. phishtank (online-valid.json)"
 # uygulanmadi, 17 KB geldi ve tek bir girdi bile tamamlanmadi. Bu yuzden
 # akistan kirpiliyor: curl indirmeye devam ederken head ilk parcayi alip
 # borusu kapaniyor.
-curl -sSL -m 120 -A "$UA" 'https://data.phishtank.com/data/online-valid.json' 2>/dev/null \
+curl -sSL -m 120 -A "$UA" -D "$WORK/pt.bas" \
+  'https://data.phishtank.com/data/online-valid.json' 2>/dev/null \
   | head -c 3000000 > "$WORK/pt.part" 2>/dev/null || :
 note "indirilen parça: $(wc -c < "$WORK/pt.part" 2>/dev/null || echo 0) bayt"
+# OLCULDU (kosu 34668079640): 41 MB beklenirken 17.993 bayt geldi. Gelenin NE
+# oldugunu bilmeden "besleme kapandi" ya da "kisa geldi" demek tahmin olurdu;
+# bu yuzden basliklar ve govdenin basi oldugu gibi yaziliyor.
+note "yanıt başlıkları:"
+grep -iE '^(HTTP/|content-type|content-length|retry-after|x-|server|location):' \
+  "$WORK/pt.bas" 2>/dev/null | head -12 | tr -d '\r' | sed 's/^/     /'
+note "gövdenin ilk 300 baytı:"
+head -c 300 "$WORK/pt.part" 2>/dev/null | tr -d '\r' | sed 's/^/     /'
+printf '\n'
+note "gövde türü: $(file -b "$WORK/pt.part" 2>/dev/null || echo bilinmiyor)"
 if [ -s "$WORK/pt.part" ]; then
   # Ilk tam girdiyi ayikla: ikinci "phish_id"den oncesini al, son tamamlanmis
   # nesneyi ayristirmayi dene.
