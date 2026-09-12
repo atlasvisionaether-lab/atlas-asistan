@@ -33,6 +33,10 @@ on:
         description: "Aday beslemeleri ölç (ülke/IP/zaman alanı var mı)"
         type: boolean
         default: false
+      dns_mail:
+        description: "E-posta kimlik kayıtlarını ölç (SPF/DMARC/DKIM)"
+        type: boolean
+        default: false
       compare_base:
         description: "Karşılaştırmada kullanılacak KENDİ adresimiz (boş = üretim)"
         required: false
@@ -78,6 +82,13 @@ jobs:
       - name: Aday beslemeleri ölç
         if: inputs.candidates
         run: bash cyberlionai/tools/candidate-feeds-probe.sh
+
+      # SPF/DMARC/DKIM kontrollerini yazmadan once DNS'in ne dondurdugu
+      # olculuyor. Ozellikle DKIM: secililer DNS'ten NUMARALANDIRILAMAZ, yani
+      # "DKIM yok" demek olcum degil tahmin olurdu.
+      - name: E-posta kimlik kayıtlarını ölç
+        if: inputs.dns_mail
+        run: node cyberlionai/tools/dns-mail-probe.js
 
       - name: PhishTank erişim durumunu ölç
         if: inputs.phishtank_access
