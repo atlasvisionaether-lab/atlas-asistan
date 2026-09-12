@@ -21,6 +21,10 @@ on:
         description: "PhishTank sayımını ölç (neyi saydığımızı doğrular)"
         type: boolean
         default: false
+      compare_base:
+        description: "Karşılaştırmada kullanılacak KENDİ adresimiz (boş = üretim)"
+        required: false
+        default: ''
       compare_host:
         description: "Tarama motorunu Observatory ve SSL Labs ile karşılaştır (boş = atla)"
         required: false
@@ -73,7 +77,7 @@ jobs:
       - name: Motoru bağımsız araçlarla karşılaştır
         if: inputs.compare_host != ''
         env:
-          BASE: https://www.cyberlionai.com
+          BASE: ${{ inputs.compare_base != '' && inputs.compare_base || 'https://www.cyberlionai.com' }}
           HOST: ${{ inputs.compare_host }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: bash cyberlionai/tools/scanner-compare.sh

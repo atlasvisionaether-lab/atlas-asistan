@@ -33,6 +33,14 @@ const ESLEME = {
   tls_protocol:  { obs: null,                         ssl: 'protocol',  ad: 'TLS sürümü' },
   tls_cert:      { obs: null,                         ssl: 'cert',      ad: 'Sertifika' },
   tls_legacy:    { obs: null,                         ssl: 'legacy',    ad: 'Eski TLS (1.0/1.1)' },
+  /* Capraz koken sertlestirmesi — Observatory de test ediyor, artik biz de.
+     Ikimizde de YOKLUK kusur sayilmiyor; o durumda iki taraf da "olculemedi"
+     der ve satir mutabakat sayimina girmez. */
+  coop:          { obs: 'cross-origin-opener-policy',    ssl: null, ad: 'COOP' },
+  coep:          { obs: 'cross-origin-embedder-policy',  ssl: null, ad: 'COEP' },
+  corp:          { obs: 'cross-origin-resource-policy',  ssl: null, ad: 'CORP' },
+  cors:          { obs: 'cross-origin-resource-sharing', ssl: null, ad: 'CORS' },
+  sri:           { obs: 'subresource-integrity',         ssl: null, ad: 'SRI' },
   /* Bu ucunu ikisi de test etmiyor; bizim ek kapsamimiz. */
   permissions:   { obs: null, ssl: null, ad: 'Permissions-Policy' },
   disclosure:    { obs: null, ssl: null, ad: 'Sürüm ifşası' },
