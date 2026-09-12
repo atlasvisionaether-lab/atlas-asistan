@@ -64,24 +64,39 @@ HTML
 
 # --- Gövde üreteci --------------------------------------------------------
 # $1: feodo ok, $2: urlhaus ok, $3: torexit ok, $4: phishtank ok
+# $5 (istege bagli): pencere bicimi — 'normal' (varsayilan), 'yok', 'bozuk'
 govde() {
   local dosya="$KOK/govde.json"
   python3 - "$dosya" "$@" <<'PY'
 import json, sys
 dosya = sys.argv[1]
 durum = dict(zip(['feodo', 'urlhaus', 'torexit', 'phishtank'], sys.argv[2:6]))
+pencere = sys.argv[6] if len(sys.argv) > 6 else 'normal'
 kaynaklar = []
 for kid, ok in durum.items():
-    k = {'id': kid, 'label': kid, 'geo': True, 'ok': ok == '1', 'cached': True}
+    # ÖLÇÜLDÜ: zaman filtresini yalnızca urlhaus destekliyor.
+    destekli = (kid == 'urlhaus') and pencere != 'yok'
+    k = {'id': kid, 'label': kid, 'geo': True, 'ok': ok == '1', 'cached': True,
+         'supportsWindows': destekli}
     if ok != '1':
         k['error'] = 'feed_status_503'
     else:
         k['summary'] = {'total': 10, 'countries': 2}
     kaynaklar.append(k)
+
+def isaret(ulke, toplam, yogunluk):
+    m = {'country': ulke, 'total': toplam, 'intensity': yogunluk}
+    if pencere == 'normal':
+        m['windows'] = {'h1': 1, 'h24': 5, 'd7': min(20, toplam)}
+    elif pencere == 'bozuk':
+        # h1 > h24: ic ice olma kurali bozuk. Sinama bunu yakalamali.
+        m['windows'] = {'h1': 9, 'h24': 2, 'd7': min(20, toplam)}
+    return m
+
 isaretler = [] if all(v != '1' for v in durum.values()) else [
-    {'country': 'US', 'total': 120, 'intensity': 1.0},
-    {'country': 'NL', 'total': 40, 'intensity': 0.7},
-    {'country': 'CN', 'total': 12, 'intensity': 0.4},
+    isaret('US', 120, 1.0),
+    isaret('NL', 40, 0.7),
+    isaret('CN', 12, 0.4),
 ]
 json.dump({
     'generatedAt': '2026-09-12T09:00:00.000Z',
@@ -97,7 +112,7 @@ PY
   printf '%s' "$dosya"
 }
 
-kos() {  # <feodo> <urlhaus> <torexit> <phishtank>
+kos() {  # <feodo> <urlhaus> <torexit> <phishtank> [pencere bicimi]
   local g; g="$(govde "$@")"
   rm -f "$KOK/durum.txt"
   PATH="$KOK/bin:$PATH" \
@@ -160,6 +175,27 @@ if grep -q 'ayakta (4/4)' "$KOK/cikti.txt"; then
 else
   KALAN=$((KALAN + 1)); printf '  \033[31mKALDI\033[0m  toplam yanlış\n'
   grep 'ayakta' "$KOK/cikti.txt" | sed 's/^/      /'
+fi
+
+printf '\033[1mZaman filtresinin verisi kontrol ediliyor\033[0m\n'
+# Filtre bir kez sessizce islevsiz kalmisti. Verinin uctan kayboldugu durum
+# artik UYARI uretmeli; sessiz gecmemeli.
+dene 'pencere verisi yoksa uyarı' uyari 0 1 1 1 1 yok
+dene 'pencereler bozuksa (h1 > h24) BAŞARISIZ' basarisiz 1 1 1 1 1 bozuk
+
+kos 1 1 1 1 yok >/dev/null 2>&1
+if grep -q 'hiçbir kaynak zaman filtresini desteklemiyor' "$KOK/cikti.txt"; then
+  GECTI=$((GECTI + 1)); printf '  \033[32mGEÇTİ\033[0m  uyarı metni sebebi söylüyor\n'
+else
+  KALAN=$((KALAN + 1)); printf '  \033[31mKALDI\033[0m  uyarı metni yok\n'
+fi
+
+kos 1 1 1 1 >/dev/null 2>&1
+if grep -q 'işaretlerde pencere kırılımı var' "$KOK/cikti.txt"; then
+  GECTI=$((GECTI + 1)); printf '  \033[32mGEÇTİ\033[0m  sağlam veride kırılım doğrulanıyor\n'
+else
+  KALAN=$((KALAN + 1)); printf '  \033[31mKALDI\033[0m  sağlam veride kırılım görülmüyor\n'
+  grep -i 'pencere' "$KOK/cikti.txt" | sed 's/^/      /'
 fi
 
 printf '\033[1mHız sınırı bölümü günlük koşuda atlanıyor\033[0m\n'

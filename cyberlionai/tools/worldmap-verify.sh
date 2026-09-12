@@ -129,6 +129,38 @@ else
   printf '  \033[33mATLANDI\033[0m  feodo şu an ulaşılamıyor; işaret kontrolü yapılamadı.\n'
 fi
 
+head1 "4b. Zaman filtresinin verisi yerinde"
+# NEDEN: 1s/24s/7g filtresi bir kez sessizce islevsiz kaldi — arayuzdeki tek
+# tuketicisi kayboldu ve kimse fark etmedi. Bu sefer verinin UCTA var oldugu
+# her gun dogrulaniyor; kaybolursa uyari uretiliyor, sessiz kalmiyor.
+PENCERELI="$(jq '[.sources[] | select(.supportsWindows == true)] | length' "$BODY" 2>/dev/null || echo 0)"
+if [ "${PENCERELI:-0}" -gt 0 ]; then
+  pass "zaman filtresini destekleyen kaynak var ($PENCERELI)"
+  # Destekleyen kaynak AYAKTA ise isaretlerde pencere kirilimi de bulunmali.
+  AYAKTA_PENCERELI="$(jq '[.sources[] | select(.supportsWindows == true and .ok)] | length' "$BODY" 2>/dev/null || echo 0)"
+  if [ "${AYAKTA_PENCERELI:-0}" -gt 0 ]; then
+    ISARETLI="$(jq '[.markers[] | select(.windows)] | length' "$BODY" 2>/dev/null || echo 0)"
+    if [ "${ISARETLI:-0}" -gt 0 ]; then
+      pass "işaretlerde pencere kırılımı var ($ISARETLI ülke)"
+      # Pencereler ic ice olmali: h1 <= h24 <= d7 <= toplam. Bozuksa sayilar
+      # birbirini tutmaz ve filtre yanlis sonuc gosterir.
+      BOZUK="$(jq '[.markers[] | select(.windows)
+        | select((.windows.h1 > .windows.h24) or (.windows.h24 > .windows.d7) or (.windows.d7 > .total))] | length' \
+        "$BODY" 2>/dev/null || echo 0)"
+      check "${BOZUK:-0}" "0" "pencereler iç içe (h1 ≤ h24 ≤ d7 ≤ toplam)"
+      printf '   toplam pencere: %s\n' "$(jq -r '[.markers[].windows // empty]
+        | {h1: (map(.h1) | add // 0), h24: (map(.h24) | add // 0), d7: (map(.d7) | add // 0)}
+        | "1s=\(.h1)  24s=\(.h24)  7g=\(.d7)"' "$BODY" 2>/dev/null || echo '-')"
+    else
+      uyar "zaman filtresini destekleyen kaynak ayakta ama işaretlerde pencere kırılımı YOK"
+    fi
+  else
+    printf '   \033[33mATLANDI\033[0m  pencere destekleyen kaynak şu an düşük; kırılım beklenmiyor.\n'
+  fi
+else
+  uyar "hiçbir kaynak zaman filtresini desteklemiyor — arayüzdeki 1s/24s/7g boş kalır"
+fi
+
 head1 "5. Gizlilik — ham gösterge dışarı sızmıyor"
 # Beslemelerin IP'si ve URL'si BILEREK disari verilmiyor. Bu kontrol o karari
 # koruyor: birisi ayristiriciya ham alan eklerse burada yakalanir.
