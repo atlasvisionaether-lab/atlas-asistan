@@ -25,6 +25,14 @@ on:
         description: "Beslemelerdeki zaman damgalarını ölç (1s/24s/7g filtresi için)"
         type: boolean
         default: false
+      phishtank_access:
+        description: "PhishTank erişim/başvuru sayfalarını ölç (salt-okunur)"
+        type: boolean
+        default: false
+      candidates:
+        description: "Aday beslemeleri ölç (ülke/IP/zaman alanı var mı)"
+        type: boolean
+        default: false
       compare_base:
         description: "Karşılaştırmada kullanılacak KENDİ adresimiz (boş = üretim)"
         required: false
@@ -63,6 +71,18 @@ jobs:
       # "kayit" diye gosterdigimiz sayinin ne oldugunu dogrular.
       # Hangi besleme zaman filtresini destekleyebilir. Alan adlarini tahmin
       # edip ayristirici yazmak yerine once olculuyor.
+      # PhishTank anahtarsiz indirme kapandi. Basvuru yolunu tahmin etmek yerine
+      # kaynagin kendi sayfasindan okuyoruz. Salt-okunur: form gonderilmiyor.
+      # PhishTank'in yerine hangi kaynak gecebilir. "Ulke var mi" sorusu
+      # hafizadan degil olcumden yanitlanacak.
+      - name: Aday beslemeleri ölç
+        if: inputs.candidates
+        run: bash cyberlionai/tools/candidate-feeds-probe.sh
+
+      - name: PhishTank erişim durumunu ölç
+        if: inputs.phishtank_access
+        run: bash cyberlionai/tools/phishtank-access-probe.sh
+
       - name: Zaman damgalarını ölç
         if: inputs.time_fields
         run: bash cyberlionai/tools/time-probe.sh
