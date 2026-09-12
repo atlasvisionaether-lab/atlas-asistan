@@ -37,7 +37,11 @@ const SEVERITY = {
   hsts: 'high', cookies: 'high', mixed_content: 'high',
   tls_protocol: 'high', tls_cert: 'high', tls_legacy: 'high',
   xframe: 'medium', nosniff: 'medium',
-  referrer: 'low', permissions: 'low', disclosure: 'low'
+  referrer: 'low', permissions: 'low', disclosure: 'low',
+  sri: 'low',
+  /* Capraz koken sertlestirmesi: agirlik 0 (info). Yoklugu kusur sayilmadigi
+     icin skoru kaydirmiyorlar; bkz. tools/crossorigin-test.js */
+  coop: 'info', coep: 'info', corp: 'info', cors: 'info'
 };
 
 function ctx(o) {
@@ -109,7 +113,11 @@ const s1 = profil('1. GÜVENLİ site', {
 }, {
   https: 'pass', hsts: 'pass', csp: 'pass', xframe: 'pass', nosniff: 'pass',
   referrer: 'pass', permissions: 'pass', cookies: 'skipped', disclosure: 'pass',
-  mixed_content: 'pass', tls_protocol: 'pass', tls_cert: 'pass', tls_legacy: 'pass'
+  mixed_content: 'pass', tls_protocol: 'pass', tls_cert: 'pass', tls_legacy: 'pass',
+  /* Capraz koken sertlestirmesi: fiksturlerin hicbiri bu basliklari
+     gondermiyor ve dis kokenli script tasimiyor, dolayisiyla hepsi atlanir.
+     Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
+  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped'
 }, [95, 100]);
 
 const s2 = profil('2. ORTA site', {
@@ -121,7 +129,11 @@ const s2 = profil('2. ORTA site', {
 }, {
   https: 'pass', hsts: 'pass', csp: 'fail', xframe: 'pass', nosniff: 'pass',
   referrer: 'fail', permissions: 'fail', cookies: 'skipped', disclosure: 'pass',
-  mixed_content: 'pass', tls_protocol: 'pass', tls_cert: 'pass', tls_legacy: 'pass'
+  mixed_content: 'pass', tls_protocol: 'pass', tls_cert: 'pass', tls_legacy: 'pass',
+  /* Capraz koken sertlestirmesi: fiksturlerin hicbiri bu basliklari
+     gondermiyor ve dis kokenli script tasimiyor, dolayisiyla hepsi atlanir.
+     Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
+  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped'
 }, [60, 80]);
 
 // Gercekten zayif bir site eski TLS surumlerini de kabul eder; fikstur bunu
@@ -136,7 +148,11 @@ const s3 = profil('3. ZAYIF site', {
 }, {
   https: 'pass', hsts: 'fail', csp: 'fail', xframe: 'fail', nosniff: 'fail',
   referrer: 'fail', permissions: 'fail', cookies: 'fail', disclosure: 'fail',
-  mixed_content: 'fail', tls_protocol: 'pass', tls_cert: 'pass', tls_legacy: 'fail'
+  mixed_content: 'fail', tls_protocol: 'pass', tls_cert: 'pass', tls_legacy: 'fail',
+  /* Capraz koken sertlestirmesi: fiksturlerin hicbiri bu basliklari
+     gondermiyor ve dis kokenli script tasimiyor, dolayisiyla hepsi atlanir.
+     Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
+  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped'
 }, [20, 40]);
 
 const s4 = profil('4. ÇOK ZAYIF site (HTTP)', {
@@ -146,7 +162,11 @@ const s4 = profil('4. ÇOK ZAYIF site (HTTP)', {
 }, {
   https: 'fail', hsts: 'fail', csp: 'fail', xframe: 'fail', nosniff: 'fail',
   referrer: 'fail', permissions: 'fail', cookies: 'fail', disclosure: 'fail',
-  mixed_content: 'skipped', tls_protocol: 'skipped', tls_cert: 'skipped', tls_legacy: 'skipped'
+  mixed_content: 'skipped', tls_protocol: 'skipped', tls_cert: 'skipped', tls_legacy: 'skipped',
+  /* Capraz koken sertlestirmesi: fiksturlerin hicbiri bu basliklari
+     gondermiyor ve dis kokenli script tasimiyor, dolayisiyla hepsi atlanir.
+     Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
+  coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped'
 }, [0, 20]);
 
 head('5. Bantlar ayrık ve sıralı');

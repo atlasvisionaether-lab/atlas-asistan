@@ -33,6 +33,14 @@ const ESLEME = {
   tls_protocol:  { obs: null,                         ssl: 'protocol',  ad: 'TLS sürümü' },
   tls_cert:      { obs: null,                         ssl: 'cert',      ad: 'Sertifika' },
   tls_legacy:    { obs: null,                         ssl: 'legacy',    ad: 'Eski TLS (1.0/1.1)' },
+  /* Capraz koken sertlestirmesi — Observatory de test ediyor, artik biz de.
+     Ikimizde de YOKLUK kusur sayilmiyor; o durumda iki taraf da "olculemedi"
+     der ve satir mutabakat sayimina girmez. */
+  coop:          { obs: 'cross-origin-opener-policy',    ssl: null, ad: 'COOP' },
+  coep:          { obs: 'cross-origin-embedder-policy',  ssl: null, ad: 'COEP' },
+  corp:          { obs: 'cross-origin-resource-policy',  ssl: null, ad: 'CORP' },
+  cors:          { obs: 'cross-origin-resource-sharing', ssl: null, ad: 'CORS' },
+  sri:           { obs: 'subresource-integrity',         ssl: null, ad: 'SRI' },
   /* Bu ucunu ikisi de test etmiyor; bizim ek kapsamimiz. */
   permissions:   { obs: null, ssl: null, ad: 'Permissions-Policy' },
   disclosure:    { obs: null, ssl: null, ad: 'Sürüm ifşası' },
@@ -84,6 +92,19 @@ function obsSonuc(obs, ad) {
   const tests = obsHarita(obs);
   const t = tests[ad];
   if (!t) return null;
+  /* "Yoklugu gecti sayma" duzeltmesi.
+     OLCULDU (kosu 34666166719): Observatory `cross-origin-resource-sharing`
+     icin BASLIK YOKKEN `pass=true result=...-not-implemented` donuyor;
+     `coep-not-implemented` de oyle. Biz ayni durumda `skipped` diyoruz —
+     yoklugu kusur da basari da saymiyoruz. Iki taraf da "pass" harfi
+     uretince tablo bunu MUTABAKAT sayiyordu; oysa ayni harf ayni gercek
+     degil: bizimki "baslik var ve makul", onlarinki "baslik hic yok".
+     Bu yuzden pass=true + "not-implemented" sonucu olcum YOKLUGU sayilir.
+     pass=false olan yokluklar (ornegin x-frame-options) bundan etkilenmez:
+     orada yokluk gercekten bir yargidir ve iki taraf da ayni sekilde
+     basarisiz sayar. */
+  const sonuc = String(t.result || '');
+  if (t.pass === true && /not-implemented/.test(sonuc)) return 'skipped';
   if (t.pass === true) return 'pass';
   if (t.pass === false) return 'fail';
   return 'skipped';

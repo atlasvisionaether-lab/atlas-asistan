@@ -283,6 +283,96 @@ function buildChecks(context) {
       { samples: insecure.slice(0, 3).map(function (m) { return m.replace(/^[^=]*=\s*["']/, '').slice(0, 120); }) }));
   }
 
+  /* --- Çapraz köken sertleştirmesi ---------------------------------------
+     ÖLÇÜLDÜ (koşu 34663226505): Observatory bu başlıkların YOKLUĞUNU
+     başarısızlık saymıyor —
+
+       coop-not-implemented  pass=true   m=0
+       coep-not-implemented  pass=true   m=0
+       corp-not-implemented  pass=null   m=0
+
+     Bu doğru bir duruş: bunlar derinlemesine savunma katmanları, kusur değil.
+     Yoklukta "fail" versek hem hemen her siteyle çelişirdik hem de haksız
+     olurduk. O yüzden: yoksa `skipped`, varsa ve BİLEREK zayıflatılmışsa
+     `fail`. Ağırlık `info` (0) — mevcut müşterilerin skoru bu eklemeyle
+     kaymıyor; bunlar tavsiye, ceza değil. */
+
+  const coop = (h.get('cross-origin-opener-policy') || '').trim().toLowerCase();
+  if (!coop) {
+    checks.push(check('coop', 'info', 'skipped', null, { note: 'not_implemented' }));
+  } else {
+    /* `unsafe-none` tarayıcı varsayılanı ama BİLEREK yazılmışsa korumayı
+       kapatma niyetidir; onu ayrıca işaretliyoruz. */
+    checks.push(check('coop', 'info', coop === 'unsafe-none' ? 'fail' : 'pass', coop));
+  }
+
+  const coep = (h.get('cross-origin-embedder-policy') || '').trim().toLowerCase();
+  if (!coep) {
+    checks.push(check('coep', 'info', 'skipped', null, { note: 'not_implemented' }));
+  } else {
+    checks.push(check('coep', 'info', coep === 'unsafe-none' ? 'fail' : 'pass', coep));
+  }
+
+  const corp = (h.get('cross-origin-resource-policy') || '').trim().toLowerCase();
+  if (!corp) {
+    checks.push(check('corp', 'info', 'skipped', null, { note: 'not_implemented' }));
+  } else {
+    const gecerli = corp === 'same-origin' || corp === 'same-site' || corp === 'cross-origin';
+    checks.push(check('corp', 'info', gecerli ? 'pass' : 'fail', corp));
+  }
+
+  /* CORS: `*` tek başına kusur DEĞİL — herkese açık bir API için doğru
+     olabilir; Observatory de m=0 veriyor. Gerçek sorun `*` ile birlikte
+     kimlik bilgisi istenmesi: tarayıcı bu ikiliyi zaten reddeder, yani
+     yapılandırma yanlış yazılmış demektir. Bunu ayrıca işaretliyoruz ve
+     bu, Observatory'den BİLEREK ayrıldığımız tek nokta. */
+  const acao = (h.get('access-control-allow-origin') || '').trim();
+  const acac = (h.get('access-control-allow-credentials') || '').trim().toLowerCase();
+  if (!acao) {
+    checks.push(check('cors', 'info', 'skipped', null, { note: 'not_implemented' }));
+  } else if (acao === '*' && acac === 'true') {
+    /* Onem derecesi CIKTIYA gore degismemeli — kalibrasyon sinamasi bunu
+       yakaladi ve hakliydi. Bu grubun tamami `info`: tarayici zaten bu
+       ikiliyi reddediyor, yani somurulebilir bir acik degil, yanlis yazilmis
+       bir yapilandirma. Raporda basarisiz kontrol olarak gorunuyor ama skoru
+       kaydirmiyor. */
+    checks.push(check('cors', 'info', 'fail', acao + ' + credentials',
+      { note: 'wildcard_with_credentials' }));
+  } else {
+    checks.push(check('cors', 'info', 'pass', acao.slice(0, 120)));
+  }
+
+  /* SRI: yalnızca BAŞKA bir kökenden yüklenen script'ler için anlamlıdır.
+     Kendi kökeninden yüklenen dosyada bütünlük özniteliği beklenmez —
+     Observatory de öyle yapıyor (sri-not-implemented-but-no-scripts-loaded
+     ve ...-all-scripts-loaded-from-secure-origin, ikisi de pass=null). */
+  if (context.html === null) {
+    checks.push(check('sri', 'low', 'skipped', null, { note: 'no_html' }));
+  } else {
+    const scriptler = context.html.match(/<script\b[^>]*\bsrc\s*=\s*["'][^"']+["'][^>]*>/gi) || [];
+    const disKokenli = scriptler.filter(function (etiket) {
+      const m = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(etiket);
+      if (!m) return false;
+      let u;
+      try { u = new URL(m[1], context.finalUrl); } catch (e) { return false; }
+      return u.origin !== context.finalUrl.origin;
+    });
+    const butunluksuz = disKokenli.filter(function (etiket) {
+      return !/\bintegrity\s*=\s*["'][^"']+["']/i.test(etiket);
+    });
+    if (!disKokenli.length) {
+      checks.push(check('sri', 'low', 'skipped', null, { note: 'no_external_scripts' }));
+    } else {
+      checks.push(check('sri', 'low', butunluksuz.length ? 'fail' : 'pass',
+        butunluksuz.length ? butunluksuz.length + '/' + disKokenli.length + ' script'
+                           : disKokenli.length + ' script',
+        { samples: butunluksuz.slice(0, 3).map(function (e) {
+            const m = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(e);
+            return m ? m[1].slice(0, 120) : '';
+          }) }));
+    }
+  }
+
   /* --- TLS --- */
   const t = context.tls;
   if (!isHttps || !t || !t.ok) {

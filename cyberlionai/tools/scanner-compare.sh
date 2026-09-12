@@ -65,6 +65,30 @@ if DUVAR="$(kimlik_duvari "$HKOD" "$HYON" "$WORK/ham.bas" "$HOST")"; then
 fi
 note "kimlik duvarı belirtisi yok; karşılaştırmaya geçiliyor"
 
+# Capraz koken basliklarinin HAM degeri. Neden: iki arac ayni "pass" harfini
+# farkli olgular icin verebiliyor — Observatory yoklugu da pass sayiyor, biz
+# varligi pass sayiyoruz. Ayni harf, ayni gercek anlamina gelmeyebilir. Ham
+# deger yazilmadan tablodaki o satira guvenilemez.
+#
+# ONEMLI: yukaridaki ham.bas YONLENDIRME ATLAMASININ basliklaridir (kimlik
+# duvari tespiti icin yonlendirme IZLENMEDEN cekiliyor). Guvenlik basliklari
+# 308'de degil, varis sayfasindadir. Bu yuzden burada AYRI bir istek yapilir
+# ve yalnizca SON atlamanin baslik blogu okunur; ara atlamalardan sizan bir
+# baslik yanlis pozitif olmasin.
+curl -sSL -m 30 -A "$UA" -o /dev/null -D "$WORK/zincir.bas" \
+  -w '%{url_effective}\n' "https://$HOST/" > "$WORK/varis.txt" 2>/dev/null \
+  || printf '\n' > "$WORK/varis.txt"
+awk '/^HTTP\//{n=0} {S[n++]=$0} END{for(i=0;i<n;i++) print S[i]}' \
+  "$WORK/zincir.bas" > "$WORK/son.bas" 2>/dev/null || : > "$WORK/son.bas"
+
+printf '   ham çapraz köken başlıkları (varış: %s):\n' "$(tr -d '\r\n' < "$WORK/varis.txt")"
+for BSLK in cross-origin-opener-policy cross-origin-embedder-policy \
+            cross-origin-resource-policy access-control-allow-origin \
+            access-control-allow-credentials vary; do
+  DEGER="$(grep -i "^$BSLK:" "$WORK/son.bas" 2>/dev/null | head -1 | cut -d: -f2- | tr -d "\r" | sed "s/^ *//")"
+  printf '     %-34s %s\n' "$BSLK" "${DEGER:-(yok)}"
+done
+
 # ---------------------------------------------------------------------------
 head1 "1. Bizim taramamız"
 # Cerez kavanozu: tarama kaydini sonunda AYNI oturumla silebilmek icin.

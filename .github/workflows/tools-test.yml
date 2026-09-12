@@ -31,6 +31,20 @@ jobs:
       - name: Akış sayacı (girdi başına sayım)
         run: node cyberlionai/tools/counter-test.js
 
+      # Capraz koken kontrolleri. Yanlis alarm burada yalnizca gurultu degil:
+      # Observatory ile sahte bir mutabakatsizlik uretirdi.
+      - name: Çapraz köken kontrolleri (COOP/COEP/CORP/CORS/SRI)
+        run: node cyberlionai/tools/crossorigin-test.js
+
+      # Mutabakat tablosunun eslemesi. Bu bozulursa iki arac AYNI harfi
+      # FARKLI gercekler icin uretip sahte bir %100 mutabakat gosterir.
+      - name: Mutabakat tablosu eşlemesi
+        run: node cyberlionai/tools/compare-map-test.js
+
+      # Puanlama kalibrasyonu: bantlar ve beyan edilen onem dereceleri.
+      - name: Puanlama kalibrasyonu
+        run: node cyberlionai/tools/calibration-test.js
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do
