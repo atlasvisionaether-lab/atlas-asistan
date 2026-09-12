@@ -477,7 +477,11 @@ async function scanSite(rawUrl) {
   let country = null;
   for (const adres of (addresses || [])) {
     const cc = geo.countryOfIp(adres);
-    if (cc) { country = cc; break; }
+    /* Buyuk harfe cevriliyor: tablo bugun ISO-2'yi buyuk harf uretiyor
+       (olculdu) ama veritabani kisiti da kod suzgeci de BUYUK harf bekliyor.
+       Uretici bir gun kucuk harfe gecerse degeri sessizce dusurmek yerine
+       kabul etmek dogru olan. */
+    if (cc) { country = String(cc).toUpperCase(); break; }
   }
 
   const failed = checks.filter(function (c) { return c.status === 'fail'; });
