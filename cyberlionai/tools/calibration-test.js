@@ -46,7 +46,10 @@ const SEVERITY = {
      skor ise WEB yuzeyi icin kalibre edilmis; agirlik vermek hicbir seyini
      degistirmemis musterilerin skorunu dusururdu. Bunun gercekten boyle
      oldugu asagida AYRICA sinaniyor (bolum 7). */
-  spf: 'info', dmarc: 'info', dkim: 'info'
+  spf: 'info', dmarc: 'info', dkim: 'info',
+  /* CAA ve DNSSEC: yine info (0). Yoklukları BASARISIZLIK degil
+     "uygulanmamis" sayiliyor; bkz. _lib/dnszone.js basligi. */
+  caa: 'info', dnssec: 'info'
 };
 
 function ctx(o) {
@@ -63,7 +66,8 @@ function ctx(o) {
     legacyTls: 'legacyTls' in o ? o.legacyTls : { tested: true, accepted: false },
     /* Belirtilmemisse UNDEFINED birakiliyor: "olculmedi" demek, uydurma bir
        kayit vermek degil. */
-    mail: o.mail
+    mail: o.mail,
+    zone: o.zone
   };
 }
 
@@ -127,7 +131,8 @@ const s1 = profil('1. GÜVENLİ site', {
      Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
   coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped',
   /* ctx() mail verisi vermiyor: olculmemis demektir, uydurma degil. */
-  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped'
+  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped',
+  caa: 'skipped', dnssec: 'skipped'
 }, [95, 100]);
 
 const s2 = profil('2. ORTA site', {
@@ -145,7 +150,8 @@ const s2 = profil('2. ORTA site', {
      Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
   coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped',
   /* ctx() mail verisi vermiyor: olculmemis demektir, uydurma degil. */
-  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped'
+  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped',
+  caa: 'skipped', dnssec: 'skipped'
 }, [60, 80]);
 
 // Gercekten zayif bir site eski TLS surumlerini de kabul eder; fikstur bunu
@@ -166,7 +172,8 @@ const s3 = profil('3. ZAYIF site', {
      Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
   coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped',
   /* ctx() mail verisi vermiyor: olculmemis demektir, uydurma degil. */
-  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped'
+  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped',
+  caa: 'skipped', dnssec: 'skipped'
 }, [20, 40]);
 
 const s4 = profil('4. ÇOK ZAYIF site (HTTP)', {
@@ -182,7 +189,8 @@ const s4 = profil('4. ÇOK ZAYIF site (HTTP)', {
      Atlanan kontrol paydaya girmedigi icin bantlari da degistirmiyor. */
   coop: 'skipped', coep: 'skipped', corp: 'skipped', cors: 'skipped', sri: 'skipped',
   /* ctx() mail verisi vermiyor: olculmemis demektir, uydurma degil. */
-  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped'
+  spf: 'skipped', dmarc: 'skipped', dkim: 'skipped',
+  caa: 'skipped', dnssec: 'skipped'
 }, [0, 20]);
 
 head('5. Bantlar ayrık ve sıralı');
@@ -239,6 +247,37 @@ ok(spfDurum.status === 'fail' && dmarcDurum.status === 'fail',
    'SPF ve DMARC yoklugu BULGU olarak raporlaniyor (' + spfDurum.status + '/' + dmarcDurum.status + ')');
 ok(dkimDurum.status === 'skipped',
    'DKIM bulunamadiginda BASARISIZ degil ATLANMIS sayiliyor (' + dkimDurum.status + ')');
+
+head('8. CAA/DNSSEC de skoru KAYDIRMIYOR');
+const bolgeYok = scoreOf(buildChecks(ctx({ headers: {} })));
+const bolgeIyi = scoreOf(buildChecks(ctx({ headers: {}, zone: {
+  ok: true, alan: 'ornek.test',
+  caa: [{ critical: 0, issue: 'letsencrypt.org' }],
+  ds: { ok: true, rcode: 0, cevap: 2, ad: true }
+} })));
+const bolgeKotu = scoreOf(buildChecks(ctx({ headers: {}, zone: {
+  ok: true, alan: 'ornek.test', caa: [], ds: { ok: true, rcode: 0, cevap: 0, ad: false }
+} })));
+ok(bolgeYok === bolgeIyi && bolgeIyi === bolgeKotu,
+   'skor uc durumda da ayni (' + [bolgeYok, bolgeIyi, bolgeKotu].join(' = ') + ')');
+
+const bolgeK = buildChecks(ctx({ headers: {}, zone: {
+  ok: true, alan: 'ornek.test', caa: [], ds: { ok: true, rcode: 0, cevap: 0, ad: false }
+} }));
+const caaDurum = bolgeK.find(function (c) { return c.id === 'caa'; });
+const secDurum = bolgeK.find(function (c) { return c.id === 'dnssec'; });
+ok(caaDurum.status === 'skipped' && caaDurum.note === 'not_implemented',
+   'CAA yoklugu "uygulanmamis" (' + caaDurum.status + '/' + caaDurum.note + ')');
+ok(secDurum.status === 'skipped' && secDurum.note === 'not_implemented',
+   'DNSSEC yoklugu "uygulanmamis" (' + secDurum.status + '/' + secDurum.note + ')');
+
+/* UDP kapaliysa "yok" DEGIL "olculemedi" denmeli — uretimde UDP/53'un
+   calisip calismadigini bilmiyoruz ve yanlis taraf yalan olurdu. */
+const udpYok = buildChecks(ctx({ headers: {}, zone: {
+  ok: true, alan: 'ornek.test', caa: [], ds: { ok: false, hata: 'timeout' }
+} })).find(function (c) { return c.id === 'dnssec'; });
+ok(udpYok.status === 'skipped' && udpYok.note === 'not_measured',
+   'UDP dustugunde "olculemedi" deniyor, "yok" degil (' + udpYok.note + ')');
 
 process.stdout.write('\n\x1b[1m' + (failed ? 'SONUÇ: BAŞARISIZ' : 'SONUÇ: HEPSİ GEÇTİ') + '\x1b[0m\n');
 process.stdout.write('\nKalibrasyon tablosu:\n');

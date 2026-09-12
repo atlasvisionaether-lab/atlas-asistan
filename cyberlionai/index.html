@@ -2488,7 +2488,9 @@
             sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
             spf:           { name: 'SPF kaydı', fix: 'TXT kaydı ekleyin:  v=spf1 include:&lt;posta sağlayıcınız&gt; -all' },
             dmarc:         { name: 'DMARC politikası', fix: '_dmarc.&lt;alan adınız&gt; altında TXT kaydı:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;alan adınız&gt;' },
-            dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını &lt;seçici&gt;._domainkey.&lt;alan adınız&gt; altında yayınlayın.' }
+            dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını &lt;seçici&gt;._domainkey.&lt;alan adınız&gt; altında yayınlayın.' },
+            caa:           { name: 'CAA kaydı (sertifika yetkisi)', fix: 'TXT değil CAA kaydı ekleyin:  0 issue "letsencrypt.org"  — yalnızca kullandığınız makamı yazın.' },
+            dnssec:        { name: 'DNSSEC imzası', fix: 'Alan adı kaydedicinizde DNSSEC\'i açın; kayıt şirketi DS kaydını üst bölgeye kendisi ekler.' }
           }
         },
         history: {
@@ -2927,7 +2929,9 @@
             sri:           { name: 'Subresource Integrity (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
             spf:           { name: 'SPF record', fix: 'Add a TXT record:  v=spf1 include:&lt;your mail provider&gt; -all' },
             dmarc:         { name: 'DMARC policy', fix: 'TXT record at _dmarc.&lt;your domain&gt;:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;your domain&gt;' },
-            dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at &lt;selector&gt;._domainkey.&lt;your domain&gt;.' }
+            dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at &lt;selector&gt;._domainkey.&lt;your domain&gt;.' },
+            caa:           { name: 'CAA record (certificate authority)', fix: 'Add a CAA record (not TXT):  0 issue "letsencrypt.org"  — name only the CA you actually use.' },
+            dnssec:        { name: 'DNSSEC signing', fix: 'Enable DNSSEC at your registrar; it publishes the DS record in the parent zone for you.' }
           }
         },
         history: {
