@@ -2399,9 +2399,14 @@
           demoNote: 'Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.',
           fullReport: 'Tam Raporu Al',
           sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
-          state: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi' },
+          /* "Ölçülemedi" üç FARKLI durumu tek kelimede topluyordu: çerez
+             göndermeyen bir sayfa ile COOP başlığını yazmamış bir sunucu aynı
+             etikete düşüyordu. Biri nötr, diğeri tavsiye — ayrılıyorlar.
+             Üçü de skora girmiyor (bkz. scanner.js scoreOf). */
+          state: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi',
+                   skippedNa: 'Uygulanabilir değil', skippedNi: 'Uygulanmamış' },
           scoreLabel: 'Güvenlik skoru',
-          summary: '{passed} geçti · {failed} kaldı · {skipped} ölçülemedi',
+          summary: '{passed} geçti · {failed} kaldı · {skipped} puan dışı',
           quota: 'Kalan ücretsiz tarama: {n}/5',
           quotaOut: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.',
           quotaOutAccount: 'Hesabınızın ücretsiz tarama hakkı doldu. Sınırsız tarama için Premium\'a geçin.',
@@ -2440,6 +2445,24 @@
             not_https: 'sayfa HTTPS değil',
             no_html: 'HTML içerik alınamadı',
             not_measured: 'bu ortamda ölçülemedi',
+            not_implemented: 'başlık uygulanmamış (tavsiye edilen ek katman)',
+            no_external_scripts: 'sayfada dış kaynaklı script yok',
+            wildcard_with_credentials: "'*' ile kimlik bilgisi birlikte kullanılamaz",
+            spf_missing: 'SPF kaydı yok — bu alan adı adına herkes e-posta gönderebilir',
+            spf_multiple: 'birden fazla SPF kaydı var; alıcı sunucu hepsini geçersiz sayar',
+            spf_no_all: "kayıt 'all' mekanizmasıyla bitmiyor; kapsam belirsiz",
+            spf_allows_all: "'+all' herkese bu alan adı adına gönderme yetkisi veriyor",
+            spf_neutral: "'?all' alıcıya hiçbir dayanak vermiyor",
+            dmarc_missing: 'DMARC kaydı yok — sahte e-posta engellenmiyor',
+            dmarc_monitor_only: 'p=none yalnızca izleme; sahte e-posta yine teslim ediliyor',
+            dmarc_partial: 'pct 100 değil; politika iletilerin yalnızca bir kısmına uygulanıyor',
+            dmarc_no_policy: 'kayıtta p= yok; DMARC geçersiz',
+            dmarc_multiple: 'birden fazla DMARC kaydı var',
+            dkim_not_enumerable: 'yaygın seçicilerde anahtar bulunamadı; DKIM seçicileri DNS\'ten listelenemez',
+            dkim_wildcard: 'alan adında joker _domainkey kaydı var; seçici taraması güvenilir değil',
+            domain_not_found: 'alan adı DNS\'te bulunamadı',
+            not_a_domain: 'hedef bir alan adı değil (IP adresi)',
+            query_failed: 'DNS sorgusu yanıt vermedi',
             expired: 'sertifika süresi dolmuş',
             expiring_soon: 'sertifikanın süresi yakında doluyor',
             untrusted: 'sertifika doğrulanamadı'
@@ -2462,7 +2485,10 @@
             coep:          { name: 'Çapraz köken gömücü politikası', fix: 'Cross-Origin-Embedder-Policy: require-corp' },
             corp:          { name: 'Çapraz köken kaynak politikası', fix: 'Cross-Origin-Resource-Policy: same-origin' },
             cors:          { name: 'Çapraz köken paylaşımı (CORS)', fix: 'Access-Control-Allow-Origin: * ile birlikte Allow-Credentials: true kullanmayın; belirli bir köken yazın.' },
-            sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' }
+            sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
+            spf:           { name: 'SPF kaydı', fix: 'TXT kaydı ekleyin:  v=spf1 include:&lt;posta sağlayıcınız&gt; -all' },
+            dmarc:         { name: 'DMARC politikası', fix: '_dmarc.&lt;alan adınız&gt; altında TXT kaydı:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;alan adınız&gt;' },
+            dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını &lt;seçici&gt;._domainkey.&lt;alan adınız&gt; altında yayınlayın.' }
           }
         },
         history: {
@@ -2474,7 +2500,7 @@
           error: 'Geçmiş yüklenemedi. Lütfen tekrar deneyin.',
           more: 'Daha Fazla Yükle', clear: 'Tüm Geçmişi Sil',
           pdf: 'PDF raporu indir', remove: 'Bu kaydı sil',
-          checks: '{passed} geçti · {failed} kaldı · {skipped} ölçülemedi',
+          checks: '{passed} geçti · {failed} kaldı · {skipped} puan dışı',
           deleted: 'Kayıt silindi.', clearedAll: '{n} kayıt silindi.',
           deleteFailed: 'Silme işlemi başarısız oldu.',
           confirmClear: 'Tüm tarama geçmişiniz silinecek. Emin misiniz?'
@@ -2816,9 +2842,10 @@
           demoNote: 'This is a demo output. Full reports and remediation steps unlock with PRO.',
           fullReport: 'Get Full Report',
           sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
-          state: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured' },
+          state: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured',
+                   skippedNa: 'Not applicable', skippedNi: 'Not implemented' },
           scoreLabel: 'Security score',
-          summary: '{passed} passed · {failed} failed · {skipped} not measured',
+          summary: '{passed} passed · {failed} failed · {skipped} not scored',
           quota: 'Free scans left: {n}/5',
           quotaOut: 'You have used your free scans. Upgrade to Premium for unlimited scanning.',
           quotaOutAccount: 'Your account has used its free scans. Upgrade to Premium for unlimited scanning.',
@@ -2857,6 +2884,24 @@
             not_https: 'the page is not served over HTTPS',
             no_html: 'HTML content was not available',
             not_measured: 'could not be measured in this environment',
+            not_implemented: 'header not implemented (recommended extra layer)',
+            no_external_scripts: 'the page loads no external scripts',
+            wildcard_with_credentials: "'*' cannot be combined with credentials",
+            spf_missing: 'no SPF record — anyone can send email as this domain',
+            spf_multiple: 'more than one SPF record; receivers treat all of them as invalid',
+            spf_no_all: "the record does not end with an 'all' mechanism; scope is undefined",
+            spf_allows_all: "'+all' authorises anyone to send as this domain",
+            spf_neutral: "'?all' gives the receiver no basis to act on",
+            dmarc_missing: 'no DMARC record — forged email is not blocked',
+            dmarc_monitor_only: 'p=none is monitoring only; forged email is still delivered',
+            dmarc_partial: 'pct is below 100; the policy applies to only part of the mail',
+            dmarc_no_policy: 'the record has no p= tag; DMARC is invalid',
+            dmarc_multiple: 'more than one DMARC record',
+            dkim_not_enumerable: 'no key found at common selectors; DKIM selectors cannot be listed from DNS',
+            dkim_wildcard: 'the domain has a wildcard _domainkey record; selector probing is unreliable',
+            domain_not_found: 'the domain was not found in DNS',
+            not_a_domain: 'the target is not a domain name (IP address)',
+            query_failed: 'the DNS query did not answer',
             expired: 'the certificate has expired',
             expiring_soon: 'the certificate expires soon',
             untrusted: 'the certificate could not be validated'
@@ -2879,7 +2924,10 @@
             coep:          { name: 'Cross-Origin-Embedder-Policy', fix: 'Cross-Origin-Embedder-Policy: require-corp' },
             corp:          { name: 'Cross-Origin-Resource-Policy', fix: 'Cross-Origin-Resource-Policy: same-origin' },
             cors:          { name: 'Cross-origin sharing (CORS)', fix: 'Do not combine Access-Control-Allow-Origin: * with Allow-Credentials: true; name a specific origin.' },
-            sri:           { name: 'Subresource Integrity (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' }
+            sri:           { name: 'Subresource Integrity (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
+            spf:           { name: 'SPF record', fix: 'Add a TXT record:  v=spf1 include:&lt;your mail provider&gt; -all' },
+            dmarc:         { name: 'DMARC policy', fix: 'TXT record at _dmarc.&lt;your domain&gt;:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;your domain&gt;' },
+            dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at &lt;selector&gt;._domainkey.&lt;your domain&gt;.' }
           }
         },
         history: {
@@ -2891,7 +2939,7 @@
           error: 'History could not be loaded. Please try again.',
           more: 'Load More', clear: 'Delete All History',
           pdf: 'Download PDF report', remove: 'Delete this record',
-          checks: '{passed} passed · {failed} failed · {skipped} not measured',
+          checks: '{passed} passed · {failed} failed · {skipped} not scored',
           deleted: 'Record deleted.', clearedAll: '{n} records deleted.',
           deleteFailed: 'Deletion failed.',
           confirmClear: 'Your entire scan history will be deleted. Are you sure?'
@@ -3925,6 +3973,29 @@
 
     /* ---- Sonuç satırları ---- */
 
+    /* Atlanan bir kontrolün NEDEN atlandığı üç ayrı şey olabilir ve kullanıcı
+       için anlamları da ayrı:
+
+         uygulanabilir değil : ölçülecek bir şey yok (sayfa çerez göndermiyor,
+                               dış script yok). Nötr — eksiklik değil.
+         uygulanmamış        : başlık yazılabilirdi, yazılmamış. Tavsiye.
+         ölçülemedi          : ölçmeyi denedik, başaramadık (TLS el sıkışması).
+
+       Üçü de skora girmiyor; ayrım rapor DÜRÜSTLÜĞÜ için. Eski kayıtlarda da
+       çalışsın diye etiket `note` alanından türetiliyor — kayıtlara yeni bir
+       alan eklemek gerekmiyor.
+
+       Sunucu tarafındaki eşi: api/_lib/report.js -> SKIP_LABEL.
+       İkisinin aynı kalmasını tools/skiplabel-test.js sınıyor. */
+    var SKIP_NA = ['no_cookies', 'no_external_scripts', 'no_html', 'not_https'];
+    var SKIP_NI = ['not_implemented'];
+
+    function skippedLabelKey(note) {
+      if (SKIP_NA.indexOf(note) !== -1) return 'scan.state.skippedNa';
+      if (SKIP_NI.indexOf(note) !== -1) return 'scan.state.skippedNi';
+      return 'scan.state.skipped';
+    }
+
     var STATE_ICON = {
       pass: 'fa-solid fa-circle-check',
       fail: 'fa-solid fa-triangle-exclamation',
@@ -3986,7 +4057,7 @@
       var tag = document.createElement('span');
       tag.className = 'sev sev--' + (item.status === 'skipped' ? 'low' : item.severity);
       tag.textContent = item.status === 'skipped'
-        ? t('scan.state.skipped')
+        ? t(skippedLabelKey(item.note))
         : t('scan.sev.' + item.severity);
       if (item.status === 'skipped') tag.style.opacity = '0.6';
 

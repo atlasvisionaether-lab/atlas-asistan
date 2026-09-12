@@ -22,6 +22,26 @@ const SEV_COLOR = {
 };
 const STATE_COLOR = { pass: [0.11, 0.47, 0.24], fail: [0.75, 0.15, 0.12], skipped: MUTED };
 
+/* Atlanan kontrolün NEDENİ üç ayrı şey olabilir; raporda da ayrı yazılıyor:
+   uygulanabilir değil (ölçülecek bir şey yok), uygulanmamış (tavsiye edilen
+   katman yazılmamış), ölçülemedi (denendi, başarılamadı). Üçü de skora
+   girmiyor — ayrım rapor dürüstlüğü için.
+
+   Etiket `note` alanından türetiliyor, böylece bu değişiklikten ÖNCE kaydedilmiş
+   taramaların PDF'i de doğru çıkıyor.
+
+   Arayüzdeki eşi: index.html -> SKIP_NA / SKIP_NI.
+   İkisinin aynı kalmasını tools/skiplabel-test.js sınıyor. */
+const SKIP_NA = ['no_cookies', 'no_external_scripts', 'no_html', 'not_https'];
+const SKIP_NI = ['not_implemented'];
+
+function stateKey(item) {
+  if (item.status !== 'skipped') return item.status;
+  if (SKIP_NA.indexOf(item.note) !== -1) return 'skippedNa';
+  if (SKIP_NI.indexOf(item.note) !== -1) return 'skippedNi';
+  return 'skipped';
+}
+
 /* Risk eşikleri — raporda da açıkça yazılır ki skor yorumu tutarlı olsun. */
 const RISK_BANDS = [
   { min: 85, key: 'low' },
@@ -41,15 +61,17 @@ const T = {
     title: 'GÜVENLİK RAPORU', brand: 'CYBER LION AI',
     domain: 'Taranan alan adı', date: 'Rapor tarihi',
     score: 'Güvenlik skoru', risk: 'Risk seviyesi',
-    summary: 'Kontrol özeti', passed: 'Geçti', failed: 'Kaldı', skipped: 'Ölçülemedi',
+    summary: 'Kontrol özeti', passed: 'Geçti', failed: 'Kaldı', skipped: 'Puan dışı',
     checksTitle: 'Kontrol sonuçları', findingsTitle: 'Bulgular ve düzeltme önerileri',
     check: 'Kontrol', severity: 'Önem', state: 'Durum',
     fix: 'Düzeltme', impact: 'Etki',
     riskNames: { low: 'Düşük', medium: 'Orta', high: 'Yüksek', critical: 'Kritik' },
     sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
-    states: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi' },
+    states: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi',
+              skippedNa: 'Uygulanabilir değil', skippedNi: 'Uygulanmamış' },
     bands: 'Eşikler: 85–100 Düşük · 70–84 Orta · 50–69 Yüksek · 0–49 Kritik',
-    skippedNote: 'Ölçülemeyen kontroller skora dahil edilmez.',
+    skippedNote: 'Puan dışı kontroller skora dahil edilmez: uygulanabilir değil (ölçülecek '
+      + 'bir şey yok), uygulanmamış (tavsiye edilen ek katman) veya ölçülemedi.',
     disclaimerTitle: 'Kapsam ve sınırlar',
     disclaimer: 'Bu rapor, hedefin dışarıdan gözlemlenebilen HTTP yanıt başlıklarına ve TLS '
       + 'yapılandırmasına dayanır. Kapsamlı bir sızma testi (penetrasyon testi) değildir ve '
@@ -64,15 +86,17 @@ const T = {
     title: 'SECURITY REPORT', brand: 'CYBER LION AI',
     domain: 'Scanned domain', date: 'Report date',
     score: 'Security score', risk: 'Risk level',
-    summary: 'Check summary', passed: 'Passed', failed: 'Failed', skipped: 'Not measured',
+    summary: 'Check summary', passed: 'Passed', failed: 'Failed', skipped: 'Not scored',
     checksTitle: 'Check results', findingsTitle: 'Findings and remediation',
     check: 'Check', severity: 'Severity', state: 'Status',
     fix: 'Fix', impact: 'Impact',
     riskNames: { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' },
     sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
-    states: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured' },
+    states: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured',
+              skippedNa: 'Not applicable', skippedNi: 'Not implemented' },
     bands: 'Thresholds: 85–100 Low · 70–84 Medium · 50–69 High · 0–49 Critical',
-    skippedNote: 'Checks that could not be measured are excluded from the score.',
+    skippedNote: 'Checks outside the score: not applicable (nothing to measure), not '
+      + 'implemented (recommended extra layer) or not measured.',
     disclaimerTitle: 'Scope and limitations',
     disclaimer: 'This report is based on externally observable HTTP response headers and TLS '
       + 'configuration of the target. It is not a full penetration test and does not cover '
@@ -100,7 +124,19 @@ const CHECKS = {
     mixed_content: ['Karışık içerik', 'HTTPS sayfada HTTP kaynak yüklenmesi, sayfanın güvenliğini zayıflatır.', 'Sayfadaki tüm kaynakları https:// ile yükleyin.'],
     tls_protocol: ['TLS protokol sürümü', 'Eski protokoller bilinen kriptografik zayıflıklar taşır.', 'Yalnızca TLS 1.2 ve 1.3 açık kalsın.'],
     tls_cert: ['SSL sertifikası', 'Süresi dolmuş veya doğrulanamayan sertifika, kullanıcıya güvenlik uyarısı gösterir.', 'Sertifikayı yenileyin ve zincirin tam olduğundan emin olun.'],
-    tls_legacy: ['Eski TLS sürümleri', 'TLS 1.0/1.1 kabul edilmesi, düşürme (downgrade) saldırılarına imkân verir.', 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;    Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3']
+    tls_legacy: ['Eski TLS sürümleri', 'TLS 1.0/1.1 kabul edilmesi, düşürme (downgrade) saldırılarına imkân verir.', 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;    Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3'],
+    /* Bu bes kontrol motorda vardi ama BURADA yoktu; PDF'te ham kimlikleri
+       ("coop", "sri") gorunuyordu. */
+    coop: ['Çapraz köken açıcı politikası', 'Sekmeler arası yalıtım olmadan sayfa, açan pencereyle aynı süreçte kalabilir.', 'Cross-Origin-Opener-Policy: same-origin'],
+    coep: ['Çapraz köken gömme politikası', 'Yalıtım tamamlanmadan hassas ölçüm API\'leri kapalı kalır.', 'Cross-Origin-Embedder-Policy: require-corp'],
+    corp: ['Çapraz köken kaynak politikası', 'Kaynaklar başka sitelerce gömülebilir.', 'Cross-Origin-Resource-Policy: same-origin'],
+    cors: ['Çapraz köken paylaşımı (CORS)', 'Joker köken ile kimlik bilgisi birlikte kullanılamaz; yapılandırma hatalıdır.', 'Access-Control-Allow-Origin: * ile Allow-Credentials: true birlikte kullanılmaz; belirli bir köken yazın.'],
+    sri: ['Alt kaynak bütünlüğü (SRI)', 'Dış kaynaklı script değiştirilirse sayfa bunu fark etmez.', '<script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous">'],
+    /* E-posta kimlik dogrulamasi. Bunlar POSTA yuzeyini olcuyor; skora
+       girmiyorlar (agirlik info=0) ama bulgu olarak raporlaniyorlar. */
+    spf: ['SPF kaydı', 'SPF olmadan üçüncü bir kişi bu alan adı adına e-posta gönderebilir ve alıcının bunu eleyecek dayanağı olmaz.', 'TXT kaydı:  v=spf1 include:<posta sağlayıcınız> -all'],
+    dmarc: ['DMARC politikası', 'DMARC olmadan (veya p=none ile) SPF/DKIM doğrulamasından geçemeyen sahte e-posta yine teslim edilir.', 'TXT kaydı:  _dmarc.<alan>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<alan>'],
+    dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.']
   },
   en: {
     https: ['HTTPS in use', 'Unencrypted traffic lets an interceptor read and modify data.', 'Serve all traffic over HTTPS; 301-redirect HTTP to HTTPS.'],
@@ -115,7 +151,15 @@ const CHECKS = {
     mixed_content: ['Mixed content', 'Loading HTTP resources on an HTTPS page weakens the page\'s security.', 'Load every resource over https://.'],
     tls_protocol: ['TLS protocol version', 'Legacy protocols carry known cryptographic weaknesses.', 'Leave only TLS 1.2 and 1.3 enabled.'],
     tls_cert: ['SSL certificate', 'An expired or untrusted certificate shows users a security warning.', 'Renew the certificate and ensure the chain is complete.'],
-    tls_legacy: ['Legacy TLS versions', 'Accepting TLS 1.0/1.1 enables downgrade attacks.', 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;    Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3']
+    tls_legacy: ['Legacy TLS versions', 'Accepting TLS 1.0/1.1 enables downgrade attacks.', 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;    Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3'],
+    coop: ['Cross-Origin-Opener-Policy', 'Without cross-tab isolation the page may share a process with its opener.', 'Cross-Origin-Opener-Policy: same-origin'],
+    coep: ['Cross-Origin-Embedder-Policy', 'Without full isolation, high-resolution measurement APIs stay disabled.', 'Cross-Origin-Embedder-Policy: require-corp'],
+    corp: ['Cross-Origin-Resource-Policy', 'Resources can be embedded by other sites.', 'Cross-Origin-Resource-Policy: same-origin'],
+    cors: ['Cross-origin sharing (CORS)', 'A wildcard origin cannot be combined with credentials; the configuration is invalid.', 'Do not combine Access-Control-Allow-Origin: * with Allow-Credentials: true; name a specific origin.'],
+    sri: ['Subresource Integrity (SRI)', 'If an external script is altered, the page will not notice.', '<script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous">'],
+    spf: ['SPF record', 'Without SPF a third party can send email as this domain and the recipient has no basis to reject it.', 'TXT record:  v=spf1 include:<your mail provider> -all'],
+    dmarc: ['DMARC policy', 'Without DMARC (or with p=none) forged email that fails SPF/DKIM is still delivered.', 'TXT record:  _dmarc.<domain>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<domain>'],
+    dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.']
   }
 };
 
@@ -217,7 +261,7 @@ function buildReport(scan, lang) {
     const meta = C[item.id] || [item.id, '', ''];
     doc.text(M, y, meta[0], { size: 9.5, color: INK });
     doc.text(M + 300, y, L.sev[item.severity] || item.severity, { size: 9, color: SEV_COLOR[item.severity] || MUTED });
-    doc.text(M + 390, y, L.states[item.status] || item.status,
+    doc.text(M + 390, y, L.states[stateKey(item)] || item.status,
       { size: 9, bold: item.status === 'fail', color: STATE_COLOR[item.status] || MUTED });
     y += 8;
     doc.line(M, y, A4.width - M, y, [0.93, 0.93, 0.94], 0.5);
