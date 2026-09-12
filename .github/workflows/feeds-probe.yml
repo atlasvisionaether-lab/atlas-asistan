@@ -21,6 +21,10 @@ on:
         description: "PhishTank sayımını ölç (neyi saydığımızı doğrular)"
         type: boolean
         default: false
+      time_fields:
+        description: "Beslemelerdeki zaman damgalarını ölç (1s/24s/7g filtresi için)"
+        type: boolean
+        default: false
       compare_base:
         description: "Karşılaştırmada kullanılacak KENDİ adresimiz (boş = üretim)"
         required: false
@@ -57,6 +61,12 @@ jobs:
       # skorlarının tutması tesadüf olurdu.
       # Sayacimizin adres mi detay satiri mi saydigini olcer. Haritada
       # "kayit" diye gosterdigimiz sayinin ne oldugunu dogrular.
+      # Hangi besleme zaman filtresini destekleyebilir. Alan adlarini tahmin
+      # edip ayristirici yazmak yerine once olculuyor.
+      - name: Zaman damgalarını ölç
+        if: inputs.time_fields
+        run: bash cyberlionai/tools/time-probe.sh
+
       - name: PhishTank sayımını ölç
         if: inputs.phishtank_count
         run: bash cyberlionai/tools/phishtank-probe.sh
