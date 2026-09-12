@@ -80,23 +80,38 @@ olc() {
 }
 
 ozet_json() {
-  local dosya="$1"
-  if ! jq -e . "$dosya" >/dev/null 2>&1; then
-    note "\033[33mJSON olarak ayrıştırılamadı\033[0m (kırpılmış ya da farklı biçim)"
-    note "ilk 200 bayt: $(head -c 200 "$dosya" | tr -d '\n\r')"
-    return
-  fi
-  local kok; kok="$(jq -r 'type' "$dosya")"
-  note "kök tür: $kok"
-  local ornek
-  if [ "$kok" = "array" ]; then
-    note "kayıt sayısı: $(jq 'length' "$dosya")"
-    ornek="$(jq -c '.[0] // {}' "$dosya")"
+  local dosya="$1" ornek=""
+  if jq -e . "$dosya" >/dev/null 2>&1; then
+    local kok; kok="$(jq -r 'type' "$dosya")"
+    note "kök tür: $kok"
+    if [ "$kok" = "array" ]; then
+      note "kayıt sayısı: $(jq 'length' "$dosya")"
+      ornek="$(jq -c '.[0] // {}' "$dosya" 2>/dev/null)"
+    else
+      # Kok nesne: yaygin sarmalayicilari dene, yoksa ilk deger.
+      ornek="$(jq -c '(.data[0]? // .urls[0]? // .results[0]? // (to_entries[0].value)) // {}' \
+               "$dosya" 2>/dev/null)"
+      # urlhaus gibi deger DIZI ise ilk elemani al.
+      ornek="$(printf '%s' "$ornek" | jq -c 'if type=="array" then (.[0] // {}) else . end' 2>/dev/null)"
+    fi
   else
-    ornek="$(jq -c '(.data // .urls // .results // to_entries | .[0]) // {}' "$dosya" 2>/dev/null || echo '{}')"
+    # OLCULDU (kosu 34702409550): Spamhaus DROP satir-basina-JSON (NDJSON).
+    # Tumu tek JSON olarak ayristirilamaz; ilk gecerli satir ornek alinir.
+    local satir
+    satir="$(grep -m1 '^{' "$dosya" 2>/dev/null)"
+    if [ -n "$satir" ] && printf '%s' "$satir" | jq -e . >/dev/null 2>&1; then
+      note "kök tür: satır-başına-JSON (NDJSON)"
+      note "satır sayısı (kırpılmış gövdede): $(wc -l < "$dosya")"
+      ornek="$satir"
+    else
+      note "\033[33mJSON olarak ayrıştırılamadı\033[0m (kırpılmış ya da farklı biçim)"
+      note "ilk 200 bayt: $(head -c 200 "$dosya" | tr -d '\n\r')"
+      return
+    fi
   fi
   note "örnek kayıt: $(printf '%s' "$ornek" | cut -c1-300)"
-  alan_tara "$(printf '%s' "$ornek" | jq -r 'if type=="object" then (keys | join(" ")) else "" end' 2>/dev/null)"
+  alan_tara "$(printf '%s' "$ornek" \
+    | jq -r 'if type=="object" then (keys_unsorted | join(" ")) else "" end' 2>/dev/null)"
 }
 
 ozet_csv() {
@@ -134,11 +149,15 @@ ozet_duz() {
 alan_tara() {
   local alanlar="$1"
   [ -z "$alanlar" ] && { note "alan adı çıkarılamadı"; return; }
+  # OLCULDU (kosu 34702409550): alan listesi bozuk geldiginde bu fonksiyon
+  # yuzlerce satir basip DIGER adaylarin sonuclarini kayittan tasirdi. Liste
+  # artik kirpiliyor: olcum, kendi ciktisini okunamaz hale getirmemeli.
+  local dizi; dizi="$(printf '%s\n' $alanlar | head -40)"
   note "alanlar: $(printf '%s' "$alanlar" | cut -c1-220)"
   local u i z
-  u="$(printf '%s\n' $alanlar | grep -iE "$ULKESI" | tr '\n' ' ')"
-  i="$(printf '%s\n' $alanlar | grep -iE "$IPSI"   | tr '\n' ' ')"
-  z="$(printf '%s\n' $alanlar | grep -iE "$ZAMANSI" | tr '\n' ' ')"
+  u="$(printf '%s\n' "$dizi" | grep -iE "$ULKESI"  | head -5 | tr '\n' ' ')"
+  i="$(printf '%s\n' "$dizi" | grep -iE "$IPSI"    | head -5 | tr '\n' ' ')"
+  z="$(printf '%s\n' "$dizi" | grep -iE "$ZAMANSI" | head -5 | tr '\n' ' ')"
   [ -n "$u" ] && note "  \033[32mÜLKE alanı\033[0m : $u" || note "  ülke alanı  : YOK"
   [ -n "$i" ] && note "  \033[32mIP alanı\033[0m    : $i" || note "  IP alanı    : YOK"
   [ -n "$z" ] && note "  \033[32mZAMAN alanı\033[0m : $z" || note "  zaman alanı : YOK"
