@@ -87,11 +87,15 @@ fi
 
 # ---------------------------------------------------------------------------
 head1 "2b. urlhaus json_recent  vs  json_online"
-# Uretimde json_online'a gecildi. Fark ANLAMLIDIR: json_recent son eklenenleri,
-# json_online su an cevrimici olanlari verir. Degisimin sayilara ne yaptigini
-# tahmin etmek yerine iki ucu yan yana olcuyoruz — ozellikle 1s/24s
-# pencerelerinin DUSUP dusmedigini, cunku json_online'da eski `dateadded`
-# degerleri bulunabilir.
+# Uretim json_recent KULLANIYOR. json_online'a gecmeyi onermistim; bu olcum
+# onerimi curuttu (kosu 34703503182) ve degisiklik geri alindi:
+#
+#   json_recent  12.637 kayit   ciplak IP tasiyan 11.298   24s=301  7g=2.912
+#   json_online  13.861 kayit   ciplak IP tasiyan  5.459   24s=212  7g=  729
+#
+# Kayit sayisi artiyor ama ULKESI COZULEBILEN kayit yariya dusuyor; ulkeyi
+# URL'deki ciplak IP'den cozuyoruz. Bolum, karar tekrar gundeme geldiginde
+# ayni olcumu yeniden yapabilmek icin duruyor.
 for UC in json_recent json_online; do
   KOD="$(cek "urlhaus-$UC" "https://urlhaus.abuse.ch/downloads/$UC/" "$WORK/$UC.json")"
   if [ "$KOD" = "200" ] && jq -e 'type == "object"' "$WORK/$UC.json" >/dev/null 2>&1; then
