@@ -2436,7 +2436,12 @@
             mixed_content: { name: 'Karışık içerik', fix: 'HTTPS sayfada http:// ile yüklenen kaynakları https:// yapın.' },
             tls_protocol:  { name: 'TLS protokol sürümü', fix: 'Yalnızca TLS 1.2 ve 1.3 açık kalsın.' },
             tls_cert:      { name: 'SSL sertifikası', fix: 'Sertifikayı yenileyin ve zincirin tam olduğundan emin olun.' },
-            tls_legacy:    { name: 'Eski TLS sürümleri', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' }
+            tls_legacy:    { name: 'Eski TLS sürümleri', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' },
+            coop:          { name: 'Çapraz köken açıcı politikası', fix: 'Cross-Origin-Opener-Policy: same-origin' },
+            coep:          { name: 'Çapraz köken gömücü politikası', fix: 'Cross-Origin-Embedder-Policy: require-corp' },
+            corp:          { name: 'Çapraz köken kaynak politikası', fix: 'Cross-Origin-Resource-Policy: same-origin' },
+            cors:          { name: 'Çapraz köken paylaşımı (CORS)', fix: 'Access-Control-Allow-Origin: * ile birlikte Allow-Credentials: true kullanmayın; belirli bir köken yazın.' },
+            sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' }
           }
         },
         history: {
@@ -2840,7 +2845,12 @@
             mixed_content: { name: 'Mixed content', fix: 'Load every resource on an HTTPS page over https://.' },
             tls_protocol:  { name: 'TLS protocol version', fix: 'Leave only TLS 1.2 and 1.3 enabled.' },
             tls_cert:      { name: 'SSL certificate', fix: 'Renew the certificate and make sure the chain is complete.' },
-            tls_legacy:    { name: 'Legacy TLS versions', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' }
+            tls_legacy:    { name: 'Legacy TLS versions', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' },
+            coop:          { name: 'Cross-Origin-Opener-Policy', fix: 'Cross-Origin-Opener-Policy: same-origin' },
+            coep:          { name: 'Cross-Origin-Embedder-Policy', fix: 'Cross-Origin-Embedder-Policy: require-corp' },
+            corp:          { name: 'Cross-Origin-Resource-Policy', fix: 'Cross-Origin-Resource-Policy: same-origin' },
+            cors:          { name: 'Cross-origin sharing (CORS)', fix: 'Do not combine Access-Control-Allow-Origin: * with Allow-Credentials: true; name a specific origin.' },
+            sri:           { name: 'Subresource Integrity (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' }
           }
         },
         history: {
