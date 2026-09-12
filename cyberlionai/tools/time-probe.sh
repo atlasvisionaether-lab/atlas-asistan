@@ -86,6 +86,38 @@ if [ "$KOD" = "200" ] && jq -e 'type == "object"' "$WORK/urlhaus.json" >/dev/nul
 fi
 
 # ---------------------------------------------------------------------------
+head1 "2b. urlhaus json_recent  vs  json_online"
+# Uretim json_recent KULLANIYOR. json_online'a gecmeyi onermistim; bu olcum
+# onerimi curuttu (kosu 34703503182) ve degisiklik geri alindi:
+#
+#   json_recent  12.637 kayit   ciplak IP tasiyan 11.298   24s=301  7g=2.912
+#   json_online  13.861 kayit   ciplak IP tasiyan  5.459   24s=212  7g=  729
+#
+# Kayit sayisi artiyor ama ULKESI COZULEBILEN kayit yariya dusuyor; ulkeyi
+# URL'deki ciplak IP'den cozuyoruz. Bolum, karar tekrar gundeme geldiginde
+# ayni olcumu yeniden yapabilmek icin duruyor.
+for UC in json_recent json_online; do
+  KOD="$(cek "urlhaus-$UC" "https://urlhaus.abuse.ch/downloads/$UC/" "$WORK/$UC.json")"
+  if [ "$KOD" = "200" ] && jq -e 'type == "object"' "$WORK/$UC.json" >/dev/null 2>&1; then
+    note "$UC: $(wc -c < "$WORK/$UC.json") bayt  $(jq 'length' "$WORK/$UC.json") kayıt"
+    note "  $(jq -r '
+      (now) as $n
+      | [ .[] | (if type=="array" then .[0] else . end) ] as $k
+      | [ $k[] | (.dateadded // "") | select(type=="string" and . != "")
+          | select(length >= 19) | (.[0:19] | sub(" "; "T") + "Z")
+          | try fromdateiso8601 catch empty ] as $t
+      | "1s=\([$t[]|select($n - . <= 3600)]|length)  " +
+        "24s=\([$t[]|select($n - . <= 86400)]|length)  " +
+        "7g=\([$t[]|select($n - . <= 604800)]|length)  " +
+        "damgali=\($t|length)  " +
+        "çıplak IP taşıyan=\([$k[]|select(.url|test("://[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+"))]|length)"
+    ' "$WORK/$UC.json" 2>/dev/null || echo 'okunamadı')"
+  else
+    note "$UC: HTTP $KOD — okunamadı"
+  fi
+done
+
+# ---------------------------------------------------------------------------
 head1 "3. torexit (torbulkexitlist)"
 KOD="$(cek torexit 'https://check.torproject.org/torbulkexitlist' "$WORK/tor.txt")"
 note "HTTP $KOD  $(wc -c < "$WORK/tor.txt") bayt"

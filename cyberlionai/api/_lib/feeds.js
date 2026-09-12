@@ -408,6 +408,17 @@ const SOURCES = [
     id: 'urlhaus',
     label: 'URLhaus',
     attribution: 'abuse.ch — URLhaus',
+    /* json_online DEGIL json_recent — ve bu OLCUMLE secildi.
+       json_online'a gecmeyi onermistim: "daha cok kayit, ayni saglayici, yeni
+       lisans yuzeyi yok". Olcum (kosu 34703503182) bunu curuttu:
+
+         json_recent  12.637 kayit   ciplak IP tasiyan 11.298   7g=2.912
+         json_online  13.861 kayit   ciplak IP tasiyan  5.459   7g=  729
+
+       Kayit sayisi %10 artiyor ama ULKESI COZULEBILEN kayit YARIYA DUSUYOR.
+       Ulkeyi URL'deki ciplak IP'den cozuyoruz; alan adi tasiyan kayit haritada
+       gorunmez. Yani json_online haritayi zenginlestirmiyor, FAKIRLESTIRIYOR.
+       7 gunluk pencere de 2.912'den 729'a iniyor. */
     url: 'https://urlhaus.abuse.ch/downloads/json_recent/',
     /* Beslemenin kendi semasinda ulke YOK; ulke IP->ulke tablosundan
        cozuluyor. Alan adi tasiyan kayitlar cozulemiyor ve ayrica sayiliyor. */
