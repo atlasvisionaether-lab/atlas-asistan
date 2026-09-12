@@ -1,0 +1,34 @@
+name: Araç sınamaları
+
+# Ağ gerektirmeyen sınamalar. Her PR'da ve main'e her işlemede koşar.
+#
+# Neden ayrı bir iş akışı: feeds-probe.yml yalnızca elle tetikleniyor. Oraya
+# konan bir sınama, kimse elle koşturmadıkça sessizce çürür — koruma olmaz.
+# Buradaki sınamalar dış ağa çıkmıyor, saniyeler sürüyor ve gerçekten kapı
+# tutuyor.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Kimlik duvari algilamasi. Bu bozulursa karsilastirma betigi yine
+      # korumali bir hedefte anlamsiz bir mutabakat orani uretebilir.
+      - name: Kimlik duvarı algılaması
+        run: bash cyberlionai/tools/wall-test.sh
+
+      - name: Kabuk betiklerinin sözdizimi
+        run: |
+          for f in cyberlionai/tools/*.sh; do
+            bash -n "$f" || exit 1
+          done
+          echo "tüm kabuk betikleri ayrıştırıldı"

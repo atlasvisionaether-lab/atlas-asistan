@@ -47,6 +47,11 @@ jobs:
       # --- Tarama motoru karşılaştırması -----------------------------------
       # Skor değil KONTROL karşılaştırılıyor: üç araç farklı kapsamları ölçüyor,
       # skorlarının tutması tesadüf olurdu.
+      # Kimlik duvari algilamasinin sinamasi. Ag gerektirmiyor; her kosuda
+      # calisir ki algilama sessizce bozulmasin.
+      - name: Kimlik duvarı algılamasını sına
+        run: bash cyberlionai/tools/wall-test.sh
+
       - name: Motoru bağımsız araçlarla karşılaştır
         if: inputs.compare_host != ''
         env:
