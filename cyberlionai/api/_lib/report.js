@@ -22,6 +22,26 @@ const SEV_COLOR = {
 };
 const STATE_COLOR = { pass: [0.11, 0.47, 0.24], fail: [0.75, 0.15, 0.12], skipped: MUTED };
 
+/* Atlanan kontrolün NEDENİ üç ayrı şey olabilir; raporda da ayrı yazılıyor:
+   uygulanabilir değil (ölçülecek bir şey yok), uygulanmamış (tavsiye edilen
+   katman yazılmamış), ölçülemedi (denendi, başarılamadı). Üçü de skora
+   girmiyor — ayrım rapor dürüstlüğü için.
+
+   Etiket `note` alanından türetiliyor, böylece bu değişiklikten ÖNCE kaydedilmiş
+   taramaların PDF'i de doğru çıkıyor.
+
+   Arayüzdeki eşi: index.html -> SKIP_NA / SKIP_NI.
+   İkisinin aynı kalmasını tools/skiplabel-test.js sınıyor. */
+const SKIP_NA = ['no_cookies', 'no_external_scripts', 'no_html', 'not_https'];
+const SKIP_NI = ['not_implemented'];
+
+function stateKey(item) {
+  if (item.status !== 'skipped') return item.status;
+  if (SKIP_NA.indexOf(item.note) !== -1) return 'skippedNa';
+  if (SKIP_NI.indexOf(item.note) !== -1) return 'skippedNi';
+  return 'skipped';
+}
+
 /* Risk eşikleri — raporda da açıkça yazılır ki skor yorumu tutarlı olsun. */
 const RISK_BANDS = [
   { min: 85, key: 'low' },
@@ -41,15 +61,17 @@ const T = {
     title: 'GÜVENLİK RAPORU', brand: 'CYBER LION AI',
     domain: 'Taranan alan adı', date: 'Rapor tarihi',
     score: 'Güvenlik skoru', risk: 'Risk seviyesi',
-    summary: 'Kontrol özeti', passed: 'Geçti', failed: 'Kaldı', skipped: 'Ölçülemedi',
+    summary: 'Kontrol özeti', passed: 'Geçti', failed: 'Kaldı', skipped: 'Puan dışı',
     checksTitle: 'Kontrol sonuçları', findingsTitle: 'Bulgular ve düzeltme önerileri',
     check: 'Kontrol', severity: 'Önem', state: 'Durum',
     fix: 'Düzeltme', impact: 'Etki',
     riskNames: { low: 'Düşük', medium: 'Orta', high: 'Yüksek', critical: 'Kritik' },
     sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
-    states: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi' },
+    states: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi',
+              skippedNa: 'Uygulanabilir değil', skippedNi: 'Uygulanmamış' },
     bands: 'Eşikler: 85–100 Düşük · 70–84 Orta · 50–69 Yüksek · 0–49 Kritik',
-    skippedNote: 'Ölçülemeyen kontroller skora dahil edilmez.',
+    skippedNote: 'Puan dışı kontroller skora dahil edilmez: uygulanabilir değil (ölçülecek '
+      + 'bir şey yok), uygulanmamış (tavsiye edilen ek katman) veya ölçülemedi.',
     disclaimerTitle: 'Kapsam ve sınırlar',
     disclaimer: 'Bu rapor, hedefin dışarıdan gözlemlenebilen HTTP yanıt başlıklarına ve TLS '
       + 'yapılandırmasına dayanır. Kapsamlı bir sızma testi (penetrasyon testi) değildir ve '
@@ -64,15 +86,17 @@ const T = {
     title: 'SECURITY REPORT', brand: 'CYBER LION AI',
     domain: 'Scanned domain', date: 'Report date',
     score: 'Security score', risk: 'Risk level',
-    summary: 'Check summary', passed: 'Passed', failed: 'Failed', skipped: 'Not measured',
+    summary: 'Check summary', passed: 'Passed', failed: 'Failed', skipped: 'Not scored',
     checksTitle: 'Check results', findingsTitle: 'Findings and remediation',
     check: 'Check', severity: 'Severity', state: 'Status',
     fix: 'Fix', impact: 'Impact',
     riskNames: { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' },
     sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
-    states: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured' },
+    states: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured',
+              skippedNa: 'Not applicable', skippedNi: 'Not implemented' },
     bands: 'Thresholds: 85–100 Low · 70–84 Medium · 50–69 High · 0–49 Critical',
-    skippedNote: 'Checks that could not be measured are excluded from the score.',
+    skippedNote: 'Checks outside the score: not applicable (nothing to measure), not '
+      + 'implemented (recommended extra layer) or not measured.',
     disclaimerTitle: 'Scope and limitations',
     disclaimer: 'This report is based on externally observable HTTP response headers and TLS '
       + 'configuration of the target. It is not a full penetration test and does not cover '
@@ -217,7 +241,7 @@ function buildReport(scan, lang) {
     const meta = C[item.id] || [item.id, '', ''];
     doc.text(M, y, meta[0], { size: 9.5, color: INK });
     doc.text(M + 300, y, L.sev[item.severity] || item.severity, { size: 9, color: SEV_COLOR[item.severity] || MUTED });
-    doc.text(M + 390, y, L.states[item.status] || item.status,
+    doc.text(M + 390, y, L.states[stateKey(item)] || item.status,
       { size: 9, bold: item.status === 'fail', color: STATE_COLOR[item.status] || MUTED });
     y += 8;
     doc.line(M, y, A4.width - M, y, [0.93, 0.93, 0.94], 0.5);

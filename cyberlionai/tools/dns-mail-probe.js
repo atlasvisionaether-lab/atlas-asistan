@@ -64,6 +64,11 @@ async function txt(ad) {
   }
 }
 
+async function kayit(yontem, ad) {
+  try { return { ok: true, deger: await cozucu[yontem](ad) }; }
+  catch (e) { return { ok: false, kod: e.code }; }
+}
+
 function yaz(etiket, deger) {
   process.stdout.write('   ' + String(etiket).padEnd(22) + String(deger) + '\n');
 }
@@ -109,17 +114,40 @@ async function olc(alan) {
     yaz('  rua', rua ? 'var (rapor toplanıyor)' : 'YOK');
   });
 
+  /* 0. Alan adı ÇÖZÜLÜYOR mu ve posta alıyor mu? TXT sorgusundan dönen
+        ENOTFOUND'u yorumlayabilmek için gerekiyor: alan adı hiç yoksa
+        "SPF yok" demek anlamsız olur. */
+  const a = await kayit('resolve4', alan);
+  const mx = await kayit('resolveMx', alan);
+  yaz('A kaydı', a.ok ? a.deger.slice(0, 3).join(', ') : a.kod);
+  yaz('MX kaydı', mx.ok ? mx.deger.map(function (m) { return m.exchange; }).slice(0, 3).join(', ') : mx.kod);
+
   /* 3. DKIM: numaralandırılamıyor. Yaygın seçiciler taranıyor ki "bulursak
-        kesin var, bulamazsak bilmiyoruz" ayrımı ÖLÇÜMLE gösterilsin. */
+        kesin var, bulamazsak bilmiyoruz" ayrımı ÖLÇÜMLE gösterilsin.
+        İLK KOŞU (34709370416) beklenmedik bir sonuç verdi: example.com'da
+        18 seçicinin 18'i de "bulundu" göründü. Bu yüzden artık EŞLEŞEN KAYDIN
+        KENDİSİ yazdırılıyor — neyin eşleştiğini görmeden "bulundu" demek
+        ölçüm değil. */
   const t0 = Date.now();
   const sonuc = await Promise.all(SECICILER.map(async function (s) {
     const r = await txt(s + '._domainkey.' + alan);
-    const varMi = r.ok && r.kayitlar.some(function (k) { return /(^|;)\s*(v=DKIM1|k=|p=)/i.test(k); });
-    return varMi ? s : null;
+    if (!r.ok) return null;
+    const esleyen = r.kayitlar.filter(function (k) { return /(^|;)\s*(v=DKIM1|k=|p=)/i.test(k); });
+    return esleyen.length ? { secici: s, kayit: esleyen[0] } : null;
   }));
   const bulunan = sonuc.filter(Boolean);
-  yaz('DKIM seçicileri', (bulunan.length ? bulunan.join(', ') : 'yaygın seçicilerde bulunamadı') +
-    '  (' + SECICILER.length + ' sorgu, ' + (Date.now() - t0) + 'ms)');
+  yaz('DKIM seçicileri', (bulunan.length ? bulunan.map(function (b) { return b.secici; }).join(', ')
+    : 'yaygın seçicilerde bulunamadı') + '  (' + SECICILER.length + ' sorgu, ' + (Date.now() - t0) + 'ms)');
+  bulunan.slice(0, 3).forEach(function (b) {
+    yaz('  ' + b.secici, (b.kayit.length > 90 ? b.kayit.slice(0, 90) + '...' : b.kayit) +
+      '  [' + b.kayit.length + ' bayt]');
+  });
+  /* Var olmayan bir seçici de soruluyor: joker (wildcard) TXT kaydı olan bir
+     alan adında HER isim yanıt döner ve seçici taraması yalan söyler. */
+  const uydurma = await txt('cyberlion-olmayan-secici-9182._domainkey.' + alan);
+  yaz('uydurma seçici', uydurma.ok
+    ? 'YANIT DÖNDÜ (joker kayıt!) -> ' + uydurma.kayitlar[0].slice(0, 60)
+    : uydurma.kod + ' (beklenen)');
 
   /* 4. www. önekiyle de bakılıyor: kullanıcı "www.x.com" tarattığında
         kaydı hangi isimde arayacağımızı ölçüm belirlesin. */

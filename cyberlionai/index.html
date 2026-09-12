@@ -2399,9 +2399,14 @@
           demoNote: 'Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.',
           fullReport: 'Tam Raporu Al',
           sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
-          state: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi' },
+          /* "Ölçülemedi" üç FARKLI durumu tek kelimede topluyordu: çerez
+             göndermeyen bir sayfa ile COOP başlığını yazmamış bir sunucu aynı
+             etikete düşüyordu. Biri nötr, diğeri tavsiye — ayrılıyorlar.
+             Üçü de skora girmiyor (bkz. scanner.js scoreOf). */
+          state: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi',
+                   skippedNa: 'Uygulanabilir değil', skippedNi: 'Uygulanmamış' },
           scoreLabel: 'Güvenlik skoru',
-          summary: '{passed} geçti · {failed} kaldı · {skipped} ölçülemedi',
+          summary: '{passed} geçti · {failed} kaldı · {skipped} puan dışı',
           quota: 'Kalan ücretsiz tarama: {n}/5',
           quotaOut: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.',
           quotaOutAccount: 'Hesabınızın ücretsiz tarama hakkı doldu. Sınırsız tarama için Premium\'a geçin.',
@@ -2440,6 +2445,9 @@
             not_https: 'sayfa HTTPS değil',
             no_html: 'HTML içerik alınamadı',
             not_measured: 'bu ortamda ölçülemedi',
+            not_implemented: 'başlık uygulanmamış (tavsiye edilen ek katman)',
+            no_external_scripts: 'sayfada dış kaynaklı script yok',
+            wildcard_with_credentials: "'*' ile kimlik bilgisi birlikte kullanılamaz",
             expired: 'sertifika süresi dolmuş',
             expiring_soon: 'sertifikanın süresi yakında doluyor',
             untrusted: 'sertifika doğrulanamadı'
@@ -2474,7 +2482,7 @@
           error: 'Geçmiş yüklenemedi. Lütfen tekrar deneyin.',
           more: 'Daha Fazla Yükle', clear: 'Tüm Geçmişi Sil',
           pdf: 'PDF raporu indir', remove: 'Bu kaydı sil',
-          checks: '{passed} geçti · {failed} kaldı · {skipped} ölçülemedi',
+          checks: '{passed} geçti · {failed} kaldı · {skipped} puan dışı',
           deleted: 'Kayıt silindi.', clearedAll: '{n} kayıt silindi.',
           deleteFailed: 'Silme işlemi başarısız oldu.',
           confirmClear: 'Tüm tarama geçmişiniz silinecek. Emin misiniz?'
@@ -2816,9 +2824,10 @@
           demoNote: 'This is a demo output. Full reports and remediation steps unlock with PRO.',
           fullReport: 'Get Full Report',
           sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
-          state: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured' },
+          state: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured',
+                   skippedNa: 'Not applicable', skippedNi: 'Not implemented' },
           scoreLabel: 'Security score',
-          summary: '{passed} passed · {failed} failed · {skipped} not measured',
+          summary: '{passed} passed · {failed} failed · {skipped} not scored',
           quota: 'Free scans left: {n}/5',
           quotaOut: 'You have used your free scans. Upgrade to Premium for unlimited scanning.',
           quotaOutAccount: 'Your account has used its free scans. Upgrade to Premium for unlimited scanning.',
@@ -2857,6 +2866,9 @@
             not_https: 'the page is not served over HTTPS',
             no_html: 'HTML content was not available',
             not_measured: 'could not be measured in this environment',
+            not_implemented: 'header not implemented (recommended extra layer)',
+            no_external_scripts: 'the page loads no external scripts',
+            wildcard_with_credentials: "'*' cannot be combined with credentials",
             expired: 'the certificate has expired',
             expiring_soon: 'the certificate expires soon',
             untrusted: 'the certificate could not be validated'
@@ -2891,7 +2903,7 @@
           error: 'History could not be loaded. Please try again.',
           more: 'Load More', clear: 'Delete All History',
           pdf: 'Download PDF report', remove: 'Delete this record',
-          checks: '{passed} passed · {failed} failed · {skipped} not measured',
+          checks: '{passed} passed · {failed} failed · {skipped} not scored',
           deleted: 'Record deleted.', clearedAll: '{n} records deleted.',
           deleteFailed: 'Deletion failed.',
           confirmClear: 'Your entire scan history will be deleted. Are you sure?'
@@ -3925,6 +3937,29 @@
 
     /* ---- Sonuç satırları ---- */
 
+    /* Atlanan bir kontrolün NEDEN atlandığı üç ayrı şey olabilir ve kullanıcı
+       için anlamları da ayrı:
+
+         uygulanabilir değil : ölçülecek bir şey yok (sayfa çerez göndermiyor,
+                               dış script yok). Nötr — eksiklik değil.
+         uygulanmamış        : başlık yazılabilirdi, yazılmamış. Tavsiye.
+         ölçülemedi          : ölçmeyi denedik, başaramadık (TLS el sıkışması).
+
+       Üçü de skora girmiyor; ayrım rapor DÜRÜSTLÜĞÜ için. Eski kayıtlarda da
+       çalışsın diye etiket `note` alanından türetiliyor — kayıtlara yeni bir
+       alan eklemek gerekmiyor.
+
+       Sunucu tarafındaki eşi: api/_lib/report.js -> SKIP_LABEL.
+       İkisinin aynı kalmasını tools/skiplabel-test.js sınıyor. */
+    var SKIP_NA = ['no_cookies', 'no_external_scripts', 'no_html', 'not_https'];
+    var SKIP_NI = ['not_implemented'];
+
+    function skippedLabelKey(note) {
+      if (SKIP_NA.indexOf(note) !== -1) return 'scan.state.skippedNa';
+      if (SKIP_NI.indexOf(note) !== -1) return 'scan.state.skippedNi';
+      return 'scan.state.skipped';
+    }
+
     var STATE_ICON = {
       pass: 'fa-solid fa-circle-check',
       fail: 'fa-solid fa-triangle-exclamation',
@@ -3986,7 +4021,7 @@
       var tag = document.createElement('span');
       tag.className = 'sev sev--' + (item.status === 'skipped' ? 'low' : item.severity);
       tag.textContent = item.status === 'skipped'
-        ? t('scan.state.skipped')
+        ? t(skippedLabelKey(item.note))
         : t('scan.sev.' + item.severity);
       if (item.status === 'skipped') tag.style.opacity = '0.6';
 
