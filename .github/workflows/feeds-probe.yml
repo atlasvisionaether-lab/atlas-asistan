@@ -37,6 +37,10 @@ on:
         description: "E-posta kimlik kayıtlarını ölç (SPF/DMARC/DKIM)"
         type: boolean
         default: false
+      dns_domains:
+        description: "Hangi alan adları ölçülsün (boşlukla ayrılmış; boş = varsayılan liste)"
+        required: false
+        default: ''
       compare_base:
         description: "Karşılaştırmada kullanılacak KENDİ adresimiz (boş = üretim)"
         required: false
@@ -88,7 +92,7 @@ jobs:
       # "DKIM yok" demek olcum degil tahmin olurdu.
       - name: E-posta kimlik kayıtlarını ölç
         if: inputs.dns_mail
-        run: node cyberlionai/tools/dns-mail-probe.js
+        run: node cyberlionai/tools/dns-mail-probe.js ${{ inputs.dns_domains }}
 
       - name: PhishTank erişim durumunu ölç
         if: inputs.phishtank_access
