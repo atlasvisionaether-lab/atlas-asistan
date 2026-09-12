@@ -102,17 +102,30 @@ async function fetchBody(url) {
 }
 
 /**
- * Büyük bir beslemeyi BELLEĞE ALMADAN tarar ve ülke kodlarını sayar.
+ * Büyük bir beslemeyi BELLEĞE ALMADAN tarar ve GİRDİ başına ülke sayar.
  *
- * Neden gerekiyor: PhishTank'in toplu indirmesi ölçümde 41.6 MB geldi. Onu
+ * Neden akış: PhishTank'in toplu indirmesi ölçümde 41.6 MB geldi. Onu
  * JSON.parse'a vermek, sunucusuz bir fonksiyonda yüzlerce MB'lık bir nesne
- * demek. Bize gereken tek şey ülke sayıları olduğu için gövde parça parça
- * okunup desen sayılıyor: bellek kullanımı gövde boyutundan bağımsız.
+ * demek. Gövde parça parça okunuyor; bellek gövde boyutundan bağımsız.
  *
- * Parçalar arasında bölünen eşleşmeleri kaçırmamak için parçanın sonundan
- * küçük bir kuyruk bir sonrakine taşınıyor.
+ * NEDEN GİRDİ BAŞINA — ÖLÇÜLDÜ (koşu 34663226505)
+ *
+ *   kimlik avı adresi (girdi)    :  75.630
+ *   ülke taşıyan detay satırı    : 104.083
+ *   birden fazla detayı olan     :     305
+ *   bir girdideki en fazla detay :   1.405
+ *
+ * Ülke `details[]` dizisinin içinde ve bir adres birden çok barındırma kaydı
+ * taşıyabiliyor. Önceki sürüm her eşleşmeyi ayrı ayrı sayıyordu; sonuç
+ * haritada "kayıt" diye gösterilen %37 şişik bir sayıydı. Daha kötüsü: 305
+ * girdi ~28.700 satır taşıdığı için TEK bir adres bir ülkenin sayısını
+ * tek başına şişirebiliyordu — sıralama da bozuluyordu.
+ *
+ * Şimdi her girdi, bulunduğu her ülkede BİR kez sayılıyor. Aynı girdide aynı
+ * ülke kaç kez geçerse geçsin bir kez. `girdiIsareti` girdi sınırını gösteren
+ * dizedir (PhishTank için `"phish_id"`); her girdide tam bir kez geçmelidir.
  */
-async function fetchCountingCountries(url, limitBytes) {
+async function fetchCountingCountries(url, limitBytes, girdiIsareti) {
   const controller = new AbortController();
   const timer = setTimeout(function () { controller.abort(); }, FETCH_TIMEOUT_MS * 4);
 
@@ -129,10 +142,25 @@ async function fetchCountingCountries(url, limitBytes) {
   const sayac = new Map();
   const reader = response.body.getReader();
   const decoder = new TextDecoder('utf8');
-  let kuyruk = '';
   let toplamBayt = 0;
-  let toplamEslesme = 0;
+  let girdiSayisi = 0;
 
+  /* Bir girdinin metnindeki BENZERSIZ ulkeleri sayaca isler. Ayni girdide ayni
+     ulke kac kez gecerse gecsin bir kez sayilir. */
+  function girdiyiIsle(metin) {
+    if (!metin) return;
+    girdiSayisi++;
+    const gorulen = new Set();
+    CC.lastIndex = 0;
+    let m;
+    while ((m = CC.exec(metin)) !== null) {
+      const cc = m[1].toUpperCase();
+      if (ISO2_RE.test(cc)) gorulen.add(cc);
+    }
+    gorulen.forEach(function (cc) { sayac.set(cc, (sayac.get(cc) || 0) + 1); });
+  }
+
+  let tampon = '';
   try {
     for (;;) {
       const adim = await reader.read();
@@ -140,23 +168,35 @@ async function fetchCountingCountries(url, limitBytes) {
       toplamBayt += adim.value.length;
       if (toplamBayt > limitBytes) { reader.cancel().catch(function () {}); throw new Error('feed_too_large'); }
 
-      const metin = kuyruk + decoder.decode(adim.value, { stream: true });
-      CC.lastIndex = 0;
-      let m;
-      let sonBitis = 0;
-      while ((m = CC.exec(metin)) !== null) {
-        const cc = m[1].toUpperCase();
-        if (ISO2_RE.test(cc)) { sayac.set(cc, (sayac.get(cc) || 0) + 1); toplamEslesme++; }
-        sonBitis = CC.lastIndex;
+      tampon += decoder.decode(adim.value, { stream: true });
+
+      /* Tamamlanmis girdiler islenip tampondan dusuluyor; tamponda en fazla
+         BIR yarim girdi kalir, yani bellek govde boyutundan bagimsiz. */
+      let kesim;
+      while ((kesim = tampon.indexOf(girdiIsareti, 1)) !== -1) {
+        girdiyiIsle(tampon.slice(0, kesim));
+        tampon = tampon.slice(kesim);
       }
-      // Parcalar arasinda bolunmus olabilecek eslesme icin kuyruk birak.
-      kuyruk = metin.slice(Math.max(sonBitis, metin.length - 64));
     }
+    tampon += decoder.decode();
+    girdiyiIsle(tampon);
   } finally {
     clearTimeout(timer);
   }
 
-  return { sayac: sayac, toplam: toplamEslesme, bayt: toplamBayt };
+  /* Ilk parca girdi isaretinden ONCE gelen JSON basligini icerir ("[" gibi);
+     o dilim ulke tasimadigi icin sayaci bozmaz ama girdi sayisini bir fazla
+     gosterir. Isaret hic bulunmadiysa girdi sayisi 1 kalir ve o da yanlistir;
+     iki durumda da gercek girdi sayisi bir eksiktir. */
+  if (girdiSayisi > 0) girdiSayisi--;
+
+  /* `toplam` artik DETAY SATIRI degil, (girdi, ulke) cifti sayisi: bir adres
+     kac ayri ulkede barindiriliyorsa o kadar. Ulke toplamlarinin toplamina
+     esittir, yani haritayla tutarlidir. */
+  let ciftToplami = 0;
+  sayac.forEach(function (n) { ciftToplami += n; });
+
+  return { sayac: sayac, toplam: ciftToplami, girdi: girdiSayisi, bayt: toplamBayt };
 }
 
 /* ------------------------------------------------------------------
@@ -378,6 +418,9 @@ const SOURCES = [
     /* Olcumde 41.6 MB geldi ve kayitlarinda `details[].country` var. Bu boyut
        JSON.parse'a verilemez; akis halinde sayiliyor (bkz. stream:true). */
     stream: true,
+    /* Girdi siniri. PhishTank'te `phish_id` her girdide tam bir kez gecer;
+       sayac girdileri bununla ayirir. */
+    entryMarker: '"phish_id"',
     maxBytes: 80 * 1024 * 1024,
     ttl: 6 * 60 * 60,
     parse: null
@@ -395,9 +438,14 @@ async function loadSource(source) {
   try {
     let data;
     if (source.stream) {
-      const r = await fetchCountingCountries(source.url, source.maxBytes || MAX_BYTES);
+      const r = await fetchCountingCountries(
+        source.url, source.maxBytes || MAX_BYTES, source.entryMarker);
       data = {
+        /* `total` = (girdi, ulke) cifti sayisi; ulke toplamlarinin toplamina
+           esit, yani haritayla tutarli. `entries` ayri tutuluyor cunku bir
+           adres birden cok ulkede barinabiliyor ve ikisi ayni sey degil. */
         total: r.toplam,
+        entries: r.girdi,
         bytes: r.bayt,
         unresolved: 0,
         countries: Array.from(r.sayac.entries())

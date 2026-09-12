@@ -32,7 +32,13 @@ const RATE_MAX = 30;
    veri hemen hemen taze olsun, ama arka arkaya yenilemeler ucu dövmesin. */
 const BROWSER_CACHE_SECONDS = 150;
 
-function cacheKey(id) { return 'cl:wm:' + id; }
+/* Anahtardaki surum eki, saklanan kaydin BICIMI ya da ANLAMI degistiginde
+   artirilir. Sayac girdi basina sayacak sekilde duzeltildiginde eski kayitlar
+   hala sisik sayilari tutuyordu ve phishtank'in TTL'i 6 saat: duzeltme
+   dagitildiktan sonra saatlerce eski sayi gosterilecekti. Surum ekiyle eski
+   kayitlar hicbir zaman okunmuyor, kendiliklerinden suresi dolup siliniyor. */
+const CACHE_VERSION = 'v2';
+function cacheKey(id) { return 'cl:wm:' + CACHE_VERSION + ':' + id; }
 
 /**
  * Bir kaynağı önbellekten okur; yoksa çeker ve yazar.

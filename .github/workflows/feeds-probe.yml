@@ -17,6 +17,10 @@ on:
         description: IP→ülke tablosunu yeniden üret ve dala işle
         type: boolean
         default: false
+      phishtank_count:
+        description: "PhishTank sayımını ölç (neyi saydığımızı doğrular)"
+        type: boolean
+        default: false
       compare_host:
         description: "Tarama motorunu Observatory ve SSL Labs ile karşılaştır (boş = atla)"
         required: false
@@ -47,8 +51,22 @@ jobs:
       # --- Tarama motoru karşılaştırması -----------------------------------
       # Skor değil KONTROL karşılaştırılıyor: üç araç farklı kapsamları ölçüyor,
       # skorlarının tutması tesadüf olurdu.
+      # Sayacimizin adres mi detay satiri mi saydigini olcer. Haritada
+      # "kayit" diye gosterdigimiz sayinin ne oldugunu dogrular.
+      - name: PhishTank sayımını ölç
+        if: inputs.phishtank_count
+        run: bash cyberlionai/tools/phishtank-probe.sh
+
       # Kimlik duvari algilamasinin sinamasi. Ag gerektirmiyor; her kosuda
       # calisir ki algilama sessizce bozulmasin.
+      # Uretimdeki toplamin kaynak bazinda dagilimi. "Sayi neden degisti"
+      # sorusu tahminle degil dokumle cevaplansin.
+      - name: Haritanın kaynak dökümü
+        if: inputs.phishtank_count
+        env:
+          BASE: https://www.cyberlionai.com
+        run: bash cyberlionai/tools/worldmap-breakdown.sh
+
       - name: Kimlik duvarı algılamasını sına
         run: bash cyberlionai/tools/wall-test.sh
 

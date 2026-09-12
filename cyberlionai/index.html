@@ -1821,8 +1821,8 @@
       <div class="container">
         <div class="section__head reveal">
           <span class="section__eyebrow" data-i18n="map.eyebrow">Açık kaynak istihbarat</span>
-          <h2 class="section__title" data-i18n="map.title">CANLI TEHDİT HARİTASI</h2>
-          <p class="section__subtitle" data-i18n="map.subtitle">Açık tehdit beslemelerinden derlenen güncel altyapı görünümü.</p>
+          <h2 class="section__title" data-i18n="map.title">KÖTÜ NİYETLİ ALTYAPI HARİTASI</h2>
+          <p class="section__subtitle" data-i18n="map.subtitle">Açık beslemelerden derlenen barındırma konumları. Sayılar kötü niyetli altyapının nerede <em>barındığını</em> gösterir; saldırganın nerede olduğunu değil.</p>
           <div class="gold-rule"></div>
         </div>
 
@@ -2337,13 +2337,13 @@
         },
         map: {
           eyebrow: 'Açık kaynak istihbarat',
-          title: 'CANLI TEHDİT HARİTASI',
-          subtitle: 'Açık tehdit beslemelerinden derlenen güncel altyapı görünümü.',
+          title: 'KÖTÜ NİYETLİ ALTYAPI HARİTASI',
+          subtitle: 'Açık beslemelerden derlenen barındırma konumları. Sayılar kötü niyetli altyapının nerede barındığını gösterir; saldırganın nerede olduğunu değil.',
           filterCountry: 'Ülke filtresi',
           allCountries: 'Tüm ülkeler',
           filterThreat: 'Tehdit türü filtresi',
           allThreats: 'Tüm tehdit türleri',
-          topTitle: 'En yoğun 10 ülke',
+          topTitle: 'En çok barındıran 10 ülke',
           range: 'Zaman aralığı',
           live: 'Canlı',
           svgTitle: 'Ülke bazlı tehdit altyapısı haritası',
@@ -2741,13 +2741,13 @@
         },
         map: {
           eyebrow: 'Open-source intelligence',
-          title: 'LIVE THREAT MAP',
-          subtitle: 'Current infrastructure picture compiled from open threat feeds.',
+          title: 'MALICIOUS INFRASTRUCTURE MAP',
+          subtitle: 'Hosting locations compiled from open feeds. The counts show where malicious infrastructure is hosted — not where the attacker is.',
           filterCountry: 'Country filter',
           allCountries: 'All countries',
           filterThreat: 'Threat type filter',
           allThreats: 'All threat types',
-          topTitle: 'Top 10 countries',
+          topTitle: 'Top 10 hosting countries',
           range: 'Time range',
           live: 'Live',
           svgTitle: 'Threat infrastructure by country',
@@ -5303,14 +5303,14 @@
     var T = {
       tr: { srcTorexit:'Tor çıkış düğümleri', geoResolved:'ülke IP tablosundan çözüldü',
             geoNative:'ülke beslemenin kendi alanından', geoTable:'IP→ülke tablosu',
-            countriesWord:'ülke', of:'/', hosts:'kayıt', online:'çevrimiçi', families:'Zararlı yazılım aileleri',
+            countriesWord:'ülke', of:'/', hosts:'barındırma kaydı', online:'çevrimiçi', families:'Zararlı yazılım aileleri',
             unknown:'Konumu bilinmeyen kayıt', noGeo:'ülke bilgisi yok', failed:'ulaşılamadı',
             cached:'önbellekten', live:'Canlı', paused:'Duraklatıldı', pick:'Haritadan bir işaret seçin.',
             none:'Bu aralıkta gösterilecek kayıt yok.', err:'Harita verisi alınamadı.',
             shared:'Aynı aileyi paylaşan ülkeler', total:'Toplam', nodes:'düğüm' },
       en: { srcTorexit:'Tor exit nodes', geoResolved:'country resolved from IP table',
             geoNative:'country from the feed’s own field', geoTable:'IP→country table',
-            countriesWord:'countries', of:'/', hosts:'records', online:'online', families:'Malware families',
+            countriesWord:'countries', of:'/', hosts:'hosting records', online:'online', families:'Malware families',
             unknown:'Records without a known location', noGeo:'no country data', failed:'unreachable',
             cached:'from cache', live:'Live', paused:'Paused', pick:'Select a marker on the map.',
             none:'No records to show in this range.', err:'Could not load map data.',
@@ -5616,10 +5616,32 @@
       }, 0);
     }
 
+    /* Sunucunun verdigi hata kodunu okunur bir cumleye cevirir.
+       Bilinmeyen kod oldugu gibi gosterilir — uydurma aciklama yapilmaz. */
+    var FEED_ERR = {
+      tr: { feed_unreachable: 'kaynağa ulaşılamadı', feed_too_large: 'yanıt çok büyük',
+            feed_shape: 'yanıt biçimi beklenenden farklı', feed_error: 'bilinmeyen hata' },
+      en: { feed_unreachable: 'source unreachable', feed_too_large: 'response too large',
+            feed_shape: 'unexpected response shape', feed_error: 'unknown error' }
+    };
+    function feedErr(code) {
+      if (!code) return '';
+      var d = FEED_ERR[document.documentElement.lang] || FEED_ERR.tr;
+      if (d[code]) return d[code];
+      /* feed_status_404 gibi kodlarda HTTP durumunu oldugu gibi goster. */
+      var m = /^feed_status_(\d{3})$/.exec(code);
+      if (m) return 'HTTP ' + m[1];
+      return code;
+    }
+
     function drawSources() {
       var html = '';
       (state.data.sources || []).forEach(function (s) {
-        var note = s.ok ? (s.cached ? t('cached') : '') : t('failed');
+        /* Hata durumunda SEBEBI de yaz. Yalnizca "ulasilamadi" demek,
+           kullanicinin durumu degerlendirmesini imkansiz kiliyordu:
+           gecici bir zaman asimi ile beslemenin kapanmasi ayni gorunuyordu. */
+        var note = s.ok ? (s.cached ? t('cached') : '')
+                        : t('failed') + (s.error ? ' — ' + feedErr(s.error) : '');
         html += '<div class="wmap__src" data-ok="' + (s.ok ? 'true' : 'false') + '">' +
                 '<i class="fa-solid fa-circle" aria-hidden="true"></i>' +
                 '<span>' + esc(srcLabel(s)) + '</span>' +
