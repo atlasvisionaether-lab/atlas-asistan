@@ -408,16 +408,18 @@ const SOURCES = [
     id: 'urlhaus',
     label: 'URLhaus',
     attribution: 'abuse.ch — URLhaus',
-    /* json_recent DEGIL json_online. Fark anlamlidir:
-         json_recent = son eklenenler
-         json_online = SU AN cevrimici olanlar
-       Harita "kotu niyetli altyapinin nerede barindigini" gosteriyor; hangi
-       adreslerin HALEN ayakta oldugu bu soruya daha yakin bir cevap. Ayrica
-       PhishTank dustugunde kaybedilen hacmin bir kismini geri getiriyor.
-       Yan etki: json_online kayitlarinin `dateadded` degeri eski olabilir,
-       yani 1s/24s pencerelerindeki sayi json_recent'e gore DUSEBILIR. Bu
-       yaniltici degil — o pencereler "ne zaman eklendi"yi olcuyor. */
-    url: 'https://urlhaus.abuse.ch/downloads/json_online/',
+    /* json_online DEGIL json_recent — ve bu OLCUMLE secildi.
+       json_online'a gecmeyi onermistim: "daha cok kayit, ayni saglayici, yeni
+       lisans yuzeyi yok". Olcum (kosu 34703503182) bunu curuttu:
+
+         json_recent  12.637 kayit   ciplak IP tasiyan 11.298   7g=2.912
+         json_online  13.861 kayit   ciplak IP tasiyan  5.459   7g=  729
+
+       Kayit sayisi %10 artiyor ama ULKESI COZULEBILEN kayit YARIYA DUSUYOR.
+       Ulkeyi URL'deki ciplak IP'den cozuyoruz; alan adi tasiyan kayit haritada
+       gorunmez. Yani json_online haritayi zenginlestirmiyor, FAKIRLESTIRIYOR.
+       7 gunluk pencere de 2.912'den 729'a iniyor. */
+    url: 'https://urlhaus.abuse.ch/downloads/json_recent/',
     /* Beslemenin kendi semasinda ulke YOK; ulke IP->ulke tablosundan
        cozuluyor. Alan adi tasiyan kayitlar cozulemiyor ve ayrica sayiliyor. */
     geo: true,
