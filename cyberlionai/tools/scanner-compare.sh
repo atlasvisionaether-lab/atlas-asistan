@@ -65,6 +65,18 @@ if DUVAR="$(kimlik_duvari "$HKOD" "$HYON" "$WORK/ham.bas" "$HOST")"; then
 fi
 note "kimlik duvarı belirtisi yok; karşılaştırmaya geçiliyor"
 
+# Capraz koken basliklarinin HAM degeri. Neden: iki arac ayni "pass" harfini
+# farkli olgular icin verebiliyor — Observatory yoklugu da pass sayiyor, biz
+# varligi pass sayiyoruz. Ayni harf, ayni gercek anlamina gelmeyebilir. Ham
+# deger yazilmadan tablodaki o satira guvenilemez.
+printf '   ham çapraz köken başlıkları:\n'
+for BSLK in cross-origin-opener-policy cross-origin-embedder-policy \
+            cross-origin-resource-policy access-control-allow-origin \
+            access-control-allow-credentials; do
+  DEGER="$(grep -i "^$BSLK:" "$WORK/ham.bas" 2>/dev/null | head -1 | cut -d: -f2- | tr -d "\r" | sed "s/^ *//")"
+  printf '     %-34s %s\n' "$BSLK" "${DEGER:-(yok)}"
+done
+
 # ---------------------------------------------------------------------------
 head1 "1. Bizim taramamız"
 # Cerez kavanozu: tarama kaydini sonunda AYNI oturumla silebilmek icin.
