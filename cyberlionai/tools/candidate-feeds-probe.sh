@@ -152,8 +152,13 @@ alan_tara() {
   # OLCULDU (kosu 34702409550): alan listesi bozuk geldiginde bu fonksiyon
   # yuzlerce satir basip DIGER adaylarin sonuclarini kayittan tasirdi. Liste
   # artik kirpiliyor: olcum, kendi ciktisini okunamaz hale getirmemeli.
-  local dizi; dizi="$(printf '%s\n' $alanlar | head -40)"
-  note "alanlar: $(printf '%s' "$alanlar" | cut -c1-220)"
+  # `cut -c1-220` SATIR BASINA calisir. Alan listesi binlerce satir oldugunda
+  # (Spamhaus DROP anahtarlari CIDR'dir) her satiri ayri ayri kirpip binlerce
+  # satir basiyordu — kosu 34702635521'de olcum kendi ciktisini bogdu. Once
+  # satir sonlari BOSLUGA cevriliyor, sonra kirpiliyor.
+  local tek; tek="$(printf '%s' "$alanlar" | tr '\n' ' ' | tr -s ' ')"
+  local dizi; dizi="$(printf '%s\n' $tek | head -40)"
+  note "alanlar: $(printf '%s' "$tek" | cut -c1-220)"
   local u i z
   u="$(printf '%s\n' "$dizi" | grep -iE "$ULKESI"  | head -5 | tr '\n' ' ')"
   i="$(printf '%s\n' "$dizi" | grep -iE "$IPSI"    | head -5 | tr '\n' ' ')"
@@ -172,6 +177,10 @@ olc "phishstats-api" "https://phishstats.info:2096/api/phishing?_size=5"        
 olc "threatfox"      "https://threatfox.abuse.ch/export/json/recent/"                  json
 olc "urlhaus-full"   "https://urlhaus.abuse.ch/downloads/json_online/"                 json
 olc "blocklist-de"   "https://lists.blocklist.de/lists/all.txt"                        txt
+# Spamhaus DROP kasten LISTEDE DEGIL: ele gecirilmis/kotuye kullanilan ag
+# bloklarini listeliyor, kimlik avi adreslerini degil. PhishTank'in yerini
+# tutmaz; haritaya baska bir tehdit sinifi karistirmak sayilari yaniltici
+# yapardi. Kayit icin yoklaniyor ama aday sayilmiyor.
 olc "spamhaus-drop"  "https://www.spamhaus.org/drop/drop_v4.json"                      json
 
 # ---------------------------------------------------------------------------
