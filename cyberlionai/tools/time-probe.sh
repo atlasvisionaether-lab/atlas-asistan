@@ -86,6 +86,34 @@ if [ "$KOD" = "200" ] && jq -e 'type == "object"' "$WORK/urlhaus.json" >/dev/nul
 fi
 
 # ---------------------------------------------------------------------------
+head1 "2b. urlhaus json_recent  vs  json_online"
+# Uretimde json_online'a gecildi. Fark ANLAMLIDIR: json_recent son eklenenleri,
+# json_online su an cevrimici olanlari verir. Degisimin sayilara ne yaptigini
+# tahmin etmek yerine iki ucu yan yana olcuyoruz — ozellikle 1s/24s
+# pencerelerinin DUSUP dusmedigini, cunku json_online'da eski `dateadded`
+# degerleri bulunabilir.
+for UC in json_recent json_online; do
+  KOD="$(cek "urlhaus-$UC" "https://urlhaus.abuse.ch/downloads/$UC/" "$WORK/$UC.json")"
+  if [ "$KOD" = "200" ] && jq -e 'type == "object"' "$WORK/$UC.json" >/dev/null 2>&1; then
+    note "$UC: $(wc -c < "$WORK/$UC.json") bayt  $(jq 'length' "$WORK/$UC.json") kayıt"
+    note "  $(jq -r '
+      (now) as $n
+      | [ .[] | (if type=="array" then .[0] else . end) ] as $k
+      | [ $k[] | (.dateadded // "") | select(type=="string" and . != "")
+          | select(length >= 19) | (.[0:19] | sub(" "; "T") + "Z")
+          | try fromdateiso8601 catch empty ] as $t
+      | "1s=\([$t[]|select($n - . <= 3600)]|length)  " +
+        "24s=\([$t[]|select($n - . <= 86400)]|length)  " +
+        "7g=\([$t[]|select($n - . <= 604800)]|length)  " +
+        "damgali=\($t|length)  " +
+        "çıplak IP taşıyan=\([$k[]|select(.url|test("://[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+"))]|length)"
+    ' "$WORK/$UC.json" 2>/dev/null || echo 'okunamadı')"
+  else
+    note "$UC: HTTP $KOD — okunamadı"
+  fi
+done
+
+# ---------------------------------------------------------------------------
 head1 "3. torexit (torbulkexitlist)"
 KOD="$(cek torexit 'https://check.torproject.org/torbulkexitlist' "$WORK/tor.txt")"
 note "HTTP $KOD  $(wc -c < "$WORK/tor.txt") bayt"

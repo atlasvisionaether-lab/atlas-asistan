@@ -408,7 +408,16 @@ const SOURCES = [
     id: 'urlhaus',
     label: 'URLhaus',
     attribution: 'abuse.ch — URLhaus',
-    url: 'https://urlhaus.abuse.ch/downloads/json_recent/',
+    /* json_recent DEGIL json_online. Fark anlamlidir:
+         json_recent = son eklenenler
+         json_online = SU AN cevrimici olanlar
+       Harita "kotu niyetli altyapinin nerede barindigini" gosteriyor; hangi
+       adreslerin HALEN ayakta oldugu bu soruya daha yakin bir cevap. Ayrica
+       PhishTank dustugunde kaybedilen hacmin bir kismini geri getiriyor.
+       Yan etki: json_online kayitlarinin `dateadded` degeri eski olabilir,
+       yani 1s/24s pencerelerindeki sayi json_recent'e gore DUSEBILIR. Bu
+       yaniltici degil — o pencereler "ne zaman eklendi"yi olcuyor. */
+    url: 'https://urlhaus.abuse.ch/downloads/json_online/',
     /* Beslemenin kendi semasinda ulke YOK; ulke IP->ulke tablosundan
        cozuluyor. Alan adi tasiyan kayitlar cozulemiyor ve ayrica sayiliyor. */
     geo: true,

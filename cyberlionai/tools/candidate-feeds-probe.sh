@@ -193,6 +193,47 @@ olc "blocklist-de"   "https://lists.blocklist.de/lists/all.txt"                 
 # sisirmekten baska bir sey katmiyor.
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+head1 "ThreatFox — ioc_type dağılımı ve çözülebilir ülke verimi"
+# NEDEN: ThreatFox'ta ulke alani YOK. "IP'den cozeriz" demek, kayitlarin
+# NE KADARININ IP tasidigini bilmeden tahmin olur. Burada olculuyor.
+TF="$WORK/tf.json"
+curl -sSL -m 90 -A "$UA" "https://threatfox.abuse.ch/export/json/recent/" 2>/dev/null \
+  | head -c "$AZAMI" > "$TF" 2>/dev/null || :
+if jq -e 'type == "object"' "$TF" >/dev/null 2>&1; then
+  note "toplam kayıt: $(jq '[.[]|.[]] | length' "$TF" 2>/dev/null || echo '-')"
+  note "ioc_type dağılımı:"
+  jq -r '[.[]|.[]] | group_by(.ioc_type) | map({t: .[0].ioc_type, n: length})
+         | sort_by(-.n) | .[] | "     \(.t)  \(.n)"' "$TF" 2>/dev/null | head -12
+  # Ciplak IPv4 tasiyan kayitlar: RIR tablosuyla ulkeye cevrilebilecek olanlar.
+  note "çözülebilir (çıplak IPv4 taşıyan) kayıt: $(jq '
+    [.[]|.[]] | [ .[] | select((.ioc_value // "")
+      | test("(^|//)[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) ] | length
+  ' "$TF" 2>/dev/null || echo '-')"
+  note "örnek ioc_value (ilk üç):"
+  jq -r '[.[]|.[]] | .[0:3][] | "     \(.ioc_type)  \(.ioc_value)"' "$TF" 2>/dev/null
+else
+  note "ThreatFox gövdesi JSON olarak okunamadı (kırpılmış ya da erişilemedi)"
+fi
+
+# ---------------------------------------------------------------------------
+head1 "abuse.ch iletişim adresi"
+# Kullanici ticari kullanim icin abuse.ch'ye yazacak. Adresi hafizadan
+# soylemek yerine kendi sayfalarindan okunuyor: yanlis adrese yazilan bir
+# e-posta sessizce kaybolur.
+for u in "https://abuse.ch/#contact" "https://abuse.ch/" "https://abuse.ch/contact/" \
+         "https://urlhaus.abuse.ch/api/"; do
+  KOD="$(curl -sSL -m 30 -A "$UA" -o "$WORK/ab.html" -w '%{http_code}' "$u" 2>/dev/null)" || KOD=000
+  printf '   %-34s HTTP %s\n' "${u#https://}" "$KOD"
+  [ "$KOD" = "200" ] || continue
+  # Sayfadaki e-posta adresleri ve iletisim baglantilari.
+  grep -oiE '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' "$WORK/ab.html" 2>/dev/null \
+    | sort -u | head -6 | sed 's/^/       e-posta: /'
+  sed -e 's/<[^>]*>/ /g' "$WORK/ab.html" 2>/dev/null | tr -s ' \t' ' ' | sed '/^ *$/d' \
+    | grep -iE 'contact|get in touch|reach out|commercial|sales|enquir' \
+    | head -4 | cut -c1-160 | sed 's/^/       /'
+done
+
 head1 "Kullanım şartları"
 # Ticari bir uruende yayinlanacak veri icin lisans, teknik uygunluktan daha
 # belirleyici olabilir. Karar insana ait; burada yalnizca sayfalar yoklanıyor.
