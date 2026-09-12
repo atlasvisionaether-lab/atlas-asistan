@@ -37,7 +37,7 @@ const BROWSER_CACHE_SECONDS = 150;
    hala sisik sayilari tutuyordu ve phishtank'in TTL'i 6 saat: duzeltme
    dagitildiktan sonra saatlerce eski sayi gosterilecekti. Surum ekiyle eski
    kayitlar hicbir zaman okunmuyor, kendiliklerinden suresi dolup siliniyor. */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 function cacheKey(id) { return 'cl:wm:' + CACHE_VERSION + ':' + id; }
 
 /**
@@ -120,11 +120,24 @@ module.exports = async function handler(req, res) {
 
     for (const c of r.data.countries) {
       let entry = countries.get(c.country);
-      if (!entry) { entry = { country: c.country, total: 0, sources: [] }; countries.set(c.country, entry); }
+      if (!entry) {
+        entry = { country: c.country, total: 0, windows: { h1: 0, h24: 0, d7: 0 }, sources: [] };
+        countries.set(c.country, entry);
+      }
       entry.total += c.count;
+      /* Zaman pencereleri YALNIZCA damga tasiyan kaynaklardan toplaniyor.
+         Tasimayan kaynagin kayitlarini pencereye eklemek, o kayitlari "son 24
+         saatte eklendi" diye gostermek olurdu — hangi kaynagin sayildigi
+         `sources[].supportsWindows` ile arayuze ayrica bildiriliyor. */
+      if (c.windows) {
+        entry.windows.h1 += c.windows.h1 || 0;
+        entry.windows.h24 += c.windows.h24 || 0;
+        entry.windows.d7 += c.windows.d7 || 0;
+      }
       entry.sources.push({
         id: r.id, label: r.label, geoSource: r.geoSource,
-        count: c.count, online: c.online, malware: c.malware, threats: c.threats
+        count: c.count, online: c.online, malware: c.malware, threats: c.threats,
+        windows: c.windows
       });
     }
   }
@@ -147,7 +160,7 @@ module.exports = async function handler(req, res) {
 
     /* En yoğun on ülke — arayüzdeki sıralama listesi bunu kullanır. */
     topCountries: markers.slice(0, 10).map(function (m) {
-      return { country: m.country, total: m.total, intensity: m.intensity };
+      return { country: m.country, total: m.total, windows: m.windows, intensity: m.intensity };
     }),
 
     /* Tehdit türü filtresi için birleşik dağılım. */
@@ -168,6 +181,10 @@ module.exports = async function handler(req, res) {
       return {
         id: r.id, label: r.label, attribution: r.attribution,
         geo: r.geo, ok: r.ok, cached: r.cached === true,
+        /* Arayuz, zaman filtresinin hangi kaynaklari kapsadigini DURUSTCE
+           yazabilsin diye. Kapsam disinda kalan kaynagi sessizce dislemek,
+           kullaniciya eksik bir sayiyi tam gibi gostermek olurdu. */
+        supportsWindows: r.supportsWindows === true,
         fetchedAt: r.fetchedAt,
         error: r.ok ? undefined : r.error,
         /* Ülkesiz kaynakların özeti: haritada nokta değil, sayaç olarak sunulur. */

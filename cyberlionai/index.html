@@ -1412,6 +1412,7 @@
   .wmap__src[data-ok="true"] i { color: var(--sev-low); }
   .wmap__src[data-ok="false"] i { color: var(--sev-critical); }
   .wmap__srcNote { color: var(--text-gray); font-size: 0.78rem; }
+  .wmap__rangeNote { color: var(--text-gray); font-size: 0.78rem; margin: 8px 0 0; line-height: 1.5; flex-basis: 100%; }
 
   .wmap__note { color: var(--text-gray); font-size: 0.82rem; line-height: 1.6; margin: 12px 0 0; }
   .wmap__empty { color: var(--text-gray); font-size: 0.9rem; padding: 8px 0; }
@@ -1836,10 +1837,12 @@
           </select>
 
           <div class="wmap__seg" role="group" aria-label="Zaman aralığı" data-i18n-aria="map.range">
+            <button type="button" data-window="all" aria-pressed="true" data-i18n="map.rAll">Tümü</button>
             <button type="button" data-window="h1" aria-pressed="false" data-i18n="map.r1h">1s</button>
-            <button type="button" data-window="h24" aria-pressed="true" data-i18n="map.r24h">24s</button>
+            <button type="button" data-window="h24" aria-pressed="false" data-i18n="map.r24h">24s</button>
             <button type="button" data-window="d7" aria-pressed="false" data-i18n="map.r7d">7g</button>
           </div>
+          <p class="wmap__rangeNote" id="wmRangeNote" hidden></p>
 
           <button type="button" class="btn btn--ghost btn--sm wmap__live" id="wmLive" data-live="true" aria-pressed="true">
             <span class="dot" aria-hidden="true"></span>
@@ -2354,7 +2357,11 @@
           loading: 'Yükleniyor…',
           countersNote: 'Bu beslemelerde ülke bilgisi yok; haritada işaret olarak değil, sayaç olarak gösterilirler.',
           sourcesTitle: 'Kaynaklar',
-          r1h: '1s', r24h: '24s', r7d: '7g',
+          r1h: '1s', r24h: '24s', r7d: '7g', rAll: 'Tümü',
+          rangeScope: 'Zaman filtresi yalnızca zaman damgası taşıyan kaynakları kapsar.',
+          rangeIncluded: 'Bu görünümde sayılan',
+          rangeExcluded: 'Sayılmayan (zaman damgası yok)',
+          rangeNone: 'Hiçbir kaynak zaman damgası taşımıyor; bu görünümde gösterilecek kayıt yok.',
           srcTorexit: 'Tor çıkış düğümleri',
           disclaimer: 'Harita, açık tehdit beslemelerinde kayıtlı altyapının bulunduğu ülkeleri gösterir; bir saldırının kaynağını veya hedefini göstermez. Kara parçaları temsilîdir. Kendi tarama etkinliğimiz gizlilik gereği konum bilgisi taşımadığından şimdilik haritada yer almaz.'
         },
@@ -2763,7 +2770,11 @@
           loading: 'Loading…',
           countersNote: 'These feeds carry no country data, so they appear as counters rather than map markers.',
           sourcesTitle: 'Sources',
-          r1h: '1h', r24h: '24h', r7d: '7d',
+          r1h: '1h', r24h: '24h', r7d: '7d', rAll: 'All',
+          rangeScope: 'The time filter covers only sources that carry timestamps.',
+          rangeIncluded: 'Counted in this view',
+          rangeExcluded: 'Not counted (no timestamps)',
+          rangeNone: 'No source carries timestamps, so there is nothing to show in this view.',
           srcTorexit: 'Tor exit nodes',
           disclaimer: 'The map shows countries hosting infrastructure recorded in open threat feeds; it does not show the source or target of an attack. Landmasses are stylised. Our own scan activity carries no location data by design, so it is not on the map yet.'
         },
@@ -5357,10 +5368,16 @@
       sources: document.getElementById('wmSources'),
       country: document.getElementById('wmCountry'),
       live: document.getElementById('wmLive'),
-      liveText: document.getElementById('wmLiveText')
+      liveText: document.getElementById('wmLiveText'),
+      rangeNote: document.getElementById('wmRangeNote')
     };
 
-    var state = { data: null, live: true, range: 'h24', country: '', threat: '', selected: null, timer: null };
+    /* range: 'all' | 'h1' | 'h24' | 'd7'. Varsayilan 'all' — ÖLÇÜLDÜ (koşu
+       34668079640): dört kaynaktan yalnızca urlhaus zaman damgası taşıyor
+       (12.408 kayıt, 24 saatte 352). Varsayılan '24s' olsaydı ziyaretçi
+       haritanın büyük kısmını hiç görmezdi ve bunun bir filtre yüzünden
+       olduğunu anlamazdı. */
+    var state = { data: null, live: true, range: 'all', country: '', threat: '', selected: null, timer: null };
 
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var REFRESH_MS = 60000;   // sunucu önbelleği 5 dk; bundan sık sormanın anlamı yok
@@ -5396,11 +5413,36 @@
 
     /* ---------- çizim ---------- */
 
+    /* Seçili zaman aralığında bir ülkenin sayısı.
+       'all' ise toplam; değilse YALNIZCA zaman damgası taşıyan kaynakların
+       o penceredeki payı. Damga taşımayan kaynağın kayıtlarını pencereye
+       katmak, onları "son 24 saatte eklendi" diye göstermek olurdu. */
+    function pencereSayisi(m) {
+      if (state.range === 'all') return m.total || 0;
+      return (m.windows && m.windows[state.range]) || 0;
+    }
+
+    /* Zaman filtresini destekleyen / desteklemeyen kaynaklar. Arayüz kapsamı
+       açıkça yazabilsin diye ayrı listeleniyor. */
+    function pencereKapsami() {
+      var kaynaklar = (state.data && state.data.sources) || [];
+      var icinde = [], disinda = [];
+      kaynaklar.forEach(function (s) {
+        if (!s.ok) return;
+        (s.supportsWindows ? icinde : disinda).push(srcLabel(s));
+      });
+      return { icinde: icinde, disinda: disinda };
+    }
+
     function markers() {
       if (!state.data || !state.data.markers) return [];
       return state.data.markers.filter(function (m) {
         if (state.country && m.country !== state.country) return false;
         if (state.threat && !tasiyorMu(m, state.threat)) return false;
+        /* Seçili pencerede hiç kaydı olmayan ülke haritada da listede de
+           görünmez; aksi halde filtre seçilmiş ama hiçbir şey değişmemiş
+           gibi durur. */
+        if (state.range !== 'all' && pencereSayisi(m) === 0) return false;
         return Object.prototype.hasOwnProperty.call(CENTROIDS, m.country);
       });
     }
@@ -5420,12 +5462,22 @@
       var list = markers();
       if (!list.length) return;
 
+      /* Yoğunluk sunucuda TOPLAMA göre hesaplanıyor. Pencere seçiliyse o
+         ölçek yanlış olurdu (bir ülke toplamda en yoğun, son 1 saatte hiç
+         olmayabilir), bu yüzden pencere seçiliyken yoğunluk buradaki
+         listeden yeniden çıkarılıyor. Ölçek yine logaritmik. */
+      var enYogun = list.reduce(function (n, m) { return Math.max(n, pencereSayisi(m)); }, 0);
+      var lnMax = Math.log(enYogun + 1) || 1;
+
       list.forEach(function (m, i) {
         var c = CENTROIDS[m.country];
         var x = projX(c[0]), y = projY(c[1]);
         var color = tone(m);
-        var yog = typeof m.intensity === 'number' ? m.intensity : 0;
-        var r = 3 + Math.min(6, Math.sqrt(m.total));
+        var sayi = pencereSayisi(m);
+        var yog = state.range === 'all'
+          ? (typeof m.intensity === 'number' ? m.intensity : 0)
+          : Math.log(sayi + 1) / lnMax;
+        var r = 3 + Math.min(6, Math.sqrt(sayi));
 
         /* Isı zemini: yoğunlukla büyüyen, kenara doğru sönen bir daire.
            İşaretlerin ALTINDA duruyor ve üst üste binince toplanıyor. */
@@ -5451,7 +5503,7 @@
         dot.setAttribute('fill', color);
         dot.setAttribute('tabindex', '0');
         dot.setAttribute('role', 'button');
-        dot.setAttribute('aria-label', countryName(m.country) + ': ' + m.total + ' ' + t('hosts'));
+        dot.setAttribute('aria-label', countryName(m.country) + ': ' + sayi + ' ' + t('hosts'));
 
         function pick() { select(m.country); }
         dot.addEventListener('click', pick);
@@ -5468,7 +5520,7 @@
     }
 
     function showTip(m, x, y) {
-      els.tip.textContent = countryName(m.country) + ' — ' + m.total + ' ' + t('hosts');
+      els.tip.textContent = countryName(m.country) + ' — ' + pencereSayisi(m) + ' ' + t('hosts');
       els.tip.style.left = (x / VW * 100) + '%';
       els.tip.style.top = (y / VH * 100) + '%';
       els.tip.hidden = false;
@@ -5537,13 +5589,27 @@
       if (!m) { els.detail.innerHTML = '<p class="wmap__empty">' + esc(t('pick')) + '</p>'; return; }
 
       var partners = drawArcs(code);
-      var html = '<div class="wmap__row"><span>' + esc(countryName(code)) + '</span><span>' + m.total + '</span></div>';
+      var html = '<div class="wmap__row"><span>' + esc(countryName(code)) + '</span><span>' + pencereSayisi(m) + '</span></div>';
 
       m.sources.forEach(function (s) {
+        /* Pencere seciliyken kaynak kirilimi de o pencereyi gostermeli;
+           damga tasimayan kaynak "—" ile gecer, sifir yazmaz. Sifir yazmak
+           "bu kaynakta hic kayit yok" demek olurdu; dogrusu "olculemiyor". */
+        var pencere = state.range === 'all'
+          ? s.count
+          : (s.windows ? (s.windows[state.range] || 0) : null);
+        if (pencere === null) {
+          html += '<div class="wmap__row"><span>' + esc(srcLabel(s)) + '</span><span>—</span></div>';
+          return;
+        }
         /* `online` yalnizca bazi kaynaklarda var (feodo, urlhaus). Kosulsuz
-           yazmak kullaniciya "231 (undefined cevrimici)" gosteriyordu. */
-        var deger = String(s.count);
-        if (typeof s.online === 'number') deger += ' (' + s.online + ' ' + t('online') + ')';
+           yazmak kullaniciya "231 (undefined cevrimici)" gosteriyordu.
+           Cevrimici sayisi pencere kirilimi tasimiyor, bu yuzden yalnizca
+           toplam gorunumde yaziliyor. */
+        var deger = String(pencere);
+        if (state.range === 'all' && typeof s.online === 'number') {
+          deger += ' (' + s.online + ' ' + t('online') + ')';
+        }
         html += '<div class="wmap__row"><span>' + esc(srcLabel(s)) + '</span><span>' +
                 esc(deger) + '</span></div>';
         if (s.malware && s.malware.length) {
@@ -5565,17 +5631,26 @@
     /* En yoğun on ülke. Sunucu zaten sıralı ve yoğunluklu veriyor; burada
        yalnızca çiziliyor. Filtre uygulanmışsa liste de filtreye uyar. */
     function drawTop() {
-      var liste = markers().slice(0, 10);
+      /* Sunucu listeyi TOPLAMA göre sıralı veriyor. Pencere seçiliyken o
+         sıralama yanlış olur — "en çok barındıran" ile "son 24 saatte en çok
+         eklenen" aynı ülke olmayabilir. Bu yüzden pencere seçiliyken liste
+         burada yeniden sıralanıyor. */
+      var liste = markers();
+      if (state.range !== 'all') {
+        liste = liste.slice().sort(function (a, b) { return pencereSayisi(b) - pencereSayisi(a); });
+      }
+      liste = liste.slice(0, 10);
       if (!liste.length) {
         els.top.innerHTML = '<li><span class="wmap__empty">' + esc(t('none')) + '</span></li>';
         return;
       }
-      var enCok = liste[0].total || 1;
+      var enCok = pencereSayisi(liste[0]) || 1;
       els.top.innerHTML = liste.map(function (m) {
-        var oran = Math.max(2, Math.round((m.total / enCok) * 100));
+        var sayi = pencereSayisi(m);
+        var oran = Math.max(2, Math.round((sayi / enCok) * 100));
         return '<li>' +
           '<span>' + esc(countryName(m.country)) + '</span>' +
-          '<b>' + m.total + '</b>' +
+          '<b>' + sayi + '</b>' +
           '<span class="bar"><i style="width:' + oran + '%"></i></span>' +
           '</li>';
       }).join('');
@@ -5586,26 +5661,39 @@
       if (!d) return;
       var html = '';
 
+      /* BURASI BİR REGRESYONUN KAYNAĞIYDI. Döngü `s.geo` olan her kaynağı
+         atlıyordu; urlhaus'a IP→ülke çözümü eklenip coğrafi hale gelince bu
+         panelden düştü ve zaman filtresinin TEK tüketicisi onunla gitti.
+         Düğmeler çalışıyordu ama hiçbir sayı değişmiyordu.
+
+         Artık her kaynak listeleniyor ve seçili pencerede ölçülemeyen kaynak
+         "—" ile gösteriliyor; sessizce atlanmıyor. */
       (d.sources || []).forEach(function (s) {
-        if (s.geo || !s.ok || !s.summary) return;
+        if (!s.ok || !s.summary) return;
         var sum = s.summary;
-        var value;
-        if (sum.windows) {
-          value = sum.windows[state.range];
+        var deger;
+        if (state.range === 'all') {
+          deger = sum.total;
+        } else if (sum.windows) {
+          deger = sum.windows[state.range];
         } else {
-          value = sum.total;
+          deger = null;                       // bu kaynak zaman damgası taşımıyor
         }
         html += '<div class="wmap__row"><span>' + esc(srcLabel(s)) + '</span><span>' +
-                (value === undefined ? sum.total : value) + '</span></div>';
-        if (!sum.windows) {
-          html += '<p class="wmap__srcNote" style="margin:-2px 0 8px">' + esc(t('total')) + ' ' + esc(t('nodes')) + '</p>';
+                (deger === null || deger === undefined ? '—' : deger) + '</span></div>';
+        if (deger === null) {
+          html += '<p class="wmap__srcNote" style="margin:-2px 0 8px">' +
+                  esc(t('rangeExcluded')) + '</p>';
         }
       });
 
       /* Konumu çözülemeyen kayıtlar: hem sunucunun bildirdiği (alan adı taşıyan
          urlhaus kayıtları gibi) hem de merkez koordinatı bilinmeyen ülke kodları.
          İkisi de saklanmıyor — haritada görünmeyen kayıt da kayıttır. */
-      var unknown = unknownCount() + (d.unresolved || 0);
+      /* `d.unresolved` sunucunun TOPLAM üzerinden verdiği sayı; pencere
+         kırılımı yok. Pencere seçiliyken onu eklemek, filtrelenmiş görünüme
+         filtrelenmemiş bir sayı karıştırmak olurdu. */
+      var unknown = unknownCount() + (state.range === 'all' ? (d.unresolved || 0) : 0);
       if (unknown > 0) {
         html += '<div class="wmap__row"><span>' + esc(t('unknown')) + '</span><span>' + unknown + '</span></div>';
       }
@@ -5622,7 +5710,8 @@
     function unknownCount() {
       if (!state.data || !state.data.markers) return 0;
       return state.data.markers.reduce(function (n, m) {
-        return Object.prototype.hasOwnProperty.call(CENTROIDS, m.country) ? n : n + m.total;
+        if (Object.prototype.hasOwnProperty.call(CENTROIDS, m.country)) return n;
+        return n + pencereSayisi(m);
       }, 0);
     }
 
@@ -5695,12 +5784,31 @@
       if (keep) els.country.value = keep;
     }
 
+    /* Zaman filtresinin KAPSAMINI yazar. Bu not olmadan filtre yanıltıcı
+       olurdu: "24s" seçen ziyaretçi sayının neden düştüğünü bilemez ve eksik
+       bir görünümü tam sanardı. */
+    function drawRangeNote() {
+      if (!els.rangeNote) return;
+      if (state.range === 'all') { els.rangeNote.hidden = true; els.rangeNote.textContent = ''; return; }
+      var k = pencereKapsami();
+      var satir = t('rangeScope');
+      if (!k.icinde.length) {
+        satir = t('rangeNone');
+      } else {
+        satir += ' ' + t('rangeIncluded') + ': ' + k.icinde.join(', ') + '.';
+        if (k.disinda.length) satir += ' ' + t('rangeExcluded') + ': ' + k.disinda.join(', ') + '.';
+      }
+      els.rangeNote.textContent = satir;
+      els.rangeNote.hidden = false;
+    }
+
     function render() {
       if (!state.data) return;
       drawDots();
       drawTop();
       drawCounters();
       drawSources();
+      drawRangeNote();
       if (state.selected) select(state.selected);
     }
 
@@ -5749,7 +5857,9 @@
         Array.prototype.forEach.call(stage.querySelectorAll('.wmap__seg button'), function (o) {
           o.setAttribute('aria-pressed', String(o === b));
         });
-        drawCounters();
+        /* Eskiden yalnızca drawCounters() çağrılıyordu; harita ve ilk on
+           listesi zaman aralığına hiç bakmıyordu. Artık tam çizim. */
+        render();
       });
     });
 

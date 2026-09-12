@@ -9,18 +9,43 @@ name: Dünya haritası doğrulaması
 # Salt-okunur: hesap açmaz, kayıt oluşturmaz, hiçbir şey silmez. Yalnızca kendi
 # ucumuzu çağırır; beslemelere sunucu tarafı önbellek üzerinden dokunur.
 #
-# Elle çalıştırılır. Preview için bypass secret'ı gerekir; üretim için gerekmez.
+# GÜNLÜK KOŞU
+#
+# Her sabah 09:00 UTC'de ÜRETİME karşı koşar. Sebep: beslemeler bizden habersiz
+# kapanabiliyor, biçim değiştirebiliyor. Bunu müşteri boş bir haritayla
+# öğrenmesin diye önce biz öğreniyoruz.
+#
+# Bildirim gürültü olmasın diye iki seviyeli:
+#   uyari      bir besleme düştü — harita kalanlarla çalışıyor, iş YEŞİL kalır
+#   basarisiz  sözleşme bozuldu ya da bütün beslemeler düştü — iş KIRMIZI
+# İkisinde de tek bir GitHub konusu (issue) açılıp güncelleniyor; durum
+# düzelince aynı konu kapatılıyor. Her gün yeni konu açılmıyor.
 
 on:
+  schedule:
+    # 09:00 UTC. Elle koşuya gerek kalmadan her sabah bir kez.
+    - cron: '0 9 * * *'
   workflow_dispatch:
     inputs:
       base:
-        description: Doğrulanacak adres (sonunda / olmadan)
-        required: true
-        default: https://cyberlionai-git-claude-epic-turing-gu2xf8-atlas-asistan.vercel.app
+        description: Doğrulanacak adres (boş = üretim)
+        required: false
+        default: ''
+      bildirim:
+        description: "Sağlık konusunu da güncelle (bildirim yolunu sınamak için)"
+        type: boolean
+        default: false
 
+# issues: write yalnizca saglik konusunu acip kapatmak icin. Depo icerigine
+# yazma yetkisi YOK.
 permissions:
   contents: read
+  issues: write
+
+# Ust uste binen kosular ayni konuya yazip birbirini ezmesin.
+concurrency:
+  group: worldmap-verify
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -32,11 +57,131 @@ jobs:
       - name: Araçları kur
         run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
 
+      - name: Karar mantığı sınaması (ağsız)
+        run: bash cyberlionai/tools/worldmap-verify-test.sh
+
       - name: Ayrıştırıcı sınamaları (ağsız)
         run: node cyberlionai/tools/worldmap-test.js
 
+      # continue-on-error: basarisizlikta da bildirim adimi kossun diye. Isin
+      # kirmizi olmasi en sondaki adimda karara baglaniyor.
       - name: Uç doğrulaması (gerçek beslemeler)
+        id: dogrula
+        continue-on-error: true
         env:
-          BASE: ${{ inputs.base }}
+          # Zamanlanmis kosuda girdi yok; uretim dogrulaniyor.
+          BASE: ${{ inputs.base || 'https://www.cyberlionai.com' }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          # Gunluk kosu 30+ istekle hiz sinirina dayanmasin; o bolum dagitim
+          # dogrulamasina ait, besleme sagligina degil.
+          HIZ_SINIRI: ${{ github.event_name == 'schedule' && '0' || '1' }}
+          DURUM_DOSYASI: ${{ runner.temp }}/durum.txt
         run: bash cyberlionai/tools/worldmap-verify.sh
+
+      - name: Durumu oku
+        id: durum
+        if: always()
+        run: |
+          DOSYA="${{ runner.temp }}/durum.txt"
+          if [ -f "$DOSYA" ]; then
+            cat "$DOSYA" >> "$GITHUB_OUTPUT"
+            cat "$DOSYA"
+          else
+            # Betik durum yazamadan olduyse (ag hatasi, uc kapali) bu da bir
+            # arizadir ve sessiz gecmemeli.
+            echo "durum=basarisiz" >> "$GITHUB_OUTPUT"
+            echo "dusen=doğrulama betiği durum üretemeden sonlandı" >> "$GITHUB_OUTPUT"
+            echo "durum dosyası yok — betik erken sonlandı"
+          fi
+
+      # Gunluk kosuda her zaman; elle kosuda yalnizca acikca istendiginde.
+      # Sebep: bildirim yolunun kendisi de sinanabilmeli — ilk kez yarin sabah
+      # 09:00'da, kimse bakmazken calismasi iyi bir fikir degil.
+      - name: Sağlık konusunu güncelle
+        if: always() && (github.event_name == 'schedule' || inputs.bildirim)
+        uses: actions/github-script@v7
+        env:
+          SAGLIK_DURUM: ${{ steps.durum.outputs.durum }}
+          SAGLIK_DUSEN: ${{ steps.durum.outputs.dusen }}
+          SAGLIK_AYAKTA: ${{ steps.durum.outputs.ayakta }}
+          SAGLIK_TOPLAM: ${{ steps.durum.outputs.toplam }}
+        with:
+          script: |
+            const ETIKET = 'besleme-sagligi';
+            const BASLIK = 'Besleme sağlığı: dünya haritası doğrulaması';
+            const durum = process.env.SAGLIK_DURUM || 'basarisiz';
+            const dusen = process.env.SAGLIK_DUSEN || '';
+            const ayakta = process.env.SAGLIK_AYAKTA || '?';
+            const toplam = process.env.SAGLIK_TOPLAM || '?';
+            const kosu = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}` +
+                         `/actions/runs/${context.runId}`;
+
+            // Ayni konu tekrar tekrar kullaniliyor: her gun yeni konu acmak
+            // bildirimi gurultuye cevirir ve bir sure sonra kimse bakmaz.
+            const acik = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: ETIKET, per_page: 10
+            });
+            const konu = acik.data[0] || null;
+
+            if (durum === 'temiz') {
+              if (konu) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: konu.number,
+                  body: `Toparlandı — bütün beslemeler ayakta (${ayakta}/${toplam}).\n\n` +
+                        `[Koşu kaydı](${kosu})\n\n---\n` +
+                        `_Generated by [Claude Code](https://claude.ai/code)_`
+                });
+                await github.rest.issues.update({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: konu.number, state: 'closed'
+                });
+                core.info('sağlık konusu kapatıldı: #' + konu.number);
+              } else {
+                core.info('temiz; açık konu yok, yapacak bir şey yok');
+              }
+              return;
+            }
+
+            const baslikSatiri = durum === 'uyari'
+              ? `**Uyarı** — bir veya daha fazla besleme düştü. Harita kalan kaynaklarla çalışmaya devam ediyor.`
+              : `**Başarısız** — doğrulama kontrolleri geçmedi. Harita boş ya da sözleşme bozulmuş olabilir.`;
+            const govde =
+              `${baslikSatiri}\n\n` +
+              `| | |\n|---|---|\n` +
+              `| Durum | \`${durum}\` |\n` +
+              `| Ayakta besleme | ${ayakta}/${toplam} |\n` +
+              `| Düşen | ${dusen || '—'} |\n` +
+              `| Koşu | [kayıt](${kosu}) |\n\n` +
+              `Ayrıntı koşu kaydında. Beslemenin biçim değiştirdiğinden şüpheleniliyorsa ` +
+              `\`feeds-probe.yml\` elle koşulup şema yeniden ölçülebilir.\n\n---\n` +
+              `_Generated by [Claude Code](https://claude.ai/code)_`;
+
+            if (konu) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: konu.number, body: govde
+              });
+              core.info('mevcut sağlık konusuna yazıldı: #' + konu.number);
+            } else {
+              const yeni = await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: BASLIK, body: govde, labels: [ETIKET]
+              });
+              core.info('sağlık konusu açıldı: #' + yeni.data.number);
+            }
+
+      # Isin rengi burada belirleniyor: uyari YESIL kalir (harita calisiyor),
+      # yalnizca gercek ariza KIRMIZI olur. Aksi halde her gecici besleme
+      # kesintisi isi kirmizi yapar ve bir sure sonra kirmizi hicbir sey ifade
+      # etmez.
+      - name: Sonucu karara bağla
+        if: always()
+        run: |
+          DURUM="${{ steps.durum.outputs.durum }}"
+          case "$DURUM" in
+            temiz) echo "temiz — bütün beslemeler ayakta" ;;
+            uyari) echo "::warning::Besleme düştü: ${{ steps.durum.outputs.dusen }}" ;;
+            *)     echo "::error::Doğrulama başarısız (durum=$DURUM)"; exit 1 ;;
+          esac
