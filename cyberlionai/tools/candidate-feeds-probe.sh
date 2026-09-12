@@ -28,7 +28,16 @@ UA="CyberLionAI-FeedProbe/1.0 (+https://www.cyberlionai.com)"
 AZAMI=$((25 * 1024 * 1024))   # tek adaydan indirilecek üst sınır
 
 head1() { printf '\n\033[1m== %s\033[0m\n' "$1"; }
-note()  { printf '   %s\n' "$1"; }
+
+# note() TEK SATIR basar. Sebep: bu betikte uc ayri yerde `cut -c1-N` ile
+# kirpma denendi ve ucunde de ayni hataya dusuldu — `cut` SATIR BASINA
+# calisiyor, yani cok satirli bir degeri kirpmak yerine her satirini ayri ayri
+# kirpip binlerce satir basiyor. Kosu 34702409550, 34702635521 ve 34702849644
+# bu yuzden kendi ciktilarini bogdu. Kirpma artik cagri basina degil, TEK
+# noktada: satir sonlari bosluga cevriliyor ve toplam uzunluk siniri burada.
+note() {
+  printf '   %s\n' "$(printf '%s' "$1" | tr '\n\r' '  ' | tr -s ' ' | cut -c1-300)"
+}
 
 # Ülke kodu / IP / zaman damgası gibi duran alan adları.
 ULKESI='country|cc|geo|nation'
@@ -177,11 +186,11 @@ olc "phishstats-api" "https://phishstats.info:2096/api/phishing?_size=5"        
 olc "threatfox"      "https://threatfox.abuse.ch/export/json/recent/"                  json
 olc "urlhaus-full"   "https://urlhaus.abuse.ch/downloads/json_online/"                 json
 olc "blocklist-de"   "https://lists.blocklist.de/lists/all.txt"                        txt
-# Spamhaus DROP kasten LISTEDE DEGIL: ele gecirilmis/kotuye kullanilan ag
+# Spamhaus DROP kasten OLCULMUYOR: ele gecirilmis/kotuye kullanilan ag
 # bloklarini listeliyor, kimlik avi adreslerini degil. PhishTank'in yerini
-# tutmaz; haritaya baska bir tehdit sinifi karistirmak sayilari yaniltici
-# yapardi. Kayit icin yoklaniyor ama aday sayilmiyor.
-olc "spamhaus-drop"  "https://www.spamhaus.org/drop/drop_v4.json"                      json
+# tutmaz ve haritaya baska bir tehdit sinifi karistirmak sayilari yaniltici
+# yapardi. Ayrica govdesi CIDR anahtarli devasa bir nesne; olcum ciktisini
+# sisirmekten baska bir sey katmiyor.
 
 # ---------------------------------------------------------------------------
 head1 "Kullanım şartları"
@@ -192,7 +201,7 @@ for u in \
   "https://openphish.com/faq.html" \
   "https://phishstats.info/" \
   "https://threatfox.abuse.ch/faq/" \
-  "https://www.spamhaus.org/drop/"
+  "https://urlhaus.abuse.ch/api/"
 do
   KOD="$(curl -sSL -m 30 -A "$UA" -o "$WORK/t.html" -w '%{http_code}' "$u" 2>/dev/null)" || KOD=000
   printf '   %-42s HTTP %s  %s bayt\n' "${u#https://}" "$KOD" "$(wc -c < "$WORK/t.html" 2>/dev/null || echo 0)"
