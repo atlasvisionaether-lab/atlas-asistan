@@ -19,7 +19,8 @@ Tarayıcı: `http://localhost:8080`
 - Aksiyonlar yalnızca mock toast üretir.
 - Kampanyalar gönderilmez.
 - Widget canlı değildir.
-- Migration dosyası yalnızca taslaktır.
+- `migrations/0001_panel_schema.sql`: Yalnızca mimari taslaktır, ASLA ÇALIŞTIRILMAZ.
+- `migrations/0001_supabase_schema.sql`: Supabase'de zaten uygulanmış şemanın GitHub'daki referans kopyasıdır. Doğrudan çalıştırılması gerekmez; yalnızca referans ve dokümantasyon amaçlıdır.
 
 ## Vercel Preview
 
