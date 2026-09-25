@@ -20,3 +20,7 @@ Tarayıcı: `http://localhost:8080`
 - Kampanyalar gönderilmez.
 - Widget canlı değildir.
 - Migration dosyası yalnızca taslaktır.
+
+## Vercel Preview
+
+Bu demo panel, ayrı atlas-asistan-panel-preview Vercel projesinde yalnızca preview/test amacıyla yayınlanır. Mevcut canlı site, Cyber Lion projesi, özel domainler ve canlı entegrasyonlar bu preview'dan bağımsızdır.
