@@ -24,5 +24,5 @@
  function render(){const s=store.get(),id=s.screen||"overview";ui.clear(nav);SCREENS.forEach(x=>{const a=ui.el("a",{href:"#"+x.id,text:x.label});if(x.id===id)a.className="active";nav.appendChild(a)});ui.clear(main);main.appendChild((RENDER[id]||screenOverview)())}
  store.subscribe(s=>{if(s.lastToast)ui.toast(s.lastToast.msg);render()});
  window.addEventListener("hashchange",()=>{const id=(location.hash||"#overview").slice(1);if(SCREENS.some(x=>x.id===id))store.set({screen:id})});
- const initial=(location.hash||"#overview").slice(1);store.set({screen:SCREENS.some(x=>x.id===initial)?initial:"overview"});
+ window.atlasBoot=function(){const initial=(location.hash||"#overview").slice(1);store.set({screen:SCREENS.some(x=>x.id===initial)?initial:"overview"})};
 })();
