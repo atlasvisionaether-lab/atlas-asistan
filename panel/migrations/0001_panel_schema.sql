@@ -1,6 +1,6 @@
 ﻿-- ============================================================
--- Atlas Asistan Panel �?eması — MİMARİ TASLAK
--- DİKKAT: BU DOSYA ASLA ÇALI�?TIRILMAZ.
+-- Atlas Asistan Panel Şeması — MİMARİ TASLAK
+-- DİKKAT: BU DOSYA ASLA ÇALIŞTIRILMAZ.
 -- Hiçbir migration veya veritabanı işlemi bu prototipte yapılmaz.
 -- ============================================================
 

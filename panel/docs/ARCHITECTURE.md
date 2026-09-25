@@ -15,7 +15,7 @@ Statik, sunucusuz, tek sayfa uygulama. Harici bağımlılık, CDN, ağ isteği v
 - Mock auth yoktur; gerçek oturum veya yetkilendirme iddiası taşımaz.
 - Aksiyonlar yalnızca mock toast üretir; kalıcı veri ve ağ isteği yoktur.
 - Sağlık/şikâyet içeriği insan devralma mock akışına yönlendirilir.
-- `migrations/0001_panel_schema.sql` yalnızca taslaktır; ASLA ÇALI�?TIRILMAZ.
+- `migrations/0001_panel_schema.sql` yalnızca taslaktır; ASLA ÇALIŞTIRILMAZ.
 
 ## Production notu
 Gerçek sürümde auth, server tarafı authorization, tenant izolasyonu, KVKK süreçleri ve sağlayıcı entegrasyonları ayrı güvenlik incelemesiyle tasarlanmalıdır.
