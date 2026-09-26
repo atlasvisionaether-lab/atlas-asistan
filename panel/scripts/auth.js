@@ -51,9 +51,17 @@ function renderLogin() {
   });
 }
 
+function resolveSupabaseUrl(url) {
+  // supabase-js constructor URL'yi /^https?:\/\//i ile doğrular; göreli bir yol
+  // ("/api/supabase") senkron olarak throw eder. Reverse-proxy niyetini korumak için
+  // göreli URL'yi deployment origin'i ile mutlak hale getiriyoruz.
+  if (/^https?:\/\//i.test(url)) return url;
+  return new URL(url, window.location.origin).href;
+}
+
 function boot() {
   if (!cfg.url || !cfg.anonKey) { renderConfigError(); return; }
-  supabase = createClient(cfg.url, cfg.anonKey);
+  supabase = createClient(resolveSupabaseUrl(cfg.url), cfg.anonKey);
   // onAuthStateChange subscribe anında INITIAL_SESSION fırlatır → başlangıç kararı burada,
   // sonraki giriş/çıkış/refresh değişimleri de burada. Tek kaynak, getSession'e gerek yok.
   supabase.auth.onAuthStateChange((_event, session) => {
