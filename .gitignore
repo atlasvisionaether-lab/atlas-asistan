@@ -1,0 +1,8 @@
+# Gerçek anahtarlar ve yerel ortam dosyaları repoya girmez.
+.env
+.env.local
+.env.*.local
+supabase/.env
+*.log
+.DS_Store
+node_modules/
