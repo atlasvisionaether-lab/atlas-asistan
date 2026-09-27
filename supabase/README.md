@@ -183,3 +183,18 @@ böyledir (Database Webhook JWT göndermez). Sınırlar:
 `supabase/cleanup-test-messages.sql` — `6e37b8e0-…` müşterisinin test mesajlarını ve
 AI cevaplarını siler: önce önizleme, sonra DELETE'ler, sonunda count doğrulaması.
 SQL Editor'de çalıştır; DELETE kalıcıdır.
+
+## Otomasyonlar ekranı (FAZ 4)
+
+`panel/scripts/automations.js` — `assistant_settings` tablosundan canlı okur/yazar:
+
+- **AI otomatik cevabı** (`auto_reply_enabled`): AÇIK/KAPALI toggle. Kapatılınca
+  Edge Function cevap üretmez (kontrol için Edge Function'da bayrak okunmalıdır;
+  0013 kolonu mevcut, davranış bağlama sonraki adımdır).
+- **Çalışma saatleri** (`working_hours` jsonb, `{start,end}`): 09:00–18:00 varsayılan.
+- **Fallback mesajı** (`fallback_message`): AI yanıt veremediğinde kullanılır.
+- **AI modeli** (`model`): small/medium.
+
+Kaydet → `supabase .update` (satır yoksa insert). 0013 migration'ı
+(`supabase/migrations/0013_handover_and_automation_settings.sql`) önce
+uygulanmalı: `auto_reply_enabled`, `working_hours` kolonları.
