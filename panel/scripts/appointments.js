@@ -1,260 +1,167 @@
-"use strict";
-/* Randevular + Genel Bakış istatistikleri: Supabase appointments tablosundan canlı veri.
- * Bağımlılıklar: window.ATLAS_UI (ui.js), window.ATLAS_SUPABASE (auth.js).
- * RLS: 0002'deki appointments_select/insert/update politikaları organization_id bazlı;
- * bu modül yeni politika eklemez. */
-(function(){
- var ui = window.ATLAS_UI;
+// panel/js/appointments.js - MANUAL CUSTOMER NAME FIX
+// Eski select yerine serbest metin + auto-create customer
 
- var STATUS_LABEL = { pending:"beklemede", scheduled:"onaylı", cancelled:"iptal", no_show:"yoklama", completed:"tamamlandı" };
- function statusLabel(s){ return STATUS_LABEL[s] || String(s || "-"); }
- function statusTag(s){
-  var cls = s === "cancelled" ? "tag danger" : (s === "no_show" ? "tag warn" : "tag ok");
-  return ui.el("span", { class: cls, text: statusLabel(s) });
- }
+const ORG_ID = window.ORG_ID || '00000000-0000-0000-0000-000000000001'; // senin org id'ni app.js set ediyor, bu fallback
+let currentDay = new Date();
+currentDay.setHours(0,0,0,0);
 
- function dayRange(d){
-  var start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-  var end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0);
-  return { start: start.toISOString(), end: end.toISOString() };
- }
+function toISODate(d) { return d.toISOString().split('T')[0]; }
+function toTRDate(d) { return d.toLocaleDateString('tr-TR', {day:'2-digit', month:'long', year:'numeric'}); }
 
- function fmtTime(iso){ try { return new Date(iso).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}); } catch(e){ return ""; } }
- function fmtDate(d){ try { return d.toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}); } catch(e){ return ""; } }
+async function loadAppointmentsForDay(day = currentDay) {
+  currentDay = day;
+  const dayLabel = document.getElementById('current-day-label');
+  if (dayLabel) dayLabel.textContent = toTRDate(day);
 
- /* useDashboardStats karşılığı: bugünün gerçek sayıları (cancelled hariç toplam, iptal, yoklama). */
- function stats(){
-  var sb = window.ATLAS_SUPABASE;
-  if (!sb) return Promise.reject(new Error("Supabase bağlantısı yok"));
-  var r = dayRange(new Date());
-  return Promise.all([
-   sb.from("appointments").select("id",{count:"exact",head:true}).gte("starts_at",r.start).lt("starts_at",r.end).neq("status","cancelled"),
-   sb.from("appointments").select("id",{count:"exact",head:true}).gte("starts_at",r.start).lt("starts_at",r.end).eq("status","cancelled"),
-   sb.from("appointments").select("id",{count:"exact",head:true}).gte("starts_at",r.start).lt("starts_at",r.end).eq("status","no_show")
-  ]).then(function(rs){
-   return { today: (rs[0] && rs[0].count) || 0, cancelled: (rs[1] && rs[1].count) || 0, noShow: (rs[2] && rs[2].count) || 0 };
-  });
- }
+  const start = new Date(day); start.setHours(0,0,0,0);
+  const end = new Date(day); end.setHours(23,59,59,999);
 
- function kpiCard(label, value, tagText, tagClass){
-  var c = ui.el("div",{class:"card"});
-  c.appendChild(ui.el("div",{class:"kpi-label",text:label}));
-  c.appendChild(ui.el("div",{class:"kpi-value",text:String(value)}));
-  if (tagText) c.appendChild(ui.el("span",{class:tagClass || "tag ok",text:tagText}));
-  return c;
- }
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('id, service_name, starts_at, ends_at, status, notes, customer_id, customers(full_name)')
+    .eq('organization_id', ORG_ID)
+    .gte('starts_at', start.toISOString())
+    .lte('starts_at', end.toISOString())
+    .order('starts_at', { ascending: true });
 
- /* Genel Bakış: 4 kart — 3'ü gerçek, açık lead kartı demo etiketli. */
- function mountOverview(f){
-  var g = ui.el("div",{class:"grid"});
-  var cToday  = kpiCard("Bugünkü randevu","…");
-  var cCancel = kpiCard("Bugünkü iptal","…");
-  var cNoShow = kpiCard("Yoklama","…");
-  var cLead   = kpiCard("Açık lead","—");
-  cLead.appendChild(ui.el("span",{class:"tag warn",text:"demo"}));
-  [cToday,cCancel,cNoShow,cLead].forEach(function(c){ g.appendChild(c); });
-  f.appendChild(g);
-  var notice = ui.el("div",{class:"notice",text:"İstatistikler yükleniyor…"});
-  f.appendChild(notice);
-  stats().then(function(s){
-   cToday.querySelector(".kpi-value").textContent  = String(s.today);
-   cCancel.querySelector(".kpi-value").textContent = String(s.cancelled);
-   cNoShow.querySelector(".kpi-value").textContent = String(s.noShow);
-   cToday.appendChild(ui.el("span",{class:"tag ok",text:"canlı"}));
-   notice.textContent = "Bugünkü özet: " + s.today + " randevu, " + s.cancelled + " iptal, " + s.noShow + " yoklama (canlı veri).";
-  }).catch(function(e){
-   notice.textContent = "Randevu istatistikleri yüklenemedi: " + (e && e.message ? e.message : String(e));
-  });
- }
-
- /* ---- Modal altyapısı ---- */
- var STYLE_ID = "appt-modal-style";
- function ensureStyles(){
-  if (document.getElementById(STYLE_ID)) return;
-  var s = document.createElement("style"); s.id = STYLE_ID;
-  s.textContent =
-   ".appt-row-actions{display:flex;gap:.35rem;flex-wrap:wrap}" +
-   ".appt-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem}" +
-   ".appt-modal{background:var(--bg,#fff);color:inherit;border-radius:12px;max-width:520px;width:100%;padding:1.25rem;box-shadow:0 12px 40px rgba(0,0,0,.25)}" +
-   ".appt-modal h2{margin:0 0 .75rem}" +
-   ".appt-modal label{display:block;margin:.5rem 0 .25rem;font-weight:600}" +
-   ".appt-modal input,.appt-modal select,.appt-modal textarea{width:100%;box-sizing:border-box;padding:.4rem;border-radius:8px;border:1px solid #ccc}" +
-   ".appt-modal textarea{min-height:70px}" +
-   ".appt-modal .appt-err{color:#b00;margin-top:.5rem}" +
-   ".appt-nav{display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem}";
-  document.head.appendChild(s);
- }
- function closeModal(){ var m = document.getElementById("appt-modal"); if (m) m.remove(); }
- document.addEventListener("keydown", function(ev){ if (ev.key === "Escape") closeModal(); });
-
- function actionBtn(label, cls, fn){
-  var b = ui.el("button",{class:cls || "btn ghost",text:label});
-  b.addEventListener("click", fn);
-  return b;
- }
-
- function setStatus(id, status, onDone){
-  var sb = window.ATLAS_SUPABASE;
-  sb.from("appointments").update({ status: status }).eq("id", id)
-   .then(function(res){
-    if (res.error){ ui.toast("Güncellenemedi: " + res.error.message); return; }
-    ui.toast("Randevu durumu güncellendi: " + statusLabel(status));
-    if (onDone) onDone();
-   })
-   .catch(function(e){ ui.toast("Güncellenemedi: " + (e && e.message ? e.message : String(e))); });
- }
-
- /* Yeni randevu modalı. Insert için organization_id users tablosundan alınır. */
- function openCreateModal(currentDate, onDone){
-  ensureStyles(); closeModal();
-  var sb = window.ATLAS_SUPABASE;
-  var bd = ui.el("div",{class:"appt-modal-backdrop"}); bd.id = "appt-modal";
-  var box = ui.el("div",{class:"appt-modal"});
-  box.appendChild(ui.el("h2",{text:"Yeni Randevu"}));
-
-  var svcInput = ui.el("input",{type:"text",placeholder:"Hizmet adı"});
-  var custSelect = ui.el("select");
-  var dateInput = ui.el("input",{type:"date"});
-  var pad = function(n){ return String(n).padStart(2,"0"); };
-  dateInput.value = currentDate.getFullYear() + "-" + pad(currentDate.getMonth()+1) + "-" + pad(currentDate.getDate());
-  var timeInput = ui.el("input",{type:"time"}); timeInput.value = "10:00";
-  var notesInput = ui.el("textarea",{placeholder:"Notlar (opsiyonel)"});
-
-  box.appendChild(ui.el("label",{text:"Hizmet"})); box.appendChild(svcInput);
-  box.appendChild(ui.el("label",{text:"Müşteri"})); box.appendChild(custSelect);
-  box.appendChild(ui.el("label",{text:"Tarih"})); box.appendChild(dateInput);
-  box.appendChild(ui.el("label",{text:"Saat"})); box.appendChild(timeInput);
-  box.appendChild(ui.el("label",{text:"Notlar"})); box.appendChild(notesInput);
-
-  var err = ui.el("p",{class:"appt-err",role:"alert"});
-  box.appendChild(err);
-
-  var create = ui.el("button",{class:"btn",text:"Oluştur"});
-  var cancel = ui.el("button",{class:"btn ghost",text:"Vazgeç"});
-  cancel.addEventListener("click", closeModal);
-  create.addEventListener("click", function(){
-   err.textContent = "";
-   var serviceName = svcInput.value.trim();
-   if (!serviceName){ err.textContent = "Hizmet adı gerekli."; return; }
-   if (!custSelect.value){ err.textContent = "Müşteri seçin."; return; }
-   if (!dateInput.value || !timeInput.value){ err.textContent = "Tarih ve saat gerekli."; return; }
-   var startsAt = new Date(dateInput.value + "T" + timeInput.value);
-   var user = window.atlasUser;
-   if (!user){ err.textContent = "Oturum bulunamadı."; return; }
-   sb.from("users").select("organization_id").eq("id", user.id).single()
-    .then(function(u){
-     if (u.error){ err.textContent = "Organizasyon bilgisi alınamadı: " + u.error.message; return; }
-     var orgId = u.data && u.data.organization_id;
-     if (!orgId){ err.textContent = "Kullanıcı bir organizasyona bağlı değil."; return; }
-     return sb.from("appointments").insert({
-      organization_id: orgId,
-      customer_id: custSelect.value,
-      service_name: serviceName,
-      starts_at: startsAt.toISOString(),
-      notes: notesInput.value.trim() || null
-     }).then(function(res){
-      if (res.error){ err.textContent = "Kayıt başarısız: " + res.error.message; return; }
-      ui.toast("Randevu oluşturuldu.");
-      closeModal();
-      if (onDone) onDone();
-     });
-    })
-    .catch(function(e){ err.textContent = "Kayıt başarısız: " + (e && e.message ? e.message : String(e)); });
-  });
-
-  var row = ui.el("div",{class:"form-row"});
-  row.appendChild(create); row.appendChild(cancel);
-  box.appendChild(row);
-  bd.appendChild(box);
-  bd.addEventListener("click", function(ev){ if (ev.target === bd) closeModal(); });
-  document.body.appendChild(bd);
-
-  custSelect.appendChild(ui.el("option",{value:"",text:"Seçiniz…"}));
-  sb.from("customers").select("id,full_name").order("full_name",{ascending:true}).range(0,199)
-   .then(function(res){
-    if (res.error){ err.textContent = "Müşteri listesi alınamadı: " + res.error.message; return; }
-    (res.data || []).forEach(function(c){
-     custSelect.appendChild(ui.el("option",{value:c.id,text:c.full_name}));
-    });
-   })
-   .catch(function(e){ err.textContent = "Müşteri listesi alınamadı: " + (e && e.message ? e.message : String(e)); });
- }
-
- /* Günlük takvim: ileri/geri gün + durum aksiyonları + yeni randevu. */
- function mountRandevular(f){
-  var currentDate = new Date();
-  var wrap = ui.el("div");
-  f.appendChild(wrap);
-
-  function renderDay(){
-   ui.clear(wrap);
-   var nav = ui.el("div",{class:"appt-nav"});
-   var prev = actionBtn("← Önceki gün","btn ghost",function(){ currentDate.setDate(currentDate.getDate()-1); renderDay(); });
-   var today = ui.el("strong",{text:fmtDate(currentDate)});
-   var next = actionBtn("Sonraki gün →","btn ghost",function(){ currentDate.setDate(currentDate.getDate()+1); renderDay(); });
-   var newBtn = actionBtn("Yeni Randevu","btn",function(){ openCreateModal(currentDate, renderDay); });
-   nav.appendChild(prev); nav.appendChild(today); nav.appendChild(next); nav.appendChild(newBtn);
-   wrap.appendChild(nav);
-
-   var sb = window.ATLAS_SUPABASE;
-   if (!sb){
-    var w = ui.el("div",{class:"card"}); w.appendChild(ui.el("p",{text:"Supabase bağlantısı kuruluyor… (giriş yapmış olmanız gerekir)"})); wrap.appendChild(w); return;
-   }
-   var loading = ui.el("div",{class:"card",text:"Randevular yükleniyor…"});
-   wrap.appendChild(loading);
-   var r = dayRange(currentDate);
-   sb.from("appointments")
-    .select("id,service_name,starts_at,status,notes,customers(full_name)")
-    .gte("starts_at", r.start).lt("starts_at", r.end)
-    .order("starts_at",{ascending:true})
-    .then(function(res){
-     ui.clear(wrap);
-     wrap.appendChild(nav);
-     if (res.error){
-      var e = ui.el("div",{class:"card"});
-      e.appendChild(ui.el("p",{text:"Randevular yüklenemedi: " + res.error.message}));
-      e.appendChild(actionBtn("Yeniden dene","btn ghost",renderDay));
-      wrap.appendChild(e); return;
-     }
-     var rows = (res.data || []);
-     if (!rows.length){
-      var empty = ui.el("div",{class:"card"});
-      empty.appendChild(ui.el("h2",{text:"Randevular"}));
-      empty.appendChild(ui.el("p",{text:"Bu güne ait randevu yok."}));
-      wrap.appendChild(empty); return;
-     }
-     var card = ui.el("div",{class:"card"});
-     card.appendChild(ui.el("h2",{text:"Günlük takvim — " + rows.length + " randevu"}));
-     var t = document.createElement("table");
-     var thead = document.createElement("thead"); var htr = document.createElement("tr");
-     ["Saat","Müşteri","Hizmet","Durum","İşlem"].forEach(function(h){ htr.appendChild(ui.el("th",{text:h})); });
-     thead.appendChild(htr); t.appendChild(thead);
-     var tbody = document.createElement("tbody");
-     rows.forEach(function(a){
-      var tr = document.createElement("tr");
-      var tdTime = document.createElement("td"); tdTime.textContent = fmtTime(a.starts_at); tr.appendChild(tdTime);
-      var tdCust = document.createElement("td"); tdCust.textContent = (a.customers && a.customers.full_name) || "Bilinmiyor"; tr.appendChild(tdCust);
-      var tdSvc = document.createElement("td"); tdSvc.textContent = a.service_name || "-"; tr.appendChild(tdSvc);
-      var tdStatus = document.createElement("td"); tdStatus.appendChild(statusTag(a.status)); tr.appendChild(tdStatus);
-      var tdActions = document.createElement("td");
-      var actions = ui.el("div",{class:"appt-row-actions"});
-      if (a.status !== "scheduled") actions.appendChild(actionBtn("Onayla","btn ghost",function(){ setStatus(a.id,"scheduled",renderDay); }));
-      if (a.status !== "cancelled") actions.appendChild(actionBtn("İptal","btn danger",function(){ setStatus(a.id,"cancelled",renderDay); }));
-      if (a.status !== "no_show") actions.appendChild(actionBtn("Yoklama","btn ghost",function(){ setStatus(a.id,"no_show",renderDay); }));
-      tdActions.appendChild(actions); tr.appendChild(tdActions);
-      tbody.appendChild(tr);
-     });
-     t.appendChild(tbody); card.appendChild(t); wrap.appendChild(card);
-    })
-    .catch(function(e){
-     ui.clear(wrap); wrap.appendChild(nav);
-     var c = ui.el("div",{class:"card"});
-     c.appendChild(ui.el("p",{text:"Randevular yüklenemedi: " + (e && e.message ? e.message : String(e))}));
-     wrap.appendChild(c);
-    });
+  if (error) {
+    console.error('appointments load error', error);
+    document.getElementById('appointments-list').innerHTML = `<div class="card error">Hata: ${error.message}</div>`;
+    return;
   }
-  renderDay();
- }
+  renderDay(data || []);
+}
 
- window.ATLAS_APPTS = { mountRandevular: mountRandevular, mountOverview: mountOverview, stats: stats };
-})();
+function renderDay(list) {
+  const box = document.getElementById('appointments-list');
+  if (!box) return;
+  if (!list.length) {
+    box.innerHTML = `<div class="card" style="padding:20px;text-align:center;opacity:.7">Bu güne ait randevu yok.<br><button onclick="openNewAppointmentModal()" style="margin-top:12px">+ Yeni Randevu Oluştur</button></div>`;
+    return;
+  }
+  box.innerHTML = list.map(a => {
+    const time = new Date(a.starts_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px;margin-bottom:8px">
+        <div>
+          <b>${a.customers?.full_name || 'Müşteri'}</b> • ${a.service_name} • ${time}
+          <br><small style="opacity:.6">${a.notes || ''}</small>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge">${a.status}</span>
+          <button onclick="updateAppointmentStatus('${a.id}','onaylandı')">Onayla</button>
+          <button onclick="updateAppointmentStatus('${a.id}','iptal')">İptal</button>
+          <button onclick="updateAppointmentStatus('${a.id}','gelmedi')">Yoklama</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function updateAppointmentStatus(id, status) {
+  const { error } = await supabase.from('appointments').update({ status }).eq('id', id);
+  if (error) return alert(error.message);
+  loadAppointmentsForDay(currentDay);
+}
+
+function openNewAppointmentModal() {
+  document.getElementById('new-appointment-modal').style.display = 'flex';
+  // bugünün tarihini doldur
+  const dInput = document.getElementById('appt-date');
+  if (dInput && !dInput.value) dInput.value = toISODate(currentDay);
+  loadCustomerDatalist();
+}
+
+function closeNewAppointmentModal() {
+  document.getElementById('new-appointment-modal').style.display = 'none';
+}
+
+async function loadCustomerDatalist() {
+  const list = document.getElementById('customer-list');
+  if (!list) return;
+  const { data } = await supabase.from('customers').select('full_name').eq('organization_id', ORG_ID).limit(50);
+  if (data) list.innerHTML = data.map(c => `<option value="${c.full_name}">`).join('');
+}
+
+async function createAppointment() {
+  const service_name = document.getElementById('appt-service').value.trim();
+  const customerName = document.getElementById('appt-customer-name').value.trim();
+  const date = document.getElementById('appt-date').value;
+  const time = document.getElementById('appt-time').value;
+  const notes = document.getElementById('appt-notes').value.trim();
+
+  if (!customerName) return alert('Müşteri adını yazın - örn: Ayşe Yılmaz');
+  if (!service_name) return alert('Hizmet yazın - örn: güzellik makyaj');
+  if (!date || !time) return alert('Tarih ve saat seçin');
+
+  // 1. müşteriyi bul veya oluştur
+  let customer_id = null;
+  const { data: existing } = await supabase
+    .from('customers')
+    .select('id')
+    .eq('organization_id', ORG_ID)
+    .ilike('full_name', customerName)
+    .maybeSingle();
+
+  if (existing) {
+    customer_id = existing.id;
+  } else {
+    const { data: created, error: cErr } = await supabase
+      .from('customers')
+      .insert({ organization_id: ORG_ID, full_name: customerName })
+      .select('id')
+      .single();
+    if (cErr) {
+      console.error(cErr);
+      return alert('Müşteri oluşturulamadı: ' + cErr.message + '\n\nSupabase SQL Editor de customers için GRANT yaptın mı?');
+    }
+    customer_id = created.id;
+  }
+
+  const starts_at = new Date(`${date}T${time}:00`).toISOString();
+  const ends_at = new Date(new Date(starts_at).getTime() + 60 * 60 * 1000).toISOString(); // +1 saat
+
+  const { error } = await supabase.from('appointments').insert({
+    organization_id: ORG_ID,
+    customer_id,
+    service_name,
+    starts_at,
+    ends_at,
+    notes,
+    status: 'beklemede'
+  });
+
+  if (error) {
+    console.error(error);
+    return alert('Randevu oluşturulamadı: ' + error.message);
+  }
+
+  closeNewAppointmentModal();
+  // inputları temizle
+  document.getElementById('appt-customer-name').value = '';
+  document.getElementById('appt-service').value = '';
+  document.getElementById('appt-notes').value = '';
+
+  await loadAppointmentsForDay(new Date(date));
+}
+
+function changeDay(offset) {
+  const d = new Date(currentDay);
+  d.setDate(d.getDate() + offset);
+  loadAppointmentsForDay(d);
+}
+
+// global
+window.loadAppointmentsForDay = loadAppointmentsForDay;
+window.createAppointment = createAppointment;
+window.updateAppointmentStatus = updateAppointmentStatus;
+window.openNewAppointmentModal = openNewAppointmentModal;
+window.closeNewAppointmentModal = closeNewAppointmentModal;
+window.changeDay = changeDay;
+
+// ilk yükleme
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('appointments-list')) {
+    loadAppointmentsForDay(currentDay);
+  }
+});
