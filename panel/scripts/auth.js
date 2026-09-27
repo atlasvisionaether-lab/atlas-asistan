@@ -1,7 +1,7 @@
 // panel/scripts/auth.js
 // Supabase auth gate: oturum aç/kapat, oturumu geri yükle, panele erişimi denetle.
-// ui.js global'ine BAĞIMLI DEĞİL (adını bilmiyoruz) — DOM'u doğrudan yönetir.
-// store.js'e BU commit'te YAZMIYORUZ: set() render tetiklediği için login'de panel
+// ui.js global'ine BAĞIMLI DEĞİL — DOM'u doğrudan yönetir.
+// store.js'e YAZMIYORUZ: set() render tetiklediği için login'de panel
 // flash'ı olurdu; oturum bilgisini window.atlasUser global'inde tutuyoruz.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -45,8 +45,7 @@ function renderLogin() {
     errEl.textContent = "";
     const email = box.querySelector("#login-email").value.trim();
     const password = box.querySelector("#login-password").value;
-    const { err
-or } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     // Başarıda onAuthStateChange (SIGNED_IN) gate'i panele çevirir; burada ek çağrı yok.
     if (error) errEl.textContent = "Giriş başarısız: " + error.message;
   });
@@ -81,3 +80,6 @@ function boot() {
 window.atlasSignOut = async () => { if (supabase) await supabase.auth.signOut(); };
 
 boot();
+
+// Doğrulama: client window'a expose edildi mi?
+console.log("[atlas] ATLAS_SUPABASE exposed:", typeof window.ATLAS_SUPABASE === "object" && window.ATLAS_SUPABASE !== null);
