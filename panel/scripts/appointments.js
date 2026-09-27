@@ -1,8 +1,9 @@
 "use strict";
 /* Randevular + Genel Bakış istatistikleri: Supabase appointments tablosundan canlı veri.
- * Bağımlılıklar: window.ATLAS_UI (ui.js), window.ATLAS_SUPABASE (auth.js).
- * RLS: 0002'deki appointments_select/insert/update politikaları organization_id bazlı;
- * bu modül yeni politika eklemez. */
+ * MANUAL CUSTOMER NAME FIX: müşteri seçimi serbest metin + datalist; bilinmeyen ad
+ * girilirse customers tablosunda auto-create edilir.
+ * Bağımlılıklar: window.ATLAS_UI (ui.js), window.ATLAS_SUPABASE (auth.js), window.atlasUser.
+ * RLS: 0002'deki appointments/customers politikaları organization_id bazlı. */
 (function(){
  var ui = window.ATLAS_UI;
 
@@ -22,7 +23,7 @@
  function fmtTime(iso){ try { return new Date(iso).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}); } catch(e){ return ""; } }
  function fmtDate(d){ try { return d.toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}); } catch(e){ return ""; } }
 
- /* useDashboardStats karşılığı: bugünün gerçek sayıları (cancelled hariç toplam, iptal, yoklama). */
+ /* Bugünün gerçek sayıları (cancelled hariç toplam, iptal, yoklama). */
  function stats(){
   var sb = window.ATLAS_SUPABASE;
   if (!sb) return Promise.reject(new Error("Supabase bağlantısı yok"));
@@ -104,7 +105,22 @@
    .catch(function(e){ ui.toast("Güncellenemedi: " + (e && e.message ? e.message : String(e))); });
  }
 
- /* Yeni randevu modalı. Insert için organization_id users tablosundan alınır. */
+ /* Manuel müşteri adı: mevcut müşteriyi bul, yoksa auto-create. */
+ function findOrCreateCustomer(orgId, name){
+  var sb = window.ATLAS_SUPABASE;
+  return sb.from("customers").select("id").eq("organization_id", orgId).ilike("full_name", name).maybeSingle()
+   .then(function(res){
+    if (res.error) return Promise.reject(new Error(res.error.message));
+    if (res.data && res.data.id) return res.data.id;
+    return sb.from("customers").insert({ organization_id: orgId, full_name: name }).select("id").single()
+     .then(function(cr){
+      if (cr.error) return Promise.reject(new Error("Müşteri oluşturulamadı: " + cr.error.message));
+      return cr.data.id;
+     });
+   });
+ }
+
+ /* Yeni randevu modalı. organization_id users tablosundan auth.uid() ile alınır. */
  function openCreateModal(currentDate, onDone){
   ensureStyles(); closeModal();
   var sb = window.ATLAS_SUPABASE;
@@ -113,7 +129,9 @@
   box.appendChild(ui.el("h2",{text:"Yeni Randevu"}));
 
   var svcInput = ui.el("input",{type:"text",placeholder:"Hizmet adı"});
-  var custSelect = ui.el("select");
+  /* MANUAL CUSTOMER NAME FIX: serbest metin + datalist autocomplete. */
+  var custName = ui.el("input",{type:"text",id:"appt-customer-name",list:"customer-list",placeholder:"Müşteri adı — örn: Ayşe Yılmaz"});
+  var custList = ui.el("datalist",{id:"customer-list"});
   var dateInput = ui.el("input",{type:"date"});
   var pad = function(n){ return String(n).padStart(2,"0"); };
   dateInput.value = currentDate.getFullYear() + "-" + pad(currentDate.getMonth()+1) + "-" + pad(currentDate.getDate());
@@ -121,7 +139,7 @@
   var notesInput = ui.el("textarea",{placeholder:"Notlar (opsiyonel)"});
 
   box.appendChild(ui.el("label",{text:"Hizmet"})); box.appendChild(svcInput);
-  box.appendChild(ui.el("label",{text:"Müşteri"})); box.appendChild(custSelect);
+  box.appendChild(ui.el("label",{text:"Müşteri"})); box.appendChild(custName); box.appendChild(custList);
   box.appendChild(ui.el("label",{text:"Tarih"})); box.appendChild(dateInput);
   box.appendChild(ui.el("label",{text:"Saat"})); box.appendChild(timeInput);
   box.appendChild(ui.el("label",{text:"Notlar"})); box.appendChild(notesInput);
@@ -135,31 +153,38 @@
   create.addEventListener("click", function(){
    err.textContent = "";
    var serviceName = svcInput.value.trim();
+   var customerName = custName.value.trim();
    if (!serviceName){ err.textContent = "Hizmet adı gerekli."; return; }
-   if (!custSelect.value){ err.textContent = "Müşteri seçin."; return; }
+   if (!customerName){ err.textContent = "Müşteri adı gerekli."; return; }
    if (!dateInput.value || !timeInput.value){ err.textContent = "Tarih ve saat gerekli."; return; }
    var startsAt = new Date(dateInput.value + "T" + timeInput.value);
+   var endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
    var user = window.atlasUser;
    if (!user){ err.textContent = "Oturum bulunamadı."; return; }
-   sb.from("users").select("organization_id").eq("id", user.id).single()
+   sb.from("users").select("organization_id").eq("id", user.id).maybeSingle()
     .then(function(u){
-     if (u.error){ err.textContent = "Organizasyon bilgisi alınamadı: " + u.error.message; return; }
-     var orgId = u.data && u.data.organization_id;
-     if (!orgId){ err.textContent = "Kullanıcı bir organizasyona bağlı değil."; return; }
-     return sb.from("appointments").insert({
-      organization_id: orgId,
-      customer_id: custSelect.value,
-      service_name: serviceName,
-      starts_at: startsAt.toISOString(),
-      notes: notesInput.value.trim() || null
-     }).then(function(res){
-      if (res.error){ err.textContent = "Kayıt başarısız: " + res.error.message; return; }
-      ui.toast("Randevu oluşturuldu.");
-      closeModal();
-      if (onDone) onDone();
+     if (u.error) return Promise.reject(new Error("Organizasyon bilgisi alınamadı: " + u.error.message));
+     if (!u.data) return Promise.reject(new Error("Kullanıcı kaydı bulunamadı (users tablosunda bu hesap yok); organizasyon atanamadı."));
+     var orgId = u.data.organization_id;
+     if (!orgId) return Promise.reject(new Error("Kullanıcı bir organizasyona bağlı değil."));
+     return findOrCreateCustomer(orgId, customerName).then(function(customerId){
+      return sb.from("appointments").insert({
+       organization_id: orgId,
+       customer_id: customerId,
+       service_name: serviceName,
+       starts_at: startsAt.toISOString(),
+       ends_at: endsAt.toISOString(),
+       status: "pending",
+       notes: notesInput.value.trim() || null
+      }).then(function(res){
+       if (res.error) return Promise.reject(new Error("Kayıt başarısız: " + res.error.message));
+       ui.toast("Randevu oluşturuldu.");
+       closeModal();
+       if (onDone) onDone();
+      });
      });
     })
-    .catch(function(e){ err.textContent = "Kayıt başarısız: " + (e && e.message ? e.message : String(e)); });
+    .catch(function(e){ err.textContent = (e && e.message) ? e.message : String(e); });
   });
 
   var row = ui.el("div",{class:"form-row"});
@@ -169,15 +194,14 @@
   bd.addEventListener("click", function(ev){ if (ev.target === bd) closeModal(); });
   document.body.appendChild(bd);
 
-  custSelect.appendChild(ui.el("option",{value:"",text:"Seçiniz…"}));
-  sb.from("customers").select("id,full_name").order("full_name",{ascending:true}).range(0,199)
+  sb.from("customers").select("full_name").order("full_name",{ascending:true}).range(0,199)
    .then(function(res){
-    if (res.error){ err.textContent = "Müşteri listesi alınamadı: " + res.error.message; return; }
+    if (res.error) return;
     (res.data || []).forEach(function(c){
-     custSelect.appendChild(ui.el("option",{value:c.id,text:c.full_name}));
+     custList.appendChild(ui.el("option",{value:c.full_name}));
     });
    })
-   .catch(function(e){ err.textContent = "Müşteri listesi alınamadı: " + (e && e.message ? e.message : String(e)); });
+   .catch(function(){});
  }
 
  /* Günlük takvim: ileri/geri gün + durum aksiyonları + yeni randevu. */

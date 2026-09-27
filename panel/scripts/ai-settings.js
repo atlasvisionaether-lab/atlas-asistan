@@ -32,10 +32,11 @@
  function fetchOrgId(){
   var sb = window.ATLAS_SUPABASE, user = window.atlasUser;
   if (!sb || !user) return Promise.reject(new Error("Oturum ya da Supabase bağlantısı yok."));
-  return sb.from("users").select("organization_id").eq("id", user.id).single()
+  return sb.from("users").select("organization_id").eq("id", user.id).maybeSingle()
    .then(function(u){
     if (u.error) throw new Error("Organizasyon bilgisi alınamadı: " + u.error.message);
-    if (!u.data || !u.data.organization_id) throw new Error("Kullanıcı bir organizasyona bağlı değil.");
+    if (!u.data) throw new Error("Kullanıcı kaydı bulunamadı (users tablosunda bu hesap yok); organizasyon atanamadı.");
+    if (!u.data.organization_id) throw new Error("Kullanıcı bir organizasyona bağlı değil.");
     return u.data.organization_id;
    });
  }
@@ -190,4 +191,4 @@
    }).catch(function(){});
  }
  window.ATLAS_AI = { mount: mount };
-})();
+ })();

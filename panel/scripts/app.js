@@ -4,6 +4,7 @@
  const SCREENS=[
   {id:"overview",label:"Genel Bakış"},{id:"inbox",label:"Gelen Kutusu"},{id:"appointments",label:"Randevular"},{id:"customers",label:"Müşteriler / Leadler"},{id:"campaigns",label:"Kampanyalar"},{id:"automations",label:"Otomasyonlar"},{id:"services",label:"Hizmetler / Fiyatlar"},{id:"ai",label:"AI Asistan Ayarları"},{id:"widget",label:"Tasarım / Widget"},{id:"plugins",label:"Eklentiler"},{id:"analytics",label:"Analitik"},{id:"team",label:"Ekip / Yetkiler"},{id:"settings",label:"Ayarlar"}
  ];
+ const ALIAS={"ai-settings":"ai"};
  const main=document.getElementById("main"),nav=document.getElementById("nav");
  function header(title,sub){const f=document.createDocumentFragment();f.appendChild(ui.el("h1",{text:title}));f.appendChild(ui.el("p",{class:"sub",text:sub}));return f}
  function cardTable(title,headers,rows){return ui.el("div",{class:"card"},[ui.el("h2",{text:title}),ui.table(headers,rows)])}
@@ -23,6 +24,6 @@
  const RENDER={overview:screenOverview,inbox:screenInbox,appointments:screenAppointments,customers:screenCustomers,campaigns:screenCampaigns,automations:screenAutomations,services:screenServices,ai:screenAI,widget:screenWidget,plugins:screenPlugins,analytics:screenAnalytics,team:screenTeam,settings:screenSettings};
  function render(){const s=store.get(),id=s.screen||"overview";ui.clear(nav);SCREENS.forEach(x=>{const a=ui.el("a",{href:"#"+x.id,text:x.label});if(x.id===id)a.className="active";nav.appendChild(a)});ui.clear(main);main.appendChild((RENDER[id]||screenOverview)())}
  store.subscribe(s=>{if(s.lastToast)ui.toast(s.lastToast.msg);render()});
- window.addEventListener("hashchange",()=>{const id=(location.hash||"#overview").slice(1);if(SCREENS.some(x=>x.id===id))store.set({screen:id})});
- window.atlasBoot=function(){const initial=(location.hash||"#overview").slice(1);store.set({screen:SCREENS.some(x=>x.id===initial)?initial:"overview"})};
+ window.addEventListener("hashchange",()=>{const raw=(location.hash||"#overview").slice(1);const id=ALIAS[raw]||raw;if(SCREENS.some(x=>x.id===id))store.set({screen:id})});
+ window.atlasBoot=function(){const raw=(location.hash||"#overview").slice(1);const initial=ALIAS[raw]||raw;store.set({screen:SCREENS.some(x=>x.id===initial)?initial:"overview"})};
 })();
