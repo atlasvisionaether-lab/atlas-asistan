@@ -31,6 +31,10 @@
   return ui.el("span", { class: cls, text: r });
  }
 
+ function aiTag(){
+  return ui.el("span", { class: "tag ai", text: "AI" });
+ }
+
  function renderList(container, rows){
   if (!rows.length){
    var e = ui.el("div", { class: "card" });
@@ -41,6 +45,7 @@
   }
   var tableRows = rows.map(function(m){
    var sender = ui.el("span", null, [ui.el("b", { text: m.customerName })]);
+   if (m.senderType === "ai") sender.appendChild(aiTag());
    if (m.unread) sender.appendChild(ui.el("span", { class: "tag warn", text: " okunmadı" }));
    var tr = ui.el("tr", { class: "inbox-row" });
    [m.channel, sender, m.content, riskTag(m.riskFlag)].forEach(function(c){
@@ -72,7 +77,7 @@
   var box = ui.el("div", { class: "inbox-modal" });
   box.appendChild(ui.el("h2", { text: m.customerName }));
   var dl = ui.el("dl");
-  [["Kanal", m.channel],["Yön", m.direction],["Tarih", fmtDate(m.createdAt)],["Risk", m.riskFlag],["Okunmadı", m.unread ? "evet" : "hayır"]].forEach(function(x){
+  [["Kanal", m.channel],["Yön", m.direction],["Gönderen", m.senderType === "ai" ? "Atlas AI" : "Müşteri"],["Tarih", fmtDate(m.createdAt)],["Risk", m.riskFlag],["Okunmadı", m.unread ? "evet" : "hayır"]].forEach(function(x){
    dl.appendChild(ui.el("dt", { text: x[0] }));
    dl.appendChild(ui.el("dd", { text: String(x[1] == null ? "-" : x[1]) }));
   });
@@ -127,7 +132,7 @@
   }
   state(wrap, "loading", "Mesajlar yükleniyor…");
   sb.from("messages")
-   .select("id, channel, direction, content, risk_flag, created_at, unread, customers(full_name)")
+   .select("id, channel, direction, content, risk_flag, created_at, unread, sender_type, customers(full_name)")
    .order("unread", { ascending: false })
    .order("created_at", { ascending: false })
    .range(0, 49)
@@ -146,7 +151,8 @@
       riskFlag: m.risk_flag || "normal",
       createdAt: m.created_at,
       unread: !!m.unread,
-      customerName: (m.customers && m.customers.full_name) ? m.customers.full_name : "Bilinmiyor"
+      customerName: (m.customers && m.customers.full_name) ? m.customers.full_name : "Bilinmiyor",
+      senderType: m.sender_type || null
      };
     });
     renderList(wrap, rows);
