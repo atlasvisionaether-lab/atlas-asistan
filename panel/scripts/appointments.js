@@ -94,6 +94,20 @@
   return b;
  }
 
+
+ /* Organizasyon ID: önce current_org_id() RPC'si (public.users bazlı, 0002),
+  * hata/null dönerse users tablosundan fallback. organization_members tablosu yoktur. */
+ function fetchOrgId(sb, user){
+  return sb.rpc("current_org_id").then(function(r){
+   if (!r.error && r.data) return r.data;
+   return sb.from("users").select("organization_id").eq("id", user.id).limit(1).maybeSingle()
+    .then(function(u){
+     if (u.error) throw new Error(u.error.message);
+     return (u.data && u.data.organization_id) || null;
+    });
+  });
+ }
+
  function setStatus(id, status, onDone){
   var sb = window.ATLAS_SUPABASE;
   sb.from("appointments").update({ status: status }).eq("id", id)
@@ -161,10 +175,8 @@
    var endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
    var user = window.atlasUser;
    if (!user){ err.textContent = "Oturum bulunamadı."; return; }
-   sb.from("users").select("organization_id").eq("id", user.id).limit(1).maybeSingle()
-    .then(function(u){
-     if (u.error) return Promise.reject(new Error("Organizasyon bilgisi alınamadı: " + u.error.message));
-     var orgId = u.data && u.data.organization_id;
+   fetchOrgId(sb, user)
+    .then(function(orgId){
      if (!orgId) return Promise.reject(new Error("Kullanıcı bir organizasyona bağlı değil."));
      return findOrCreateCustomer(orgId, customerName).then(function(customerId){
       return sb.from("appointments").insert({
