@@ -102,13 +102,28 @@
   container.appendChild(c);
  }
 
+ var realtimeChannel = null;
+ var currentWrap = null;
+
  function mount(f){
+  if (currentWrap && currentWrap.parentNode) currentWrap.parentNode.removeChild(currentWrap);
   var wrap = ui.el("div");
+  currentWrap = wrap;
   f.appendChild(wrap);
   var sb = window.ATLAS_SUPABASE;
   if (!sb){
    state(wrap, "wait", "Supabase bağlantısı kuruluyor… (giriş yapmış olmanız gerekir)");
    return;
+  }
+  /* Realtime: messages tablosuna INSERT olunca liste anında yenilenir.
+   * RLS, authenticated kullanıcıyı kendi org'una sınırlar; abonelik de
+   * oturum ile yetkilendirilir. Tek kanal; tekrar mount'ta abonelik yenilenmez. */
+  if (!realtimeChannel && sb.channel){
+   realtimeChannel = sb.channel("messages-inbox")
+    .on("postgres_changes",
+     { event: "INSERT", schema: "public", table: "messages" },
+     function(){ if (currentWrap && currentWrap.parentNode) mount(currentWrap.parentNode); })
+    .subscribe();
   }
   state(wrap, "loading", "Mesajlar yükleniyor…");
   sb.from("messages")
