@@ -5,7 +5,8 @@
 -- İDempotent hale getirilmiştir; mevcut bir Supabase projesinde
 -- güvenle çalıştırılabilir:
 --   - CREATE TABLE / INDEX / ADD COLUMN → IF NOT EXISTS
---   - Her CREATE POLICY öncesinde DROP POLICY IF EXISTS eklenmiştir
+--   - Her CREATE POLICY öncesine DROP POLICY IF EXISTS eklenmiştir
+--     (CREATE POLICY Postgres'te IF NOT EXISTS desteklemez)
 --   - ADD CONSTRAINT, DO $$ ... $$ varlık kontrolüyle sarılmıştır
 --
 -- NOT 1: 0001_panel_schema.sql bu dosyaya DAHİL EDİLMEMİŞTİR;
@@ -115,57 +116,67 @@ ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE automations ENABLE ROW LEVEL SECURITY;
 
 -- Organizasyon politikaları
+drop policy if exists "Organizations: users can view their own" on public.organizations;
 CREATE POLICY "Organizations: users can view their own" ON organizations
   FOR SELECT USING (
     id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
 -- Kullanıcı politikaları
+drop policy if exists "Users: can view own org users" on public.users;
 CREATE POLICY "Users: can view own org users" ON users
   FOR SELECT USING (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
 -- Müşteri politikaları
+drop policy if exists "Customers: users can view their org customers" on public.customers;
 CREATE POLICY "Customers: users can view their org customers" ON customers
   FOR SELECT USING (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
+drop policy if exists "Customers: users can insert their org customers" on public.customers;
 CREATE POLICY "Customers: users can insert their org customers" ON customers
   FOR INSERT WITH CHECK (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
 -- Randevu politikaları
+drop policy if exists "Appointments: users can view their org appointments" on public.appointments;
 CREATE POLICY "Appointments: users can view their org appointments" ON appointments
   FOR SELECT USING (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
+drop policy if exists "Appointments: users can insert their org appointments" on public.appointments;
 CREATE POLICY "Appointments: users can insert their org appointments" ON appointments
   FOR INSERT WITH CHECK (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
 -- Mesaj politikaları
+drop policy if exists "Messages: users can view their org messages" on public.messages;
 CREATE POLICY "Messages: users can view their org messages" ON messages
   FOR SELECT USING (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
+drop policy if exists "Messages: users can insert their org messages" on public.messages;
 CREATE POLICY "Messages: users can insert their org messages" ON messages
   FOR INSERT WITH CHECK (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
 -- Kampanya politikaları
+drop policy if exists "Campaigns: users can view their org campaigns" on public.campaigns;
 CREATE POLICY "Campaigns: users can view their org campaigns" ON campaigns
   FOR SELECT USING (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
   );
 
 -- Otomasyon politikaları
+drop policy if exists "Automations: users can view their org automations" on public.automations;
 CREATE POLICY "Automations: users can view their org automations" ON automations
   FOR SELECT USING (
     organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
@@ -252,18 +263,21 @@ DROP POLICY IF EXISTS "Automations: users can view their org automations" ON pub
 -- ------------------------------------------------------------
 -- organizations (tenant sütunu: id)
 -- ------------------------------------------------------------
+drop policy if exists organizations_select on public.organizations;
 CREATE POLICY "organizations_select" ON public.organizations
   FOR SELECT USING (
     (id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists organizations_insert on public.organizations;
 CREATE POLICY "organizations_insert" ON public.organizations
   FOR INSERT WITH CHECK (
     (id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists organizations_update on public.organizations;
 CREATE POLICY "organizations_update" ON public.organizations
   FOR UPDATE USING (
     (id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
@@ -273,24 +287,28 @@ CREATE POLICY "organizations_update" ON public.organizations
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists organizations_delete on public.organizations;
 CREATE POLICY "organizations_delete" ON public.organizations
   FOR DELETE USING (public.has_role(ARRAY['atlas_admin']));
 
 -- ------------------------------------------------------------
 -- users (tenant sütunu: organization_id)
 -- ------------------------------------------------------------
+drop policy if exists users_select on public.users;
 CREATE POLICY "users_select" ON public.users
   FOR SELECT USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists users_insert on public.users;
 CREATE POLICY "users_insert" ON public.users
   FOR INSERT WITH CHECK (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists users_update on public.users;
 CREATE POLICY "users_update" ON public.users
   FOR UPDATE USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
@@ -300,24 +318,28 @@ CREATE POLICY "users_update" ON public.users
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists users_delete on public.users;
 CREATE POLICY "users_delete" ON public.users
   FOR DELETE USING (public.has_role(ARRAY['atlas_admin']));
 
 -- ------------------------------------------------------------
 -- customers (tenant sütunu: organization_id)
 -- ------------------------------------------------------------
+drop policy if exists customers_select on public.customers;
 CREATE POLICY "customers_select" ON public.customers
   FOR SELECT USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists customers_insert on public.customers;
 CREATE POLICY "customers_insert" ON public.customers
   FOR INSERT WITH CHECK (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists customers_update on public.customers;
 CREATE POLICY "customers_update" ON public.customers
   FOR UPDATE USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
@@ -327,24 +349,28 @@ CREATE POLICY "customers_update" ON public.customers
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists customers_delete on public.customers;
 CREATE POLICY "customers_delete" ON public.customers
   FOR DELETE USING (public.has_role(ARRAY['atlas_admin']));
 
 -- ------------------------------------------------------------
 -- appointments (tenant sütunu: organization_id; receptionist dahil)
 -- ------------------------------------------------------------
+drop policy if exists appointments_select on public.appointments;
 CREATE POLICY "appointments_select" ON public.appointments
   FOR SELECT USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant', 'receptionist'])
   );
 
+drop policy if exists appointments_insert on public.appointments;
 CREATE POLICY "appointments_insert" ON public.appointments
   FOR INSERT WITH CHECK (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant', 'receptionist'])
   );
 
+drop policy if exists appointments_update on public.appointments;
 CREATE POLICY "appointments_update" ON public.appointments
   FOR UPDATE USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
@@ -354,24 +380,28 @@ CREATE POLICY "appointments_update" ON public.appointments
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists appointments_delete on public.appointments;
 CREATE POLICY "appointments_delete" ON public.appointments
   FOR DELETE USING (public.has_role(ARRAY['atlas_admin']));
 
 -- ------------------------------------------------------------
 -- messages (tenant sütunu: organization_id; receptionist dahil)
 -- ------------------------------------------------------------
+drop policy if exists messages_select on public.messages;
 CREATE POLICY "messages_select" ON public.messages
   FOR SELECT USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant', 'receptionist'])
   );
 
+drop policy if exists messages_insert on public.messages;
 CREATE POLICY "messages_insert" ON public.messages
   FOR INSERT WITH CHECK (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant', 'receptionist'])
   );
 
+drop policy if exists messages_update on public.messages;
 CREATE POLICY "messages_update" ON public.messages
   FOR UPDATE USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
@@ -381,24 +411,28 @@ CREATE POLICY "messages_update" ON public.messages
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists messages_delete on public.messages;
 CREATE POLICY "messages_delete" ON public.messages
   FOR DELETE USING (public.has_role(ARRAY['atlas_admin']));
 
 -- ------------------------------------------------------------
 -- campaigns (tenant sütunu: organization_id)
 -- ------------------------------------------------------------
+drop policy if exists campaigns_select on public.campaigns;
 CREATE POLICY "campaigns_select" ON public.campaigns
   FOR SELECT USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists campaigns_insert on public.campaigns;
 CREATE POLICY "campaigns_insert" ON public.campaigns
   FOR INSERT WITH CHECK (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists campaigns_update on public.campaigns;
 CREATE POLICY "campaigns_update" ON public.campaigns
   FOR UPDATE USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
@@ -408,24 +442,28 @@ CREATE POLICY "campaigns_update" ON public.campaigns
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists campaigns_delete on public.campaigns;
 CREATE POLICY "campaigns_delete" ON public.campaigns
   FOR DELETE USING (public.has_role(ARRAY['atlas_admin']));
 
 -- ------------------------------------------------------------
 -- automations (tenant sütunu: organization_id)
 -- ------------------------------------------------------------
+drop policy if exists automations_select on public.automations;
 CREATE POLICY "automations_select" ON public.automations
   FOR SELECT USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists automations_insert on public.automations;
 CREATE POLICY "automations_insert" ON public.automations
   FOR INSERT WITH CHECK (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists automations_update on public.automations;
 CREATE POLICY "automations_update" ON public.automations
   FOR UPDATE USING (
     (organization_id = public.current_org_id() OR public.has_role(ARRAY['atlas_admin']))
@@ -435,6 +473,7 @@ CREATE POLICY "automations_update" ON public.automations
     AND public.has_role(ARRAY['owner', 'manager', 'consultant'])
   );
 
+drop policy if exists automations_delete on public.automations;
 CREATE POLICY "automations_delete" ON public.automations
   FOR DELETE USING (public.has_role(ARRAY['atlas_admin']));
 
@@ -607,17 +646,22 @@ alter table public.assistant_settings_history enable row level security;
 drop policy if exists assistant_settings_select on public.assistant_settings;
 drop policy if exists assistant_settings_insert on public.assistant_settings;
 drop policy if exists assistant_settings_update on public.assistant_settings;
+drop policy if exists assistant_settings_select on public.assistant_settings;
 create policy assistant_settings_select on public.assistant_settings
   for select using (organization_id = current_org_id());
+drop policy if exists assistant_settings_insert on public.assistant_settings;
 create policy assistant_settings_insert on public.assistant_settings
   for insert with check (organization_id = current_org_id());
+drop policy if exists assistant_settings_update on public.assistant_settings;
 create policy assistant_settings_update on public.assistant_settings
   for update using (organization_id = current_org_id())
   with check (organization_id = current_org_id());
 
 drop policy if exists assistant_settings_history_select on public.assistant_settings_history;
 drop policy if exists assistant_settings_history_insert on public.assistant_settings_history;
+drop policy if exists assistant_settings_history_select on public.assistant_settings_history;
 create policy assistant_settings_history_select on public.assistant_settings_history
   for select using (organization_id = current_org_id());
+drop policy if exists assistant_settings_history_insert on public.assistant_settings_history;
 create policy assistant_settings_history_insert on public.assistant_settings_history
   for insert with check (organization_id = current_org_id());
