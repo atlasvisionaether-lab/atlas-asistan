@@ -1,6 +1,28 @@
 # Supabase — Atlas Asistan
 
-Bu klasör Atlas Asistan'ın Supabase tarafını içerir: Edge Function, migration referansları ve ortam değişkenleri.
+Bu klasör Atlas Asistan'ın Supabase tarafını içerir: Edge Function, migration referansları, ortam değişkenleri ve kurulum otomasyonu.
+
+## Hızlı kurulum (tek komut — PR #47 sonrası 4 adım)
+
+```bash
+# 1) Supabase CLI login (bir kez)
+supabase login
+
+# 2) AI anahtarı (ikisinden biri)
+export LOVABLE_API_KEY=...     # veya: export OPENAI_API_KEY=sk-...
+
+# 3) Hepsini çalıştır: migration + secrets + deploy + webhook + test
+bash supabase/setup-auto-reply.sh
+```
+
+Script ne yapar:
+1. **0011** migration — `messages.is_from_customer`, `messages.sender_type`, `customers.last_message_at`, realtime publication
+2. **Secrets** — `LOVABLE_API_KEY` (yoksa `OPENAI_API_KEY`) set eder
+3. **Deploy** — `supabase functions deploy atlas-auto-reply --no-verify-jwt`
+4. **Webhook** — **0012** SQL'i ile `on_message_insert` pg_net trigger'ı (Dashboard webhook'u yerine)
+5. **Test** — test mesajı insert eder, 5 sn sonra son 3 mesajı sorgular
+
+Bir adım hata verirse script durur ve neyin kaldığını söyler.
 
 ## Yapı
 
@@ -8,9 +30,12 @@ Bu klasör Atlas Asistan'ın Supabase tarafını içerir: Edge Function, migrati
 supabase/
 ├── config.toml                          # Edge Function ayarları (verify_jwt)
 ├── functions/atlas-auto-reply/index.ts  # Otomatik AI cevabı Edge Function
-├── migrations/                          # SQL migration referansları
-│   └── 0011_atlas_auto_reply_trigger.sql
-├── .env.example                          # Ortam değişkenleri şablonu
+├── migrations/
+│   ├── 0011_atlas_auto_reply_trigger.sql  # Kolonlar + realtime (ADIM 1)
+│   ├── 0012_atlas_auto_reply_webhook.sql  # pg_net webhook (ADIM 4B)
+│   └── 9999_test_insert.sql               # Test INSERT + doğrulama (ADIM 5)
+├── setup-auto-reply.sh                 # Tüm adımları çalıştıran script
+├── .env.example                        # Ortam değişkenleri şablonu
 └── README.md
 ```
 
@@ -57,9 +82,11 @@ supabase functions deploy atlas-auto-reply
 
 `config.toml` içinde `[functions.atlas-auto-reply] verify_jwt = false` — webhook anon çağırır; yetki service_role ile DB tarafında ele alınır.
 
-### 4) Database Webhook
+### 4) Database Webhook — iki seçenek
 
-Dashboard: **Database > Webhooks > Create a webhook**
+**4B (önerilen, SQL ile):** `supabase/migrations/0012_atlas_auto_reply_webhook.sql` — pg_net ile `on_message_insert` trigger'ı kurar. `net.http_post` ile Edge Function'ı çağırır; `is_from_customer = true` olmayan satırları (AI cevapları) döngüye sokmaz. Setup script bunu otomatik uygular.
+
+**4A (Dashboard):** Database > Webhooks > Create a webhook
 
 | Alan | Değer |
 |---|---|
@@ -70,18 +97,30 @@ Dashboard: **Database > Webhooks > Create a webhook**
 | Function | `atlas-auto-reply` |
 | Webhook payload | Default |
 
-Koşul filtresi (`channel`, `is_from_customer`) Edge Function içinde uygulanır; webhook tüm INSERT'leri gönderir, function gereksiz olanları `skipped` ile reddeder.
+Koşul filtresi (`channel`, `is_from_customer`) Edge Function içinde uygulanır; function gereksiz INSERT'leri `skipped` ile reddeder.
+
+> DİKKAT: 4A ve 4B aynı anda kurulursa her mesaj için Edge Function iki kez çağrılır. Birini seç: setup script (4B) varsayılan; Dashboard webhook'u kullandıysan 0012'yi çalıştırma.
 
 ### 5) Panel Realtime
 
 `panel/scripts/inbox.js` `postgres_changes` INSERT aboneliği ile yeni mesaj geldiğinde listeyi yeniler. Gereksinim: 0011 migration'ındaki publication eki + authenticated oturum (RLS).
 
-## Test
+## Test (ADIM 5)
 
 ```sql
 -- Supabase SQL Editor: müşteri mesajı simüle et
+-- NOT: direction NOT NULL'dur (0001); mutlaka 'in' verilmelidir.
 INSERT INTO public.messages (organization_id, customer_id, channel, direction, content, risk_flag, is_from_customer, sender_type, unread)
-VALUES ('fff29ed3-f2e3-4837-bdfc-f4e974f366e7', '<customer-uuid>', 'whatsapp', 'in', 'Merhaba, lazer epilasyon fiyatı nedir?', 'normal', true, 'customer', true);
+VALUES ('fff29ed3-f2e3-4837-bdfc-f4e974f366e7', '6e37b8e0-fdce-4837-ab1a-f11b7578c198', 'whatsapp', 'in', 'Selam fiyat nedir?', 'normal', true, 'customer', true);
+```
+
+3–5 saniye sonra doğrulama (`supabase/migrations/9999_test_insert.sql` ile aynı):
+
+```sql
+select sender_type, is_from_customer, content, created_at
+from public.messages
+where customer_id = '6e37b8e0-fdce-4837-ab1a-f11b7578c198'
+order by created_at desc limit 3;
 ```
 
 2–3 saniye içinde:
