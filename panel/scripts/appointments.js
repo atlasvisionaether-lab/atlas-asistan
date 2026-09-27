@@ -161,7 +161,7 @@
    var endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
    var user = window.atlasUser;
    if (!user){ err.textContent = "Oturum bulunamadı."; return; }
-   sb.from("users").select("organization_id").eq("id", user.id).single()
+   sb.from("users").select("organization_id").eq("id", user.id).limit(1).maybeSingle()
     .then(function(u){
      if (u.error) return Promise.reject(new Error("Organizasyon bilgisi alınamadı: " + u.error.message));
      var orgId = u.data && u.data.organization_id;
