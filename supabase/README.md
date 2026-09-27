@@ -133,3 +133,53 @@ order by created_at desc limit 3;
 - Webhook payload'ı tüm satırı içerir; Edge Function yalnızca gerekli alanları işler.
 - `verify_jwt = false` gereklidir (webhook anon çağırır); DB erişimi service_role ile RLS bypass'ı üzerinden tek noktada tutulur.
 - Sağlık/şikâyet içeriklerinde otomatik tıbbi yanıt üretilmez; insan devralma akışı korunur.
+
+## Auto-reply nasıl çalışır (akış)
+
+```
+müşteri mesajı (messages INSERT, is_from_customer=true)
+  └─ trigger on_message_insert (0012, pg_net)
+       └─ net.http_post → https://lfltontezrfcmjntsgix.supabase.co/functions/v1/atlas-auto-reply
+            └─ Edge Function (verify_jwt=false, service_role)
+                 ├─ koşul: channel ∈ {whatsapp, web_widget}, is_from_customer=true
+                 ├─ yüksek risk (risk_flag='yüksek') → insan devralma notu, AI üretimi yok
+                 ├─ son 10 mesaj (context) + org services + assistant_settings
+                 ├─ Lovable AI Gateway → OpenAI → fallback sırasıyla cevap üretir
+                 └─ cevap INSERT (sender_type='ai', is_from_customer=false, unread=false)
+                      └─ customers.last_message_at güncellenir
+                           └─ panel Realtime (postgres_changes INSERT) anında gösterir
+```
+
+Fiyat bilgisi hardcode değildir: Edge Function her çağrıda `services` tablosundan
+org'un `is_active=true` satırlarını okur ve system prompt'a service listesi olarak ekler.
+Fiyat değişirse tabloyu güncellemek yeterlidir; Edge Function yeniden deploy edilmez.
+
+## Troubleshooting
+
+| Belirti | Neden | Çözüm |
+|---|---|---|
+| Insert sonrası AI cevabı gelmiyor | Trigger yok / düştü | `select tgname from pg_trigger where tgrelid='public.messages'::regclass;` → `on_message_insert` yoksa 0012'yi tekrar çalıştır (idempotent) |
+| `function net.http_post(...) does not exist` — SQLSTATE 42883 | `body` parametresi `::text` cast edilmiş veya imza uyuşmuyor | `net.http_post(url text, body jsonb, headers jsonb)` — body'yi **jsonb** ver (`::text` cast YOK). Repo'daki 0012'nin güncel halini kullan |
+| Edge Function 401 döner | JWT kısıtı kapalı değil | `supabase functions deploy atlas-auto-reply --no-verify-jwt` VEYA `supabase/config.toml` içinde `[functions.atlas-auto-reply] verify_jwt = false` |
+| Cevap hep fallback mesajı | AI anahtarı yok/geçersiz | `supabase secrets list` → `LOVABLE_API_KEY` veya `OPENAI_API_KEY` olmalı; `supabase secrets set OPENAI_API_KEY=...` sonrası yeni çağrıda okunur (deploy gerekmez) |
+| Aynı mesaja iki AI cevabı | 4A (Dashboard webhook) + 4B (0012 trigger) birlikte kurulu | İkisinden birini kaldır: Dashboard > Webhooks'tan sil VEYA `drop trigger on_message_insert on public.messages;` |
+| Panelde cevap görünmüyor | Realtime publication'da `messages` yok | 0011'in publication bloğunu uygula; tarayıcı console'unda realtime hatası var mı bak |
+| `services` fiyatları güncel değil | Edge Function her çağrıda tabloyu okur; cache yok | Sadece tabloyu güncelle. Hâlâ eskiyse cevabın `created_at`'ine bak — eski bir cevap olabilir |
+| Webhook çağrıldı ama cevap üretilmedi | Koşullar tutmadı → `skipped` | Kayıtta `channel` ('whatsapp'/'web_widget') ve `is_from_customer=true` olmalı; Edge Function logları: `supabase functions logs atlas-auto-reply` |
+
+### JWT OFF uyarısı
+
+`atlas-auto-reply` `verify_jwt = false` ile çalışır — anon çağrılabilir. Bu bilerek
+böyledir (Database Webhook JWT göndermez). Sınırlar:
+
+- Function yalnızca geçerli bir `messages` satır kaydı işler; koşullar tutmazsa `skipped` döner.
+- DB erişimi function içindeki service_role ile; dışarıya anahtar sızmaz.
+- URL biliniyorsa sahte record ile cevap üretimi denenebilir. Üretimde ek koruma
+  istenirse: 0012 trigger'ında özel bir `params`/header doğrulaması ekleyip function'da
+  kontrol et, veya Dashboard webhook (supabase_functions, imzalı) kullan.
+
+### Test verisi temizliği
+
+`supabase/cleanup-test-messages.sql` — `6e37b8e0-…` müşterisinin test mesajlarını ve
+AI cevaplarını siler: önce önizleme, sonra DELETE'ler, sonunda count doğrulaması.
+SQL Editor'de çalıştır; DELETE kalıcıdır.

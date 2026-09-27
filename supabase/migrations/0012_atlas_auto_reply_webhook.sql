@@ -36,7 +36,7 @@ begin
       'type', 'INSERT',
       'table', 'messages',
       'record', to_jsonb(new)
-    )::text,
+    ),
     headers := '{"Content-Type": "application/json"}'::jsonb
   );
 
