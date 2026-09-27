@@ -176,6 +176,72 @@ Deno.serve(async (req) => {
     return jsonResponse({ skipped: true, reason: "missing organization_id or customer_id" });
   }
 
+  // —— BAYRAK KONTROLLERİ (0013) ————————————————————————————————
+  // 1) Org'un asistan ayarları: auto_reply_enabled + working_hours + fallback.
+  const { data: flagRows } = await db
+    .from("assistant_settings")
+    .select("auto_reply_enabled, working_hours, fallback_message")
+    .eq("organization_id", orgId)
+    .limit(1);
+  const flags = (flagRows && flagRows[0]) || null;
+
+  // 1a) AI otomatik cevabı kapalıysa hiçbir cevap yazılmaz.
+  if (flags && flags.auto_reply_enabled === false) {
+    return jsonResponse({ skipped: true, reason: "auto_reply_disabled" });
+  }
+
+  // 1b) Müşteri insan temsilciye aktarılmışsa AI susar.
+  const { data: custRows } = await db
+    .from("customers")
+    .select("is_handled_by_human")
+    .eq("id", customerId)
+    .limit(1);
+  const cust = (custRows && custRows[0]) || null;
+  if (cust && cust.is_handled_by_human === true) {
+    return jsonResponse({ skipped: true, reason: "handled_by_human" });
+  }
+
+  // 1c) Çalışma saatleri dışındaysa AI modeli ÇAĞRILMAZ;
+  //     assistant_settings.fallback_message gönderilir (yoksa sessiz geç).
+  let outsideWorkingHours = false;
+  if (flags && flags.working_hours && flags.working_hours.start && flags.working_hours.end) {
+    const nowTR = new Date().toLocaleTimeString("tr-TR", {
+      timeZone: "Europe/Istanbul",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const cur = nowTR.split(":").map(Number);
+    const start = String(flags.working_hours.start).split(":").map(Number);
+    const end = String(flags.working_hours.end).split(":").map(Number);
+    const curMin = cur[0] * 60 + cur[1];
+    const startMin = start[0] * 60 + start[1];
+    const endMin = end[0] * 60 + end[1];
+    outsideWorkingHours = curMin < startMin || curMin >= endMin;
+  }
+  if (outsideWorkingHours) {
+    const fb = (flags && flags.fallback_message) || "";
+    if (!fb) {
+      return jsonResponse({ skipped: true, reason: "outside_working_hours" });
+    }
+    const { error: fbErr } = await db.from("messages").insert({
+      organization_id: orgId,
+      customer_id: customerId,
+      content: fb,
+      channel: record.channel,
+      direction: "out",
+      is_from_customer: false,
+      sender_type: "ai",
+      risk_flag: "normal",
+      unread: false,
+    });
+    if (fbErr) {
+      return jsonResponse({ error: "fallback insert failed: " + fbErr.message }, 500);
+    }
+    return jsonResponse({ ok: true, replied: true, fallback: true, customer_id: customerId });
+  }
+  // ————————————————————————————————————————————————————————
+
   // b) Son 10 mesaj (context) — eski→yeni sırayla modele verilir.
   const { data: recent, error: recentErr } = await db
     .from("messages")

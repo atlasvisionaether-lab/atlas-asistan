@@ -198,3 +198,58 @@ SQL Editor'de çalıştır; DELETE kalıcıdır.
 Kaydet → `supabase .update` (satır yoksa insert). 0013 migration'ı
 (`supabase/migrations/0013_handover_and_automation_settings.sql`) önce
 uygulanmalı: `auto_reply_enabled`, `working_hours` kolonları.
+
+## EF bayrak kontrolleri (FAZ 6 — 0013 kolonları Edge Function'a bağlandı)
+
+`atlas-auto-reply` artık cevap üretmeden ÖNCE üç bayrağı kontrol eder (sırayla):
+
+1. **`assistant_settings.auto_reply_enabled = false`** → `{"skipped":true,"reason":"auto_reply_disabled"}`
+   — hiçbir cevap yazılmaz. Panel #automations'taki toggle buradan okur.
+2. **`customers.is_handled_by_human = true`** → `{"skipped":true,"reason":"handled_by_human"}`
+   — insana aktarılan müşteride AI susar (devralma geri alınana kadar).
+3. **`working_hours` dışında** (Europe/Istanbul saatine göre) → AI modeli ÇAĞRILMAZ;
+   `assistant_settings.fallback_message` gönderilir (fallback boşsa sessizce geçilir,
+   `reason:"outside_working_hours"`). Cevap yine `sender_type='ai'` olarak yazılır.
+
+Bunların hiçbiri mevcut `serviceList` akışını etkilemez: bayraklar geçilirse
+hizmet listesi + context + assistant_settings ile normal üretim çalışır.
+Deploy: `supabase functions deploy atlas-auto-reply --no-verify-jwt`.
+
+## Akış (0013 sonrası — güncel)
+
+```
+müşteri mesajı (messages INSERT, is_from_customer=true)
+  └─ trigger on_message_insert (0012, pg_net, jsonb body)
+       └─ Edge Function atlas-auto-reply (verify_jwt=false, service_role)
+            ├─ koşul: channel ∈ {whatsapp, web_widget}, is_from_customer=true
+            ├─[BAYRAK 1] auto_reply_enabled=false?      → skipped: auto_reply_disabled (cevap YOK)
+            ├─[BAYRAK 2] is_handled_by_human=true?      → skipped: handled_by_human (AI susar)
+            ├─[BAYRAK 3] working_hours dışı (TR saati)?  → fallback_message yazılır, model ÇAĞRILMAZ
+            ├─ risk_flag='yüksek'?                       → HEALTHY_HANDOVER (insan devralma notu)
+            ├─ son 10 mesaj (context) + org services + assistant_settings
+            ├─ Lovable AI Gateway → OpenAI → fallback sırasıyla üretim
+            └─ cevap INSERT (sender_type='ai', is_from_customer=false, unread=false)
+                 └─ customers.last_message_at güncelle
+                      └─ panel Realtime anında gösterir (mor "AI" badge)
+                           └─ panelde "İnsan temsilciye aktar" → handover_requested=true
+                                + is_handled_by_human=true → Bayrak 2 bundan sonra AI'yi susturur
+```
+
+## Prod checklist
+
+- [ ] **Verify JWT OFF riski:** `atlas-auto-reply` anon çağrılabilir (webhook JWT göndermez,
+      bilerek böyle). URL sızarsa sahte record ile cevap üretimi denenebilir. Azaltıcılar:
+      function URL'ini gizli tut, 0012 trigger'ını yalnızca servis bileşeni yeniden kurabilir,
+      gerekiyorsa function'a özel bir header doğrulaması ekle (sonraki hardening adımı).
+- [ ] **RLS:** 0002/0009 politikaları aktif — panel authenticated kullanıcıyı kendi org'una
+      sınırlar. `select * from pg_policies where schemaname='public';` ile doğrula.
+      `messages.handover_requested` update'i 0002'deki messages_update politikasiyla kaplı.
+- [ ] **OPENAI_API_KEY / LOVABLE_API_KEY rotasyonu:** `supabase secrets set OPENAI_API_KEY=...`
+      yeni değerle değiştirir; eski anahtarı sağlayıcı panelinden iptal et. Sonrası
+      `supabase secrets list` ile doğrula. Anahtarlar repoda/`.env.example`'ta asla düz metin olmaz.
+- [ ] **Edge Function deploy:** her EF değişikliğinden sonra
+      `supabase functions deploy atlas-auto-reply --no-verify-jwt`
+- [ ] **Test verisi:** `supabase/seed-services.sql` + `supabase/cleanup-test-messages.sql`
+      çalıştırılmış, tabloda yalnız 2 aktif hizmet kalmış.
+- [ ] **Realtime:** publication'da `messages` + `services` (0011; services için
+      `alter publication supabase_realtime add table public.services;` gerekirse).

@@ -126,7 +126,7 @@
   var box = ui.el("div", { class: "inbox-modal" });
   box.appendChild(ui.el("h2", { text: m.customerName }));
   var dl = ui.el("dl");
-  var senderLabel = m.senderType === "ai" ? "Atlas AI" : (m.senderType === "human" ? "İnsan temsilci" : "Müşteri");
+  var senderLabel = m.senderType === "ai" ? "Atlas AI (Otomatik)" : (m.senderType === "human" ? "İnsan temsilci" : "Müşteri");
   [["Kanal", m.channel],["Gönderen", senderLabel],["Yön", m.direction],["Tarih", fmtDate(m.createdAt)],["Risk", m.riskFlag],["Okunmadı", m.unread ? "evet" : "hayır"],["Devralma talebi", m.handoverRequested ? "evet" : "hayır"]].forEach(function(x){
    dl.appendChild(ui.el("dt", { text: x[0] }));
    dl.appendChild(ui.el("dd", { text: String(x[1] == null ? "-" : x[1]) }));
