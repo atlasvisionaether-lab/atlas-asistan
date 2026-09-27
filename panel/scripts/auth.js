@@ -45,7 +45,8 @@ function renderLogin() {
     errEl.textContent = "";
     const email = box.querySelector("#login-email").value.trim();
     const password = box.querySelector("#login-password").value;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { err
+or } = await supabase.auth.signInWithPassword({ email, password });
     // Başarıda onAuthStateChange (SIGNED_IN) gate'i panele çevirir; burada ek çağrı yok.
     if (error) errEl.textContent = "Giriş başarısız: " + error.message;
   });
@@ -62,6 +63,7 @@ function resolveSupabaseUrl(url) {
 function boot() {
   if (!cfg.url || !cfg.anonKey) { renderConfigError(); return; }
   supabase = createClient(resolveSupabaseUrl(cfg.url), cfg.anonKey);
+  window.ATLAS_SUPABASE = supabase;   // Gelen Kutusu gibi sayfaların erişimi için
   // onAuthStateChange subscribe anında INITIAL_SESSION fırlatır → başlangıç kararı burada,
   // sonraki giriş/çıkış/refresh değişimleri de burada. Tek kaynak, getSession'e gerek yok.
   supabase.auth.onAuthStateChange((_event, session) => {
