@@ -177,7 +177,7 @@
        status: "pending",
        notes: notesInput.value.trim() || null
       }).then(function(res){
-       if (res.error) return Promise.reject(new Error("Kayıt başarısızı: " + res.error.message));
+       if (res.error) return Promise.reject(new Error("Kayıt başarısız: " + res.error.message));
        ui.toast("Randevu oluşturuldu.");
        closeModal();
        if (onDone) onDone();
