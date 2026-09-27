@@ -198,3 +198,19 @@ SQL Editor'de çalıştır; DELETE kalıcıdır.
 Kaydet → `supabase .update` (satır yoksa insert). 0013 migration'ı
 (`supabase/migrations/0013_handover_and_automation_settings.sql`) önce
 uygulanmalı: `auto_reply_enabled`, `working_hours` kolonları.
+
+## EF bayrak kontrolleri (FAZ 6 — 0013 kolonları Edge Function'a bağlandı)
+
+`atlas-auto-reply` artık cevap üretmeden ÖNCE üç bayrağı kontrol eder (sırayla):
+
+1. **`assistant_settings.auto_reply_enabled = false`** → `{"skipped":true,"reason":"auto_reply_disabled"}`
+   — hiçbir cevap yazılmaz. Panel #automations'taki toggle buradan okur.
+2. **`customers.is_handled_by_human = true`** → `{"skipped":true,"reason":"handled_by_human"}`
+   — insana aktarılan müşteride AI susar (devralma geri alınana kadar).
+3. **`working_hours` dışında** (Europe/Istanbul saatine göre) → AI modeli ÇAĞRILMAZ;
+   `assistant_settings.fallback_message` gönderilir (fallback boşsa sessizce geçilir,
+   `reason:"outside_working_hours"`). Cevap yine `sender_type='ai'` olarak yazılır.
+
+Bunların hiçbiri mevcut `serviceList` akışını etkilemez: bayraklar geçilirse
+hizmet listesi + context + assistant_settings ile normal üretim çalışır.
+Deploy: `supabase functions deploy atlas-auto-reply --no-verify-jwt`.
