@@ -161,10 +161,11 @@
    var endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
    var user = window.atlasUser;
    if (!user){ err.textContent = "Oturum bulunamadı."; return; }
-   sb.from("users").select("organization_id").eq("id", user.id).single()
+   sb.from("users").select("organization_id").eq("id", user.id).maybeSingle()
     .then(function(u){
      if (u.error) return Promise.reject(new Error("Organizasyon bilgisi alınamadı: " + u.error.message));
-     var orgId = u.data && u.data.organization_id;
+     if (!u.data) return Promise.reject(new Error("Kullanıcı kaydı bulunamadı (users tablosunda bu hesap yok); organizasyon atanamadı."));
+     var orgId = u.data.organization_id;
      if (!orgId) return Promise.reject(new Error("Kullanıcı bir organizasyona bağlı değil."));
      return findOrCreateCustomer(orgId, customerName).then(function(customerId){
       return sb.from("appointments").insert({
