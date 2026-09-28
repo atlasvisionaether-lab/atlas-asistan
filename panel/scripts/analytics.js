@@ -1,7 +1,7 @@
 "use strict";
 /* Analitik: messages tablosundan son 7 gün — canlı metrikler (mock değil).
  * Bağımlılıklar: window.ATLAS_UI (ui.js), window.ATLAS_SUPABASE (auth.js), window.atlasUser.
- * Metrikler: toplam mesaj, AI cevap sayısı, ortalama cevap süresi (müşteri→AI diff),
+ * Metrikler: toplam mesaj, AI çözme sayısı, ortalama cevap süresi (müşteri→AI diff),
  * günlük mesaj bar chart, en sık sorulan sorular tablosu.
  * NOT: Harici CDN (Chart.js vb.) proje kuralı gereği kullanılmaz;
  * bar chart saf SVG ile çizilir. */
@@ -137,9 +137,9 @@
   var questions = topQuestions(rows, 5);
   var days = dailyCounts(rows, 7);
 
-  var g = ui.el("div", { class: "grid" });
-  g.appendChild(kpiCard("Toplam mesaj (7 gün)", String(total), "canlı"));
-  g.appendChild(kpiCard("AI cevap sayısı", String(aiCount), "canlı"));
+  var g = ui.el("div", { class: "grid kpi-grid" });
+  g.appendChild(kpiCard("Toplam mesaj (7 gün) — CANLI", String(total), "canlı"));
+  g.appendChild(kpiCard("AI çözme sayısı", String(aiCount), "canlı"));
   g.appendChild(kpiCard("Ortalama cevap süresi", fmtNum(avg), "canlı"));
   wrap.appendChild(g);
 
