@@ -6,3 +6,4 @@ supabase/.env
 *.log
 .DS_Store
 node_modules/
+supabase/.temp/
