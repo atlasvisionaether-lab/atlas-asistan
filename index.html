@@ -1,155 +1,807 @@
 <!DOCTYPE html>
+<!-- KAYNAK: atlasasistan.com canlı sayfası, 2026-09-29 indirildi. Bu dosya canlı varyantın versiyon kontrolüne alınmış kopyasıdır; doğrudan editlenmez. -->
+
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atlas Asistan | Yapay Zeka AI Automation</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas Asistan — Klinikler için 7/24 Yapay Zeka Asistanı</title>
+<meta name="description" content="Güzellik ve sağlık sektörü için WhatsApp ve Instagram yapay zeka asistanı. Randevularınızı 7/24 otomatik yönetin, hiçbir müşteriyi kaçırmayın.">
+  <meta property="og:title" content="Atlas Asistan — Klinikler için 7/24 Yapay Zeka Asistanı">
+  <meta property="og:description" content="Güzellik ve sağlık sektörü için WhatsApp ve Instagram yapay zeka asistanı. Randevularınızı 7/24 otomatik yönetin, hiçbir müşteriyi kaçırmayın.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="tr_TR">
+  <meta property="og:image" content="/public/logo.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><rect x='4' y='7' width='16' height='12' rx='3'/><circle cx='9' cy='13' r='1.5' fill='white'/><circle cx='15' cy='13' r='1.5' fill='white'/><rect x='11' y='3' width='2' height='4' rx='1'/></svg>">
+<style>
+/* Atlas Asistan — atlasasistan.com */
+:root{
+  --bg: hsl(240 20% 4%);
+  --fg: hsl(214 32% 91%);
+  --card: hsl(240 15% 8%);
+  --secondary: hsl(240 10% 14%);
+  --muted: hsl(215 20% 55%);
+  --border: hsl(240 10% 16%);
+  --blue: #3b82f6;
+  --blue-btn: #2563eb;
+  --blue-btn-h: #1d4ed8;
+  --emerald: #34d399;
+  --emerald-btn: #059669;
+  --emerald-btn-h: #047857;
+  --orange: #fb923c;
+  --pink: #f472b6;
+  --yellow: #facc15;
+  --radius: .75rem;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img,svg{display:block}
+button{font:inherit;cursor:pointer}
+input,textarea{font:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+
+.container{max-width:80rem;margin:0 auto;padding:0 1rem}
+.narrow{max-width:48rem}
+.mid{max-width:56rem}
+
+/* ---- Nav ---- */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;background:hsl(240 20% 4% / .8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:4rem}
+.brand{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:1.05rem}
+.brand .bot{width:1.75rem;height:1.75rem;color:var(--blue)}
+.badge{display:inline-block;font-size:.7rem;padding:.1rem .5rem;border-radius:999px;border:1px solid hsl(217 91% 60% / .3);color:#60a5fa}
+.nav-links{display:none;align-items:center;gap:1.4rem}
+.nav-links a.plain{font-size:.875rem;color:var(--muted);transition:color .2s}
+.nav-links a.plain:hover{color:var(--fg)}
+.hamb{display:inline-flex;background:none;border:1px solid var(--border);border-radius:.5rem;padding:.4rem .55rem;color:var(--fg)}
+@media(min-width:768px){.nav-links{display:flex}.hamb{display:none}}
+.mobile-menu{display:none;flex-direction:column;gap:.75rem;padding:1rem;border-top:1px solid var(--border);background:var(--bg)}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:.95rem;color:var(--muted)}
+
+/* ---- Buttons ---- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-size:.875rem;font-weight:500;border-radius:.6rem;padding:.55rem 1rem;border:1px solid transparent;transition:background .2s,border-color .2s,color .2s}
+.btn.lg{padding:.75rem 1.4rem;font-size:.95rem}
+.btn.blue{background:var(--blue-btn);color:#fff}
+.btn.blue:hover{background:var(--blue-btn-h)}
+.btn.green{background:var(--emerald-btn);color:#fff}
+.btn.green:hover{background:var(--emerald-btn-h)}
+.btn.outline-blue{border-color:hsl(217 91% 60% / .5);color:#60a5fa;background:transparent}
+.btn.outline-blue:hover{background:hsl(217 91% 60% / .1)}
+.btn.outline-green{border-color:hsl(160 84% 39% / .5);color:var(--emerald);background:transparent}
+.btn.outline-green:hover{background:hsl(160 84% 39% / .1)}
+.btn.gray{background:var(--secondary);color:var(--fg)}
+.btn.gray:hover{background:hsl(240 10% 18%)}
+.btn.block{width:100%}
+
+/* ---- Sections ---- */
+.section{padding:5rem 1rem}
+.section.alt{background:hsl(240 10% 14% / .3)}
+.sec-head{text-align:center;margin-bottom:3rem}
+.sec-head h2{font-size:clamp(1.75rem,4vw,2.25rem);font-weight:700;margin-bottom:1rem}
+.sec-head p{color:var(--muted);max-width:42rem;margin:0 auto}
+.eyebrow{display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.03em;padding:.25rem .75rem;border-radius:999px;margin-bottom:1rem;background:hsl(25 95% 53% / .1);color:var(--orange);border:1px solid hsl(25 95% 53% / .2)}
+
+/* ---- Hero ---- */
+.hero{padding:8rem 1rem 5rem;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60rem 30rem at 20% 0%,hsl(217 91% 60% / .08),transparent 60%),radial-gradient(50rem 26rem at 90% 20%,hsl(160 84% 39% / .06),transparent 60%);pointer-events:none}
+.hero-grid{position:relative;display:grid;gap:3rem;align-items:center}
+@media(min-width:1024px){.hero-grid{grid-template-columns:1.1fr .9fr}}
+.hero h1{font-size:clamp(2.25rem,5.5vw,3.6rem);font-weight:700;line-height:1.15}
+.text-gradient{background:linear-gradient(to right,#60a5fa,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{margin-top:1.5rem;font-size:1.1rem;color:var(--muted);max-width:36rem}
+.hero-ctas{display:flex;flex-direction:column;gap:1rem;margin-top:2rem}
+@media(min-width:640px){.hero-ctas{flex-direction:row}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2.5rem;max-width:26rem}
+.stat{text-align:center}
+.stat b{display:block;font-size:1.5rem;font-weight:700}
+.stat span{font-size:.75rem;color:var(--muted)}
+.c-blue{color:#60a5fa}.c-green{color:var(--emerald)}.c-orange{color:var(--orange)}
+
+/* Chat mockup */
+.glass-card{border-radius:var(--radius);border:1px solid #ffffff1a;background:#ffffff0d;backdrop-filter:blur(4px);padding:1.5rem;max-width:24rem;margin:0 auto;width:100%}
+.chat-head{display:flex;align-items:center;gap:.75rem;padding-bottom:.85rem;margin-bottom:1rem;border-bottom:1px solid #ffffff1a}
+.chat-avatar{width:2.5rem;height:2.5rem;border-radius:999px;background:var(--blue-btn);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.chat-head .who b{display:block;font-size:.9rem}
+.chat-head .who span{font-size:.75rem;color:var(--emerald)}
+.chat-head .tag{margin-left:auto;font-size:.7rem;padding:.15rem .5rem;border-radius:999px;background:hsl(160 84% 39% / .2);color:var(--emerald)}
+.bubble{max-width:85%;padding:.6rem .8rem;border-radius:.9rem;font-size:.83rem;margin-bottom:.6rem;white-space:pre-line}
+.bubble.in{background:var(--secondary);border-bottom-left-radius:.25rem}
+.bubble.out{background:var(--blue-btn);color:#fff;margin-left:auto;border-bottom-right-radius:.25rem}
+.bubble time{display:block;font-size:.65rem;opacity:.6;margin-top:.25rem;text-align:right}
+
+/* ---- Cards ---- */
+.grid-3{display:grid;gap:1.5rem}
+@media(min-width:768px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+.grid-2{display:grid;gap:2rem}
+@media(min-width:768px){.grid-2{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;transition:border-color .2s}
+.card:hover.hov-blue{border-color:hsl(217 91% 60% / .3)}
+.card:hover.hov-green{border-color:hsl(160 84% 39% / .3)}
+.card:hover.hov-orange{border-color:hsl(25 95% 53% / .3)}
+.icon-box{width:3rem;height:3rem;border-radius:.6rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem}
+.icon-box.blue{background:hsl(217 91% 60% / .1);color:#60a5fa}
+.icon-box.green{background:hsl(160 84% 39% / .1);color:var(--emerald)}
+.icon-box.orange{background:hsl(25 95% 53% / .1);color:var(--orange)}
+.metric{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+.card h3{font-size:1.05rem;font-weight:600;margin-bottom:.5rem}
+.card p{font-size:.875rem;color:var(--muted)}
+
+/* ---- Pricing ---- */
+.plans{display:grid;gap:2rem;max-width:56rem;margin:3rem auto 0}
+@media(min-width:768px){.plans{grid-template-columns:repeat(2,1fr)}}
+.plan{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:1.5rem}
+.plan.featured{border-color:hsl(217 91% 60% / .3)}
+.ribbon{position:absolute;top:0;right:0;background:var(--blue-btn);color:#fff;font-size:.7rem;font-weight:500;padding:.25rem .75rem;border-bottom-left-radius:.6rem}
+.pop{position:absolute;top:-0.8rem;left:50%;transform:translateX(-50%);background:var(--blue-btn);color:#fff;font-size:.7rem;font-weight:600;padding:.25rem .8rem;border-radius:999px}
+.plan h3{font-size:1.2rem;font-weight:700}
+.plan .sub{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+.price b{font-size:1.9rem;font-weight:700}
+.price .per{color:var(--muted);font-size:.95rem}
+.price .note{display:block;font-size:.78rem;color:#60a5fa;margin-top:.15rem}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:.7rem;flex:1}
+.plan li{display:flex;align-items:center;gap:.5rem;font-size:.875rem}
+.check{color:var(--emerald);flex-shrink:0}
+.plan-cta{display:flex;gap:.5rem}
+.plan-cta .btn{flex:1}
+
+/* ---- Testimonials ---- */
+.t-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+.starrow{display:flex;gap:.2rem;color:var(--yellow)}
+.t-card blockquote{font-size:.875rem;color:var(--muted);font-style:italic}
+.t-card .who{padding-top:.75rem;border-top:1px solid var(--border)}
+.t-card .who b{font-size:.875rem;display:block}
+.t-card .who span{font-size:.75rem;color:var(--muted)}
+
+/* ---- FAQ ---- */
+.faq{display:flex;flex-direction:column;gap:.75rem;max-width:48rem;margin:0 auto}
+.faq details{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:0 1rem}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 0;font-size:.9rem;font-weight:500}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:1.2rem;color:var(--muted);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq .a{padding:0 0 1rem;font-size:.875rem;color:var(--muted)}
+
+/* ---- Contact ---- */
+.contact-grid{display:grid;gap:3rem;align-items:center}
+@media(min-width:768px){.contact-grid{grid-template-columns:1fr 1fr}}
+.contact-info h2{font-size:clamp(1.75rem,4vw,2.25rem);font-weight:700;margin-bottom:1.25rem}
+.contact-info>p{color:var(--muted);margin-bottom:1.5rem}
+.contact-line{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;color:var(--fg);transition:color .2s}
+.contact-line:hover{color:#60a5fa}
+.contact-line svg{color:#60a5fa;flex-shrink:0}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.85rem;font-weight:500;margin-bottom:.35rem}
+.field input{width:100%;background:var(--secondary);border:1px solid var(--border);border-radius:.5rem;padding:.6rem .8rem;color:var(--fg)}
+.field input::placeholder{color:hsl(215 20% 45%)}
+.field input:focus{outline:none;border-color:var(--blue)}
+
+/* ---- Footer ---- */
+footer{padding:3rem 1rem;border-top:1px solid var(--border)}
+.foot-grid{display:grid;gap:2rem;margin-bottom:2rem}
+@media(min-width:768px){.foot-grid{grid-template-columns:repeat(4,1fr)}}
+.foot-brand p{font-size:.875rem;color:var(--muted);margin:1rem 0}
+.socials{display:flex;gap:.75rem}
+.soc{width:2rem;height:2rem;border-radius:999px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.soc.wa{background:hsl(160 84% 39% / .1);color:var(--emerald)}
+.soc.wa:hover{background:hsl(160 84% 39% / .2)}
+.soc.ig{background:hsl(330 81% 60% / .1);color:var(--pink)}
+.soc.ig:hover{background:hsl(330 81% 60% / .2)}
+footer h4{font-size:.875rem;font-weight:600;margin-bottom:.9rem}
+footer ul{list-style:none;display:flex;flex-direction:column;gap:.55rem}
+footer ul a{font-size:.875rem;color:var(--muted);transition:color .2s}
+footer ul a:hover{color:var(--fg)}
+.foot-bottom{border-top:1px solid var(--border);padding-top:1.5rem;text-align:center;font-size:.8rem;color:var(--muted)}
+
+/* ---- Legal pages ---- */
+.legal{padding:7rem 1rem 5rem;max-width:48rem;margin:0 auto}
+.legal h1{font-size:2rem;font-weight:700;margin-bottom:.5rem}
+.legal .updated{font-size:.85rem;color:var(--muted);margin-bottom:2.5rem}
+.legal h2{font-size:1.2rem;font-weight:600;margin:2rem 0 .75rem}
+.legal p,.legal li{font-size:.93rem;color:var(--muted);margin-bottom:.9rem}
+.legal ul{padding-left:1.4rem;margin-bottom:1rem}
+.legal a{color:#60a5fa}
+.legal a:hover{text-decoration:underline}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--muted);margin-bottom:2rem;transition:color .2s}
+.back-link:hover{color:var(--fg)}
+
+/* ---- Demo page ---- */
+.demo-wrap{max-width:44rem;margin:0 auto;padding:5.5rem 1rem 2rem;display:flex;flex-direction:column;min-height:100dvh}
+.demo-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;flex:1;overflow:hidden}
+.demo-note{background:hsl(217 91% 60% / .08);border-bottom:1px solid hsl(217 91% 60% / .2);color:#93c5fd;font-size:.8rem;padding:.6rem 1rem;text-align:center}
+.demo-msgs{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column}
+.chip-row{display:flex;flex-wrap:wrap;gap:.5rem;padding:.75rem 1rem;border-top:1px solid var(--border)}
+.chip{background:var(--secondary);border:1px solid var(--border);color:var(--fg);font-size:.78rem;padding:.35rem .8rem;border-radius:999px;transition:border-color .2s}
+.chip:hover{border-color:var(--blue)}
+.demo-input{display:flex;gap:.6rem;padding:.85rem 1rem;border-top:1px solid var(--border)}
+.demo-input input{flex:1;background:var(--secondary);border:1px solid var(--border);border-radius:.6rem;padding:.6rem .9rem;color:var(--fg)}
+.demo-input input:focus{outline:none;border-color:var(--blue)}
+.typing{display:inline-flex;gap:.25rem;padding:.7rem .9rem}
+.typing i{width:.4rem;height:.4rem;border-radius:999px;background:var(--muted);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}
+.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* ---- Checkout ---- */
+.co-wrap{max-width:56rem;margin:0 auto;padding:6.5rem 1rem 4rem}
+.co-grid{display:grid;gap:2.5rem}
+@media(min-width:768px){.co-grid{grid-template-columns:1fr 1fr}}
+.notice{display:flex;gap:.75rem;align-items:flex-start;background:hsl(160 84% 39% / .05);border:1px solid hsl(160 84% 39% / .2);border-radius:.6rem;padding:1rem;margin-top:1.25rem}
+.notice svg{color:var(--emerald);flex-shrink:0;margin-top:.1rem}
+.notice b{display:block;font-size:.875rem}
+.notice span{font-size:.78rem;color:var(--muted)}
+.tagline{font-size:.7rem;padding:.15rem .6rem;border-radius:999px;background:hsl(217 91% 60% / .1);color:#60a5fa;border:1px solid hsl(217 91% 60% / .2)}
+
+</style>
 </head>
 <body>
 
-    <!-- Üst Menü -->
-    <header class="navbar">
-        <div class="container nav-container">
-            <div class="logo">
-                <i class="fa-solid fa-robot"></i> 
-                <span>ATLAS ASİSTAN <small>AI AUTOMATION</small></span>
-            </div>
-            <nav class="nav-links">
-                <a href="#cozum">Çözüm</a>
-                <a href="#moduller">Modüller</a>
-                <a href="#paketler">Paketler</a>
-                <a href="https://wa.me/905344682769" target="_blank" class="btn-login">
-                    <i class="fa-brands fa-whatsapp"></i> 0534 468 2769
-                </a>
-            </nav>
+<nav class="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/" class="brand">
+        <svg class="bot" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
+        ATLAS ASİSTAN <span class="badge">AI</span>
+      </a>
+      <div class="nav-links">
+        <a class="plain" href="#cozum">Çözüm</a>
+        <a class="plain" href="#moduller">Modüller</a>
+        <a class="plain" href="#fiyatlar">Paketler</a>
+        <a class="plain" href="#sss">SSS</a>
+        <a href="/demo" class="btn outline-blue">▶ Canlı Demo</a>
+        <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click" class="btn green">WhatsApp</a>
+      </div>
+      <button class="hamb" aria-label="Menüyü aç" onclick="document.getElementById('mmenu').classList.toggle('open')">☰</button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mmenu">
+    <a href="#cozum">Çözüm</a>
+    <a href="#moduller">Modüller</a>
+    <a href="#fiyatlar">Paketler</a>
+    <a href="#sss">SSS</a>
+    <a href="/demo">Canlı Demo</a>
+    <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click">WhatsApp</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="container hero-grid">
+    <div>
+      <h1>Kliniğiniz Kapalıyken Bile <span class="text-gradient">Randevu Defterinizi Dolduran</span> Yapay Zeka Asistanı.</h1>
+      <p class="lead">Güzellik ve sağlık sektörü için tasarlandı. Atlas Asistan ile WhatsApp ve Instagram'dan gelen tüm hasta/müşteri mesajlarını otonom yanıtlayın, randevularınızı 7/24 saniyeler içinde takvime ekleyin.</p>
+      <div class="hero-ctas">
+        <a href="/demo" class="btn blue lg">▶ Asistanı Deneyin</a>
+        <a href="#iletisim" class="btn outline-green lg">Ücretsiz Ön Görüşme</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><b class="c-blue">%94</b><span>Mesaj Yanıtlama</span></div>
+        <div class="stat"><b class="c-green">3.2x</b><span>Randevu Artışı</span></div>
+        <div class="stat"><b class="c-orange">7/24</b><span>Otonom Çalışma</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="glass-card">
+        <div class="chat-head">
+          <div class="chat-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
+          </div>
+          <div class="who"><b>Atlas Asistan</b><span>● Çevrimiçi</span></div>
+          <span class="tag">WhatsApp</span>
         </div>
-    </header>
+        <div class="bubble out">Merhaba, lazer epilasyon fiyatlarınız nedir? Yarın için randevu var mı?<time>02:14</time></div>
+        <div class="bubble in">Merhaba! 🌟 Tüm vücut lazer epilasyon 2.500₺. Yarın 10:00, 14:00 ve 16:30 saatlerimiz müsait. Hangisini ayırtalım?<time>02:14</time></div>
+        <div class="bubble out">14:00 olsun lütfen 🙏<time>02:15</time></div>
+        <div class="bubble in">Mükemmel! ✅ Randevunuz oluşturuldu:
 
-    <!-- Ana Ekran (Hero) -->
-    <section class="hero">
-        <div class="container hero-grid">
-            <div class="hero-content">
-                <div class="badge">
-                    <span class="dot"></span> GÜZELLİK & SAĞLIK SEKTÖRÜ İÇİN ÖZEL
-                </div>
-                <h1>Kliniğiniz Kapalıyken Bile Randevu Defterinizi Dolduran <br> <span class="gradient-text">Yapay Zeka Asistanı.</span></h1>
-                <p>Güzellik ve sağlık sektörü için tasarlandı. Atlas Asistan ile WhatsApp ve Instagram'dan gelen tüm hasta/müşteri mesajlarını otonom olarak yanıtlayın, randevularınızı 7/24 otomatik planlayın.</p>
-                <div class="hero-actions">
-                    <a href="https://wa.me/905344682769" target="_blank" class="btn-primary">Hemen Randevu Alın</a>
-                </div>
-            </div>
+📅 Yarın, 14:00
+📍 Bağdat Cad. No:45, Kadıköy
 
-            <div class="hero-visual">
-                <div class="floating-badge badge-left">
-                    <i class="fa-solid fa-bolt"></i>
-                    <div>
-                        <small>Yanıt</small>
-                        <strong>0.8 saniye</strong>
-                    </div>
-                </div>
-                <div class="phone-mockup">
-                    <div class="phone-header">
-                        <div class="phone-logo"><i class="fa-solid fa-robot"></i></div>
-                        <div class="phone-title">
-                            <strong>Atlas Asistan</strong>
-                            <span class="online-status"><span class="dot"></span> Çevrimiçi • Otonom</span>
-                        </div>
-                        <div class="phone-icons">
-                            <i class="fa-brands fa-instagram"></i>
-                            <i class="fa-brands fa-whatsapp"></i>
-                        </div>
-                    </div>
-                    <div class="phone-body">
-                        <div class="time-stamp">Bugün 07:14</div>
-                        <div class="message-row user-row">
-                            <div class="msg user-msg">Lazer epilasyon fiyat nedir?</div>
-                        </div>
-                        <div class="message-row ai-row">
-                            <div class="msg ai-msg">
-                                <div class="ai-msg-header">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i> ATLAS AI
-                                </div>
-                                Merhaba! Tüm vücut lazer epilasyon 2.500₺. Yarın 14:00 veya 16:30 müsait. Hangisini tercih edersiniz?
-                                <div class="action-btn"><i class="fa-regular fa-calendar-check"></i> Randevu takvime eklendi ✓</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+Randevu hatırlatması WhatsApp'tan gönderilecektir.<time>02:15</time></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ÇÖZÜM -->
+<section id="cozum" class="section">
+  <div class="container">
+    <div class="sec-head">
+      <h2>Kliniğiniz Neden Müşteri Kaybediyor?</h2>
+      <p>Cevaplanmayan her mesaj, rakibinize giden bir randevudur. Atlas Asistan bu üç sızıntıyı kapatır.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card hov-blue">
+        <div class="icon-box blue">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
         </div>
-    </section>
-
-    <!-- Çözüm Bölümü -->
-    <section id="cozum" class="section">
-        <div class="container text-center">
-            <h2 class="section-title">Nasıl Çalışır?</h2>
-            <p class="section-subtitle">Sistemi işletmenize entegre etmek sadece birkaç saat sürer.</p>
-            <div class="grid-3">
-                <div class="card">
-                    <div class="card-icon"><i class="fa-solid fa-database"></i></div>
-                    <h3>1. Bilgi Yükleme</h3>
-                    <p>Fiyat listenizi, hizmetlerinizi ve çalışma saatlerinizi sisteme tanımlarız.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><i class="fa-solid fa-brain"></i></div>
-                    <h3>2. AI Eğitimi</h3>
-                    <p>Yapay zeka asistanınız kliniğinizin tarzına ve kurallarına göre saniyeler içinde eğitilir.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><i class="fa-solid fa-rocket"></i></div>
-                    <h3>3. Canlıya Alım</h3>
-                    <p>Instagram ve WhatsApp hatlarınıza bağlanır, anında randevu almaya başlar.</p>
-                </div>
-            </div>
+        <div class="metric c-blue">7/24</div>
+        <h3>Mesai Bitince Kapı Kapanmasın</h3>
+        <p>Mesajların büyük kısmı akşam ve hafta sonu gelir — tam da kimsenin cevap veremediği saatlerde. Atlas Asistan gece 02:00'de yazana da saniyeler içinde yanıt verir, randevusunu oluşturur.</p>
+      </div>
+      <div class="card hov-green">
+        <div class="icon-box green">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         </div>
-    </section>
-
-    <!-- Modüller Bölümü -->
-    <section id="moduller" class="section bg-darker">
-        <div class="container text-center">
-            <h2 class="section-title">Öne Çıkan Modüller</h2>
-            <p class="section-subtitle">Sadece mesaj yanıtlamakla kalmaz, iş yükünüzü hafifletir.</p>
-            <div class="grid-2">
-                <div class="feature-card text-left">
-                    <i class="fa-brands fa-whatsapp feature-icon"></i>
-                    <h3>WhatsApp Otonom Satış</h3>
-                    <p>Müşterileriniz doğrudan WhatsApp üzerinden hizmetlerinizi inceler, fiyat alır ve insan müdahalesine gerek kalmadan randevusunu oluşturur.</p>
-                </div>
-                <div class="feature-card text-left">
-                    <i class="fa-brands fa-instagram feature-icon"></i>
-                    <h3>Instagram DM & Yorum Asistanı</h3>
-                    <p>Gelen kutunuzdaki yığılmaları bitirin. Gönderilerinize yapılan "Fiyat nedir?" yorumlarına anında özel mesaj (DM) ile dönüş yapar.</p>
-                </div>
-            </div>
+        <div class="metric c-green">0 sn</div>
+        <h3>Bekleyen Müşteri Kaçan Müşteridir</h3>
+        <p>"Fiyat ne kadar?" sorusuna 10 dakikada dönerseniz, müşteri çoktan üç kliniğe daha yazmıştır. Asistan anında yanıtlar — konuşma sıcakken randevuya dönüşür.</p>
+      </div>
+      <div class="card hov-orange">
+        <div class="icon-box orange">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
-    </section>
+        <div class="metric c-orange">−%70</div>
+        <h3>Personeliniz Telefona Değil İşine Baksın</h3>
+        <p>Aynı beş soru gün boyu tekrarlanır: fiyat, saat, adres, kampanya, müsaitlik. Asistan bunları üstlenir; ekibiniz salondaki müşteriye odaklanır.</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:2.5rem">
+      <a href="/demo" class="btn blue lg">▶ Asistanı Şimdi Deneyin</a>
+    </div>
+  </div>
+</section>
 
-    <!-- Paketler & İletişim (CTA) Bölümü -->
-    <section id="paketler" class="section">
-        <div class="container text-center">
-            <h2 class="section-title">İşletmenizi Otomatize Edin</h2>
-            <p class="section-subtitle">Demo talebi ve paket fiyatlandırmaları için asistanımızla veya bizimle doğrudan WhatsApp üzerinden iletişime geçebilirsiniz.</p>
-            <br><br>
-            <a href="https://wa.me/905344682769" target="_blank" class="btn-primary btn-large">
-                <i class="fa-brands fa-whatsapp"></i> Demo Talebi ve Fiyat Bilgisi Alın
-            </a>
+<!-- MODÜLLER: WEB + ASİSTAN -->
+<section id="moduller" class="section alt">
+  <div class="container">
+    <div class="sec-head" style="margin-bottom:1.5rem">
+      <span class="eyebrow">WEB SİTESİ OLMAYAN KLİNİKLER İÇİN</span>
+      <h2>Web Siteniz Yok Mu? <span class="text-gradient">7/24 Çalışan Dijital Bir Şube</span> Kuruyoruz.</h2>
+      <p style="max-width:48rem">Sıradan bir web sitesi yaptırıp müşteri beklemeyin. Biz, kliniğiniz için en modern tasarıma sahip web sitesini kuruyor ve içine <strong style="color:var(--fg)">saniyeler içinde randevu alan, kampanya satan WhatsApp/Instagram yapay zeka asistanınızı</strong> entegre ediyoruz.</p>
+    </div>
+    <div class="plans">
+      <div class="plan">
+        <div>
+          <h3>Dijital Başlangıç Paketi</h3>
+          <p class="sub">Modern Web Sitesi + Temel WhatsApp Asistanı</p>
         </div>
-    </section>
-
-    <!-- Alt Bilgi (Footer) -->
-    <footer>
-        <div class="container footer-content">
-            <div class="logo">
-                <i class="fa-solid fa-robot"></i> <span>ATLAS ASİSTAN</span>
-            </div>
-            <div class="footer-contact">
-                <p>Müşteri Hizmetleri: <strong>0534 468 2769</strong></p>
-                <p>&copy; 2026 Atlas Asistan AI Automation. Tüm hakları saklıdır.</p>
-            </div>
+        <div class="price"><b>₺14.900</b> <span class="per">tek sefer</span><span class="note">+ ₺1.200/ay asistan</span></div>
+        <ul>
+          <li><span class="check">✓</span> Premium 5 sayfalık site</li>
+          <li><span class="check">✓</span> Mobil uyumlu</li>
+          <li><span class="check">✓</span> WhatsApp widget</li>
+          <li><span class="check">✓</span> Temel asistan</li>
+          <li><span class="check">✓</span> SSL hosting 1 yıl</li>
+          <li><span class="check">✓</span> 1-3 iş günü teslim*</li>
+        </ul>
+        <a href="/checkout?plan=starter" class="btn gray block">🛒 Satın Al</a>
+        <a href="iletisim.html#contactForm" class="btn outline-blue block" style="margin-top:.5rem">14 Gün Ücretsiz Deneyin</a>
+      </div>
+      <div class="plan featured">
+        <span class="ribbon">EN ÇOK TERCİH EDİLEN</span>
+        <div>
+          <h3>VIP Klinik Dönüşümü</h3>
+          <p class="sub">Premium Site + Gelişmiş Otomasyon</p>
         </div>
-    </footer>
+        <div class="price"><b>₺24.900</b> <span class="per">tek sefer</span><span class="note">+ ₺2.400/ay full asistan</span></div>
+        <ul>
+          <li><span class="check">✓</span> 10+ sayfa + blog</li>
+          <li><span class="check">✓</span> WhatsApp + Instagram FULL</li>
+          <li><span class="check">✓</span> SEO temel kurulumu</li>
+          <li><span class="check">✓</span> Google Business profili</li>
+          <li><span class="check">✓</span> Aylık rapor</li>
+          <li><span class="check">✓</span> 3-5 iş günü teslim*</li>
+        </ul>
+        <a href="/checkout?plan=vip" class="btn blue block">🛒 Satın Al</a>
+        <a href="iletisim.html#contactForm" class="btn outline-blue block" style="margin-top:.5rem">14 Gün Ücretsiz Deneyin</a>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:.78rem;color:var(--muted);margin-top:1.5rem;max-width:44rem;margin-left:auto;margin-right:auto">* Teslim süresi, klinik bilgileriniz (hizmet listesi, fotoğraflar, çalışma saatleri) bize ulaştıktan sonra başlar. Siparişten hemen sonra kısa bir bilgi formu gönderiyoruz.</p>
+  </div>
+</section>
 
+<!-- ASİSTAN PAKETLERİ -->
+<section id="fiyatlar" class="section">
+  <div class="container">
+    <div class="sec-head">
+      <h2>Asistan Paketleri</h2>
+      <p>Zaten web siteniz var mı? Sadece asistan hizmetimizi alın.</p>
+    </div>
+    <div class="plans" style="max-width:48rem">
+      <div class="plan">
+        <h3>Standart</h3>
+        <div class="price"><b>₺4.900</b> <span class="per">/ay</span></div>
+        <ul>
+          <li><span class="check">✓</span> WhatsApp asistanı</li>
+          <li><span class="check">✓</span> Randevu yönetimi</li>
+          <li><span class="check">✓</span> Fiyat bilgilendirme</li>
+          <li><span class="check">✓</span> 7/24 otomatik yanıt</li>
+          <li><span class="check">✓</span> Sınırsız yanıt, aylık 500 hatırlatma</li>
+        </ul>
+        <div class="plan-cta">
+          <a href="/checkout?plan=standard" class="btn gray">🛒 Satın Al</a>
+        <a href="iletisim.html#contactForm" class="btn outline-blue block" style="margin-top:.5rem">14 Gün Ücretsiz Deneyin</a>
+          <a href="/demo" class="btn outline-blue">Demo</a>
+        </div>
+      </div>
+      <div class="plan featured">
+        <span class="pop">POPÜLER</span>
+        <h3>Pro</h3>
+        <div class="price"><b>₺7.900</b> <span class="per">/ay</span></div>
+        <ul>
+          <li><span class="check">✓</span> WhatsApp + Instagram</li>
+          <li><span class="check">✓</span> Gelişmiş randevu yönetimi</li>
+          <li><span class="check">✓</span> Kampanya &amp; promosyon</li>
+          <li><span class="check">✓</span> Müşteri takip sistemi</li>
+          <li><span class="check">✓</span> Sınırsız yanıt ve hatırlatma</li>
+          <li><span class="check">✓</span> Öncelikli destek</li>
+        </ul>
+        <div class="plan-cta">
+          <a href="/checkout?plan=pro" class="btn blue">🛒 Satın Al</a>
+        <a href="iletisim.html#contactForm" class="btn outline-blue block" style="margin-top:.5rem">14 Gün Ücretsiz Deneyin</a>
+          <a href="/demo" class="btn outline-blue">Demo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- YORUMLAR -->
+<section class="section alt">
+  <div class="container">
+    <div class="sec-head">
+      <h2>Müşterilerimiz Ne Diyor?</h2>
+      <p>Atlas Asistan kullanan kliniklerin deneyimleri</p>
+    </div>
+    <div class="grid-3">
+      <div class="t-card">
+        <div class="starrow">★★★★★</div>
+        <blockquote>"Atlas Asistan sayesinde gece gelen mesajları kaçırmıyoruz. Randevu sayımız %40 arttı, resepsiyon personelimiz artık gerçek işlere odaklanıyor."</blockquote>
+        <div class="who"><b>Dr. Ayşe Yılmaz</b><span>Glow Beauty Clinic</span></div>
+      </div>
+      <div class="t-card">
+        <div class="starrow">★★★★★</div>
+        <blockquote>"Instagram DM'lerinden gelen soruları anında yanıtlıyor. Müşterilerimiz çok memnun, biz de. Kesinlikle tavsiye ederim."</blockquote>
+        <div class="who"><b>Mehmet Kaya</b><span>Elite Estetik Merkezi</span></div>
+      </div>
+      <div class="t-card">
+        <div class="starrow">★★★★★</div>
+        <blockquote>"Hafta sonları bile randevu alınabiliyor artık. Asistan tam bir profesyonel gibi davranıyor, müşteriler gerçek kişiyle konuştuğunu sanıyor."</blockquote>
+        <div class="who"><b>Zeynep Demir</b><span>Zen Wellness Spa</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SSS -->
+<section id="sss" class="section">
+  <div class="container narrow">
+    <div class="sec-head">
+      <h2>Sıkça Sorulan Sorular</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>Atlas Asistan nasıl çalışır?</summary>
+        <div class="a">Atlas Asistan, yapay zeka teknolojisi ile WhatsApp ve Instagram üzerinden gelen müşteri mesajlarını otomatik olarak yanıtlar. Randevu oluşturma, fiyat bilgilendirme, kampanya paylaşımı gibi işlemleri 7/24 otonom olarak gerçekleştirir.</div>
+      </details>
+      <details>
+        <summary>Kurulum ne kadar sürer?</summary>
+        <div class="a">Standart asistan kurulumu 1-2 iş günü içinde tamamlanır. Web sitesi + asistan paketlerinde ise 3-7 iş günü içinde teslim edilir. Kurulum sürecinde sizden sadece klinik bilgilerinizi ve fiyat listenizi alırız.</div>
+      </details>
+      <details>
+        <summary>Asistan yanlış bilgi verir mi?</summary>
+        <div class="a">Hayır. Atlas Asistan sadece sizin belirlediğiniz bilgileri paylaşır. Fiyatlar, hizmetler, çalışma saatleri gibi bilgiler tamamen sizin kontrolünüzdedir. Emin olmadığı sorularda müşteriyi size yönlendirir.</div>
+      </details>
+      <details>
+        <summary>Mevcut WhatsApp numaram ile kullanabilir miyim?</summary>
+        <div class="a">Evet! Mevcut iş WhatsApp numaranız ile entegre edilir. Müşterileriniz aynı numaradan size ulaşmaya devam eder, sadece artık 7/24 yanıt alırlar.</div>
+      </details>
+      <details>
+        <summary>İptal etmek istersem ne olur?</summary>
+        <div class="a">Aylık abonelik sistemi ile çalışıyoruz. İstediğiniz zaman bir sonraki ay için iptal edebilirsiniz. Taahhüt yoktur. Detaylar için <a href="/refund" style="color:#60a5fa">iade politikamızı</a> inceleyebilirsiniz.</div>
+      </details>
+      <details>
+        <summary>Hangi sektörlere hizmet veriyorsunuz?</summary>
+        <div class="a">Güzellik merkezleri, estetik klinikler, diş klinikleri, spa &amp; wellness merkezleri, saç ekim klinikleri, dermatoloji klinikleri ve tüm sağlık/güzellik sektörüne hizmet veriyoruz.</div>
+      </details>
+      <details>
+        <summary>Ödeme nasıl yapılır?</summary>
+        <div class="a">Kredi kartı veya banka kartı ile güvenli ödeme yapabilirsiniz. İyzico altyapısı ile tüm ödemeleriniz güvence altındadır. Taksit seçenekleri de mevcuttur.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- İLETİŞİM -->
+<section id="iletisim" class="section alt">
+  <div class="container">
+    <div class="contact-grid">
+      <div class="contact-info">
+        <h2>Ön Görüşme Talep Edin</h2>
+        <p>Kliniğinize özel çözüm için bizimle iletişime geçin. Ücretsiz danışmanlık ile ihtiyaçlarınızı belirleyelim.</p>
+        <a href="tel:+905344682769" class="contact-line">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          0534 468 27 69
+        </a>
+        <a href="mailto:merhaba@atlasasistan.com" class="contact-line">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          merhaba@atlasasistan.com
+        </a>
+      </div>
+      <div class="card">
+        <form id="contactForm">
+          <div class="field">
+            <label for="cf-clinic">Klinik Adı</label>
+            <input id="cf-clinic" type="text" placeholder="Kliniğinizin adı" required>
+          </div>
+          <div class="field">
+            <label for="cf-name">Ad Soyad</label>
+            <input id="cf-name" type="text" placeholder="Adınız ve soyadınız" required>
+          </div>
+          <div class="field">
+            <label for="cf-phone">Telefon</label>
+            <input id="cf-phone" type="tel" placeholder="05XX XXX XX XX" required>
+          </div>
+          <button type="submit" class="btn blue block">Görüşme Talep Et →</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="/" class="brand">
+          <svg class="bot" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue)"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
+          ATLAS ASİSTAN
+        </a>
+        <p>Güzellik &amp; Sağlık sektörü için yapay zeka otomasyon çözümleri.</p>
+        <div class="socials">
+          <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click" class="soc wa" aria-label="WhatsApp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+          <a href="https://www.instagram.com/atlasasistan.ai/" target="_blank" rel="noopener noreferrer" class="soc ig" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h4>Hizmetler</h4>
+        <ul>
+          <li><a href="#cozum">AI Asistan</a></li>
+          <li><a href="#moduller">Web Sitesi Paketleri</a></li>
+          <li><a href="#fiyatlar">Asistan Paketleri</a></li>
+          <li><a href="/demo">Canlı Demo</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Destek</h4>
+        <ul>
+          <li><a href="#sss">Sıkça Sorulan Sorular</a></li>
+          <li><a href="iletisim.html">İletişim</a></li>
+          <li><a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click">WhatsApp Destek</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Yasal</h4>
+        <ul>
+          <li><a href="gizlilik.html">Gizlilik Politikası</a></li>
+          <li><a href="kvkk.html">KVKK Aydınlatma Metni</a></li>
+          <li><a href="hakkinda.html">Hakkımızda</a></li>
+          <li><a href="iade.html">İade Politikası</a></li>
+          <li><a href="iletisim.html">İletişim</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">© 2026 Atlas Asistan. Tüm hakları saklıdır.</div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  var clinic = document.getElementById('cf-clinic').value;
+  var name = document.getElementById('cf-name').value;
+  var phone = document.getElementById('cf-phone').value;
+  window.open('https://wa.me/905344682769?text=' + encodeURIComponent('Merhaba, ' + clinic + ' kliniğinden ' + name + '. Görüşme talep ediyorum. Tel: ' + phone), '_blank');
+});
+</script>
+<!-- ATLAS SATIŞ ASİSTANI WIDGET -->
+<style>
+.aw-btn{position:fixed;bottom:1.25rem;right:1.25rem;z-index:90;width:3.5rem;height:3.5rem;border-radius:999px;background:var(--blue-btn);color:#fff;border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform .2s,background .2s}
+.aw-btn:hover{background:var(--blue-btn-h);transform:scale(1.05)}
+.aw-btn .dot{position:absolute;top:.15rem;right:.15rem;width:.8rem;height:.8rem;border-radius:999px;background:var(--emerald);border:2px solid var(--bg)}
+.aw-panel{position:fixed;bottom:5.25rem;right:1.25rem;z-index:91;width:min(23rem,calc(100vw - 2.5rem));height:min(30rem,calc(100dvh - 8rem));background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 16px 48px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden}
+.aw-panel.open{display:flex}
+.aw-head{display:flex;align-items:center;gap:.7rem;padding:.85rem 1rem;border-bottom:1px solid var(--border);background:hsl(240 15% 10%)}
+.aw-head .av{width:2.2rem;height:2.2rem;border-radius:999px;background:var(--blue-btn);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.aw-head b{font-size:.88rem;display:block}
+.aw-head span{font-size:.72rem;color:var(--emerald)}
+.aw-close{margin-left:auto;background:none;border:none;color:var(--muted);font-size:1.3rem;line-height:1;padding:.2rem .4rem;border-radius:.3rem}
+.aw-close:hover{color:var(--fg)}
+.aw-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column}
+.aw-msgs .bubble{max-width:88%;padding:.6rem .8rem;border-radius:.9rem;font-size:.82rem;margin-bottom:.6rem;white-space:pre-line;line-height:1.5}
+.aw-msgs .bubble.in{background:var(--secondary);border-bottom-left-radius:.25rem}
+.aw-msgs .bubble.out{background:var(--blue-btn);color:#fff;margin-left:auto;border-bottom-right-radius:.25rem}
+.aw-chips{display:flex;flex-wrap:wrap;gap:.4rem;padding:.6rem 1rem;border-top:1px solid var(--border)}
+.aw-chips button{background:var(--secondary);border:1px solid var(--border);color:var(--fg);font-size:.73rem;padding:.3rem .7rem;border-radius:999px;transition:border-color .2s}
+.aw-chips button:hover{border-color:var(--blue)}
+.aw-input{display:flex;gap:.5rem;padding:.7rem 1rem;border-top:1px solid var(--border)}
+.aw-input input{flex:1;background:var(--secondary);border:1px solid var(--border);border-radius:.5rem;padding:.5rem .75rem;color:var(--fg);font-size:.85rem}
+.aw-input input:focus{outline:none;border-color:var(--blue)}
+.aw-input button{background:var(--blue-btn);color:#fff;border:none;border-radius:.5rem;padding:.5rem .8rem}
+.aw-typing{display:inline-flex;gap:.25rem;padding:.65rem .85rem}
+.aw-typing i{width:.38rem;height:.38rem;border-radius:999px;background:var(--muted);animation:awblink 1.2s infinite}
+.aw-typing i:nth-child(2){animation-delay:.2s}
+.aw-typing i:nth-child(3){animation-delay:.4s}
+@keyframes awblink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media(max-width:480px){.aw-panel{right:.75rem;bottom:4.75rem;width:calc(100vw - 1.5rem)}}
+</style>
+
+<button class="aw-btn" id="awBtn" aria-label="Atlas Asistan'a sorun">
+  <span class="dot"></span>
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
+</button>
+
+<div class="aw-panel" id="awPanel">
+  <div class="aw-head">
+    <div class="av">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
+    </div>
+    <div><b>Atlas Asistan</b><span>● 7/24 çevrimiçi</span></div>
+    <button class="aw-close" id="awClose" aria-label="Kapat">×</button>
+  </div>
+  <div class="aw-msgs" id="awMsgs"></div>
+  <div class="aw-chips">
+    <button data-q="Paketler ve fiyatlar">Paketler</button>
+    <button data-q="Teslim süresi ne kadar">Teslim süresi</button>
+    <button data-q="Mesaj sınırı var mı">Mesaj sınırı</button>
+    <button data-q="Kaç sayfa yapıyorsunuz">Sayfa sayısı</button>
+    <button data-q="WhatsApp numaram ne olacak">WhatsApp numaram</button>
+    <button data-q="Nasıl çalışıyor">Nasıl çalışır</button>
+    <button data-q="İnsanla görüşmek istiyorum">İnsanla görüş</button>
+  </div>
+  <form class="aw-input" id="awForm">
+    <input type="text" id="awText" placeholder="Sorunuzu yazın..." autocomplete="off">
+    <button type="submit" aria-label="Gönder">➤</button>
+  </form>
+</div>
+
+<script>
+(function(){
+  var btn=document.getElementById('awBtn'),panel=document.getElementById('awPanel'),
+      msgs=document.getElementById('awMsgs'),form=document.getElementById('awForm'),
+      input=document.getElementById('awText'),started=false;
+
+  var WA='https://wa.me/905344682769';
+
+  var A={
+    hos:"Merhaba! 👋 Ben Atlas Asistan. Paketler, kurulum süreci, WhatsApp entegrasyonu — aklınıza takılan her şeyi sorabilirsiniz.\n\nNe öğrenmek istersiniz?",
+
+    paket:"Dört paketimiz var 💼\n\n🔹 WEB SİTESİ + ASİSTAN\n• Dijital Başlangıç — ₺14.900 tek sefer + ₺1.200/ay\n  5 sayfalık site, WhatsApp widget, temel asistan\n• VIP Klinik Dönüşümü — ₺24.900 tek sefer + ₺2.400/ay\n  10+ sayfa + blog, WhatsApp + Instagram, SEO kurulumu\n\n🔹 SADECE ASİSTAN (siteniz varsa)\n• Standart — ₺4.900/ay — WhatsApp, randevu, sınırsız yanıt\n• Pro — ₺7.900/ay — WhatsApp + Instagram, kampanya yönetimi, müşteri takibi\n\n\"Sayfa\", \"mesaj sınırı\" veya \"teslim süresi\" yazarak detayına bakabilirsiniz. Hangisi size uygun?",
+
+    sayfa:"Sayfa sayıları şöyle 📄\n\n5 SAYFA (Dijital Başlangıç):\n• Ana Sayfa\n• Hizmetler\n• Hakkımızda\n• Galeri (öncesi/sonrası)\n• İletişim\n\n10+ SAYFA (VIP):\nYukarıdakilerin tamamı + her hizmetiniz için ayrı sayfa (lazer epilasyon, botox, cilt bakımı, dolgu...) + Blog + SSS + Ekip + Müşteri Yorumları\n\n💡 Asıl fark şurada: VIP'te her hizmetin kendi sayfası olur. Bu, Google'da \"Kadıköy lazer epilasyon\" gibi aramalarda ayrı ayrı çıkmanızı sağlar.\n\nVIP pakete ayrıca SEO temel kurulumu (başlıklar, açıklamalar, site haritası, Google Search Console kaydı) ve Google Business profili düzenlemesi de dahildir — haritada ve aramalarda görünürlüğünüz artar.",
+
+    mesaj:"Mesaj sınırı konusunda içiniz rahat olsun 💬\n\nMüşterileriniz size yazdığında asistanın verdiği yanıtlar SINIRSIZDIR — her iki pakette de. Ne kadar yoğun olursanız olun ek ücret çıkmaz.\n\nSınır sadece hatırlatma mesajlarında: randevu hatırlatması gibi, sizin müşteriye ilk mesajı attığınız durumlar.\n\n• Standart: ayda 500 hatırlatma\n• Pro: sınırsız hatırlatma\n\nOrtalama bir klinik ayda 200-400 hatırlatma gönderir, yani Standart çoğu işletmeye rahat yeter.",
+
+    teslim:"Teslim sürelerimiz ⏱️\n\n• Dijital Başlangıç: 1-3 iş günü\n• VIP Klinik Dönüşümü: 3-5 iş günü\n• Sadece asistan paketleri: 1-2 iş günü\n\n⚠️ Önemli: Süre, klinik bilgileriniz bize ulaştıktan sonra başlar. Hizmet listeniz, fotoğraflarınız ve çalışma saatleriniz elimize geçtiği andan itibaren sayıyoruz.\n\nSiparişten hemen sonra size kısa bir bilgi formu gönderiyoruz. Formu doldurduğunuz gün süre başlar.",
+
+    fark:"Standart ile Pro arasındaki fark şu 📊\n\nStandart (₺4.900/ay): Sadece WhatsApp kanalı, randevu yönetimi, sınırsız yanıt, ayda 500 hatırlatma.\n\nPro (₺7.900/ay): WhatsApp + Instagram DM, gelişmiş randevu yönetimi, kampanya & promosyon yönetimi, müşteri takip sistemi, sınırsız hatırlatma, öncelikli destek.\n\nAradaki ₺3.000 farkı esas olarak Instagram entegrasyonu, kampanya yönetimi ve müşteri takip sistemi oluşturuyor. Instagram'dan mesaj alıyorsanız Pro kendini kısa sürede amorti eder.",
+
+    kurulum:"Kurulum süreci şöyle işliyor ⚙️\n\n1️⃣ Sipariş sonrası sizden klinik bilgilerinizi alıyoruz: hizmet ve fiyat listesi, çalışma saatleri, adres, kampanyalar, sık sorulan sorular.\n\n2️⃣ WhatsApp numaranızı sisteme kaydediyoruz (doğrulama kodu size gelir).\n\n3️⃣ Asistanı sizin bilgilerinizle eğitip test ediyoruz.\n\n⏱️ Süre: Sadece asistan paketlerinde 1-2 iş günü. Dijital Başlangıç 1-3 iş günü, VIP 3-5 iş günü. Süre bilgileriniz bize ulaştıktan sonra başlar.\n\nSizden istediğimiz tek şey bilgileriniz — teknik hiçbir işlem yapmanıza gerek yok.",
+
+    whatsapp:"WhatsApp numaranız konusunda önemli bir detay var ⚠️\n\nAtlas Asistan, WhatsApp Business Cloud API üzerinde çalışır. Verdiğiniz numara bu altyapıya kaydedilir.\n\n• Numaranız artık telefondaki WhatsApp/WhatsApp Business uygulamasından kullanılamaz\n• Mevcut sohbet geçmişi yeni sisteme aktarılmaz (önceden yedek alın)\n• İşletme adınız, profiliniz ve numaranız aynı kalır — müşteri tarafında hiçbir şey değişmez\n• İstediğiniz zaman geri alabilirsiniz\n\n💡 Tavsiyemiz: Kişisel numaranızı değil, kliniğinizin iş numarasını verin.",
+
+    mevcut:"Evet, mevcut iş numaranızı kullanabilirsiniz ✅\n\nMüşterileriniz aynı numaradan size ulaşmaya devam eder, sadece artık 7/24 yanıt alırlar.\n\nTek dikkat edilecek nokta: o numara telefondaki WhatsApp uygulamasından kullanılamaz hale gelir, çünkü Cloud API altyapısına geçer. Detayını sormak isterseniz \"WhatsApp numaram\" yazın.",
+
+    nasil:"Atlas Asistan şöyle çalışır 🤖\n\nMüşteriniz WhatsApp veya Instagram'dan mesaj attığında, asistan saniyeler içinde yanıtlar:\n\n• Fiyat sorularına sizin belirlediğiniz listeden cevap verir\n• Müsait saatleri gösterip randevu oluşturur\n• Güncel kampanyalarınızı anlatır\n• Adres, çalışma saatleri gibi bilgileri paylaşır\n\nGece 02:00'de gelen mesaj bile anında yanıtlanır. Emin olmadığı bir soruda müşteriyi size yönlendirir.\n\n▶ Sol üstteki \"Canlı Demo\" ile kendiniz deneyebilirsiniz!",
+
+    yanlis:"Hayır, asistan uydurmaz 🎯\n\nAtlas Asistan sadece sizin verdiğiniz bilgileri paylaşır. Fiyatlar, hizmetler, çalışma saatleri — hepsi tamamen sizin kontrolünüzde.\n\nEmin olmadığı bir soruyla karşılaşırsa müşteriyi doğrudan size yönlendirir. Yani \"bilmiyorum ama uydurayım\" durumu yok.",
+
+    iptal:"İptal konusunda esneğiz 🔓\n\n• Aylık abonelik sistemi, taahhüt yok\n• İstediğiniz zaman bir sonraki ay için iptal edebilirsiniz\n• İlk 7 gün içinde memnun kalmazsanız ücretsiz yeniden yapılandırma, çözülmezse tam iade\n\nDetaylar için İade Politikası sayfamıza bakabilirsiniz.",
+
+    sektor:"Şu sektörlere hizmet veriyoruz 🏥\n\n• Güzellik merkezleri\n• Estetik klinikler\n• Diş klinikleri\n• Spa & wellness merkezleri\n• Saç ekim klinikleri\n• Dermatoloji klinikleri\n\nRandevu ve müşteri mesajı trafiği olan her sağlık/güzellik işletmesi için uygundur. Farklı bir sektördeyseniz de konuşalım, çoğu durumda uyarlayabiliyoruz.",
+
+    odeme:"Ödeme konusunda 💳\n\nKredi kartı veya banka kartı ile ödeme yapabilirsiniz. iyzico altyapısı ile tüm ödemeler 256-bit SSL koruması altındadır. Taksit seçenekleri de mevcuttur.\n\nŞu anda online ödeme sistemimiz aktive edilme aşamasında — bu süreçte siparişler WhatsApp üzerinden alınıp faturalandırılmaktadır.",
+
+    insan:"Tabii, memnuniyetle 🤝\n\nAli Atlas ile doğrudan görüşmek için:\n📱 WhatsApp: 0534 468 27 69\n📧 E-posta: merhaba@atlasasistan.com\n📸 Instagram: @atlasasistan.ai\n\nAyrıca ana sayfadaki \"Ön Görüşme Talep Edin\" formunu doldurursanız size dönüş yapılır. Ücretsiz danışmanlıkla kliniğinize özel çözümü belirleriz.",
+
+    demo:"Demoyu hemen deneyebilirsiniz ▶️\n\nÜst menüdeki \"Canlı Demo\" butonuna tıklayın — gerçek bir güzellik kliniği senaryosunda asistanla konuşabilirsiniz. Fiyat sorun, randevu alın, kampanya isteyin.\n\nSorularınız için WhatsApp'tan da yazabilirsiniz: 0534 468 27 69",
+
+    fb:"Bu konuyu tam olarak çözemedim, ama şunlardan biri yardımcı olabilir 🤔\n\n• \"Paketler\" — fiyatlar ve kapsam\n• \"Sayfa\" — 5 vs 10+ sayfa farkı\n• \"Mesaj sınırı\" — kaç mesaj hakkım var\n• \"Teslim süresi\" — ne kadar sürede hazır\n• \"WhatsApp numaram\" — entegrasyon detayı\n• \"Nasıl çalışır\" — sistemin işleyişi\n\nDaha detaylı konuşmak isterseniz \"insanla görüş\" yazın, sizi Ali Atlas'a yönlendireyim."
+  };
+
+  function reply(t){
+    var e=t.toLocaleLowerCase('tr');
+    if(/(numaram|numara|hattım|hattim|business hesab|numaramı|numarami)/.test(e)) {
+      if(/(mevcut|şu anki|su anki|kendi|var olan|eski|kullanabilir)/.test(e)) return A.mevcut;
+      return A.whatsapp;
+    }
+    if(/(insan|gerçek kişi|gercek kisi|\bara\b|arayın|arayin|temsilci|yetkili|birisiyle|biriyle|görüşmek|gorusmek|iletişime|iletisime)/.test(e)) return A.insan;
+    if(/(demo|dene|test)/.test(e)) return A.demo;
+    if(/(sayfa|kaç sayfa|kac sayfa|hangi sayfa|blog|seo|google)/.test(e)) return A.sayfa;
+    if(/(mesaj sınır|mesaj sinir|1000|bin mesaj|sınırsız|sinirsiz|kaç mesaj|kac mesaj|mesaj hakk|hatırlatma|hatirlatma|limit)/.test(e)) return A.mesaj;
+    if(/(teslim|kaç gün|kac gun|ne kadar sür|ne kadar sur|kaç günde|kac gunde|hazır olur|hazir olur)/.test(e)) return A.teslim;
+    if(/(fark|hangisi|karşılaştır|karsilastir|standart.*pro|pro.*standart)/.test(e)) return A.fark;
+    if(/(paket|fiyat|ücret|ucret|kaç para|kac para|maliyet|ne kadar tut|kaça)/.test(e)) return A.paket;
+    if(/(kurulum|kurul|süre|sure|ne zaman|başla|basla|hazır|hazir)/.test(e)) return A.kurulum;
+    if(/(yanlış|yanlis|hata|uydur|güvenilir|guvenilir|doğru bilgi|dogru bilgi)/.test(e)) return A.yanlis;
+    if(/(iptal|iade|taahhüt|taahhut|geri öde|geri ode|vazgeç|vazgec)/.test(e)) return A.iptal;
+    if(/(sektör|sektor|klinik|diş|dis|kuaför|kuafor|salon|spa|berber|uygun mu|işime yarar)/.test(e)) return A.sektor;
+    if(/(ödeme|odeme|kart|taksit|havale|iyzico|fatura)/.test(e)) return A.odeme;
+    if(/(nasıl|nasil|çalış|calis|ne yapıyor|ne yapiyor|nedir|instagram)/.test(e)) return A.nasil;
+    if(/(merhaba|selam|iyi günler|iyi gunler|hey|hello|günaydın)/.test(e)) return A.hos;
+    return A.fb;
+  }
+
+  function add(text,who){
+    var d=document.createElement('div');
+    d.className='bubble '+who;
+    d.textContent=text;
+    msgs.appendChild(d);
+    msgs.scrollTop=msgs.scrollHeight;
+  }
+  function typing(on){
+    var t=document.getElementById('awTyp');
+    if(on){ if(t)return;
+      var d=document.createElement('div');d.id='awTyp';d.className='bubble in aw-typing';
+      d.innerHTML='<i></i><i></i><i></i>';msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+    } else if(t) t.remove();
+  }
+  function send(t){
+    if(!t.trim())return;
+    add(t,'out'); input.value='';
+    typing(true);
+    setTimeout(function(){typing(false);add(reply(t),'in');},600+Math.random()*500);
+  }
+
+  btn.addEventListener('click',function(){
+    panel.classList.toggle('open');
+    if(panel.classList.contains('open')){
+      if(!started){started=true;setTimeout(function(){add(A.hos,'in');},300);}
+      setTimeout(function(){input.focus();},100);
+    }
+  });
+  document.getElementById('awClose').addEventListener('click',function(){panel.classList.remove('open');});
+  form.addEventListener('submit',function(e){e.preventDefault();send(input.value);});
+  document.querySelectorAll('.aw-chips button').forEach(function(c){
+    c.addEventListener('click',function(){send(c.getAttribute('data-q'));});
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')panel.classList.remove('open');});
+})();
+</script>
+
+<script>
+(function () {
+  var GA4_ID = null;   /* TODO: GA4_MEASUREMENT_ID — ör. 'G-XXXXXXXXXX' */
+  var PIXEL_ID = null; /* TODO: META_PIXEL_ID — ör. '1234567890' */
+  window.ATLAS_ANALYTICS = {
+    send: function (event, params) {
+      if (GA4_ID && typeof window.gtag === 'function') { window.gtag('event', event, params || {}); }
+      if (PIXEL_ID && typeof window.fbq === 'function') { window.fbq('trackCustom', event, params || {}); }
+      if (!GA4_ID && !PIXEL_ID) { console.log('[analytics-placeholder]', event, params || {}); }
+    }
+  };
+  if (GA4_ID) {
+    var s = document.createElement('script'); s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date()); window.gtag('config', GA4_ID);
+  }
+  if (PIXEL_ID) {
+    !function (f, b, e, v) {
+      if (f.fbq) return; var n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
+      var t = b.createElement(e); t.async = !0; t.src = v; var s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s);
+    }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    window.fbq('init', PIXEL_ID); window.fbq('track', 'PageView');
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-track]') : null;
+    if (!el) return;
+    window.ATLAS_ANALYTICS.send(el.getAttribute('data-track'), { link: el.getAttribute('href') });
+  });
+})();
+</script>
 </body>
 </html>
