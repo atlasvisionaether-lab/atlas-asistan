@@ -1,1 +1,17 @@
-{"rewrites":[{"source":"/(.*)","destination":"/panel/index.html"}]}
+{
+  "rewrites": [
+    { "source": "/checkout", "destination": "/checkout.html" },
+    { "source": "/demo", "destination": "/demo.html" },
+    { "source": "/iletisim", "destination": "/iletisim.html" },
+    { "source": "/hakkinda", "destination": "/hakkinda.html" },
+    { "source": "/gizlilik", "destination": "/gizlilik.html" },
+    { "source": "/kvkk", "destination": "/kvkk.html" },
+    { "source": "/iade", "destination": "/iade.html" },
+    { "source": "/blog/whatsapp-asistani", "destination": "/blog/whatsapp-asistani.html" },
+    { "source": "/blog/guzellik-merkezi-yazilimi", "destination": "/blog/guzellik-merkezi-yazilimi.html" },
+    { "source": "/blog/instagram-randevu", "destination": "/blog/instagram-randevu.html" },
+    { "source": "/sehir/istanbul", "destination": "/sehir/istanbul.html" },
+    { "source": "/sehir/ankara", "destination": "/sehir/ankara.html" },
+    { "source": "/sehir/izmir", "destination": "/sehir/izmir.html" }
+  ]
+}
