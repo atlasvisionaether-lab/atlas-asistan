@@ -108,6 +108,11 @@ input,textarea{font:inherit}
 
 /* Chat mockup */
 .glass-card{border-radius:var(--radius);border:1px solid #ffffff1a;background:#ffffff0d;backdrop-filter:blur(4px);padding:1.5rem;max-width:24rem;margin:0 auto;width:100%}
+.glass-card{position:relative;overflow:hidden}
+.corner-logo{position:absolute;top:.75rem;width:2.75rem;height:2.75rem;pointer-events:none;opacity:.85}
+.corner-logo.left{left:.75rem}
+.corner-logo.right{right:.75rem}
+@media (max-width:480px){.corner-logo{width:1.75rem;height:1.75rem;top:.6rem}.corner-logo.left{left:.6rem}.corner-logo.right{right:.6rem}}
 .chat-head{display:flex;align-items:center;gap:.75rem;padding-bottom:.85rem;margin-bottom:1rem;border-bottom:1px solid #ffffff1a}
 .chat-avatar{width:2.5rem;height:2.5rem;border-radius:999px;background:var(--blue-btn);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
 .chat-head .who b{display:block;font-size:.9rem}
@@ -372,6 +377,8 @@ footer ul a:hover{color:var(--fg)}
     </div>
     <div>
       <div class="glass-card">
+        <img class="corner-logo left" src="public/duz-logo-kucuk.png" alt="Atlas Asistan">
+        <img class="corner-logo right" src="public/duz-logo-kucuk.png" alt="Atlas Asistan">
         <div class="chat-head">
           <div class="chat-avatar">
             <img src="public/logo.png" alt="Atlas Asistan" style="width:1.4rem;height:1.4rem;border-radius:999px">
