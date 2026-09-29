@@ -109,8 +109,8 @@ input,textarea{font:inherit}
 /* Chat mockup */
 .glass-card{border-radius:var(--radius);border:1px solid #ffffff1a;background:#ffffff0d;backdrop-filter:blur(4px);padding:1.5rem;max-width:24rem;margin:0 auto;width:100%}
 .glass-card{position:relative;overflow:hidden}
-.site-logo-fixed{position:fixed;bottom:6rem;right:1.25rem;width:70px;height:auto;max-height:96px;object-fit:contain;opacity:1;z-index:50;pointer-events:none}
-@media (max-width:480px){.site-logo-fixed{width:48px;bottom:6rem;right:1rem}}
+.site-logo-fixed{position:fixed;left:1.25rem;bottom:1.25rem;width:70px;height:auto;max-height:96px;object-fit:contain;opacity:1;z-index:50;pointer-events:none}
+@media (max-width:480px){.site-logo-fixed{width:48px;left:1rem;bottom:1rem}}
 .chat-head{display:flex;align-items:center;gap:.75rem;padding-bottom:.85rem;margin-bottom:1rem;border-bottom:1px solid #ffffff1a}
 .chat-avatar{width:2.5rem;height:2.5rem;border-radius:999px;background:var(--blue-btn);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
 .chat-head .who b{display:block;font-size:.9rem}
@@ -694,7 +694,7 @@ document.getElementById('contactForm').addEventListener('submit', function(e){
   window.open('https://wa.me/905344682769?text=' + encodeURIComponent('Merhaba, ' + clinic + ' kliniğinden ' + name + '. Görüşme talep ediyorum. Tel: ' + phone), '_blank');
 });
 </script>
-<img class="site-logo-fixed" src="public/duz-logo-kucuk.png" alt="Atlas Asistan">
+<img class="site-logo-fixed" src="public/sol-kose-logo-kucuk.png" alt="Atlas Asistan">
 <!-- ATLAS SATIŞ ASİSTANI WIDGET -->
 <style>
 .aw-btn{position:fixed;bottom:1.25rem;right:1.25rem;z-index:90;width:3.5rem;height:3.5rem;border-radius:999px;background:var(--blue-btn);color:#fff;border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform .2s,background .2s}
