@@ -1,18 +1,18 @@
+<!-- KAYNAK: atlasasistan.com/checkout (tüm plan parametreleri ayni HTML'i dondurur; plan bilgisi JS ile query parametresinden okunur), 2026-09-29 indirildi. Bu dosya canli varyantin versiyon kontrolune alinmis kopyasidir; dogrudan editlenmez. -->
 <!DOCTYPE html>
-<!-- KAYNAK: atlasasistan.com canlı sayfası, 2026-09-29 indirildi. Bu dosya canlı varyantın versiyon kontrolüne alınmış kopyasıdır; doğrudan editlenmez. -->
-
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Atlas Asistan — Klinikler için 7/24 Yapay Zeka Asistanı</title>
-<meta name="description" content="Güzellik ve sağlık sektörü için WhatsApp ve Instagram yapay zeka asistanı. Randevularınızı 7/24 otomatik yönetin, hiçbir müşteriyi kaçırmayın.">
-  <meta property="og:title" content="Atlas Asistan — Klinikler için 7/24 Yapay Zeka Asistanı">
-  <meta property="og:description" content="Güzellik ve sağlık sektörü için WhatsApp ve Instagram yapay zeka asistanı. Randevularınızı 7/24 otomatik yönetin, hiçbir müşteriyi kaçırmayın.">
-  <meta property="og:type" content="website">
-  <meta property="og:locale" content="tr_TR">
-  <meta property="og:image" content="/public/logo.png">
+<title>Sipariş — Atlas Asistan</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><rect x='4' y='7' width='16' height='12' rx='3'/><circle cx='9' cy='13' r='1.5' fill='white'/><circle cx='15' cy='13' r='1.5' fill='white'/><rect x='11' y='3' width='2' height='4' rx='1'/></svg>">
+<meta name="description" content="Atlas Asistan paketinizi seçin ve WhatsApp ile siparişinizi güvenle tamamlayın.">
+<meta property="og:title" content="Sipariş — Atlas Asistan">
+<meta property="og:description" content="Atlas Asistan paketinizi seçin ve WhatsApp ile siparişinizi güvenle tamamlayın.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:url" content="https://atlasasistan.com/checkout.html">
+<meta property="og:image" content="https://atlasasistan.com/public/logo.png">
 <style>
 /* Atlas Asistan — atlasasistan.com */
 :root{
@@ -233,91 +233,18 @@ footer ul a:hover{color:var(--fg)}
 .notice svg{color:var(--emerald);flex-shrink:0;margin-top:.1rem}
 .notice b{display:block;font-size:.875rem}
 .notice span{font-size:.78rem;color:var(--muted)}
+.warn{background:hsl(38 92% 50% / .06);border:1px solid hsl(38 92% 50% / .25);border-radius:.6rem;padding:1.25rem;margin-top:1.25rem}
+.warn h3{font-size:.92rem;font-weight:600;color:#fbbf24;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.warn p{font-size:.82rem;color:var(--muted);margin-bottom:.6rem}
+.warn p strong{color:var(--fg)}
+.warn ul{list-style:none;display:flex;flex-direction:column;gap:.55rem;margin:.75rem 0}
+.warn li{font-size:.82rem;color:var(--muted);padding-left:1rem;position:relative;line-height:1.5}
+.warn li::before{content:"•";position:absolute;left:0;color:#fbbf24}
+.warn li strong{color:var(--fg)}
+.warn .tip{background:hsl(38 92% 50% / .08);border-radius:.45rem;padding:.7rem .85rem;font-size:.82rem;color:var(--fg);margin-top:.5rem}
 .tagline{font-size:.7rem;padding:.15rem .6rem;border-radius:999px;background:hsl(217 91% 60% / .1);color:#60a5fa;border:1px solid hsl(217 91% 60% / .2)}
 
 </style>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "Atlas Asistan nasıl çalışır?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Atlas Asistan, yapay zeka teknolojisi ile WhatsApp ve Instagram üzerinden gelen müşteri mesajlarını otomatik olarak yanıtlar. Randevu oluşturma, fiyat bilgilendirme, kampanya paylaşımı gibi işlemleri 7/24 otonom olarak gerçekleştirir."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Kurulum ne kadar sürer?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Standart asistan kurulumu 1-2 iş günü içinde tamamlanır. Web sitesi + asistan paketlerinde ise 3-7 iş günü içinde teslim edilir. Kurulum sürecinde sizden sadece klinik bilgilerinizi ve fiyat listenizi alırız."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Asistan yanlış bilgi verir mi?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Hayır. Atlas Asistan sadece sizin belirlediğiniz bilgileri paylaşır. Fiyatlar, hizmetler, çalışma saatleri gibi bilgiler tamamen sizin kontrolünüzdedir. Emin olmadığı sorularda müşteriyi size yönlendirir."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Mevcut WhatsApp numaram ile kullanabilir miyim?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Evet! Mevcut iş WhatsApp numaranız ile entegre edilir. Müşterileriniz aynı numaradan size ulaşmaya devam eder, sadece artık 7/24 yanıt alırlar."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "İptal etmek istersem ne olur?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Aylık abonelik sistemi ile çalışıyoruz. İstediğiniz zaman bir sonraki ay için iptal edebilirsiniz. Taahhüt yoktur. Detaylar için iade politikamızı inceleyebilirsiniz."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Hangi sektörlere hizmet veriyorsunuz?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Güzellik merkezleri, estetik klinikler, diş klinikleri, spa & wellness merkezleri, saç ekim klinikleri, dermatoloji klinikleri ve tüm sağlık/güzellik sektörüne hizmet veriyoruz."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Ödeme nasıl yapılır?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Kredi kartı veya banka kartı ile güvenli ödeme yapabilirsiniz. İyzico altyapısı ile tüm ödemeleriniz güvence altındadır. Taksit seçenekleri de mevcuttur."
-      }
-    }
-  ]
-}
-</script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "Atlas Asistan",
-  "url": "https://atlasasistan.com",
-  "logo": "https://atlasasistan.com/public/logo.png",
-  "email": "merhaba@atlasasistan.com",
-  "telephone": "+905344682769",
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "telephone": "+905344682769",
-    "email": "merhaba@atlasasistan.com",
-    "contactType": "customer service",
-    "availableLanguage": "tr"
-  }
-}
-</script>
 </head>
 <body>
 
@@ -326,365 +253,113 @@ footer ul a:hover{color:var(--fg)}
     <div class="nav-inner">
       <a href="/" class="brand">
         <svg class="bot" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
-        ATLAS ASİSTAN <span class="badge">AI</span>
+        ATLAS ASİSTAN
       </a>
       <div class="nav-links">
-        <a class="plain" href="#cozum">Çözüm</a>
-        <a class="plain" href="#moduller">Modüller</a>
-        <a class="plain" href="#fiyatlar">Paketler</a>
-        <a class="plain" href="#sss">SSS</a>
-        <a href="/demo" class="btn outline-blue">▶ Canlı Demo</a>
-        <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click" class="btn green">WhatsApp</a>
+        <a class="plain" href="/#fiyatlar">← Paketlere Dön</a>
       </div>
-      <button class="hamb" aria-label="Menüyü aç" onclick="document.getElementById('mmenu').classList.toggle('open')">☰</button>
+      <a href="/#fiyatlar" class="hamb" style="text-decoration:none">←</a>
     </div>
-  </div>
-  <div class="mobile-menu" id="mmenu">
-    <a href="#cozum">Çözüm</a>
-    <a href="#moduller">Modüller</a>
-    <a href="#fiyatlar">Paketler</a>
-    <a href="#sss">SSS</a>
-    <a href="/demo">Canlı Demo</a>
-    <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click">WhatsApp</a>
   </div>
 </nav>
 
-<!-- HERO -->
-<header class="hero">
-  <div class="container hero-grid">
+<div class="co-wrap">
+  <div class="co-grid">
     <div>
-      <h1>Kliniğiniz Kapalıyken Bile <span class="text-gradient">Randevu Defterinizi Dolduran</span> Yapay Zeka Asistanı.</h1>
-      <p class="lead">Güzellik ve sağlık sektörü için tasarlandı. Atlas Asistan ile WhatsApp ve Instagram'dan gelen tüm hasta/müşteri mesajlarını otonom yanıtlayın, randevularınızı 7/24 saniyeler içinde takvime ekleyin.</p>
-      <div class="hero-ctas">
-        <a href="/demo" class="btn blue lg">▶ Asistanı Deneyin</a>
-        <a href="#iletisim" class="btn outline-green lg">Ücretsiz Ön Görüşme</a>
-      </div>
-      <div class="stats">
-        <div class="stat"><b class="c-blue">%94</b><span>Mesaj Yanıtlama</span></div>
-        <div class="stat"><b class="c-green">3.2x</b><span>Randevu Artışı</span></div>
-        <div class="stat"><b class="c-orange">7/24</b><span>Otonom Çalışma</span></div>
-      </div>
-    </div>
-    <div>
-      <div class="glass-card">
-        <div class="chat-head">
-          <div class="chat-avatar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
-          </div>
-          <div class="who"><b>Atlas Asistan</b><span>● Çevrimiçi</span></div>
-          <span class="tag">WhatsApp</span>
-        </div>
-        <div class="bubble out">Merhaba, lazer epilasyon fiyatlarınız nedir? Yarın için randevu var mı?<time>02:14</time></div>
-        <div class="bubble in">Merhaba! 🌟 Tüm vücut lazer epilasyon 2.500₺. Yarın 10:00, 14:00 ve 16:30 saatlerimiz müsait. Hangisini ayırtalım?<time>02:14</time></div>
-        <div class="bubble out">14:00 olsun lütfen 🙏<time>02:15</time></div>
-        <div class="bubble in">Mükemmel! ✅ Randevunuz oluşturuldu:
-
-📅 Yarın, 14:00
-📍 Bağdat Cad. No:45, Kadıköy
-
-Randevu hatırlatması WhatsApp'tan gönderilecektir.<time>02:15</time></div>
-      </div>
-    </div>
-  </div>
-</header>
-
-<!-- ÇÖZÜM -->
-<section id="cozum" class="section">
-  <div class="container">
-    <div class="sec-head">
-      <h2>Kliniğiniz Neden Müşteri Kaybediyor?</h2>
-      <p>Cevaplanmayan her mesaj, rakibinize giden bir randevudur. Atlas Asistan bu üç sızıntıyı kapatır.</p>
-    </div>
-    <div class="grid-3">
-      <div class="card hov-blue">
-        <div class="icon-box blue">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-        </div>
-        <div class="metric c-blue">7/24</div>
-        <h3>Mesai Bitince Kapı Kapanmasın</h3>
-        <p>Mesajların büyük kısmı akşam ve hafta sonu gelir — tam da kimsenin cevap veremediği saatlerde. Atlas Asistan gece 02:00'de yazana da saniyeler içinde yanıt verir, randevusunu oluşturur.</p>
-      </div>
-      <div class="card hov-green">
-        <div class="icon-box green">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        </div>
-        <div class="metric c-green">0 sn</div>
-        <h3>Bekleyen Müşteri Kaçan Müşteridir</h3>
-        <p>"Fiyat ne kadar?" sorusuna 10 dakikada dönerseniz, müşteri çoktan üç kliniğe daha yazmıştır. Asistan anında yanıtlar — konuşma sıcakken randevuya dönüşür.</p>
-      </div>
-      <div class="card hov-orange">
-        <div class="icon-box orange">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
-        <div class="metric c-orange">−%70</div>
-        <h3>Personeliniz Telefona Değil İşine Baksın</h3>
-        <p>Aynı beş soru gün boyu tekrarlanır: fiyat, saat, adres, kampanya, müsaitlik. Asistan bunları üstlenir; ekibiniz salondaki müşteriye odaklanır.</p>
-      </div>
-    </div>
-    <div style="text-align:center;margin-top:2.5rem">
-      <a href="/demo" class="btn blue lg">▶ Asistanı Şimdi Deneyin</a>
-    </div>
-  </div>
-</section>
-
-<!-- MODÜLLER: WEB + ASİSTAN -->
-<section id="moduller" class="section alt">
-  <div class="container">
-    <div class="sec-head" style="margin-bottom:1.5rem">
-      <span class="eyebrow">WEB SİTESİ OLMAYAN KLİNİKLER İÇİN</span>
-      <h2>Web Siteniz Yok Mu? <span class="text-gradient">7/24 Çalışan Dijital Bir Şube</span> Kuruyoruz.</h2>
-      <p style="max-width:48rem">Sıradan bir web sitesi yaptırıp müşteri beklemeyin. Biz, kliniğiniz için en modern tasarıma sahip web sitesini kuruyor ve içine <strong style="color:var(--fg)">saniyeler içinde randevu alan, kampanya satan WhatsApp/Instagram yapay zeka asistanınızı</strong> entegre ediyoruz.</p>
-    </div>
-    <div class="plans">
-      <div class="plan">
-        <div>
-          <h3>Dijital Başlangıç Paketi</h3>
-          <p class="sub">Modern Web Sitesi + Temel WhatsApp Asistanı</p>
-        </div>
-        <div class="price"><b>₺14.900</b> <span class="per">tek sefer</span><span class="note">+ ₺1.200/ay asistan</span></div>
-        <ul>
-          <li><span class="check">✓</span> Premium 5 sayfalık site</li>
-          <li><span class="check">✓</span> Mobil uyumlu</li>
-          <li><span class="check">✓</span> WhatsApp widget</li>
-          <li><span class="check">✓</span> Temel asistan</li>
-          <li><span class="check">✓</span> SSL hosting 1 yıl</li>
-          <li><span class="check">✓</span> 1-3 iş günü teslim*</li>
-        </ul>
-        <a href="/checkout?plan=starter" class="btn gray block">🛒 Satın Al</a>
-        <a href="iletisim.html#contactForm" class="btn outline-blue block" style="margin-top:.5rem">14 Gün Ücretsiz Deneyin</a>
-      </div>
-      <div class="plan featured">
-        <span class="ribbon">EN ÇOK TERCİH EDİLEN</span>
-        <div>
-          <h3>VIP Klinik Dönüşümü</h3>
-          <p class="sub">Premium Site + Gelişmiş Otomasyon</p>
-        </div>
-        <div class="price"><b>₺24.900</b> <span class="per">tek sefer</span><span class="note">+ ₺2.400/ay full asistan</span></div>
-        <ul>
-          <li><span class="check">✓</span> 10+ sayfa + blog</li>
-          <li><span class="check">✓</span> WhatsApp + Instagram FULL</li>
-          <li><span class="check">✓</span> SEO temel kurulumu</li>
-          <li><span class="check">✓</span> Google Business profili</li>
-          <li><span class="check">✓</span> Aylık rapor</li>
-          <li><span class="check">✓</span> 3-5 iş günü teslim*</li>
-        </ul>
-        <a href="/checkout?plan=vip" class="btn blue block">🛒 Satın Al</a>
-        <a href="iletisim.html#contactForm" class="btn outline-blue block" style="margin-top:.5rem">14 Gün Ücretsiz Deneyin</a>
-      </div>
-    </div>
-    <p style="text-align:center;font-size:.78rem;color:var(--muted);margin-top:1.5rem;max-width:44rem;margin-left:auto;margin-right:auto">* Teslim süresi, klinik bilgileriniz (hizmet listesi, fotoğraflar, çalışma saatleri) bize ulaştıktan sonra başlar. Siparişten hemen sonra kısa bir bilgi formu gönderiyoruz.</p>
-  </div>
-</section>
-
-<!-- ASİSTAN PAKETLERİ -->
-<section id="fiyatlar" class="section">
-  <div class="container">
-    <div class="sec-head">
-      <h2>Asistan Paketleri</h2>
-      <p>Zaten web siteniz var mı? Sadece asistan hizmetimizi alın.</p>
-    </div>
-    <div class="plans" style="max-width:48rem">
-      <div class="plan">
-        <h3>Standart</h3>
-        <div class="price"><b>₺4.900</b> <span class="per">/ay</span></div>
-        <ul>
-          <li><span class="check">✓</span> WhatsApp asistanı</li>
-          <li><span class="check">✓</span> Randevu yönetimi</li>
-          <li><span class="check">✓</span> Fiyat bilgilendirme</li>
-          <li><span class="check">✓</span> 7/24 otomatik yanıt</li>
-          <li><span class="check">✓</span> Sınırsız yanıt, aylık 500 hatırlatma</li>
-        </ul>
-        <div class="plan-cta">
-          <a href="/checkout?plan=standart" class="btn gray">🛒 Satın Al</a>
-        <a href="iletisim.html#contactForm" class="btn outline-blue block" style="margin-top:.5rem">14 Gün Ücretsiz Deneyin</a>
-          <a href="/demo" class="btn outline-blue">Demo</a>
-        </div>
-      </div>
-      <div class="plan featured">
-        <span class="pop">POPÜLER</span>
-        <h3>Pro</h3>
-        <div class="price"><b>₺7.900</b> <span class="per">/ay</span></div>
-        <ul>
-          <li><span class="check">✓</span> WhatsApp + Instagram</li>
-          <li><span class="check">✓</span> Gelişmiş randevu yönetimi</li>
-          <li><span class="check">✓</span> Kampanya &amp; promosyon</li>
-          <li><span class="check">✓</span> Müşteri takip sistemi</li>
-          <li><span class="check">✓</span> Sınırsız yanıt ve hatırlatma</li>
-          <li><span class="check">✓</span> Öncelikli destek</li>
-        </ul>
-        <div class="plan-cta">
-          <a href="/checkout?plan=pro" class="btn blue">🛒 Satın Al</a>
-        <a href="iletisim.html#contactForm" class="btn outline-blue block" style="margin-top:.5rem">14 Gün Ücretsiz Deneyin</a>
-          <a href="/demo" class="btn outline-blue">Demo</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- YORUMLAR -->
-<section class="section alt">
-  <div class="container">
-    <div class="sec-head">
-      <h2>Müşterilerimiz Ne Diyor?</h2>
-      <p>Atlas Asistan kullanan kliniklerin deneyimleri</p>
-    </div>
-    <div class="grid-3">
-      <div class="t-card">
-        <div class="starrow">★★★★★</div>
-        <blockquote>"Atlas Asistan sayesinde gece gelen mesajları kaçırmıyoruz. Randevu sayımız %40 arttı, resepsiyon personelimiz artık gerçek işlere odaklanıyor."</blockquote>
-        <div class="who"><b>Dr. Ayşe Yılmaz</b><span>Glow Beauty Clinic</span></div>
-      </div>
-      <div class="t-card">
-        <div class="starrow">★★★★★</div>
-        <blockquote>"Instagram DM'lerinden gelen soruları anında yanıtlıyor. Müşterilerimiz çok memnun, biz de. Kesinlikle tavsiye ederim."</blockquote>
-        <div class="who"><b>Mehmet Kaya</b><span>Elite Estetik Merkezi</span></div>
-      </div>
-      <div class="t-card">
-        <div class="starrow">★★★★★</div>
-        <blockquote>"Hafta sonları bile randevu alınabiliyor artık. Asistan tam bir profesyonel gibi davranıyor, müşteriler gerçek kişiyle konuştuğunu sanıyor."</blockquote>
-        <div class="who"><b>Zeynep Demir</b><span>Zen Wellness Spa</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SSS -->
-<section id="sss" class="section">
-  <div class="container narrow">
-    <div class="sec-head">
-      <h2>Sıkça Sorulan Sorular</h2>
-    </div>
-    <div class="faq">
-      <details>
-        <summary>Atlas Asistan nasıl çalışır?</summary>
-        <div class="a">Atlas Asistan, yapay zeka teknolojisi ile WhatsApp ve Instagram üzerinden gelen müşteri mesajlarını otomatik olarak yanıtlar. Randevu oluşturma, fiyat bilgilendirme, kampanya paylaşımı gibi işlemleri 7/24 otonom olarak gerçekleştirir.</div>
-      </details>
-      <details>
-        <summary>Kurulum ne kadar sürer?</summary>
-        <div class="a">Standart asistan kurulumu 1-2 iş günü içinde tamamlanır. Web sitesi + asistan paketlerinde ise 3-7 iş günü içinde teslim edilir. Kurulum sürecinde sizden sadece klinik bilgilerinizi ve fiyat listenizi alırız.</div>
-      </details>
-      <details>
-        <summary>Asistan yanlış bilgi verir mi?</summary>
-        <div class="a">Hayır. Atlas Asistan sadece sizin belirlediğiniz bilgileri paylaşır. Fiyatlar, hizmetler, çalışma saatleri gibi bilgiler tamamen sizin kontrolünüzdedir. Emin olmadığı sorularda müşteriyi size yönlendirir.</div>
-      </details>
-      <details>
-        <summary>Mevcut WhatsApp numaram ile kullanabilir miyim?</summary>
-        <div class="a">Evet! Mevcut iş WhatsApp numaranız ile entegre edilir. Müşterileriniz aynı numaradan size ulaşmaya devam eder, sadece artık 7/24 yanıt alırlar.</div>
-      </details>
-      <details>
-        <summary>İptal etmek istersem ne olur?</summary>
-        <div class="a">Aylık abonelik sistemi ile çalışıyoruz. İstediğiniz zaman bir sonraki ay için iptal edebilirsiniz. Taahhüt yoktur. Detaylar için <a href="/refund" style="color:#60a5fa">iade politikamızı</a> inceleyebilirsiniz.</div>
-      </details>
-      <details>
-        <summary>Hangi sektörlere hizmet veriyorsunuz?</summary>
-        <div class="a">Güzellik merkezleri, estetik klinikler, diş klinikleri, spa &amp; wellness merkezleri, saç ekim klinikleri, dermatoloji klinikleri ve tüm sağlık/güzellik sektörüne hizmet veriyoruz.</div>
-      </details>
-      <details>
-        <summary>Ödeme nasıl yapılır?</summary>
-        <div class="a">Kredi kartı veya banka kartı ile güvenli ödeme yapabilirsiniz. İyzico altyapısı ile tüm ödemeleriniz güvence altındadır. Taksit seçenekleri de mevcuttur.</div>
-      </details>
-    </div>
-  </div>
-</section>
-
-<!-- İLETİŞİM -->
-<section id="iletisim" class="section alt">
-  <div class="container">
-    <div class="contact-grid">
-      <div class="contact-info">
-        <h2>Ön Görüşme Talep Edin</h2>
-        <p>Kliniğinize özel çözüm için bizimle iletişime geçin. Ücretsiz danışmanlık ile ihtiyaçlarınızı belirleyelim.</p>
-        <a href="tel:+905344682769" class="contact-line">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          0534 468 27 69
-        </a>
-        <a href="mailto:merhaba@atlasasistan.com" class="contact-line">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-          merhaba@atlasasistan.com
-        </a>
-      </div>
+      <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:1.25rem">Sipariş Özeti</h1>
       <div class="card">
-        <form id="contactForm">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <h3 id="planName" style="font-size:1.1rem">Pro Asistan</h3>
+          <span class="tagline">Seçili Plan</span>
+        </div>
+        <div class="price" style="margin-bottom:1.25rem"><b id="planPrice">₺7.900</b> <span class="per" id="planPeriod">/ay</span></div>
+        <div style="border-top:1px solid var(--border);padding-top:1rem">
+          <p style="font-size:.875rem;font-weight:500;margin-bottom:.75rem;color:var(--fg)">Dahil olan özellikler:</p>
+          <ul id="planFeatures" style="list-style:none;display:flex;flex-direction:column;gap:.55rem"></ul>
+        </div>
+      </div>
+      <div class="notice">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div>
+          <b>Güvenli Ödeme</b>
+          <span>iyzico altyapısı ile 256-bit SSL şifreleme koruması altında. Online ödeme çok yakında aktif olacak — şimdilik siparişiniz WhatsApp üzerinden alınmaktadır.</span>
+        </div>
+      </div>
+
+      <div class="warn">
+        <h3>⚠️ WhatsApp Numaranız Hakkında Önemli Bilgi</h3>
+        <p>Atlas Asistan, WhatsApp Business Cloud API altyapısı üzerinde çalışır. Kurulum sırasında vereceğiniz numara bu altyapıya kaydedilir.</p>
+        <p><strong>Bunun anlamı:</strong></p>
+        <ul>
+          <li>Numaranız artık telefonunuzdaki WhatsApp veya WhatsApp Business <strong>uygulamasından kullanılamaz.</strong> Kayıt tamamlandığında uygulamadaki hesap kapanır.</li>
+          <li>Tüm mesajlaşma Atlas Asistan üzerinden yürür. Randevu bildirimleri ve konuşma özetleri size iletilir; gerektiğinde müşterinizle doğrudan iletişime geçebilirsiniz.</li>
+          <li>Numaranızdaki mevcut sohbet geçmişi <strong>yeni sisteme aktarılmaz.</strong> Kayıttan önce telefonunuzdan yedek almanızı öneririz.</li>
+          <li>İşletme adınız, profil fotoğrafınız ve müşterilerinizin bildiği numara <strong>aynı kalır.</strong> Müşteri tarafında hiçbir şey değişmez.</li>
+        </ul>
+        <div class="tip"><strong>Tavsiyemiz:</strong> Günlük kişisel iletişimde kullandığınız numarayı vermeyin. Kliniğinizin resmi iş numarasını veya bu iş için ayıracağınız yeni bir numarayı tercih edin.</div>
+        <p style="margin-top:.75rem;margin-bottom:0">Bu adım geri alınabilir — numaranızı istediğiniz zaman sistemden çıkarıp normal WhatsApp'a geri döndürebilirsiniz.</p>
+      </div>
+    </div>
+    <div>
+      <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:1.25rem">İletişim Bilgileri</h2>
+      <div class="card">
+        <form id="coForm">
           <div class="field">
-            <label for="cf-clinic">Klinik Adı</label>
-            <input id="cf-clinic" type="text" placeholder="Kliniğinizin adı" required>
+            <label for="co-name">Ad Soyad</label>
+            <input id="co-name" type="text" placeholder="Adınız ve soyadınız" required>
           </div>
           <div class="field">
-            <label for="cf-name">Ad Soyad</label>
-            <input id="cf-name" type="text" placeholder="Adınız ve soyadınız" required>
+            <label for="co-clinic">Klinik / İşletme Adı</label>
+            <input id="co-clinic" type="text" placeholder="İşletmenizin adı" required>
           </div>
           <div class="field">
-            <label for="cf-phone">Telefon</label>
-            <input id="cf-phone" type="tel" placeholder="05XX XXX XX XX" required>
+            <label for="co-phone">Telefon</label>
+            <input id="co-phone" type="tel" placeholder="05XX XXX XX XX" required>
           </div>
-          <button type="submit" class="btn blue block">Görüşme Talep Et →</button>
+          <div class="field">
+            <label for="co-email">E-posta</label>
+            <input id="co-email" type="email" placeholder="ornek@eposta.com" required>
+          </div>
+          <button type="submit" class="btn green block lg">WhatsApp ile Siparişi Tamamla</button>
+          <p style="font-size:.72rem;color:var(--muted);margin-top:.9rem;text-align:center">Siparişi tamamlayarak <a href="kvkk.html" style="color:#60a5fa">Kullanım Koşulları</a>'nı ve <a href="iade.html" style="color:#60a5fa">İade Politikası</a>'nı kabul etmiş olursunuz.</p>
         </form>
       </div>
     </div>
   </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="container">
-    <div class="foot-grid">
-      <div class="foot-brand">
-        <a href="/" class="brand">
-          <svg class="bot" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--blue)"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
-          ATLAS ASİSTAN
-        </a>
-        <p>Güzellik &amp; Sağlık sektörü için yapay zeka otomasyon çözümleri.</p>
-        <div class="socials">
-          <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click" class="soc wa" aria-label="WhatsApp">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          </a>
-          <a href="https://www.instagram.com/atlasasistan.ai/" target="_blank" rel="noopener noreferrer" class="soc ig" aria-label="Instagram">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-          </a>
-        </div>
-      </div>
-      <div>
-        <h4>Hizmetler</h4>
-        <ul>
-          <li><a href="#cozum">AI Asistan</a></li>
-          <li><a href="#moduller">Web Sitesi Paketleri</a></li>
-          <li><a href="blog/whatsapp-asistani.html">Blog</a></li>
-          <li><a href="#fiyatlar">Asistan Paketleri</a></li>
-          <li><a href="/demo">Canlı Demo</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Destek</h4>
-        <ul>
-          <li><a href="#sss">Sıkça Sorulan Sorular</a></li>
-          <li><a href="iletisim.html">İletişim</a></li>
-          <li><a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click">WhatsApp Destek</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Yasal</h4>
-        <ul>
-          <li><a href="gizlilik.html">Gizlilik Politikası</a></li>
-          <li><a href="kvkk.html">KVKK Aydınlatma Metni</a></li>
-          <li><a href="hakkinda.html">Hakkımızda</a></li>
-          <li><a href="iade.html">İade Politikası</a></li>
-          <li><a href="iletisim.html">İletişim</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="foot-bottom">© 2026 Atlas Asistan. Tüm hakları saklıdır.</div>
-  </div>
-</footer>
+</div>
 
 <script>
-document.getElementById('contactForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  var clinic = document.getElementById('cf-clinic').value;
-  var name = document.getElementById('cf-name').value;
-  var phone = document.getElementById('cf-phone').value;
-  window.open('https://wa.me/905344682769?text=' + encodeURIComponent('Merhaba, ' + clinic + ' kliniğinden ' + name + '. Görüşme talep ediyorum. Tel: ' + phone), '_blank');
-});
+(function(){
+  var plans = {
+    starter: { name:"Dijital Başlangıç Paketi", price:"₺14.900", period:"tek sefer + ₺1.200/ay", features:["Premium 5 sayfalık site","Mobil uyumlu","WhatsApp widget","Temel asistan","SSL hosting 1 yıl","1-3 iş günü teslim*"] },
+    vip:     { name:"VIP Klinik Dönüşümü", price:"₺24.900", period:"tek sefer + ₺2.400/ay", features:["10+ sayfa + blog","WhatsApp + Instagram FULL","SEO temel kurulumu","Google Business profili","Aylık performans raporu","3-5 iş günü teslim*"] },
+    standart:{ name:"Standart Asistan", price:"₺4.900", period:"/ay", features:["WhatsApp asistanı","Randevu yönetimi","Fiyat bilgilendirme","7/24 otomatik yanıt","Sınırsız yanıt, aylık 500 hatırlatma"] },
+    pro:     { name:"Pro Asistan", price:"₺7.900", period:"/ay", features:["WhatsApp + Instagram","Gelişmiş randevu yönetimi","Kampanya & promosyon","Müşteri takip sistemi","Sınırsız yanıt ve hatırlatma","Öncelikli destek"] }
+  };
+  var key = (new URLSearchParams(location.search).get('plan') || 'pro'); if (key === 'standard') { key = 'standart'; }
+  var p = plans[key] || plans.pro;
+
+  document.getElementById('planName').textContent = p.name;
+  document.getElementById('planPrice').textContent = p.price;
+  document.getElementById('planPeriod').textContent = p.period;
+  var ul = document.getElementById('planFeatures');
+  p.features.forEach(function(f){
+    var li = document.createElement('li');
+    li.style.cssText = 'display:flex;align-items:center;gap:.5rem;font-size:.875rem;color:var(--muted)';
+    li.innerHTML = '<span class="check">✓</span> ' + f;
+    ul.appendChild(li);
+  });
+
+  document.getElementById('coForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('co-name').value;
+    var clinic = document.getElementById('co-clinic').value;
+    var phone = document.getElementById('co-phone').value;
+    var email = document.getElementById('co-email').value;
+    var msg = 'Merhaba, ' + p.name + ' (' + p.price + ' ' + p.period + ') satın almak istiyorum.\n\nAd Soyad: ' + name + '\nKlinik: ' + clinic + '\nTelefon: ' + phone + '\nE-posta: ' + email;
+    window.open('https://wa.me/905344682769?text=' + encodeURIComponent(msg), '_blank');
+  });
+})();
 </script>
 <!-- ATLAS SATIŞ ASİSTANI WIDGET -->
 <style>
