@@ -13,22 +13,6 @@
       "destination": "/iletisim.html"
     },
     {
-      "source": "/hakkinda",
-      "destination": "/hakkinda.html"
-    },
-    {
-      "source": "/gizlilik",
-      "destination": "/gizlilik.html"
-    },
-    {
-      "source": "/kvkk",
-      "destination": "/kvkk.html"
-    },
-    {
-      "source": "/iade",
-      "destination": "/iade.html"
-    },
-    {
       "source": "/blog/whatsapp-asistani",
       "destination": "/blog/whatsapp-asistani.html"
     },
@@ -75,6 +59,28 @@
     {
       "source": "/pages/kullanim-sartlari",
       "destination": "/pages/kullanim-sartlari.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/kvkk",
+      "destination": "/pages/kvkk-aydinlatma-metni",
+      "permanent": true
+    },
+    {
+      "source": "/gizlilik",
+      "destination": "/pages/gizlilik-politikasi",
+      "permanent": true
+    },
+    {
+      "source": "/iade",
+      "destination": "/pages/teslimat-ve-iade-sartlari",
+      "permanent": true
+    },
+    {
+      "source": "/hakkinda",
+      "destination": "/pages/hakkimizda",
+      "permanent": true
     }
   ]
 }
