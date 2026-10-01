@@ -92,6 +92,13 @@ jobs:
       - name: QStash imza doğrulaması
         run: node cyberlionai/tools/qstash-test.js
 
+      # Fiyat tutarliligi: ayni plan uc yerde yaziyor ve bir kez ayristi
+      # (ana sayfa Pro icin "SINIRSIZ" diyordu, sinirsiz olan Enterprise'di).
+      # Fiyat sayfasinda yazan sey bir taahhut; iki sayfanin iki farkli sey
+      # soylemesi musteriye yanlis soz vermek olur.
+      - name: Fiyatlandırma tutarlılığı ve ödeme ucu
+        run: node cyberlionai/tools/pricing-test.js
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do

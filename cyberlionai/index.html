@@ -795,6 +795,7 @@
   .plan--enterprise .plan__list li i { color: var(--accent-blue); }
 
   .pricing__foot { text-align: center; margin-top: 34px; color: var(--text-gray); font-size: 0.84rem; }
+  .pricing__more { color: var(--gold-primary); text-decoration: underline; text-underline-offset: 3px; }
 
   /* ============================================================
      11. FOOTER
@@ -1845,13 +1846,13 @@
             <div class="plan__price" data-i18n="pricing.pro.price">₺299/ay</div>
             <span class="plan__period" data-i18n="pricing.pro.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f1">SINIRSIZ Tarama</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f2">Gelişmiş Başlık + SSL + DNS Analizi</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f3">Detaylı PDF + AI Düzeltme Kılavuzu (kod örnekli)</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f4">E-posta Bildirimleri</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">7/24 Destek (destek@cyberlionai.com)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f1">Ayda 50 Tarama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f2">OWASP Lite Taraması (A01–A10)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f3">OWASP Gruplu PDF Rapor (düzeltme kodu ile)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f4">Panelde Tarama Geçmişi ve Skor Eğilimi</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">E-posta Desteği (destek@cyberlionai.com)</span></li>
             </ul>
-            <button type="button" class="btn btn--gold btn--block" data-open-modal data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</button>
+            <a class="btn btn--gold btn--block" href="/api/checkout?plan=pro" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
           </article>
 
           <!-- ENTERPRISE -->
@@ -1859,21 +1860,22 @@
             <span class="plan__badge" data-i18n="pricing.ent.badge">Kurumsal</span>
             <h3 class="plan__name" data-i18n="pricing.ent.name">Enterprise</h3>
             <p class="plan__tagline" data-i18n="pricing.ent.tagline">Kendi altyapınıza uyarlanmış tarama ve raporlama.</p>
-            <div class="plan__price" data-i18n="pricing.ent.price">Özel Teklif</div>
-            <span class="plan__period" data-i18n="pricing.ent.period">Kullanımınıza göre fiyatlandırma</span>
+            <div class="plan__price" data-i18n="pricing.ent.price">₺2.499/ay</div>
+            <span class="plan__period" data-i18n="pricing.ent.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">Pro'daki her şey</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">API Erişimi</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f3">Özel Raporlama</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f4">Öncelikli Destek</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Kurumsal Faturalandırma</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">Sınırsız Tarama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f3">Haftalık Otomatik Tarama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f4">Skor Eğilimi ve Alan Adı Karşılaştırması</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Öncelikli Destek ve Kurumsal Faturalandırma</span></li>
             </ul>
-            <button type="button" class="btn btn--blue btn--block" id="contactBtn" data-i18n="pricing.ent.cta">İletişime Geç</button>
+            <a class="btn btn--blue btn--block" href="/api/checkout?plan=enterprise" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
           </article>
 
         </div>
 
         <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur.</p>
+        <p class="pricing__foot reveal"><a class="pricing__more" href="/pricing" data-i18n="pricing.more">Planları yan yana karşılaştır</a></p>
       </div>
     </section>
   </main>
@@ -2424,7 +2426,7 @@
           },
           pricing: {
             q: 'Planlar ne kadar?',
-            a: 'Free ₺0, Pro ₺299/ay (sınırsız tarama, detaylı PDF rapor, kod örnekli AI düzeltme kılavuzu, e-posta bildirimleri), Enterprise için kullanımınıza göre özel fiyatlandırma yapılır.|Tüm planlar KDV hariçtir.'
+            a: 'Free ₺0, Pro ₺299/ay (ayda 50 OWASP Lite taraması, OWASP gruplu PDF rapor, panelde tarama geçmişi ve skor eğilimi), Enterprise ₺2.499/ay (sınırsız tarama, Cloudflare ile 1-Tık Düzeltme, haftalık otomatik tarama, öncelikli destek).|Tüm planlar KDV hariçtir.'
           },
           report: {
             q: 'Rapor nasıl geliyor?',
@@ -2481,18 +2483,20 @@
           pro: {
             badge: 'Popüler', name: 'Pro', tagline: 'Üretim ortamını sürekli izleyen ekipler için.',
             price: '₺299/ay', period: 'Aylık, istediğiniz zaman iptal',
-            f1: 'SINIRSIZ Tarama', f2: 'Gelişmiş Başlık + SSL + DNS Analizi',
-            f3: 'Detaylı PDF + AI Düzeltme Kılavuzu (kod örnekli)', f4: 'E-posta Bildirimleri',
-            f5: '7/24 Destek (destek@cyberlionai.com)',
+            f1: 'Ayda 50 Tarama', f2: 'OWASP Lite Taraması (A01–A10)',
+            f3: 'OWASP Gruplu PDF Rapor (düzeltme kodu ile)', f4: 'Panelde Tarama Geçmişi ve Skor Eğilimi',
+            f5: 'E-posta Desteği (destek@cyberlionai.com)',
             cta: "Pro'ya Geç"
           },
           ent: {
-            badge: 'Kurumsal', name: 'Enterprise', tagline: 'Kendi altyapınıza uyarlanmış tarama ve raporlama.',
-            price: 'Özel Teklif', period: 'Kullanımınıza göre fiyatlandırma',
-            f1: "Pro'daki her şey", f2: 'API Erişimi', f3: 'Özel Raporlama',
-            f4: 'Öncelikli Destek', f5: 'Kurumsal Faturalandırma',
-            cta: 'İletişime Geç'
-          }
+            badge: 'Kurumsal', name: 'Enterprise', tagline: 'Sürekli izleme ve düzeltme isteyen kurumlar için.',
+            price: '₺2.499/ay', period: 'Aylık, istediğiniz zaman iptal',
+            f1: 'Sınırsız Tarama', f2: "Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)",
+            f3: 'Haftalık Otomatik Tarama', f4: 'Skor Eğilimi ve Alan Adı Karşılaştırması',
+            f5: 'Öncelikli Destek ve Kurumsal Faturalandırma',
+            cta: "Enterprise'a Geç"
+          },
+          more: 'Planları yan yana karşılaştır'
         },
         footer: {
           about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması. Destek: destek@cyberlionai.com — www.cyberlionai.com',
@@ -2813,7 +2817,7 @@
           },
           pricing: {
             q: 'What do the plans cost?',
-            a: 'Free ₺0, Pro ₺299/mo (unlimited scans, detailed PDF report, code-example AI fix guide, email notifications), Enterprise is priced on usage.|All prices exclude VAT.'
+            a: 'Free ₺0, Pro ₺299/mo (50 OWASP Lite scans per month, PDF report grouped by OWASP, scan history and score trend in the panel), Enterprise ₺2,499/mo (unlimited scans, 1-Click Fix via Cloudflare, weekly automated scan, priority support).|All prices exclude VAT.'
           },
           report: {
             q: 'What does the report look like?',
@@ -2870,18 +2874,20 @@
           pro: {
             badge: 'Popular', name: 'Pro', tagline: 'For teams monitoring production continuously.',
             price: '₺299/mo', period: 'Monthly, cancel anytime',
-            f1: 'Unlimited Scans', f2: 'Advanced Headers + SSL + DNS Analysis',
-            f3: 'Detailed PDF + AI Fix Guide (code examples)', f4: 'Email Notifications',
-            f5: '24/7 Support via destek@cyberlionai.com',
+            f1: '50 Scans per Month', f2: 'OWASP Lite Scan (A01–A10)',
+            f3: 'PDF Report Grouped by OWASP (with fix code)', f4: 'Scan History and Score Trend in the Panel',
+            f5: 'Email Support via destek@cyberlionai.com',
             cta: 'Go Pro'
           },
           ent: {
-            badge: 'Enterprise', name: 'Enterprise', tagline: 'Scanning and reporting tailored to your infrastructure.',
-            price: 'Custom', period: 'Usage-based pricing',
-            f1: 'Everything in Pro', f2: 'API Access', f3: 'Custom Reporting',
-            f4: 'Priority Support', f5: 'Corporate Invoicing',
-            cta: 'Contact Us'
-          }
+            badge: 'Enterprise', name: 'Enterprise', tagline: 'For organizations that want continuous monitoring and remediation.',
+            price: '₺2,499/mo', period: 'Monthly, cancel anytime',
+            f1: 'Unlimited Scans', f2: '1-Click Fix via Cloudflare (with your own token)',
+            f3: 'Weekly Automated Scan', f4: 'Score Trend and Domain Comparison',
+            f5: 'Priority Support and Corporate Invoicing',
+            cta: 'Go Enterprise'
+          },
+          more: 'Compare the plans side by side'
         },
         footer: {
           about: 'Fast security scanning that analyzes your SSL and security headers in seconds. Support: destek@cyberlionai.com — www.cyberlionai.com',
