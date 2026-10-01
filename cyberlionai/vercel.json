@@ -10,6 +10,14 @@
     "api/worldmap.js": {
       "maxDuration": 20,
       "memory": 512
+    },
+    "api/cron/weekly-scan.js": {
+      "maxDuration": 60,
+      "memory": 512
+    },
+    "api/report.js": {
+      "maxDuration": 30,
+      "memory": 1024
     }
   },
   "headers": [
@@ -18,7 +26,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; script-src 'self' 'sha256-TBN8Q6psxPFqMOdGUWIBFIa9Btk+pnLR0R+6W1rTuNo=' 'sha256-XFpZWZkFF6aM74UA6wSrgvarZKAi01ihFiXGFgX8j+8=' 'sha256-3r+JarKUDjIQCNRex5upJytL3yv6bLqgtLEVtOFgpSk=' 'sha256-xD2cy5lHZVFGbhb7smsSyyCDwLsYnBbb7CD6QEr6DWs=' 'sha256-V5KMmEOjAHvgYc6ZFLeFw8jBgijaPfW9VSozn+34g04=' 'sha256-PbzQMtBvyMODICd/oxs3rQATIwV0Q9VmrYyQnup+ONo=' 'sha256-bbJNHos/F0a9fz/jIB0MkIfkH2Hg+IwDY9rjjO4Twls=' 'sha256-kKQjffethgWQEkt+syPxj8ZsF92rKx3S1gGE86riSvI=' 'sha256-o3fXLRjysbcdiKWo58HwQjXARPGjXrIHkrCVe3NAz60='; connect-src 'self' https://ipapi.co; upgrade-insecure-requests"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; script-src 'self' 'sha256-TBN8Q6psxPFqMOdGUWIBFIa9Btk+pnLR0R+6W1rTuNo=' 'sha256-XFpZWZkFF6aM74UA6wSrgvarZKAi01ihFiXGFgX8j+8=' 'sha256-Wg60lGscb2izJm7hsOBwGjLWMGqPqbixWmsDSzub2AI=' 'sha256-Gq9/8EMQb4BFH2vtzX8mzFNd5WbpjdL4ihVkgn/Dh/E=' 'sha256-3r+JarKUDjIQCNRex5upJytL3yv6bLqgtLEVtOFgpSk=' 'sha256-0rTqvOEm6Pe5SJ9WvB2L+kSsXyr7aC+YSHxYrHxfl1A=' 'sha256-CC+adZumw+3uGTmdm3beJfKzPJnbWeiULPep91MiipY=' 'sha256-PbzQMtBvyMODICd/oxs3rQATIwV0Q9VmrYyQnup+ONo=' 'sha256-bbJNHos/F0a9fz/jIB0MkIfkH2Hg+IwDY9rjjO4Twls=' 'sha256-xUoNGpJxoJZSBIgot43cUrYNf+NN+Z4gbxGTjdcff30=' 'sha256-nUp3KjL7iS2hq0OLHkMrRSZd3Gbn9SgiwnQJ69qyBlE=' 'sha256-UVdfISOvL1broULYifacLelHLxBgasQnN3w33VGYxrA=' 'sha256-hlQC1w/Y1pvTM85N4MglOtvX6acRYRgSJrsU4jLh4x4=' 'sha256-kKQjffethgWQEkt+syPxj8ZsF92rKx3S1gGE86riSvI=' 'sha256-jq+OoRVY/VnTG5STRotMQQZR36vL9pa6NdkyiB2cFz0=' 'sha256-1+ff7XWjSJpnuL5BjQnlg91ZsI9LbnHCemLPHgfuEf8=' 'sha256-o+of3JxRCNuITO22+k6jz4FFFJfPmDceWQCVnzU/lfE=' 'sha256-o3fXLRjysbcdiKWo58HwQjXARPGjXrIHkrCVe3NAz60='; connect-src 'self' https://ipapi.co; upgrade-insecure-requests"
         },
         {
           "key": "Strict-Transport-Security",
@@ -62,19 +70,105 @@
   ],
   "redirects": [
     {
+      "source": "/kvkk",
+      "destination": "/pages/kvkk-aydinlatma-metni",
+      "permanent": true
+    },
+    {
+      "source": "/gizlilik",
+      "destination": "/pages/gizlilik-politikasi",
+      "permanent": true
+    },
+    {
+      "source": "/gizlilik-politikasi",
+      "destination": "/pages/gizlilik-politikasi",
+      "permanent": true
+    },
+    {
+      "source": "/iade",
+      "destination": "/pages/teslimat-ve-iade-sartlari",
+      "permanent": true
+    },
+    {
+      "source": "/hakkinda",
+      "destination": "/pages/hakkimizda",
+      "permanent": true
+    },
+    {
+      "source": "/kullanim-sartlari",
+      "destination": "/pages/kullanim-sartlari",
+      "permanent": true
+    },
+    {
+      "source": "/cerez-politikasi",
+      "destination": "/pages/cerez-politikasi",
+      "permanent": true
+    },
+    {
+      "source": "/mesafeli-satis",
+      "destination": "/pages/mesafeli-satis-sozlesmesi",
+      "permanent": true
+    },
+    {
       "source": "/privacy",
-      "destination": "/gizlilik-politikasi",
+      "destination": "/pages/gizlilik-politikasi",
       "permanent": true
     },
     {
       "source": "/terms",
-      "destination": "/kullanim-sartlari",
+      "destination": "/pages/kullanim-sartlari",
       "permanent": true
     },
     {
       "source": "/cookies",
-      "destination": "/cerez-politikasi",
+      "destination": "/pages/cerez-politikasi",
       "permanent": true
+    },
+    {
+      "source": "/fiyatlandirma",
+      "destination": "/pricing",
+      "permanent": true
+    },
+    {
+      "source": "/fiyat",
+      "destination": "/pricing",
+      "permanent": true
+    },
+    {
+      "source": "/planlar",
+      "destination": "/pricing",
+      "permanent": true
+    },
+    {
+      "source": "/plans",
+      "destination": "/pricing",
+      "permanent": true
+    },
+    {
+      "source": "/legal",
+      "destination": "/pages/yasal",
+      "permanent": true
+    },
+    {
+      "source": "/yasal",
+      "destination": "/pages/yasal",
+      "permanent": true
+    },
+    {
+      "source": "/iletisim",
+      "destination": "/pages/yasal",
+      "permanent": true
+    },
+    {
+      "source": "/contact",
+      "destination": "/pages/yasal",
+      "permanent": true
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/weekly-scan",
+      "schedule": "0 9 * * 1"
     }
   ]
 }

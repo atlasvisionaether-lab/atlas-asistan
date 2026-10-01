@@ -70,6 +70,38 @@ jobs:
       - name: Puanlama kalibrasyonu
         run: node cyberlionai/tools/calibration-test.js
 
+      # Ana sayfa sayaci NEYI sayiyor. scan_jobs tablosu Cloudflare duzeltme
+      # denetim izini de tutuyor; ayiklanmazsa "taranan site" sayisi her
+      # duzeltmede sisiyor ve ziyaretciye yanlis sayi gosteriliyor.
+      - name: Ana sayfa sayacı
+        run: node cyberlionai/tools/stats-test.js
+
+      # Panel sorgulari: sahiplik filtresi sorgunun ICINDE mi, baskasinin is
+      # kimligi bulgulari aciyor mu, bulgular OWASP'e gore gruplaniyor mu.
+      # Buradaki hatanin bedeli yanlis bir sayi degil, baska musterinin verisi.
+      - name: Panel sorguları ve sahiplik
+        run: node cyberlionai/tools/panel-test.js
+
+      # OWASP PDF raporu ve kanit maskeleme. Rapor musterinin eline giden bir
+      # dosya; IP maskelemesi ne eksik ne fazla hevesli olmali.
+      - name: OWASP raporu ve maskeleme
+        run: node cyberlionai/tools/owasp-report-test.js
+
+      # Haftalik tarama ucunun imza dogrulamasi. Yanlissa ucuncu biri bizim
+      # altyapimizi baska sitelere istek atmak icin kullanabilir.
+      - name: QStash imza doğrulaması
+        run: node cyberlionai/tools/qstash-test.js
+
+      # Fiyat tutarliligi: ayni plan uc yerde yaziyor ve bir kez ayristi
+      # (ana sayfa Pro icin "SINIRSIZ" diyordu, sinirsiz olan Enterprise'di).
+      # Fiyat sayfasinda yazan sey bir taahhut; iki sayfanin iki farkli sey
+      # soylemesi musteriye yanlis soz vermek olur.
+      - name: Fiyatlandırma tutarlılığı ve ödeme ucu
+        run: node cyberlionai/tools/pricing-test.js
+
+      - name: iyzico abonelik entegrasyonu (imza test vektörleri)
+        run: node cyberlionai/tools/iyzico-test.js
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do

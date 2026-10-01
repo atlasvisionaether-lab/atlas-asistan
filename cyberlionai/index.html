@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#0a0a0f" />
 
   <title>Cyber Lion AI - Yapay Zeka ile Güvenlik Taraması</title>
-  <meta name="description" content="Web sitenizdeki güvenlik açıklarını AI ile tespit edin. Ücretsiz deneme, profesyonel raporlama." />
-  <meta name="keywords" content="güvenlik, siber güvenlik, AI, tarama, zafiyet, SSL, OWASP, penetrasyon testi" />
+  <meta name="description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez." />
+  <meta name="keywords" content="güvenlik, siber güvenlik, AI, tarama, SSL, TLS, güvenlik başlıkları, CSP, HSTS" />
   <meta name="author" content="Cyber Lion AI" />
   <meta name="robots" content="index, follow" />
 
@@ -15,7 +15,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Cyber Lion AI" />
   <meta property="og:title" content="Cyber Lion AI - Yapay Zeka Destekli Güvenlik Tarama Platformu" />
-  <meta property="og:description" content="Web sitenizdeki güvenlik açıklarını AI ile tespit edin. Ücretsiz deneme, profesyonel raporlama." />
+  <meta property="og:description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez." />
   <meta property="og:url" content="https://cyberlionai.com/" />
   <meta property="og:locale" content="tr_TR" />
   <meta property="og:locale:alternate" content="en_US" />
@@ -795,6 +795,7 @@
   .plan--enterprise .plan__list li i { color: var(--accent-blue); }
 
   .pricing__foot { text-align: center; margin-top: 34px; color: var(--text-gray); font-size: 0.84rem; }
+  .pricing__more { color: var(--gold-primary); text-decoration: underline; text-underline-offset: 3px; }
 
   /* ============================================================
      11. FOOTER
@@ -1478,7 +1479,6 @@
           <li><a class="nav__link" href="#services" data-i18n="nav.services">Hizmetler</a></li>
           <li><a class="nav__link" href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
           <li><a class="nav__link" href="#worldmap" data-i18n="nav.map">Canlı Harita</a></li>
-          <li><a class="nav__link" href="#remediation" data-i18n="nav.modes">Düzeltme</a></li>
           <li><a class="nav__link" href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
           <li><a class="nav__link" href="#contact" data-i18n="nav.contact">İletişim</a></li>
         </ul>
@@ -1493,7 +1493,7 @@
             <i class="fa-solid fa-moon" aria-hidden="true"></i>
           </button>
 
-          <button type="button" class="btn btn--gold btn--sm nav__cta" data-open-modal data-i18n="nav.upgrade">Premium'a Geç</button>
+          <button type="button" class="btn btn--gold btn--sm nav__cta" data-open-modal data-pro-intent data-i18n="nav.upgrade">Pro'ya Geç</button>
 
           <!-- Giriş yapılmamışken: giriş düğmesi. Yapılmışken: hesap menüsü.
                Hangisinin görüneceğine sunucu karar verir (/api/auth/me). -->
@@ -1525,10 +1525,9 @@
     <a href="#services" data-i18n="nav.services">Hizmetler</a>
     <a href="#how" data-i18n="nav.how">Nasıl Çalışır</a>
     <a href="#worldmap" data-i18n="nav.map">Canlı Harita</a>
-    <a href="#remediation" data-i18n="nav.modes">Düzeltme</a>
     <a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a>
     <a href="#contact" data-i18n="nav.contact">İletişim</a>
-    <button type="button" class="btn btn--gold btn--block" data-open-modal data-i18n="nav.upgrade">Premium'a Geç</button>
+    <button type="button" class="btn btn--gold btn--block" data-open-modal data-pro-intent data-i18n="nav.upgrade">Pro'ya Geç</button>
   </div>
 
   <main id="main">
@@ -1546,11 +1545,11 @@
         </span>
 
         <h1 class="hero__title">
-          <span class="gold-text" data-i18n="hero.title">GÜVENLİK AÇIKLARINIZI AVLIYORUZ</span><span class="caret" aria-hidden="true"></span>
+          <span class="gold-text" data-i18n="hero.title">GÜVENLİK BAŞLIKLARI VE SSL'İ SANİYELERDE ANALİZ EDİN</span><span class="caret" aria-hidden="true"></span>
         </h1>
 
-        <p class="hero__subtitle" data-i18n="hero.subtitle">Yapay Zeka ile Güçlendirilmiş Otomatik Güvenlik Taraması</p>
-        <p class="hero__desc" data-i18n="hero.desc">Web sitenizdeki zafiyetleri tespit edin, raporlayın ve düzeltin.</p>
+        <p class="hero__subtitle" data-i18n="hero.subtitle">Yapay Zeka Destekli Hızlı Güvenlik Durum Tespiti — SSL ve Başlık Analizi</p>
+        <p class="hero__desc" data-i18n="hero.desc">Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin.</p>
 
         <!-- Canlı demo tarama -->
         <div class="scan">
@@ -1566,6 +1565,11 @@
               <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
               <span data-i18n="hero.cta1">Hemen Tara</span>
             </button>
+                    <label class="scan__consent" for="scanConsent" style="display:flex;gap:8px;align-items:flex-start;
+              margin:10px 0 0;font-size:0.72rem;line-height:1.5;color:var(--text-muted,#a0a0b0);cursor:pointer">
+              <input type="checkbox" id="scanConsent" style="margin-top:2px;accent-color:#d4af37" />
+              <span data-i18n="hero.consent">Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.</span>
+            </label>
           </form>
           <p class="scan__note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
@@ -1593,28 +1597,33 @@
         </div>
 
         <div class="hero__actions">
-          <button type="button" class="btn btn--gold" data-open-modal>
+          <button type="button" class="btn btn--gold" data-open-modal data-pro-intent>
             <i class="fa-solid fa-crown" aria-hidden="true"></i>
-            <span data-i18n="hero.cta2">Premium'a Geç</span>
+            <span data-i18n="hero.cta2">Pro'ya Geç</span>
           </button>
           <a class="btn btn--ghost" href="#services">
             <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
             <span data-i18n="hero.cta3">Nasıl Çalışır?</span>
           </a>
+          <a class="btn btn--ghost" href="/ornek-rapor.pdf" download>
+            <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+            <span data-i18n="hero.cta4">Örnek Rapor (PDF)</span>
+          </a>
         </div>
 
         <div class="hero__stats">
-          <div class="stat reveal">
-            <span class="stat__value" data-count="10000" data-suffix="+">10.000+</span>
-            <span class="stat__label" data-i18n="hero.stat1">Taranan Site</span>
-          </div>
-          <div class="stat reveal" style="--reveal-delay:120ms">
-            <span class="stat__value" data-count="98" data-suffix="%">98%</span>
-            <span class="stat__label" data-i18n="hero.stat2">Doğruluk Oranı</span>
+          <!-- Sayaç ÖLÇÜLEN bir sayı: /api/stats -> scan_jobs tablosundaki
+               tamamlanmış tarama adedi. Uç cevap vermezse bu kutu hiç
+               görünmez (hidden kalkmaz): sayamadığımız bir sayıyı "0" diye
+               göstermek de uydurmak olurdu. Bu yüzden sunucu tarafında bir
+               değer gömülmüyor ve işaretlemede sabit sayı yok. -->
+          <div class="stat reveal" id="heroScans" hidden>
+            <span class="stat__value" id="heroScansValue" data-count="0" data-suffix="+">0+</span>
+            <span class="stat__label" data-i18n="hero.stat1">Taranan Site (Canlı)</span>
           </div>
           <div class="stat reveal" style="--reveal-delay:240ms">
             <span class="stat__value" data-i18n="hero.stat3v">7/24</span>
-            <span class="stat__label" data-i18n="hero.stat3">Aktif Koruma</span>
+            <span class="stat__label" data-i18n="hero.stat3">Hızlı Tarama</span>
           </div>
         </div>
       </div>
@@ -1634,8 +1643,8 @@
         <div class="grid grid--2">
           <article class="feature reveal">
             <div class="feature__icon"><i class="fa-solid fa-bug-slash" aria-hidden="true"></i></div>
-            <h3 class="feature__title" data-i18n="services.s1t">Otomatik Zafiyet Taraması</h3>
-            <p class="feature__desc" data-i18n="services.s1d">OWASP Top 10 ve diğer yaygın güvenlik açıklarını otomatik olarak tespit eder.</p>
+            <h3 class="feature__title" data-i18n="services.s1t">Güvenlik Durum Skoru</h3>
+            <p class="feature__desc" data-i18n="services.s1d">Ölçülen kontrollerden dinamik bir güvenlik skoru üretir; ölçülemeyen kontrol puana girmez.</p>
           </article>
 
           <article class="feature reveal" style="--reveal-delay:100ms">
@@ -1652,8 +1661,8 @@
 
           <article class="feature reveal" style="--reveal-delay:300ms">
             <div class="feature__icon"><i class="fa-solid fa-brain" aria-hidden="true"></i></div>
-            <h3 class="feature__title" data-i18n="services.s4t">AI Asistan</h3>
-            <p class="feature__desc" data-i18n="services.s4d">Tespit edilen zafiyetler için akıllı düzeltme önerileri sunar.</p>
+            <h3 class="feature__title" data-i18n="services.s4t">AI Düzeltme Kılavuzu</h3>
+            <p class="feature__desc" data-i18n="services.s4d">Tespit edilen eksikler için kod örnekli düzeltme önerileri sunar.</p>
           </article>
         </div>
       </div>
@@ -1695,118 +1704,6 @@
               <p class="step__desc" data-i18n="how.s3d">Önem derecesine göre sıralanmış bulgular, kanıtlar ve uygulanabilir düzeltme adımları.</p>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==========================================================
-         DÜZELTME YÖNTEMLERİ (3 Seçenek)
-         ========================================================== -->
-    <section class="section" id="remediation">
-      <div class="container">
-        <div class="section__head reveal">
-          <span class="section__eyebrow" data-i18n="modes.eyebrow">Düzeltme</span>
-          <h2 class="section__title" data-i18n="modes.title">DÜZELTMEYİ NASIL İSTERSİNİZ?</h2>
-          <p class="section__subtitle" data-i18n="modes.subtitle">Size en uygun yöntemi seçin. İstediğiniz zaman değiştirebilirsiniz.</p>
-        </div>
-
-        <div class="grid modes">
-
-          <!-- TAM OTOMATİK -->
-          <article class="mode reveal" data-mode="autonomous">
-            <span class="mode__badge" data-i18n="modes.auto.badge">Yeni</span>
-            <div class="mode__icon"><i class="fa-solid fa-robot" aria-hidden="true"></i></div>
-            <h3 class="mode__name" data-i18n="modes.auto.name">Tam Otomatik</h3>
-            <div class="mode__price" data-i18n="modes.auto.price">₺299</div>
-            <span class="mode__period" data-i18n="modes.auto.period">Tek tarama başına</span>
-            <ul class="mode__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f1">Açıkları otomatik bulur</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f2">Düzeltmeyi otomatik uygular</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f3">Hiçbir müdahale gerekmez</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f4">Uygulama sonrası anında doğrulama</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.auto.f5">7/24 çalışır</span></li>
-              <li class="is-wait"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span data-i18n="modes.auto.f6">Hata hâlinde otomatik geri alma</span></li>
-            </ul>
-            <button type="button" class="btn btn--ghost btn--block" data-select-mode="autonomous" data-i18n="modes.select">Bu Yöntemi Seç</button>
-            <span class="mode__note" data-i18n="modes.auto.note">Teknik ekipler için ideal</span>
-          </article>
-
-          <!-- YARI OTOMATİK -->
-          <article class="mode mode--featured reveal" data-mode="semi_autonomous" style="--reveal-delay:120ms">
-            <span class="mode__badge" data-i18n="modes.semi.badge">Popüler</span>
-            <div class="mode__icon"><i class="fa-solid fa-user-check" aria-hidden="true"></i></div>
-            <h3 class="mode__name gold-text" data-i18n="modes.semi.name">Yarı Otomatik</h3>
-            <div class="mode__price" data-i18n="modes.semi.price">₺199</div>
-            <span class="mode__period" data-i18n="modes.semi.period">Tek tarama başına</span>
-            <ul class="mode__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f1">Açıkları otomatik bulur</span></li>
-              <li class="is-wait"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i><span data-i18n="modes.semi.f2">Düzeltmeyi önerir, onayınızı bekler</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f3">Her düzeltmenin ön izlemesi</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f4">Yalnızca seçtiklerinizi uygular</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f5">Onay sonrası otomatik uygulama</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.semi.f6">Otomatik geri alma</span></li>
-            </ul>
-            <button type="button" class="btn btn--gold btn--block" data-select-mode="semi_autonomous" data-i18n="modes.select">Bu Yöntemi Seç</button>
-            <span class="mode__note" data-i18n="modes.semi.note">Bireysel geliştiriciler için ideal</span>
-          </article>
-
-          <!-- YÖNETİLEN HİZMET -->
-          <article class="mode mode--managed reveal" data-mode="managed" style="--reveal-delay:240ms">
-            <span class="mode__badge" data-i18n="modes.managed.badge">Premium</span>
-            <div class="mode__icon"><i class="fa-solid fa-crown" aria-hidden="true"></i></div>
-            <h3 class="mode__name" data-i18n="modes.managed.name">Yönetilen Hizmet</h3>
-            <div class="mode__price" data-i18n="modes.managed.price">₺2.499</div>
-            <span class="mode__period" data-i18n="modes.managed.period">Aylık</span>
-            <ul class="mode__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f1">AI + uzman ekip birlikte çalışır</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f2">Sizin hiçbir şey yapmanıza gerek yok</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f3">7/24 canlı destek</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f4">Yönetici ve teknik ekip raporu</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f5">Sürekli izleme</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="modes.managed.f6">Öncelikli müdahale</span></li>
-            </ul>
-            <button type="button" class="btn btn--blue btn--block" data-select-mode="managed" data-i18n="modes.select">Bu Yöntemi Seç</button>
-            <span class="mode__note" data-i18n="modes.managed.note">Kurumsal firmalar için ideal</span>
-          </article>
-        </div>
-
-        <!-- Karşılaştırma tablosu -->
-        <div class="compare reveal">
-          <h3 class="compare__title" data-i18n="compare.title">Tüm Özellikler Karşılaştırması</h3>
-          <div class="compare__scroll" tabindex="0" role="region" aria-labelledby="compareCaption">
-            <table>
-              <caption id="compareCaption" class="sr-only" data-i18n="compare.caption">Üç düzeltme yönteminin özellik karşılaştırması</caption>
-              <thead>
-                <tr>
-                  <th scope="col" data-i18n="compare.feature">Özellik</th>
-                  <th scope="col" data-i18n="modes.auto.name">Tam Otomatik</th>
-                  <th scope="col" data-i18n="modes.semi.name">Yarı Otomatik</th>
-                  <th scope="col" data-i18n="modes.managed.name">Yönetilen Hizmet</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><th scope="row" data-i18n="compare.r1">Açık tespiti</th>
-                  <td class="yes" data-i18n="compare.ai">AI</td><td class="yes" data-i18n="compare.ai">AI</td><td class="yes" data-i18n="compare.aiExpert">AI + uzman</td></tr>
-                <tr><th scope="row" data-i18n="compare.r2">Düzeltme önerisi</th>
-                  <td class="yes" data-i18n="compare.ai">AI</td><td class="yes" data-i18n="compare.ai">AI</td><td class="yes" data-i18n="compare.aiExpert">AI + uzman</td></tr>
-                <tr><th scope="row" data-i18n="compare.r3">Düzeltme uygulama</th>
-                  <td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="wait" data-i18n="compare.needsApproval">Onay gerekir</td><td class="yes" data-i18n="compare.expertTeam">Uzman ekip</td></tr>
-                <tr><th scope="row" data-i18n="compare.r4">Müşteri müdahalesi</th>
-                  <td class="no" data-i18n="compare.none">Gerekmez</td><td class="wait" data-i18n="compare.approvalOnly">Yalnızca onay</td><td class="no" data-i18n="compare.none">Gerekmez</td></tr>
-                <tr><th scope="row" data-i18n="compare.r5">Doğrulama</th>
-                  <td class="yes" data-i18n="compare.rescan">AI yeniden tarar</td><td class="yes" data-i18n="compare.rescan">AI yeniden tarar</td><td class="yes" data-i18n="compare.expertAi">Uzman + AI</td></tr>
-                <tr><th scope="row" data-i18n="compare.r6">Geri alma</th>
-                  <td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="yes" data-i18n="compare.byExpert">Uzman yapar</td></tr>
-                <tr><th scope="row" data-i18n="compare.r7">Raporlama</th>
-                  <td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="yes" data-i18n="compare.automatic">Otomatik</td><td class="yes" data-i18n="compare.detailed">Detaylı + danışmanlık</td></tr>
-                <tr><th scope="row" data-i18n="compare.r8">Hız</th>
-                  <td class="yes" data-i18n="compare.instant">Anında</td><td class="wait" data-i18n="compare.approvalTime">Onay süresi kadar</td><td class="yes" data-i18n="compare.instant247">Anında (7/24)</td></tr>
-                <tr><th scope="row" data-i18n="compare.r9">Fiyat</th>
-                  <td data-i18n="modes.auto.price">₺299</td><td data-i18n="modes.semi.price">₺199</td><td data-i18n="compare.managedPrice">₺2.499/ay</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="pricing__foot" data-i18n="compare.foot">Seçtiğiniz yöntemi panelinizden istediğiniz zaman değiştirebilirsiniz.</p>
         </div>
       </div>
     </section>
@@ -1932,12 +1829,13 @@
             <div class="plan__price" data-i18n="pricing.free.price">₺0</div>
             <span class="plan__period" data-i18n="pricing.free.period">Süresiz ücretsiz</span>
             <ul class="plan__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f1">5 Güvenlik Testi</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f2">Temel SSL Kontrolü</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f3">Basit Rapor (PDF)</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f4">Kayıt Gerekmez</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f1">5 Güvenlik Taraması</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f2">Temel SSL/TLS Kontrolü</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f3">Güvenlik Başlıkları Kontrolü (CSP, HSTS, X-Frame)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f4">Basit PDF Raporu</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f5">Kayıt Gerekmez (ilk 5 tarama)</span></li>
             </ul>
-            <button type="button" class="btn btn--muted btn--block" id="trialBtn" data-i18n="pricing.free.cta">Deneme Sürümü</button>
+            <button type="button" class="btn btn--muted btn--block" id="trialBtn" data-i18n="pricing.free.cta">Ücretsiz Tara</button>
           </article>
 
           <!-- PRO (öne çıkan) -->
@@ -1948,13 +1846,13 @@
             <div class="plan__price" data-i18n="pricing.pro.price">₺299/ay</div>
             <span class="plan__period" data-i18n="pricing.pro.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f1">Sınırsız Güvenlik Testi</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f2">Gelişmiş Zafiyet Taraması</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f3">Detaylı Rapor + Düzeltme Önerileri</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f4">E-posta Bildirimleri</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">7/24 Destek</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f1">Ayda 50 Tarama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f2">OWASP Lite Taraması (A01–A10)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f3">OWASP Gruplu PDF Rapor (düzeltme kodu ile)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f4">Panelde Tarama Geçmişi ve Skor Eğilimi</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">E-posta Desteği (destek@cyberlionai.com)</span></li>
             </ul>
-            <button type="button" class="btn btn--gold btn--block" data-open-modal data-i18n="pricing.pro.cta">Premium'a Geç</button>
+            <a class="btn btn--gold btn--block" href="/api/checkout?plan=pro" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
           </article>
 
           <!-- ENTERPRISE -->
@@ -1962,21 +1860,22 @@
             <span class="plan__badge" data-i18n="pricing.ent.badge">Kurumsal</span>
             <h3 class="plan__name" data-i18n="pricing.ent.name">Enterprise</h3>
             <p class="plan__tagline" data-i18n="pricing.ent.tagline">Kendi altyapınıza uyarlanmış tarama ve raporlama.</p>
-            <div class="plan__price" data-i18n="pricing.ent.price">Özel Teklif</div>
-            <span class="plan__period" data-i18n="pricing.ent.period">Kullanımınıza göre fiyatlandırma</span>
+            <div class="plan__price" data-i18n="pricing.ent.price">₺2.499/ay</div>
+            <span class="plan__period" data-i18n="pricing.ent.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">PRO'daki tüm özellikler</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Özel AI Model Entegrasyonu</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f3">API Erişimi</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f4">Öncelikli Destek</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Özel Raporlama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">Sınırsız Tarama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f3">Haftalık Otomatik Tarama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f4">Skor Eğilimi ve Alan Adı Karşılaştırması</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Öncelikli Destek ve Kurumsal Faturalandırma</span></li>
             </ul>
-            <button type="button" class="btn btn--blue btn--block" id="contactBtn" data-i18n="pricing.ent.cta">İletişime Geç</button>
+            <a class="btn btn--blue btn--block" href="/api/checkout?plan=enterprise" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
           </article>
 
         </div>
 
         <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur.</p>
+        <p class="pricing__foot reveal"><a class="pricing__more" href="/pricing" data-i18n="pricing.more">Planları yan yana karşılaştır</a></p>
       </div>
     </section>
   </main>
@@ -2019,7 +1918,6 @@
             <li><a href="#hero" data-i18n="nav.home">Ana Sayfa</a></li>
             <li><a href="#services" data-i18n="nav.services">Hizmetler</a></li>
             <li><a href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
-            <li><a href="#remediation" data-i18n="nav.modes">Düzeltme</a></li>
             <li><a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
           </ul>
         </div>
@@ -2030,6 +1928,7 @@
             <li><a href="mailto:info@cyberlionai.com"><i class="fa-solid fa-envelope" aria-hidden="true"></i> info@cyberlionai.com</a></li>
             <li><a href="mailto:destek@cyberlionai.com"><i class="fa-solid fa-headset" aria-hidden="true"></i> destek@cyberlionai.com</a></li>
             <li><span data-i18n="footer.hours">Destek: Hafta içi 09:00 – 18:00 (TSİ)</span></li>
+            <li><a href="https://www.cyberlionai.com">https://www.cyberlionai.com</a></li>
           </ul>
         </div>
       </div>
@@ -2037,9 +1936,12 @@
       <div class="footer__bottom">
         <span data-i18n="footer.rights">© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.</span>
         <nav class="footer__legal" aria-label="Yasal">
-          <a href="/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a>
-          <a href="/kullanim-sartlari" data-i18n="footer.terms">Kullanım Şartları</a>
-          <a href="/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a>
+          <a href="/pages/kvkk-aydinlatma-metni" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a>
+          <a href="/pages/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a>
+          <a href="/pages/mesafeli-satis-sozlesmesi" data-i18n="footer.dist">Mesafeli Satış</a>
+          <a href="/pages/teslimat-ve-iade-sartlari" data-i18n="footer.refund">Teslimat ve İade</a>
+          <a href="/pages/kullanim-sartlari" data-i18n="footer.terms">Kullanım Şartları</a>
+          <a href="/pages/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a>
         </nav>
       </div>
     </div>
@@ -2105,7 +2007,7 @@
         <button type="submit" class="btn btn--gold btn--block" data-i18n="auth.signUp">Hesap Oluştur</button>
         <p class="modal__foot">
           <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
-          <a href="/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
+          <a href="/pages/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
         </p>
       </form>
 
@@ -2173,41 +2075,6 @@
   </div>
 
   <!-- ==========================================================
-       DÜZELTME YÖNTEMİ ONAY MODALI
-       ========================================================== -->
-  <div class="modal" id="modeModal" role="dialog" aria-modal="true" aria-labelledby="modeModalTitle" hidden>
-    <div class="modal__box" role="document">
-      <button type="button" class="modal__close" data-close-modal aria-label="Kapat" data-i18n-aria="modal.close">
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-      </button>
-
-      <h2 class="modal__title" id="modeModalTitle" data-i18n="modeModal.title">Seçiminiz</h2>
-      <p class="modal__subtitle" data-i18n="modeModal.subtitle">Bu yöntemi onaylıyor musunuz?</p>
-
-      <div class="mode-confirm__row">
-        <i id="modeConfirmIcon" class="fa-solid fa-robot" aria-hidden="true"></i>
-        <div>
-          <strong id="modeConfirmName">Tam Otomatik</strong>
-          <span id="modeConfirmDesc">Açıkları otomatik bulup kapatır.</span>
-        </div>
-      </div>
-
-      <div class="mode-confirm__actions">
-        <button type="button" class="btn btn--gold" id="modeConfirm" data-i18n="modeModal.confirm">Evet, bu yöntemi kullan</button>
-        <button type="button" class="btn btn--muted" data-close-modal data-i18n="modeModal.cancel">Vazgeç</button>
-      </div>
-
-      <p class="mode-confirm__info">
-        <i class="fa-solid fa-lightbulb" aria-hidden="true"></i>
-        <span data-i18n="modeModal.info">Seçiminizi hesap panelinizden istediğiniz zaman değiştirebilirsiniz.</span>
-      </p>
-    </div>
-  </div>
-
-  <!-- Bildirimler -->
-  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
-
-  <!-- ==========================================================
        CANLI DESTEK ASİSTANI
        ========================================================== -->
   <button type="button" class="assist-launch" id="assistLaunch" aria-expanded="false" aria-controls="assist">
@@ -2251,7 +2118,7 @@
   <div class="cookie" id="cookieBar" role="region" aria-label="Çerez bildirimi">
     <p>
       <span data-i18n="cookie.text">Deneyiminizi iyileştirmek için çerez kullanıyoruz. Tercihinizi istediğiniz zaman değiştirebilirsiniz.</span>
-      <a href="/cerez-politikasi" data-i18n="cookie.more">Çerez Politikası</a>
+      <a href="/pages/cerez-politikasi" data-i18n="cookie.more">Çerez Politikası</a>
     </p>
     <div class="cookie__actions">
       <button type="button" class="btn btn--gold btn--sm" id="cookieAccept" data-i18n="cookie.accept">Kabul Et</button>
@@ -2275,7 +2142,7 @@
         "name": "Cyber Lion AI",
         "url": "https://cyberlionai.com/",
         "description": "Yapay zeka destekli web güvenlik tarama platformu.",
-        "email": "info@cyberlionai.com"
+        "email": "destek@cyberlionai.com"
       },
       {
         "@type": "WebSite",
@@ -2340,12 +2207,12 @@
       tr: {
         meta: {
           title: 'Cyber Lion AI - Yapay Zeka ile Güvenlik Taraması',
-          desc: 'Web sitenizdeki güvenlik açıklarını AI ile tespit edin. Ücretsiz deneme, profesyonel raporlama.'
+          desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez.'
         },
         a11y: { skip: 'İçeriğe geç', theme: 'Temayı değiştir', menu: 'Menüyü aç/kapat', toTop: 'Sayfanın başına dön' },
         nav: {
-          home: 'Ana Sayfa', services: 'Hizmetler', how: 'Nasıl Çalışır', modes: 'Düzeltme',
-          pricing: 'Fiyatlandırma', contact: 'İletişim', upgrade: "Premium'a Geç",
+          home: 'Ana Sayfa', services: 'Hizmetler', how: 'Nasıl Çalışır',
+          pricing: 'Fiyatlandırma', contact: 'İletişim', upgrade: "Pro'ya Geç",
           map: 'Canlı Harita'
         },
         map: {
@@ -2381,14 +2248,15 @@
         },
         hero: {
           badge: 'Tarama motoru aktif',
-          title: 'GÜVENLİK AÇIKLARINIZI AVLIYORUZ',
-          subtitle: 'Yapay Zeka ile Güçlendirilmiş Otomatik Güvenlik Taraması',
-          desc: 'Web sitenizdeki zafiyetleri tespit edin, raporlayın ve düzeltin.',
+          title: "GÜVENLİK BAŞLIKLARI VE SSL'İ SANİYELERDE ANALİZ EDİN",
+          subtitle: 'Yapay Zeka Destekli Hızlı Güvenlik Durum Tespiti — SSL ve Başlık Analizi',
+          desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin.',
           scanLabel: 'Taranacak adres',
           scanPlaceholder: 'ornek.com',
           scanNote: 'Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.',
-          cta1: 'Hemen Tara', cta2: "Premium'a Geç", cta3: 'Nasıl Çalışır?',
-          stat1: 'Taranan Site', stat2: 'Doğruluk Oranı', stat3: 'Aktif Koruma', stat3v: '7/24'
+          cta1: 'Hemen Tara', cta2: "Pro'ya Geç", cta3: 'Nasıl Çalışır?', cta4: 'Örnek Rapor (PDF)',
+          stat1: 'Taranan Site (Canlı)',
+          stat3: 'Hızlı Tarama', stat3v: '7/24'
         },
         scan: {
           step1: 'Hedef doğrulanıyor',
@@ -2408,8 +2276,8 @@
           scoreLabel: 'Güvenlik skoru',
           summary: '{passed} geçti · {failed} kaldı · {skipped} puan dışı',
           quota: 'Kalan ücretsiz tarama: {n}/5',
-          quotaOut: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.',
-          quotaOutAccount: 'Hesabınızın ücretsiz tarama hakkı doldu. Sınırsız tarama için Premium\'a geçin.',
+          quotaOut: "Ücretsiz tarama hakkınız doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
+          quotaOutAccount: "Hesabınızın ücretsiz tarama hakkı doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
           quotaAccount: 'Hesabınızda {n} ücretsiz tarama kaldı',
           fixLabel: 'Düzeltme',
           downloadPdf: 'PDF Raporu İndir',
@@ -2435,7 +2303,7 @@
             scan_failed: 'Tarama tamamlanamadı. Lütfen tekrar deneyin.',
             network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.',
             service_unavailable: 'Tarama servisi şu anda yapılandırılıyor. Kısa süre sonra tekrar deneyin.',
-            quota_exceeded: 'Ücretsiz tarama hakkınız doldu. Sınırsız tarama için Premium\'a geçin.'
+            quota_exceeded: "Ücretsiz tarama hakkınız doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay)."
           },
           note: {
             unsafe_inline: "script-src 'unsafe-inline' içeriyor; koruma büyük ölçüde etkisiz",
@@ -2526,14 +2394,6 @@
             q: 'Ücretsiz mi, kayıt gerekiyor mu?',
             a: 'Ücretsiz plan kayıt gerektirmez ve 5 güvenlik testi ile temel SSL kontrolü sunar. Hesap açmanız yalnızca sınırsız tarama, detaylı rapor ve düzeltme önerileri için gerekir.'
           },
-          pricing: {
-            q: 'Planlar ne kadar?',
-            a: 'Free ₺0, Pro ₺299/ay (sınırsız tarama, detaylı rapor, düzeltme önerileri, 7/24 destek), Enterprise ise kullanımınıza göre özel fiyatlandırılır.|Düzeltme yöntemleri ayrıca fiyatlandırılır: Tam Otomatik ₺299, Yarı Otomatik ₺199 (tarama başına), Yönetilen Hizmet ₺2.499/ay.'
-          },
-          modes: {
-            q: 'Düzeltme yöntemleri arasındaki fark ne?',
-            a: 'Üç seçenek var. Tam Otomatik: bulunan açığı onayınızı beklemeden kapatır, hata olursa geri alır. Yarı Otomatik: düzeltmeyi önerir, yalnızca siz onayladıktan sonra uygular. Yönetilen Hizmet: uzman ekibimiz yapay zekâyla birlikte çalışır, siz yalnızca sonucu ve raporu alırsınız.|Seçiminizi "Düzeltme" bölümünden yapabilir, sonra istediğiniz zaman değiştirebilirsiniz.'
-          },
           csp: {
             q: 'Content-Security-Policy nasıl eklenir?',
             a: 'CSP, tarayıcıya hangi kaynaklardan içerik yükleyebileceğini söyler ve XSS saldırılarının etkisini büyük ölçüde keser. Sıkı bir başlangıç noktası:',
@@ -2564,6 +2424,10 @@
             q: 'Başkasının sitesini tarayabilir miyim?',
             a: 'Hayır. Yalnızca sahibi olduğunuz veya sahibinden açık ve yazılı izin aldığınız sistemleri tarayabilirsiniz. İzinsiz tarama Türk Ceza Kanunu m.243 ve pek çok ülkenin mevzuatı kapsamında suç teşkil edebilir.|Ayrıntı için Kullanım Şartları\'nın üçüncü bölümüne bakın.'
           },
+          pricing: {
+            q: 'Planlar ne kadar?',
+            a: 'Free ₺0, Pro ₺299/ay (ayda 50 OWASP Lite taraması, OWASP gruplu PDF rapor, panelde tarama geçmişi ve skor eğilimi), Enterprise ₺2.499/ay (sınırsız tarama, Cloudflare ile 1-Tık Düzeltme, haftalık otomatik tarama, öncelikli destek).|Tüm planlar KDV hariçtir.'
+          },
           report: {
             q: 'Rapor nasıl geliyor?',
             a: 'Bulgular önem derecesine göre sıralanır (Kritik, Yüksek, Orta, Bilgi) ve her biri için kanıt ile uygulanabilir düzeltme adımı verilir. Ücretsiz planda basit PDF, Pro planda detaylı rapor ve düzeltme önerileri, Enterprise planda ayrıca yönetici özeti sunulur.'
@@ -2578,70 +2442,21 @@
           },
           contact: {
             q: 'İnsan bir uzmanla konuşmak istiyorum',
-            a: 'Elbette. info@cyberlionai.com adresine yazabilir ya da aşağıdaki düğmeyle talebinizi doğrudan iletebilirsiniz. Destek saatlerimiz hafta içi 09:00–18:00 (TSİ).'
+            a: 'Elbette. destek@cyberlionai.com adresine yazabilir ya da aşağıdaki düğmeyle talebinizi doğrudan iletebilirsiniz. Destek saatlerimiz hafta içi 09:00–18:00 (TSİ).'
           }
-        },
-        modes: {
-          eyebrow: 'Düzeltme', title: 'DÜZELTMEYİ NASIL İSTERSİNİZ?',
-          subtitle: 'Size en uygun yöntemi seçin. İstediğiniz zaman değiştirebilirsiniz.',
-          select: 'Bu Yöntemi Seç', selected: 'Seçili Yöntem ✓',
-          auto: {
-            badge: 'Yeni', name: 'Tam Otomatik', price: '₺299', period: 'Tek tarama başına',
-            f1: 'Açıkları otomatik bulur', f2: 'Düzeltmeyi otomatik uygular',
-            f3: 'Hiçbir müdahale gerekmez', f4: 'Uygulama sonrası anında doğrulama',
-            f5: '7/24 çalışır', f6: 'Hata hâlinde otomatik geri alma',
-            note: 'Teknik ekipler için ideal',
-            desc: 'Açıkları bulur ve düzeltmeyi kendisi uygular; sizin onayınızı beklemez.'
-          },
-          semi: {
-            badge: 'Popüler', name: 'Yarı Otomatik', price: '₺199', period: 'Tek tarama başına',
-            f1: 'Açıkları otomatik bulur', f2: 'Düzeltmeyi önerir, onayınızı bekler',
-            f3: 'Her düzeltmenin ön izlemesi', f4: 'Yalnızca seçtiklerinizi uygular',
-            f5: 'Onay sonrası otomatik uygulama', f6: 'Otomatik geri alma',
-            note: 'Bireysel geliştiriciler için ideal',
-            desc: 'Açıkları bulur ve düzeltmeyi önerir; yalnızca siz onayladıktan sonra uygular.'
-          },
-          managed: {
-            badge: 'Premium', name: 'Yönetilen Hizmet', price: '₺2.499', period: 'Aylık',
-            f1: 'AI + uzman ekip birlikte çalışır', f2: 'Sizin hiçbir şey yapmanıza gerek yok',
-            f3: '7/24 canlı destek', f4: 'Yönetici ve teknik ekip raporu',
-            f5: 'Sürekli izleme', f6: 'Öncelikli müdahale',
-            note: 'Kurumsal firmalar için ideal',
-            desc: 'Uzman ekibimiz AI ile birlikte çalışır; siz yalnızca sonucu ve raporu alırsınız.'
-          }
-        },
-        compare: {
-          title: 'Tüm Özellikler Karşılaştırması',
-          caption: 'Üç düzeltme yönteminin özellik karşılaştırması',
-          feature: 'Özellik',
-          r1: 'Açık tespiti', r2: 'Düzeltme önerisi', r3: 'Düzeltme uygulama',
-          r4: 'Müşteri müdahalesi', r5: 'Doğrulama', r6: 'Geri alma',
-          r7: 'Raporlama', r8: 'Hız', r9: 'Fiyat',
-          ai: 'AI', aiExpert: 'AI + uzman', automatic: 'Otomatik',
-          needsApproval: 'Onay gerekir', expertTeam: 'Uzman ekip', none: 'Gerekmez',
-          approvalOnly: 'Yalnızca onay', rescan: 'AI yeniden tarar', expertAi: 'Uzman + AI',
-          byExpert: 'Uzman yapar', detailed: 'Detaylı + danışmanlık',
-          instant: 'Anında', approvalTime: 'Onay süresi kadar', instant247: 'Anında (7/24)',
-          managedPrice: '₺2.499/ay',
-          foot: 'Seçtiğiniz yöntemi panelinizden istediğiniz zaman değiştirebilirsiniz.'
-        },
-        modeModal: {
-          title: 'Seçiminiz', subtitle: 'Bu yöntemi onaylıyor musunuz?',
-          confirm: 'Evet, bu yöntemi kullan', cancel: 'Vazgeç',
-          info: 'Seçiminizi hesap panelinizden istediğiniz zaman değiştirebilirsiniz.'
         },
         services: {
           eyebrow: 'Yetenekler',
           title: 'NEDEN CYBER LION AI?',
-          subtitle: 'Tek bir taramada, saldırganın gördüğü her yüzeyi analiz ediyoruz.',
-          s1t: 'Otomatik Zafiyet Taraması',
-          s1d: 'OWASP Top 10 ve diğer yaygın güvenlik açıklarını otomatik olarak tespit eder.',
+          subtitle: 'Tek bir taramada SSL/TLS yapılandırmanızı ve kritik güvenlik başlıklarınızı kontrol ederiz.',
+          s1t: 'Güvenlik Durum Skoru',
+          s1d: 'Ölçülen kontrollerden dinamik bir güvenlik skoru üretir; ölçülemeyen kontrol puana girmez.',
           s2t: 'SSL/TLS Analizi',
           s2d: 'Sertifika geçerliliği, şifreleme gücü ve protokol uyumluluğunu kontrol eder.',
           s3t: 'Güvenlik Başlıkları',
           s3d: 'CSP, HSTS, X-Frame-Options gibi kritik güvenlik başlıklarını analiz eder.',
-          s4t: 'AI Asistan',
-          s4d: 'Tespit edilen zafiyetler için akıllı düzeltme önerileri sunar.'
+          s4t: 'AI Düzeltme Kılavuzu',
+          s4d: 'Tespit edilen eksikler için kod örnekli düzeltme önerileri sunar.'
         },
         how: {
           eyebrow: 'Süreç', title: 'NASIL ÇALIŞIR?',
@@ -2649,40 +2464,46 @@
           s1t: "URL'yi Girin",
           s1d: 'Taramak istediğiniz alan adını yazın. Doğrulama ve kapsam belirleme otomatik yapılır.',
           s2t: 'AI Taramayı Başlatsın',
-          s2d: 'Motor; başlıkları, sertifikaları, açık uçları ve bilinen zafiyet imzalarını paralel olarak tarar.',
+          s2d: 'Motor; güvenlik başlıklarını, sertifikaları ve DNS/e-posta güvenlik kayıtlarını paralel olarak analiz eder.',
           s3t: 'Detaylı Raporu Alın',
           s3d: 'Önem derecesine göre sıralanmış bulgular, kanıtlar ve uygulanabilir düzeltme adımları.'
         },
         pricing: {
           eyebrow: 'Planlar', title: 'SİZE UYGUN PLANI SEÇİN',
           subtitle: 'Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.',
-          foot: 'Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur.',
+          foot: 'Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur. | All prices exclude VAT.',
           free: {
             badge: 'Deneme', name: 'Free', tagline: 'Sitenizin güvenlik durumuna hızlı bir bakış.',
             price: '₺0', period: 'Süresiz ücretsiz',
-            f1: '5 Güvenlik Testi', f2: 'Temel SSL Kontrolü', f3: 'Basit Rapor (PDF)', f4: 'Kayıt Gerekmez',
-            cta: 'Deneme Sürümü'
+            f1: '5 Güvenlik Taraması', f2: 'Temel SSL/TLS Kontrolü',
+            f3: 'Güvenlik Başlıkları Kontrolü (CSP, HSTS, X-Frame)', f4: 'Basit PDF Raporu',
+            f5: 'Kayıt Gerekmez (ilk 5 tarama)',
+            cta: 'Ücretsiz Tara'
           },
           pro: {
             badge: 'Popüler', name: 'Pro', tagline: 'Üretim ortamını sürekli izleyen ekipler için.',
             price: '₺299/ay', period: 'Aylık, istediğiniz zaman iptal',
-            f1: 'Sınırsız Güvenlik Testi', f2: 'Gelişmiş Zafiyet Taraması',
-            f3: 'Detaylı Rapor + Düzeltme Önerileri', f4: 'E-posta Bildirimleri', f5: '7/24 Destek',
-            cta: "Premium'a Geç"
+            f1: 'Ayda 50 Tarama', f2: 'OWASP Lite Taraması (A01–A10)',
+            f3: 'OWASP Gruplu PDF Rapor (düzeltme kodu ile)', f4: 'Panelde Tarama Geçmişi ve Skor Eğilimi',
+            f5: 'E-posta Desteği (destek@cyberlionai.com)',
+            cta: "Pro'ya Geç"
           },
           ent: {
-            badge: 'Kurumsal', name: 'Enterprise', tagline: 'Kendi altyapınıza uyarlanmış tarama ve raporlama.',
-            price: 'Özel Teklif', period: 'Kullanımınıza göre fiyatlandırma',
-            f1: "PRO'daki tüm özellikler", f2: 'Özel AI Model Entegrasyonu', f3: 'API Erişimi',
-            f4: 'Öncelikli Destek', f5: 'Özel Raporlama',
-            cta: 'İletişime Geç'
-          }
+            badge: 'Kurumsal', name: 'Enterprise', tagline: 'Sürekli izleme ve düzeltme isteyen kurumlar için.',
+            price: '₺2.499/ay', period: 'Aylık, istediğiniz zaman iptal',
+            f1: 'Sınırsız Tarama', f2: "Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)",
+            f3: 'Haftalık Otomatik Tarama', f4: 'Skor Eğilimi ve Alan Adı Karşılaştırması',
+            f5: 'Öncelikli Destek ve Kurumsal Faturalandırma',
+            cta: "Enterprise'a Geç"
+          },
+          more: 'Planları yan yana karşılaştır'
         },
         footer: {
-          about: 'Yapay zeka destekli sürekli güvenlik taraması. Zafiyetleri saldırganlardan önce bulun, önceliklendirin ve kapatın.',
+          about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması. Destek: destek@cyberlionai.com — www.cyberlionai.com',
           quick: 'Hızlı Linkler', contact: 'İletişim',
+          kvkk: 'KVKK Aydınlatma Metni', dist: 'Mesafeli Satış Sözleşmesi', refund: 'Teslimat ve İade',
           hours: 'Destek: Hafta içi 09:00 – 18:00 (TSİ)',
-          rights: '© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.',
+          rights: '© 2026 Cyber Lion AI — www.cyberlionai.com — Tüm Hakları Saklıdır.',
           privacy: 'Gizlilik Politikası', terms: 'Kullanım Şartları', cookies: 'Çerez Politikası'
         },
         auth: {
@@ -2750,7 +2571,7 @@
           }
         },
         modal: {
-          title: "Premium'a Geç",
+          title: "Pro'ya Geç",
           subtitle: 'Hesabınızı oluşturun ve güvenlik avantajlarından yararlanın.',
           email: 'E-posta', password: 'Şifre', password2: 'Şifre Tekrar',
           remember: 'Beni Hatırla', submit: 'Hesap Oluştur', close: 'Kapat',
@@ -2763,7 +2584,7 @@
         },
         toast: {
           trial: 'Ücretsiz sürüm zaten aktif — yukarıdaki alandan sitenizi hemen tarayabilirsiniz.',
-          contact: 'Kurumsal teklif için: info@cyberlionai.com',
+          contact: 'Kurumsal teklif için: destek@cyberlionai.com',
           urlEmpty: 'Lütfen taranacak bir adres girin.',
           urlInvalid: 'Geçerli bir alan adı girin. Örnek: ornek.com',
           scanBusy: 'Tarama zaten sürüyor, lütfen bekleyin.',
@@ -2774,21 +2595,19 @@
           registerOk: 'Hesabınız oluşturuldu. Doğrulama e-postasını gönderdik.',
           registerFail: 'Kayıt tamamlanamadı. Lütfen tekrar deneyin.',
           langChanged: 'Dil Türkçe olarak ayarlandı.',
-          modeSaved: '{mode} yöntemi seçildi. Şimdi taranacak adresi girin.',
-          modeSaveFail: 'Tercih kaydedilemedi. Lütfen tekrar deneyin.',
-          scanWithMode: 'Tarama {mode} yöntemiyle başlatıldı.'
+          langChanged: 'Dil Türkçe olarak ayarlandı.'
         }
       },
 
       en: {
         meta: {
           title: 'Cyber Lion AI - AI-Powered Security Scanning',
-          desc: 'Detect security vulnerabilities on your website with AI. Free trial, professional reporting.'
+          desc: 'Analyze your SSL and security headers in seconds. 5 free scans, no sign-up required.'
         },
         a11y: { skip: 'Skip to content', theme: 'Toggle theme', menu: 'Toggle menu', toTop: 'Back to top' },
         nav: {
-          home: 'Home', services: 'Services', how: 'How It Works', modes: 'Remediation',
-          pricing: 'Pricing', contact: 'Contact', upgrade: 'Upgrade',
+          home: 'Home', services: 'Services', how: 'How It Works',
+          pricing: 'Pricing', contact: 'Contact', upgrade: 'Go Pro',
           map: 'Live Map'
         },
         map: {
@@ -2824,14 +2643,15 @@
         },
         hero: {
           badge: 'Scan engine online',
-          title: 'HUNTING YOUR VULNERABILITIES',
-          subtitle: 'AI-Powered Automated Security Scanning',
-          desc: 'Detect, report, and fix vulnerabilities in your website.',
+          title: 'ANALYZE YOUR SECURITY HEADERS & SSL IN SECONDS',
+          subtitle: 'AI-Assisted Quick Security Posture Check — SSL & Header Analysis',
+          desc: "Check your site's SSL and security headers in seconds.",
           scanLabel: 'Address to scan',
           scanPlaceholder: 'example.com',
           scanNote: 'No sign-up required — 5 free tests, results in seconds.',
-          cta1: 'Scan Now', cta2: 'Upgrade', cta3: 'How It Works',
-          stat1: 'Sites Scanned', stat2: 'Accuracy Rate', stat3: 'Active Protection', stat3v: '24/7'
+          cta1: 'Scan Now', cta2: 'Go Pro', cta3: 'How It Works', cta4: 'Sample Report (PDF)',
+          stat1: 'Sites Scanned (Live)',
+          stat3: 'Fast Scanning', stat3v: '24/7'
         },
         scan: {
           step1: 'Validating target',
@@ -2847,8 +2667,8 @@
           scoreLabel: 'Security score',
           summary: '{passed} passed · {failed} failed · {skipped} not scored',
           quota: 'Free scans left: {n}/5',
-          quotaOut: 'You have used your free scans. Upgrade to Premium for unlimited scanning.',
-          quotaOutAccount: 'Your account has used its free scans. Upgrade to Premium for unlimited scanning.',
+          quotaOut: 'You have used your free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.',
+          quotaOutAccount: 'Your account has used its free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.',
           quotaAccount: '{n} free scans left on your account',
           fixLabel: 'Fix',
           downloadPdf: 'Download PDF Report',
@@ -2874,7 +2694,7 @@
             scan_failed: 'The scan could not be completed. Please try again.',
             network: 'Could not reach the server. Check your connection.',
             service_unavailable: 'The scanning service is being configured. Please try again shortly.',
-            quota_exceeded: 'You have used your free scans. Upgrade to Premium for unlimited scanning.'
+            quota_exceeded: 'You have used your free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.'
           },
           note: {
             unsafe_inline: "script-src allows 'unsafe-inline'; most of the protection is lost",
@@ -2965,14 +2785,6 @@
             q: 'Is it free? Do I need an account?',
             a: 'The free plan needs no registration and gives you 5 security tests plus a basic SSL check. An account is only required for unlimited scans, detailed reports and remediation guidance.'
           },
-          pricing: {
-            q: 'What do the plans cost?',
-            a: 'Free $0, Pro $19/mo (unlimited scans, detailed reports, remediation guidance, 24/7 support), Enterprise priced on usage.|Remediation methods are priced separately: Fully Automatic $29, Semi-Automatic $19 (per scan), Managed Service $249/mo.'
-          },
-          modes: {
-            q: 'What is the difference between the remediation modes?',
-            a: 'There are three. Fully Automatic: closes the finding without waiting for you, and rolls back on failure. Semi-Automatic: proposes the fix and applies it only after you approve. Managed Service: our expert team works alongside the AI and you simply receive the outcome and the report.|Choose in the "Remediation" section; you can change it later at any time.'
-          },
           csp: {
             q: 'How do I add a Content-Security-Policy?',
             a: 'CSP tells the browser which sources may load content and drastically limits the impact of XSS. A strict starting point:',
@@ -3003,6 +2815,10 @@
             q: 'Can I scan someone else\'s site?',
             a: 'No. You may scan only systems you own or for which you hold explicit written permission. Unauthorised scanning can be a criminal offence under Turkish Criminal Code Art. 243 and comparable laws elsewhere.|See section three of the Terms of Use for details.'
           },
+          pricing: {
+            q: 'What do the plans cost?',
+            a: 'Free ₺0, Pro ₺299/mo (50 OWASP Lite scans per month, PDF report grouped by OWASP, scan history and score trend in the panel), Enterprise ₺2,499/mo (unlimited scans, 1-Click Fix via Cloudflare, weekly automated scan, priority support).|All prices exclude VAT.'
+          },
           report: {
             q: 'What does the report look like?',
             a: 'Findings are ranked by severity (Critical, High, Medium, Info), each with evidence and an actionable remediation step. The free plan gives a simple PDF, Pro adds detailed reporting and remediation guidance, Enterprise adds an executive summary.'
@@ -3017,70 +2833,21 @@
           },
           contact: {
             q: 'I want to talk to a human',
-            a: 'Of course. Write to info@cyberlionai.com, or use the button below to send your request directly. Support hours are weekdays 09:00–18:00 (GMT+3).'
+            a: 'Of course. Write to destek@cyberlionai.com, or use the button below to send your request directly. Support hours are weekdays 09:00–18:00 (GMT+3).'
           }
-        },
-        modes: {
-          eyebrow: 'Remediation', title: 'HOW SHOULD WE FIX IT?',
-          subtitle: 'Pick the method that suits you. You can change it at any time.',
-          select: 'Choose This Method', selected: 'Selected ✓',
-          auto: {
-            badge: 'New', name: 'Fully Automatic', price: '$29', period: 'Per scan',
-            f1: 'Finds vulnerabilities automatically', f2: 'Applies fixes automatically',
-            f3: 'No intervention required', f4: 'Instant verification after each fix',
-            f5: 'Runs 24/7', f6: 'Automatic rollback on failure',
-            note: 'Ideal for technical teams',
-            desc: 'Finds the issues and applies the fixes itself, without waiting for your approval.'
-          },
-          semi: {
-            badge: 'Popular', name: 'Semi-Automatic', price: '$19', period: 'Per scan',
-            f1: 'Finds vulnerabilities automatically', f2: 'Proposes fixes and waits for your approval',
-            f3: 'Preview of every fix', f4: 'Applies only what you select',
-            f5: 'Automatic application after approval', f6: 'Automatic rollback',
-            note: 'Ideal for individual developers',
-            desc: 'Finds the issues and proposes fixes, applying them only after you approve.'
-          },
-          managed: {
-            badge: 'Premium', name: 'Managed Service', price: '$249', period: 'Per month',
-            f1: 'AI and expert team work together', f2: 'Nothing for you to do',
-            f3: '24/7 live support', f4: 'Executive and technical reports',
-            f5: 'Continuous monitoring', f6: 'Priority response',
-            note: 'Ideal for enterprises',
-            desc: 'Our expert team works alongside the AI; you simply receive the outcome and the report.'
-          }
-        },
-        compare: {
-          title: 'Full Feature Comparison',
-          caption: 'Feature comparison of the three remediation methods',
-          feature: 'Feature',
-          r1: 'Vulnerability detection', r2: 'Fix proposal', r3: 'Fix application',
-          r4: 'Customer involvement', r5: 'Verification', r6: 'Rollback',
-          r7: 'Reporting', r8: 'Speed', r9: 'Price',
-          ai: 'AI', aiExpert: 'AI + expert', automatic: 'Automatic',
-          needsApproval: 'Approval required', expertTeam: 'Expert team', none: 'Not required',
-          approvalOnly: 'Approval only', rescan: 'AI rescans', expertAi: 'Expert + AI',
-          byExpert: 'By expert', detailed: 'Detailed + advisory',
-          instant: 'Instant', approvalTime: 'As long as approval takes', instant247: 'Instant (24/7)',
-          managedPrice: '$249/mo',
-          foot: 'You can change your chosen method from your dashboard at any time.'
-        },
-        modeModal: {
-          title: 'Your Choice', subtitle: 'Do you confirm this method?',
-          confirm: 'Yes, use this method', cancel: 'Cancel',
-          info: 'You can change your choice from your account dashboard at any time.'
         },
         services: {
           eyebrow: 'Capabilities',
           title: 'WHY CYBER LION AI?',
-          subtitle: 'One scan analyzes every surface an attacker can see.',
-          s1t: 'Automated Vulnerability Scanning',
-          s1d: 'Automatically detects OWASP Top 10 and other common security vulnerabilities.',
+          subtitle: 'One scan checks your SSL/TLS setup and critical security headers.',
+          s1t: 'Security Posture Score',
+          s1d: 'Produces a dynamic security score from measured checks; anything not measured stays out of the score.',
           s2t: 'SSL/TLS Analysis',
           s2d: 'Checks certificate validity, encryption strength, and protocol compliance.',
           s3t: 'Security Headers',
           s3d: 'Analyzes critical security headers like CSP, HSTS, X-Frame-Options.',
-          s4t: 'AI Assistant',
-          s4d: 'Provides intelligent remediation suggestions for detected vulnerabilities.'
+          s4t: 'AI Fix Guide',
+          s4d: 'Provides code-example remediation guidance for detected issues.'
         },
         how: {
           eyebrow: 'Process', title: 'HOW IT WORKS',
@@ -3088,40 +2855,46 @@
           s1t: 'Enter Your URL',
           s1d: 'Type the domain you want to scan. Validation and scoping happen automatically.',
           s2t: 'Let the AI Scan',
-          s2d: 'The engine scans headers, certificates, exposed endpoints, and known vulnerability signatures in parallel.',
+          s2d: 'The engine analyzes security headers, certificates, and DNS/email security records in parallel.',
           s3t: 'Get the Detailed Report',
           s3d: 'Findings ranked by severity, with evidence and actionable remediation steps.'
         },
         pricing: {
           eyebrow: 'Plans', title: 'CHOOSE YOUR PLAN',
           subtitle: 'Start free. Upgrade when you are ready. No long-term commitment.',
-          foot: 'All prices exclude VAT. Corporate invoicing and annual billing are available.',
+          foot: 'All prices exclude VAT. Corporate invoicing and annual billing are available. | Tüm planlar KDV hariçtir.',
           free: {
             badge: 'Trial', name: 'Free', tagline: 'A fast look at your site security posture.',
-            price: '$0', period: 'Free forever',
-            f1: '5 Security Tests', f2: 'Basic SSL Check', f3: 'Simple Report (PDF)', f4: 'No Sign-Up Needed',
-            cta: 'Try Now'
+            price: '₺0', period: 'Free forever',
+            f1: '5 Security Scans', f2: 'Basic SSL/TLS Check',
+            f3: 'Security Headers Check (CSP, HSTS, X-Frame)', f4: 'Basic PDF Report',
+            f5: 'No Sign-Up Needed (first 5 scans)',
+            cta: 'Scan for Free'
           },
           pro: {
             badge: 'Popular', name: 'Pro', tagline: 'For teams monitoring production continuously.',
-            price: '$29/mo', period: 'Monthly, cancel anytime',
-            f1: 'Unlimited Security Tests', f2: 'Advanced Vulnerability Scanning',
-            f3: 'Detailed Report + Remediation', f4: 'Email Notifications', f5: '24/7 Support',
-            cta: 'Upgrade'
+            price: '₺299/mo', period: 'Monthly, cancel anytime',
+            f1: '50 Scans per Month', f2: 'OWASP Lite Scan (A01–A10)',
+            f3: 'PDF Report Grouped by OWASP (with fix code)', f4: 'Scan History and Score Trend in the Panel',
+            f5: 'Email Support via destek@cyberlionai.com',
+            cta: 'Go Pro'
           },
           ent: {
-            badge: 'Enterprise', name: 'Enterprise', tagline: 'Scanning and reporting tailored to your infrastructure.',
-            price: 'Custom', period: 'Usage-based pricing',
-            f1: 'Everything in PRO', f2: 'Custom AI Model Integration', f3: 'API Access',
-            f4: 'Priority Support', f5: 'Custom Reporting',
-            cta: 'Contact'
-          }
+            badge: 'Enterprise', name: 'Enterprise', tagline: 'For organizations that want continuous monitoring and remediation.',
+            price: '₺2,499/mo', period: 'Monthly, cancel anytime',
+            f1: 'Unlimited Scans', f2: '1-Click Fix via Cloudflare (with your own token)',
+            f3: 'Weekly Automated Scan', f4: 'Score Trend and Domain Comparison',
+            f5: 'Priority Support and Corporate Invoicing',
+            cta: 'Go Enterprise'
+          },
+          more: 'Compare the plans side by side'
         },
         footer: {
-          about: 'AI-powered continuous security scanning. Find, prioritize, and close vulnerabilities before attackers do.',
+          about: 'Fast security scanning that analyzes your SSL and security headers in seconds. Support: destek@cyberlionai.com — www.cyberlionai.com',
           quick: 'Quick Links', contact: 'Contact',
+          kvkk: 'KVKK Privacy Notice', dist: 'Distance Sales Agreement', refund: 'Delivery & Returns',
           hours: 'Support: Weekdays 09:00 – 18:00 (GMT+3)',
-          rights: '© 2026 Cyber Lion AI — All Rights Reserved.',
+          rights: '© 2026 Cyber Lion AI — www.cyberlionai.com — All Rights Reserved.',
           privacy: 'Privacy Policy', terms: 'Terms of Use', cookies: 'Cookie Policy'
         },
         auth: {
@@ -3189,7 +2962,7 @@
           }
         },
         modal: {
-          title: 'Upgrade Now',
+          title: 'Go Pro',
           subtitle: 'Create your account and unlock security features.',
           email: 'Email', password: 'Password', password2: 'Confirm Password',
           remember: 'Remember Me', submit: 'Create Account', close: 'Close',
@@ -3202,7 +2975,7 @@
         },
         toast: {
           trial: 'The free tier is already live — scan your site from the field above.',
-          contact: 'For an enterprise quote: info@cyberlionai.com',
+          contact: 'For an enterprise quote: destek@cyberlionai.com',
           urlEmpty: 'Please enter an address to scan.',
           urlInvalid: 'Enter a valid domain. Example: example.com',
           scanBusy: 'A scan is already running, please wait.',
@@ -3213,9 +2986,7 @@
           registerOk: 'Account created. We sent you a verification email.',
           registerFail: 'Registration failed. Please try again.',
           langChanged: 'Language set to English.',
-          modeSaved: '{mode} selected. Now enter the address to scan.',
-          modeSaveFail: 'Your preference could not be saved. Please try again.',
-          scanWithMode: 'Scan started using {mode}.'
+          langChanged: 'Language set to English.'
         }
       }
     };
@@ -3291,11 +3062,8 @@
         btns[m].setAttribute('aria-pressed', btns[m].getAttribute('data-lang') === lang ? 'true' : 'false');
       }
 
-      // Sayaçları yeniden biçimlendir (10.000+ / 10,000+)
+      // Sayaçlar dile göre yeniden biçimlendirilir
       formatCounters();
-
-      // Seçili düzeltme yönteminin düğme metni dile göre güncellensin
-      if (typeof modeManager !== 'undefined' && modeManager) modeManager.refresh();
       if (typeof renderQuota === 'function') renderQuota();
 
       if (!opts.silent) store.set(CONFIG.storageKeys.lang, lang);
@@ -3474,6 +3242,56 @@
         else el.dataset.done = '1';
       })(performance.now());
     }
+
+    /**
+     * Ana sayfadaki sayacı ÖLÇÜLEN değerle doldurur.
+     *
+     * Kutu işaretlemede `hidden` duruyor ve yalnızca uç gerçek bir sayı
+     * döndürdüğünde açılıyor. Sebep: uç düştüğünde ya da veritabanı
+     * yapılandırılmadığında "0+ Taranan Site" yazmak, ölçemediğimiz bir şeyi
+     * ölçmüş gibi göstermek olur — uydurma 10.000 ile aynı hata, küçüğü.
+     * Sayının sıfır olması ise ayrı bir durum ve dürüstçe gösteriliyor.
+     *
+     * Sayaç `.reveal` gözlemcisinden bağımsız tetikleniyor: kutu açıldığında
+     * gözlemci büyük olasılıkla o bölgeyi çoktan geçmiş olur.
+     */
+    var STATS_MIN_TO_SHOW = 50;
+
+    function loadLiveStats() {
+      var box = document.getElementById('heroScans');
+      var value = document.getElementById('heroScansValue');
+      if (!box || !value) return;
+
+      fetch('/api/stats', { headers: { 'Accept': 'application/json' } })
+        .then(function (res) {
+          if (!res.ok) throw new Error('stats_http_' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          if (!data || typeof data.totalScans !== 'number') throw new Error('stats_malformed');
+          /* Eşiğin ALTINDA kutu açılmıyor. Sayı doğru ama bir güvenlik
+             ürününün ana sayfasında "3+ taranan site" yazması ürünü
+             olduğundan zayıf gösteriyor; eşik dolana kadar hiç sayı
+             göstermemek, küçük bir sayı göstermekten de uydurma bir sayı
+             göstermekten de dürüst. Eşik tek yerde: aşağıdaki sabit. */
+          if (data.totalScans < STATS_MIN_TO_SHOW) {
+            log('canlı sayaç eşiğin altında, gizli:', data.totalScans, '<', STATS_MIN_TO_SHOW);
+            return;
+          }
+          value.setAttribute('data-count', String(data.totalScans));
+          value.dataset.done = '';
+          box.hidden = false;
+          box.classList.add('is-visible');
+          animateCounter(value);
+          log('canlı sayaç:', data.totalScans, 'tarama /', data.uniqueDomains, 'alan adı');
+        })
+        .catch(function (err) {
+          /* Kutu kapalı kalıyor. Hata YUTULMUYOR, loga yazılıyor. */
+          if (window.console) console.warn('stats:', err.message);
+        });
+    }
+
+    loadLiveStats();
 
     /** Dil değişince tamamlanmış sayaçları yeni yerel biçime çevirir. */
     function formatCounters() {
@@ -3761,14 +3579,15 @@
        * güvenlik başlıklarını ve TLS yapılandırmasını ölçer ve sonucu tek
        * yanıtta döndürür (ayrı bir sonuç sorgusu gerekmez).
        */
-      startScan: function (url, type, mode) {
+      startScan: function (url, type, mode, consent) {
         if (!CONFIG.liveScan) {
           return Promise.reject({ code: 'scan_failed' });
         }
         return fetch(CONFIG.apiBaseUrl + '/api/scan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: url, type: type || 'quick', mode: mode || null })
+          body: JSON.stringify({ url: url, type: type || 'quick', mode: mode || null,
+            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true })
         }).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
@@ -3818,14 +3637,6 @@
       /* ---- Düzeltme (remediation) uçları ---- */
 
       /** POST /api/user/preferences — tercih edilen düzeltme yöntemini kaydeder */
-      savePreference: function (mode) {
-        if (CONFIG.useMockApi) {
-          return new Promise(function (resolve) {
-            setTimeout(function () { resolve({ ok: true, preferredMode: mode }); }, 260);
-          });
-        }
-        return API.request('/api/user/preferences', { method: 'POST', body: { preferredMode: mode } });
-      },
 
       /** POST /api/remediate — seçilen modda düzeltme sürecini başlatır */
       remediate: function (scanId, vulnerabilityIds, mode, integration) {
@@ -4126,7 +3937,7 @@
       addNoticeRow(domain, 'fa-solid fa-globe', '--gold-primary');
       var ticker = startProgress();
 
-      API.startScan(domain, 'quick', modeManager.get())
+      API.startScan(domain, 'quick', null)
         .then(function (result) { renderScanResult(result); })
         .catch(function (err) { renderScanError(err); })
         .then(function () {
@@ -4293,7 +4104,6 @@
 
     var modal = document.getElementById('authModal');
     var authModal = createModal(modal);
-    var modeModal = createModal(document.getElementById('modeModal'));
 
     function openModal() { if (authModal) authModal.open(); }
     function closeModal() { if (authModal) authModal.close(); }
@@ -4528,6 +4338,8 @@
             toast(data.claimed > 0
               ? t('auth.toast.signedInClaimed', { count: data.claimed })
               : t('auth.toast.signedIn'), 'success');
+            // "Pro'ya Geç" ile gelen kullanıcı ödeme/ön kayıt akışına yönlenir.
+            try { if (sessionStorage.getItem('cl_pro_intent') === '1') window.location.href = '/checkout'; } catch (e) {}
           }, function (err) {
             busy(form, false);
             showMsg(errText(err), 'error');
@@ -4564,6 +4376,8 @@
             toast(data.claimed > 0
               ? t('auth.toast.signedUpClaimed', { count: data.claimed })
               : t('auth.toast.signedUp'), 'success');
+            // "Pro'ya Geç" ile gelen kullanıcı ödeme/ön kayıt akışına yönlenir.
+            try { if (sessionStorage.getItem('cl_pro_intent') === '1') window.location.href = '/checkout'; } catch (e) {}
           }, function (err) {
             busy(form, false);
             showMsg(errText(err), 'error');
@@ -4718,104 +4532,16 @@
     if (authOpenBtn) authOpenBtn.addEventListener('click', function () { authManager.open('login'); });
 
     /* ==========================================================
-       10b. DÜZELTME YÖNTEMİ SEÇİMİ (3 Mod)
-       --------------------------------------------------------
-       Müşteri üç yöntemden birini seçer; tercih onay modalıyla
-       doğrulanır, localStorage'a ve API'ye yazılır, sonraki tarama
-       istekleri bu modla gönderilir.
-       ========================================================== */
-    var VALID_MODES = ['autonomous', 'semi_autonomous', 'managed'];
-
-    var modeManager = (function () {
-      var current = null;
-      var pending = null;                 // onay bekleyen seçim
-      var box = document.getElementById('modeModal');
-      var iconEl = document.getElementById('modeConfirmIcon');
-      var nameEl = document.getElementById('modeConfirmName');
-      var descEl = document.getElementById('modeConfirmDesc');
-      var confirmBtn = document.getElementById('modeConfirm');
-
-      // Mod anahtarı -> çeviri alt ağacı ve ikonu
-      var META = {
-        autonomous:      { key: 'auto',    icon: 'fa-solid fa-robot' },
-        semi_autonomous: { key: 'semi',    icon: 'fa-solid fa-user-check' },
-        managed:         { key: 'managed', icon: 'fa-solid fa-crown' }
-      };
-
-      function label(mode) { return t('modes.' + META[mode].key + '.name'); }
-      function describe(mode) { return t('modes.' + META[mode].key + '.desc'); }
-
-      /** Seçilen kartı görsel olarak işaretler. */
-      function markCards() {
-        var cards = document.querySelectorAll('[data-mode]');
-        for (var i = 0; i < cards.length; i++) {
-          var isCurrent = cards[i].getAttribute('data-mode') === current;
-          cards[i].setAttribute('aria-current', isCurrent ? 'true' : 'false');
-          var btn = cards[i].querySelector('[data-select-mode]');
-          if (btn) btn.textContent = isCurrent ? t('modes.selected') : t('modes.select');
-        }
-      }
-
-      /** Onay modalını seçilen yöntemin bilgileriyle doldurup açar. */
-      function propose(mode) {
-        if (VALID_MODES.indexOf(mode) === -1) return;
-        pending = mode;
-        if (iconEl) iconEl.className = META[mode].icon;
-        if (nameEl) nameEl.textContent = label(mode);
-        if (descEl) descEl.textContent = describe(mode);
-        if (modeModal) modeModal.open();
-      }
-
-      /** Onaylanan seçimi kalıcı hâle getirir ve kullanıcıyı taramaya yönlendirir. */
-      function confirm() {
-        if (!pending) return;
-        var mode = pending;
-        var original = confirmBtn ? confirmBtn.textContent : '';
-        if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '…'; }
-
-        API.savePreference(mode)
-          .then(function () {
-            current = mode;
-            store.set(CONFIG.storageKeys.mode, mode);
-            markCards();
-            if (modeModal) modeModal.close();
-            toast(t('toast.modeSaved', { mode: label(mode) }), 'success');
-
-            // Kullanıcıyı taramanın başladığı yere götür
-            var hero = document.getElementById('hero');
-            if (hero) hero.scrollIntoView({ behavior: 'smooth' });
-            setTimeout(function () { if (scanInput) scanInput.focus(); }, 700);
-          })
-          .catch(function (err) {
-            log('preference error', err);
-            toast(t('toast.modeSaveFail'), 'error');
-          })
-          .then(function () {
-            if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = original; }
-            pending = null;
-          });
-      }
-
-      function init() {
-        var saved = store.get(CONFIG.storageKeys.mode);
-        if (VALID_MODES.indexOf(saved) !== -1) current = saved;
-
-        var buttons = document.querySelectorAll('[data-select-mode]');
-        for (var i = 0; i < buttons.length; i++) {
-          buttons[i].addEventListener('click', function () {
-            propose(this.getAttribute('data-select-mode'));
-          });
-        }
-        if (confirmBtn) confirmBtn.addEventListener('click', confirm);
-        markCards();
-      }
-
-      return { init: init, get: function () { return current; }, label: label, refresh: markCards };
-    })();
-
-    /* ==========================================================
        11. PLAN BUTONLARI
        ========================================================== */
+    // TODO: Google Workspace aktif olunca destek@ maili test et
+    var proIntentBtns = document.querySelectorAll('[data-pro-intent], #scanUpgradeBtn');
+    for (var pi = 0; pi < proIntentBtns.length; pi++) {
+      proIntentBtns[pi].addEventListener('click', function () {
+        try { sessionStorage.setItem('cl_pro_intent', '1'); } catch (e) {}
+      });
+    }
+
     var trialBtn = document.getElementById('trialBtn');
     if (trialBtn) {
       // "Deneme Sürümü": modal AÇMAZ — yalnızca bilgilendirme verir
@@ -4831,7 +4557,7 @@
     if (contactBtn) {
       contactBtn.addEventListener('click', function () {
         toast(t('toast.contact'), 'info', 6000);
-        window.location.href = 'mailto:info@cyberlionai.com?subject=Enterprise';
+        window.location.href = 'mailto:destek@cyberlionai.com?subject=Enterprise';
       });
     }
 
@@ -5029,7 +4755,6 @@
         scan:          ['tara', 'tarama', 'scan', 'başlat', 'baslat', 'start', 'url', 'adres', 'domain', 'alan adı', 'alan adi'],
         free:          ['ücretsiz', 'ucretsiz', 'bedava', 'free', 'kayıt', 'kayit', 'üye', 'uye', 'register', 'sign up', 'account', 'hesap aç', 'hesap ac'],
         pricing:       ['fiyat', 'ücret', 'ucret', 'price', 'pricing', 'cost', 'plan', 'abonelik', 'subscription', 'ne kadar', 'how much'],
-        modes:         ['mod', 'mode', 'düzelt', 'duzelt', 'remediat', 'fix', 'otomatik', 'automatic', 'onay', 'approval', 'yönetilen', 'yonetilen', 'managed'],
         csp:           ['csp', 'content-security', 'content security', 'xss', 'inline script'],
         hsts:          ['hsts', 'strict-transport', 'strict transport', 'ssl strip'],
         xframe:        ['x-frame', 'xframe', 'clickjack', 'iframe', 'frame-ancestors', 'frame ancestors'],
@@ -5177,10 +4902,10 @@
         var map = {
           csp: ['hsts', 'xframe'], hsts: ['csp', 'tls'], xframe: ['csp', 'cookies'],
           tls: ['hsts', 'cookies'], cookies: ['csp', 'privacy'],
-          scan: ['free', 'report'], free: ['pricing', 'scan'], pricing: ['modes', 'free'],
-          modes: ['pricing', 'report'], report: ['accuracy', 'pricing'],
+          scan: ['free', 'report'], free: ['pricing', 'scan'], pricing: ['free', 'report'],
+          report: ['accuracy', 'pricing'],
           privacy: ['authorization', 'contact'], accuracy: ['report', 'contact'],
-          authorization: ['privacy', 'contact'], contact: ['pricing', 'modes']
+          authorization: ['privacy', 'contact'], contact: ['pricing', 'free']
         };
         return map[topic] || all.slice(0, 2);
       }
@@ -5213,7 +4938,7 @@
             meta(bubble, elapsed, 'assist.layerLocal');
           } else {
             paragraphs(bubble, t('assist.unknown'));
-            chips(bubble, ['scan', 'pricing', 'modes']);
+            chips(bubble, ['scan', 'pricing', 'free']);
             escalationButton(bubble, question, level);
             meta(bubble, elapsed, 'assist.layerHuman');
           }
@@ -5236,7 +4961,7 @@
         greeted = true;
         var bubble = row('bot');
         paragraphs(bubble, t('assist.greeting'));
-        chips(bubble, ['scan', 'pricing', 'modes', 'csp']);
+        chips(bubble, ['scan', 'pricing', 'free', 'csp']);
         var note = document.createElement('span');
         note.className = 'bubble__meta';
         note.textContent = t('assist.disclaimer');
@@ -5347,7 +5072,6 @@
       var savedTheme = store.get(CONFIG.storageKeys.theme);
       applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark');
 
-      modeManager.init();
       assistant.init();
       historyManager.init();
 

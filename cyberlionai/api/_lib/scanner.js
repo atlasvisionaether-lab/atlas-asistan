@@ -14,6 +14,7 @@ const tls = require('node:tls');
 const { normalizeTarget, assertPublicHost } = require('./guard.js');
 const geo = require('./geo.js');
 const mail = require('./mail');
+const owaspLite = require('./owasp.js');
 
 const FETCH_TIMEOUT_MS = 9000;
 const TLS_TIMEOUT_MS = 6000;
@@ -22,7 +23,7 @@ const MAX_REDIRECTS = 4;
 
 /* Rapor ve motor sürümü: kaydedilen her taramaya ve PDF'e yazılır, böylece
    eski bir sonuç hangi kural setiyle üretildiği bilinerek okunabilir. */
-const SCANNER_VERSION = '1.2.0';
+const SCANNER_VERSION = '1.3.0-owasp-lite';
 const REPORT_VERSION = '1';
 
 /* ============================================================
@@ -473,9 +474,10 @@ function scoreOf(checks) {
    Giriş noktası
    ============================================================ */
 
-async function scanSite(rawUrl) {
+async function scanSite(rawUrl, options) {
   const target = normalizeTarget(rawUrl);
   if (target.error) throw new Error(target.error);
+  const opts = options || {};
 
   const started = Date.now();
   const { response, finalUrl, chain, addresses } = await guardedFetch(target.url, {});
@@ -518,7 +520,7 @@ async function scanSite(rawUrl) {
 
   const mailInfo = await mailSozu;
 
-  const checks = buildChecks({
+  const baseChecks = buildChecks({
     headers: response.headers,
     finalUrl: finalUrl,
     html: html,
@@ -526,6 +528,18 @@ async function scanSite(rawUrl) {
     legacyTls: legacyInfo,
     mail: mailInfo
   });
+
+  /* OWASP Top 10 LITE: paralel tek tur. Aktif kontroller (A03) yalnızca
+     kullanıcının sahiplik onayı ile çalışır; onay yoksa skipped döner.
+     Bknz _lib/owasp.js — ölçülmeyen kontrol burada da puanlanmaz. */
+  const owaspResult = await owaspLite.runOwaspLite({
+    finalUrl: finalUrl,
+    headers: response.headers,
+    html: html,
+    consent: opts.consent === true
+  });
+
+  const checks = baseChecks.concat(owaspResult.checks);
 
   /* Ulke: SON atlamanin cozulmus adreslerinden, kamu mali RIR tablosuyla.
      Ucuncu taraf bir cografi konum servisine cikilmiyor — taradigimiz adresi
@@ -553,10 +567,20 @@ async function scanSite(rawUrl) {
   if (response.status >= 400) warnings.push('error_response');
   if (html === null) warnings.push('no_html_body');
 
+  const owaspFailByCat = {};
+  owaspResult.checks.forEach(function (c) {
+    if (c.owasp && c.status === 'fail') {
+      owaspFailByCat[c.owasp] = (owaspFailByCat[c.owasp] || 0) + 1;
+    }
+  });
+
   return {
     url: finalUrl.href,
     warnings: warnings,
     host: host,
+    owaspFindings: owaspResult.findings,
+    owaspFailedCategories: owaspFailByCat,
+    activeChecksConsent: opts.consent === true,
     country: country,
     httpStatus: response.status,
     redirects: chain.length - 1,

@@ -1,1 +1,86 @@
-{"rewrites":[{"source":"/(.*)","destination":"/panel/index.html"}]}
+{
+  "rewrites": [
+    {
+      "source": "/checkout",
+      "destination": "/checkout.html"
+    },
+    {
+      "source": "/demo",
+      "destination": "/demo.html"
+    },
+    {
+      "source": "/iletisim",
+      "destination": "/iletisim.html"
+    },
+    {
+      "source": "/blog/whatsapp-asistani",
+      "destination": "/blog/whatsapp-asistani.html"
+    },
+    {
+      "source": "/blog/guzellik-merkezi-yazilimi",
+      "destination": "/blog/guzellik-merkezi-yazilimi.html"
+    },
+    {
+      "source": "/blog/instagram-randevu",
+      "destination": "/blog/instagram-randevu.html"
+    },
+    {
+      "source": "/sehir/istanbul",
+      "destination": "/sehir/istanbul.html"
+    },
+    {
+      "source": "/sehir/ankara",
+      "destination": "/sehir/ankara.html"
+    },
+    {
+      "source": "/sehir/izmir",
+      "destination": "/sehir/izmir.html"
+    },
+    {
+      "source": "/pages/hakkimizda",
+      "destination": "/pages/hakkimizda.html"
+    },
+    {
+      "source": "/pages/gizlilik-politikasi",
+      "destination": "/pages/gizlilik-politikasi.html"
+    },
+    {
+      "source": "/pages/kvkk-aydinlatma-metni",
+      "destination": "/pages/kvkk-aydinlatma-metni.html"
+    },
+    {
+      "source": "/pages/mesafeli-satis-sozlesmesi",
+      "destination": "/pages/mesafeli-satis-sozlesmesi.html"
+    },
+    {
+      "source": "/pages/teslimat-ve-iade-sartlari",
+      "destination": "/pages/teslimat-ve-iade-sartlari.html"
+    },
+    {
+      "source": "/pages/kullanim-sartlari",
+      "destination": "/pages/kullanim-sartlari.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/kvkk",
+      "destination": "/pages/kvkk-aydinlatma-metni",
+      "permanent": true
+    },
+    {
+      "source": "/gizlilik",
+      "destination": "/pages/gizlilik-politikasi",
+      "permanent": true
+    },
+    {
+      "source": "/iade",
+      "destination": "/pages/teslimat-ve-iade-sartlari",
+      "permanent": true
+    },
+    {
+      "source": "/hakkinda",
+      "destination": "/pages/hakkimizda",
+      "permanent": true
+    }
+  ]
+}
