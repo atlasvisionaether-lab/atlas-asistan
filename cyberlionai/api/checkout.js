@@ -1,96 +1,92 @@
 'use strict';
 
 /**
- * Ödeme başlatma — Stripe Checkout'a yönlendirir.
+ * Ödeme başlatma — iyzico Subscription v2 barındırılan formuna yönlendirir.
  *
  *   GET /api/checkout?plan=pro
  *   GET /api/checkout?plan=enterprise
  *
+ * NEDEN STRIPE DEĞİL
+ *
+ * Stripe Payment Link yolu iptal edildi: Stripe Türkiye'deki şahıs şirketinde
+ * canlıya geçmiyor. iyzico Subscription v2 geçiyor ve barındırılan ödeme formu
+ * sunuyor; kart numarası bizim sunucumuza hiç gelmiyor.
+ *
  * NEDEN BİR UÇ, NEDEN HTML'DE DÜZ BAĞLANTI DEĞİL
  *
- * Ödeme bağlantısı sayfanın HTML'ine gömülseydi, bağlantıyı değiştirmek için
- * HTML değişip CSP hash'lerinin yeniden hesaplanması gerekirdi; test modundan
- * canlı moda geçmek de bir dağıtım gerektirirdi. Bağlantı burada ortam
- * değişkeninden okunuyor: mod değişimi bir env değişikliği, kod değişikliği
- * değil.
+ * Abonelik formunun adresi her müşteri için iyzico'dan ayrı alınıyor; sayfaya
+ * gömülebilecek sabit bir adres yok. Ayrıca sağlayıcı değişimi (Stripe →
+ * iyzico) HTML'e hiç dokunmadan oldu: /pricing butonları aynı adrese bakıyor.
  *
  * YAPILANDIRILMAMIŞSA UYDURMUYOR
  *
- * Bağlantı tanımlı değilse uç 503 `checkout_unconfigured` dönüyor ve arayüz
- * "ödeme henüz açılmadı" diyor. Çalışmayan ya da tahmin edilmiş bir Stripe
- * adresine yönlendirmek, müşteriyi ödeme sayfası sandığı bir 404'e göndermek
- * olurdu.
+ * Anahtar yoksa, kısa/yer tutucu bir anahtarsa ya da plan referansı tanımsızsa
+ * uç 503 `checkout_unconfigured` dönüyor ve tarayıcı /pricing'e geri gidiyor;
+ * sayfa orada ödemenin henüz açılmadığını yazıyor. Çalışmayan bir ödeme
+ * sayfasına yönlendirmek, müşteriyi ödeme sandığı bir hataya göndermek olurdu.
  *
- * AÇIK YÖNLENDİRME KORUMASI
+ * GİRİŞ ZORUNLU
  *
- * Hedef yalnızca Stripe'ın kendi alan adlarından biri olabilir. Env değeri
- * yanlış yapılandırılırsa (ya da birisi onu değiştirirse) uç bunu bir
- * yönlendirme fırsatına çevirmiyor: `checkout_misconfigured` ile 503 dönüyor.
- * Bir güvenlik ürününün kendi sitesinde açık yönlendirme taşıması olmaz.
+ * Abonelik bir HESABA bağlanıyor: iyzico'nun müşteri kaydı ve bizim
+ * `cl_subscriptions` satırımız kullanıcı kimliği olmadan kurulamaz. Anonim
+ * tarayıcı /panel'e gönderiliyor (giriş, sonra ödeme), makine isteği 401 alıyor.
  *
  * NE LOGLANMIYOR
  *
- * Ödeme bağlantısı gizli değil ama yine de loglanmıyor; hata kayıtlarına
- * yalnızca sebep kodu ve plan adı giriyor. Stripe gizli anahtarı bu uçta hiç
- * kullanılmıyor: ödeme bağlantısı (Payment Link) sunucuda imza gerektirmiyor.
+ * Form adresi, form jetonu, anahtarlar ve imza LOGLANMIYOR; hata kayıtlarına
+ * yalnızca sebep kodu ve plan adı giriyor.
  *
- * BİLİNEN EKSİK
+ * BİLİNEN EKSİKLER
  *
- * Ödeme bağlantısı aboneliği `cl_subscriptions` tablosuna YAZMIYOR. Ödeme
- * sonrası satırı açan şey bir Stripe webhook'u olmalı (servis rolüyle; o
- * tabloda anon/authenticated INSERT policy'si bilerek yok). O webhook
- * yazılana kadar abonelik satırı elle açılıyor ve haftalık tarama ancak
- * satır açıldıktan sonra o alan adını tarıyor.
+ * 1. iyzico'nun müşteri kaydı ad, soyad, TC kimlik ve adres isteyebiliyor;
+ *    elimizde yalnızca e-posta var. Bu alanlar gerekiyorsa iyzico `errorCode`
+ *    ile reddediyor ve ödeme açılmıyor — uydurma bir TC kimlik numarası
+ *    göndermek seçenek değil. Gerekirse ödeme öncesi küçük bir form eklenecek.
+ * 2. Pro'nun "ayda 50 tarama" sınırı hâlâ kodda zorlanmıyor (Faz 6).
  */
 
-const { isPaidPlan, plan: planOf } = require('./_lib/plans.js');
+const { isPaidPlan, plan: planOf, PLANS } = require('./_lib/plans.js');
+const iyzico = require('./_lib/iyzico.js');
+const auth = require('./_lib/auth.js');
 
-/* Stripe'ın ödeme sayfalarını barındırdığı alan adları. Başka bir host
-   yönlendirme hedefi olamaz. */
-const ALLOWED_HOSTS = ['buy.stripe.com', 'checkout.stripe.com'];
-
-/* Ortam değişkeni adları plan başına sabit: tahmin edilen bir ad yerine
-   açıkça yazılmış iki ad. */
-const LINK_ENV = {
-  pro: 'STRIPE_PAYMENT_LINK_PRO',
-  enterprise: 'STRIPE_PAYMENT_LINK_ENTERPRISE'
+/* Plan başına fiyat planı referansı. iyzico panelinde (ya da
+   createPricingPlan ile) bir kez oluşturulup env'e yazılıyor; kodda sabit
+   referans tutmak, sandbox ile canlıyı karıştırmak demekti. */
+const PLAN_REF_ENV = {
+  pro: 'IYZICO_PRICING_PLAN_PRO',
+  enterprise: 'IYZICO_PRICING_PLAN_ENTERPRISE'
 };
 
-/**
- * Plan için yapılandırılmış ödeme bağlantısını döndürür.
- * @returns {{ok: true, url: string} | {ok: false, reason: string}}
- */
-function checkoutUrl(planId) {
-  const name = LINK_ENV[planId];
-  if (!name) return { ok: false, reason: 'unknown_plan' };
-
-  const raw = process.env[name];
-  if (!raw || !String(raw).trim()) return { ok: false, reason: 'checkout_unconfigured' };
-
-  let parsed;
-  try {
-    parsed = new URL(String(raw).trim());
-  } catch (err) {
-    return { ok: false, reason: 'checkout_misconfigured' };
-  }
-
-  if (parsed.protocol !== 'https:') return { ok: false, reason: 'checkout_misconfigured' };
-  if (ALLOWED_HOSTS.indexOf(parsed.hostname) === -1) {
-    return { ok: false, reason: 'checkout_misconfigured' };
-  }
-
-  return { ok: true, url: parsed.toString() };
+function pricingPlanRef(planId) {
+  const name = PLAN_REF_ENV[planId];
+  if (!name) return null;
+  const value = process.env[name];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-/** Bağlantının test modunda mı olduğunu söyler (Stripe test bağlantıları `/test/` taşır). */
-function isTestLink(url) {
-  return /\/test\//.test(url);
-}
-
-/** İsteği bir tarayıcı gezinmesi mi yapıyor: cevabın HTML mi JSON mu olacağını belirler. */
+/** İsteği bir tarayıcı gezinmesi mi yapıyor: cevap HTML mi JSON mu olacak. */
 function wantsHtml(req) {
   const accept = (req.headers && req.headers.accept) || '';
   return String(accept).indexOf('text/html') !== -1;
+}
+
+/** Ödeme dönüşünün geleceği adres. Host başlığından kuruluyor. */
+function callbackUrl(req) {
+  const configured = process.env.SITE_URL;
+  if (typeof configured === 'string' && /^https:\/\//.test(configured.trim())) {
+    return configured.trim().replace(/\/+$/, '') + '/api/checkout-return';
+  }
+  const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
+  return 'https://' + String(host) + '/api/checkout-return';
+}
+
+function unavailable(req, res, reason, planId) {
+  if (console && console.warn) console.warn('checkout: ' + reason + ' (plan=' + planId + ')');
+  if (wantsHtml(req)) {
+    res.setHeader('Location', '/pricing?checkout=unavailable&plan=' + encodeURIComponent(planId));
+    return res.status(303).end();
+  }
+  return res.status(503).json({ error: { code: 'checkout_unconfigured' } });
 }
 
 module.exports = async function handler(req, res) {
@@ -101,38 +97,85 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: { code: 'method_not_allowed' } });
   }
 
+  /* --- Ödemenin durumu (kamuya açık) ---
+     /pricing sayfası "test modu" rozetini buna göre gösteriyor. Dönen şey bir
+     sır değil: ödemenin açık olup olmadığı ve sandbox mı olduğu. Müşterinin
+     gerçek bir kart girmeden önce bunu BİLMESİ gerekiyor. Anahtar, referans
+     kodu ya da adres dönmüyor. */
+  if (req.query && req.query.mode !== undefined) {
+    const ready = iyzico.isConfigured() && iyzico.isEnabled();
+    return res.status(200).json({
+      enabled: ready,
+      testMode: ready ? iyzico.isSandbox() : null,
+      plans: ready
+        ? Object.keys(PLAN_REF_ENV).filter(function (id) { return pricingPlanRef(id) !== null; })
+        : []
+    });
+  }
+
   const planId = String((req.query && req.query.plan) || '').toLowerCase();
 
   if (!planId) {
     return res.status(400).json({ error: { code: 'missing_plan' } });
   }
   if (!planOf(planId) || !isPaidPlan(planId)) {
-    /* Free planın ödemesi yok; bilinmeyen plan da buraya düşer. İkisi için de
-       aynı cevap: istenen plan ödenebilir değil. */
+    /* Free planın ödemesi yok; bilinmeyen plan da buraya düşer. */
     return res.status(400).json({ error: { code: 'invalid_plan' } });
   }
 
-  const link = checkoutUrl(planId);
-  if (!link.ok) {
-    console.warn('checkout: ' + link.reason + ' (plan=' + planId + ')');
-    /* Tarayıcıdan gelen bir tıklamaya ham JSON göstermek, müşteriyi ödeme
-       sayfası beklediği yerde bir hata gövdesiyle bırakmak olurdu. Fiyat
-       sayfasına geri gönderiliyor; sayfa orada ne olduğunu yazıyor. */
-    if (wantsHtml(req)) {
-      res.setHeader('Location', '/pricing?checkout=unavailable&plan=' + encodeURIComponent(planId));
-      return res.status(303).end();
-    }
-    return res.status(503).json({ error: { code: link.reason } });
+  /* --- Yapılandırma --- */
+  if (!iyzico.isConfigured() || !iyzico.isEnabled()) {
+    return unavailable(req, res, 'iyzico_unconfigured', planId);
+  }
+  const planRef = pricingPlanRef(planId);
+  if (!planRef) {
+    return unavailable(req, res, 'pricing_plan_ref_missing', planId);
   }
 
-  /* 303: tarayıcı GET ile izlesin ve geri tuşunda ödeme sayfasına geri
-     dönmek yerine fiyat sayfasına dönsün. */
-  res.setHeader('Location', link.url);
+  /* --- Giriş --- */
+  if (!auth.isConfigured()) {
+    return unavailable(req, res, 'auth_unavailable', planId);
+  }
+  const user = await auth.resolveUser(req, res);
+  if (!user) {
+    if (wantsHtml(req)) {
+      res.setHeader('Location', '/panel?checkout=' + encodeURIComponent(planId));
+      return res.status(303).end();
+    }
+    return res.status(401).json({ error: { code: 'auth_required' } });
+  }
+
+  /* --- iyzico aboneliği --- */
+  let init;
+  try {
+    init = await iyzico.initializeCheckoutForm({
+      callbackUrl: callbackUrl(req),
+      pricingPlanRef: planRef,
+      customer: {
+        /* Elimizdeki tek kimlik e-posta. iyzico daha fazlasını isterse
+           `errorCode` ile reddediyor; uydurma ad/TC kimlik gönderilmiyor. */
+        email: user.email || '',
+        name: (user.email || '').split('@')[0] || 'Musteri',
+        surname: '-'
+      }
+    });
+  } catch (err) {
+    return unavailable(req, res, 'iyzico_error', planId);
+  }
+
+  if (!init.ok) {
+    return unavailable(req, res, init.reason, planId);
+  }
+
+  /* 303: tarayıcı GET ile izlesin; geri tuşu ödeme sayfasına değil fiyat
+     sayfasına dönsün. Adresin host'u iyzico'nun kendi alan adı olduğu
+     `formUrlOf` içinde zaten doğrulandı. */
+  res.setHeader('Location', init.url);
   return res.status(303).end();
 };
 
-module.exports.checkoutUrl = checkoutUrl;
-module.exports.isTestLink = isTestLink;
+module.exports.pricingPlanRef = pricingPlanRef;
 module.exports.wantsHtml = wantsHtml;
-module.exports.ALLOWED_HOSTS = ALLOWED_HOSTS;
-module.exports.LINK_ENV = LINK_ENV;
+module.exports.callbackUrl = callbackUrl;
+module.exports.PLAN_REF_ENV = PLAN_REF_ENV;
+module.exports.PLANS = PLANS;

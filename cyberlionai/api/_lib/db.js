@@ -616,10 +616,104 @@ async function enterpriseScanTargets(limit) {
   };
 }
 
+/* ============================================================
+   Abonelik okuma ve yazma (iyzico).
+
+   OKUMA panelden geliyor ve her zaman kullanıcı kimliğiyle sınırlı: filtre
+   sorgunun İÇİNDE (`user_id=eq.…`). YAZMA yalnızca webhook'tan geliyor ve
+   servis rolüyle yapılıyor; tabloda anon/authenticated INSERT ya da UPDATE
+   policy'si bilerek yok, yoksa bir kullanıcı kendini Enterprise ilan ederdi.
+   ============================================================ */
+
+const SUBS_TABLE = 'cl_subscriptions';
+const SUB_SELECT = 'id,domain,plan,active,status,iyzico_env,'
+  + 'iyzico_subscription_ref,iyzico_customer_ref,created_at,updated_at';
+
+/** Hesabın kendi abonelikleri. Başkasının satırı bu sorgudan ÇIKAMAZ. */
+async function listSubscriptions(userId) {
+  if (!UUID_RE.test(String(userId || ''))) return [];
+  const rows = await request(SUBS_TABLE
+    + '?user_id=eq.' + encodeURIComponent(userId)
+    + '&select=' + SUB_SELECT
+    + '&order=created_at.desc&limit=50', {});
+  return Array.isArray(rows) ? rows : [];
+}
+
+/**
+ * Webhook'tan gelen abonelik durumunu yazar.
+ *
+ * Eşleme anahtarı iyzico'nun abonelik referansı: aynı webhook iki kez
+ * gelirse (iyzico yeniden deniyor) ikinci çağrı yeni satır açmıyor, mevcut
+ * satırı güncelliyor. `user_id` ve `domain` İSTEKTEN GELMİYOR — webhook'un
+ * gövdesi bunları taşısa bile güvenilmez; kendi tarafımızdaki müşteri
+ * eşlemesinden geliyor (çağıran veriyor).
+ */
+async function upsertIyzicoSubscription(row) {
+  if (!UUID_RE.test(String(row.userId || ''))) throw new Error('subscription_user_invalid');
+  if (!row.subscriptionRef) throw new Error('subscription_ref_missing');
+
+  const body = {
+    user_id: row.userId,
+    domain: String(row.domain || '').toLowerCase(),
+    plan: row.plan,
+    active: row.active === true,
+    status: row.status || null,
+    iyzico_env: row.env || null,
+    iyzico_subscription_ref: String(row.subscriptionRef),
+    iyzico_customer_ref: row.customerRef ? String(row.customerRef) : null,
+    iyzico_product_ref: row.productRef ? String(row.productRef) : null,
+    iyzico_plan_ref: row.planRef ? String(row.planRef) : null,
+    updated_at: new Date().toISOString()
+  };
+
+  const rows = await request(SUBS_TABLE + '?on_conflict=iyzico_subscription_ref', {
+    method: 'POST',
+    body: body,
+    headers: {
+      'Prefer': 'resolution=merge-duplicates,return=representation'
+    }
+  });
+  return rows && rows[0] ? rows[0] : null;
+}
+
+/** Abonelik satırını iyzico referansıyla bulur (webhook için). */
+async function findSubscriptionByRef(subscriptionRef) {
+  if (!subscriptionRef) return null;
+  const rows = await request(SUBS_TABLE
+    + '?iyzico_subscription_ref=eq.' + encodeURIComponent(subscriptionRef)
+    + '&select=' + SUB_SELECT + ',user_id&limit=1', {});
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+/**
+ * Var olan abonelik satırının durumunu günceller.
+ *
+ * Webhook YENİ satır açmıyor: hangi kullanıcıya ait olduğunu söyleyen eşleme
+ * yalnızca ödeme dönüşünde (oturumlu istekte) kuruluyor. Eşlemesi olmayan bir
+ * referans için satır açmak, aboneliği rastgele bir kullanıcıya yazmak olurdu.
+ */
+async function updateSubscriptionStatusByRef(subscriptionRef, patch) {
+  if (!subscriptionRef) throw new Error('subscription_ref_missing');
+  const body = {
+    active: patch.active === true,
+    status: patch.status || null,
+    updated_at: new Date().toISOString()
+  };
+  const rows = await request(SUBS_TABLE
+    + '?iyzico_subscription_ref=eq.' + encodeURIComponent(subscriptionRef), {
+    method: 'PATCH',
+    body: body,
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return Array.isArray(rows) ? rows.length : 0;
+}
+
 module.exports = {
 
   isConfigured, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans, scanStats,
   listJobs, jobScoreTrend, getJob, getJobWithFindings, SEVERITY_ORDER,
-  enterpriseScanTargets
+  enterpriseScanTargets,
+  listSubscriptions, upsertIyzicoSubscription,
+  findSubscriptionByRef, updateSubscriptionStatusByRef
 };

@@ -69,6 +69,14 @@
   /* Ödeme açılmamışsa gösterilen uyarı. Sessizce kaybolan bir buton yerine
      ne olduğunu söyleyen bir satır: müşteri tıkladığında bir şey olmadığını
      anlamakta kalmasın. */
+    /* Sandbox'ta görünen rozet. Müşteri gerçek bir kart girmeden önce ödemenin
+     test modunda olduğunu BİLMEK zorunda; sessizce test modunda kalmak,
+     çalıştığını sanılan bir ödeme sayfası bırakmak olurdu. */
+  .testbadge{display:none;align-items:center;gap:9px;margin:0 0 22px;padding:11px 16px;
+    border-radius:999px;border:1px solid rgba(255,223,0,.45);background:rgba(255,223,0,.09);
+    font-family:var(--font-heading);font-size:.68rem;font-weight:600;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--gold-light)}
+  .testbadge[data-on="1"]{display:inline-flex}
   .notice{margin:0 0 26px;padding:14px 18px;border-radius:10px;
     border:1px solid rgba(0,212,255,.3);background:rgba(0,212,255,.07);color:var(--text-white);font-size:.92rem}
   .plans{display:grid;gap:18px;grid-template-columns:1fr}
@@ -132,6 +140,10 @@
       <p class="lead"
          data-t-tr="Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok; aylık, istediğiniz zaman iptal."
          data-t-en="Start free. Upgrade when you are ready. No long-term commitment; monthly, cancel anytime.">Ücretsiz başlayın. Hazır olduğunuzda yükseltin.</p>
+
+      <p class="testbadge" id="testbadge"
+         data-t-tr="Ödeme test modunda (iyzico sandbox) — gerçek kart kullanmayın"
+         data-t-en="Payment is in test mode (iyzico sandbox) — do not use a real card">Ödeme test modunda (iyzico sandbox) — gerçek kart kullanmayın</p>
 
       <!-- Ödeme bağlantısı yapılandırılmamışsa /api/checkout buraya geri
            yönlendiriyor ve bu satır görünüyor. -->
@@ -200,8 +212,8 @@
       </div>
 
       <p class="foot-note"
-         data-t-tr="Tüm fiyatlar KDV hariçtir. Ödeme Stripe üzerinden alınır; kart bilgileriniz bize hiç gelmez. Abonelik iptali, teslimat ve iade koşulları için Mesafeli Satış Sözleşmesi ile Teslimat ve İade Şartları sayfalarına bakın."
-         data-t-en="All prices exclude VAT. Payments are taken through Stripe; your card details never reach us. For cancellation, delivery and refund terms see the Distance Sales Agreement and the Delivery &amp; Returns pages.">Tüm fiyatlar KDV hariçtir.</p>
+         data-t-tr="Tüm fiyatlar KDV hariçtir. Ödeme iyzico üzerinden alınır; kart bilgileriniz bize hiç gelmez. Abonelik iptali, teslimat ve iade koşulları için Mesafeli Satış Sözleşmesi ile Teslimat ve İade Şartları sayfalarına bakın."
+         data-t-en="All prices exclude VAT. Payments are taken through iyzico; your card details never reach us. For cancellation, delivery and refund terms see the Distance Sales Agreement and the Delivery &amp; Returns pages.">Tüm fiyatlar KDV hariçtir.</p>
     </div>
   </main>
 
@@ -254,6 +266,22 @@
         store.set('preferredLang', l);
         apply(l);
       });
+    }
+
+    /* Ödemenin durumu sunucudan: açık mı, test modunda mı. Rozet yalnızca
+       sandbox'ta açılıyor. Uç cevap vermezse rozet HİÇ görünmüyor: ödemenin
+       canlı olduğunu varsaymak değil, bilmediğimizi söylememek doğrusu —
+       yanlış yerde "test modu" yazmak da müşteriyi yanıltırdı. */
+    if (typeof fetch === 'function') {
+      fetch('/api/checkout?mode=1', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (mode) {
+          if (mode && mode.enabled === true && mode.testMode === true) {
+            var badge = document.getElementById('testbadge');
+            if (badge) badge.setAttribute('data-on', '1');
+          }
+        })
+        .catch(function () {});
     }
 
     /* /api/checkout yapılandırılmamış bir plan için buraya geri gönderiyor.

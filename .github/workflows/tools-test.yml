@@ -99,6 +99,9 @@ jobs:
       - name: Fiyatlandırma tutarlılığı ve ödeme ucu
         run: node cyberlionai/tools/pricing-test.js
 
+      - name: iyzico abonelik entegrasyonu (imza test vektörleri)
+        run: node cyberlionai/tools/iyzico-test.js
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do

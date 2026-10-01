@@ -20,9 +20,9 @@
  *      "Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)" ve bu, ürünün
  *      gerçekte yaptığı şey.
  *   3. Pro "sınırsız" demiyor: sınırsız olan plan Enterprise.
- *   4. Ödeme ucu yalnızca Stripe alan adlarına yönlendiriyor ve
- *      yapılandırılmamışsa bağlantı UYDURMUYOR. Açık yönlendirme bir güvenlik
- *      ürününün kendi sitesinde hiç olmamalı.
+ *   4. Satış sayfasındaki ödeme sağlayıcısının adı doğru: ödeme iyzico
+ *      üzerinden alınıyor (Stripe yolu iptal edildi; TR şahıs şirketinde
+ *      canlıya geçmiyor). Ödeme ucunun kendi sınamaları tools/iyzico-test.js.
  */
 
 const fs = require('node:fs');
@@ -75,53 +75,10 @@ sina('ana sayfada Pro için "Unlimited Scans" yalnızca Enterprise satırında',
   (index.match(/Unlimited Scans/g) || []).length, 1);
 sina('/pricing Pro kartında 50 tarama yazıyor', /Ayda 50 Tarama/.test(pricing), true);
 
-/* ---- 4. Ödeme ucu ---- */
-const ENV_KEYS = ['STRIPE_PAYMENT_LINK_PRO', 'STRIPE_PAYMENT_LINK_ENTERPRISE'];
-ENV_KEYS.forEach(function (k) { delete process.env[k]; });
-
-const checkout = require('../api/checkout.js');
-
-sina('yapılandırılmamışsa bağlantı uydurulmuyor',
-  checkout.checkoutUrl('pro'), { ok: false, reason: 'checkout_unconfigured' });
-
-process.env.STRIPE_PAYMENT_LINK_PRO = 'https://buy.stripe.com/test/abc123';
-sina('Stripe test bağlantısı kabul ediliyor',
-  checkout.checkoutUrl('pro'), { ok: true, url: 'https://buy.stripe.com/test/abc123' });
-sina('test bağlantısı test modu olarak tanınıyor',
-  checkout.isTestLink('https://buy.stripe.com/test/abc123'), true);
-sina('canlı bağlantı test modu sayılmıyor',
-  checkout.isTestLink('https://buy.stripe.com/abc123'), false);
-
-/* Açık yönlendirme: Stripe dışı bir host yönlendirme hedefi OLAMAZ. */
-process.env.STRIPE_PAYMENT_LINK_PRO = 'https://kotu-site.example/odeme';
-sina('Stripe dışı host reddediliyor',
-  checkout.checkoutUrl('pro'), { ok: false, reason: 'checkout_misconfigured' });
-
-process.env.STRIPE_PAYMENT_LINK_PRO = 'http://buy.stripe.com/test/abc123';
-sina('http (şifresiz) reddediliyor',
-  checkout.checkoutUrl('pro'), { ok: false, reason: 'checkout_misconfigured' });
-
-/* Alan adı sonuna Stripe eklenmiş bir host da Stripe değil. */
-process.env.STRIPE_PAYMENT_LINK_PRO = 'https://buy.stripe.com.kotu.example/odeme';
-sina('benzer görünen host reddediliyor',
-  checkout.checkoutUrl('pro'), { ok: false, reason: 'checkout_misconfigured' });
-
-process.env.STRIPE_PAYMENT_LINK_PRO = 'bu bir adres degil';
-sina('ayrıştırılamayan değer reddediliyor',
-  checkout.checkoutUrl('pro'), { ok: false, reason: 'checkout_misconfigured' });
-
-sina('free planın ödeme bağlantısı yok',
-  checkout.checkoutUrl('free'), { ok: false, reason: 'unknown_plan' });
-sina('bilinmeyen plan reddediliyor',
-  checkout.checkoutUrl('kurumsal-plus'), { ok: false, reason: 'unknown_plan' });
-
-/* Tarayıcı gezinmesi ile makine isteği ayırt ediliyor: ilkine HTML sayfası,
-   ikincisine JSON dönüyor. */
-sina('tarayıcı isteği HTML istiyor sayılıyor',
-  checkout.wantsHtml({ headers: { accept: 'text/html,application/xhtml+xml' } }), true);
-sina('JSON isteği HTML istemiyor',
-  checkout.wantsHtml({ headers: { accept: 'application/json' } }), false);
-sina('Accept başlığı yoksa JSON', checkout.wantsHtml({ headers: {} }), false);
+/* ---- 4. Sağlayıcı adı doğru ---- */
+sina('/pricing ödemenin iyzico ile alındığını yazıyor', /iyzico/.test(pricing), true);
+sina('/pricing artık Stripe demiyor', /Stripe/.test(pricing), false);
+sina('ana sayfa Stripe demiyor', /Stripe/.test(index), false);
 
 console.log(hata === 0 ? '\nTümü geçti.' : '\n' + hata + ' sınama BAŞARISIZ.');
 process.exit(hata === 0 ? 0 : 1);
