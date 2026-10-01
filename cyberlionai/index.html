@@ -2556,6 +2556,7 @@
             weak_password: 'Bu şifre yeterince güçlü değil. Daha uzun bir şifre deneyin.',
             link_invalid: 'Bağlantı geçersiz veya süresi dolmuş. Yeni bir bağlantı isteyin.',
             too_many_requests: 'Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.',
+            too_many_requests_in: 'Çok fazla deneme yapıldı. {min} dakika sonra tekrar deneyin.',
             not_authenticated: 'Oturumunuz sonlanmış. Tekrar giriş yapın.',
             auth_unavailable: 'Giriş servisi şu anda kullanılamıyor.',
             signup_unavailable: 'Kayıt şu anda tamamlanamıyor. Kısa süre içinde düzeltilecek; lütfen sonra tekrar deneyin.',
@@ -2947,6 +2948,7 @@
             weak_password: 'That password is not strong enough. Try a longer one.',
             link_invalid: 'The link is invalid or has expired. Request a new one.',
             too_many_requests: 'Too many attempts. Please try again later.',
+            too_many_requests_in: 'Too many attempts. Please try again in {min} minutes.',
             not_authenticated: 'Your session ended. Please sign in again.',
             auth_unavailable: 'The sign-in service is unavailable right now.',
             signup_unavailable: 'Sign-up cannot be completed right now. This is being fixed; please try again later.',
@@ -4162,9 +4164,22 @@
         msgEl.hidden = false;
       }
 
-      /** Sunucu hata kodunu kullanıcıya gösterilecek metne çevirir. */
+      /**
+       * Sunucu hata kodunu kullanıcıya gösterilecek metne çevirir.
+       *
+       * Deneme sınırında kalan süre de yazılıyor: sunucu 429 ile birlikte
+       * `retryAfter`'ı saniye olarak gönderiyor. "Bir süre sonra" diyen bir
+       * mesaj, kullanıcıyı düğmeye tekrar bastırıyor ve sayaç her istekte
+       * yeniden uzuyordu; dakikayı söylemek o döngüyü kesiyor.
+       */
       function errText(err) {
         var code = (err && err.code) || 'auth_failed';
+        if (code === 'too_many_requests') {
+          var saniye = Number(err && err.retryAfter);
+          if (isFinite(saniye) && saniye > 0) {
+            return t('auth.err.too_many_requests_in', { min: Math.ceil(saniye / 60) });
+          }
+        }
         var key = 'auth.err.' + code;
         var text = t(key);
         return text === key ? t('auth.err.auth_failed') : text;
@@ -4496,6 +4511,21 @@
         var hash = params.get('token_hash');
         var type = params.get('type');
         var errCode = params.get('error_code') || params.get('error');
+
+        /* Supabase'in VARSAYILAN şablonu ({{ .ConfirmationURL }}) kodu adresin
+           sorgu dizesine değil, # sonrasındaki parçaya koyar. Bu sayfa parçayı
+           okumuyor: oturum HttpOnly çerezde tutuluyor, tarayıcıya jeton
+           verilmiyor. Böyle bir bağlantıyla eskiden HİÇBİR ŞEY olmuyordu —
+           kullanıcı siteye düşüyor, şifre yenileme adımı açılmıyordu. Artık
+           bağlantı kullanılamaz sayılıp söyleniyor; çözüm panodaki şablonu
+           {{ .TokenHash }} sürümüyle değiştirmek (docs/auth.md). */
+        var parca = String(window.location.hash || '');
+        if (!hash && !errCode && /[#&](access_token|error_code|error)=/.test(parca)) {
+          try { window.history.replaceState({}, '', window.location.pathname); } catch (e) {}
+          openModal(); setView('login');
+          showMsg(t('auth.err.link_invalid'), 'error');
+          return Promise.resolve(false);
+        }
 
         if (!hash && !errCode) return Promise.resolve(false);
 

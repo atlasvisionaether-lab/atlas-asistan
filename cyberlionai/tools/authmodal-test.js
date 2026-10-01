@@ -93,5 +93,29 @@ sina('kanca kimlik modülüne bağlı',
   /authModal\.onClose = function \(\) \{ authManager\.resetTransient\(\); \}/.test(html), true);
 sina('resetTransient dışa açılmış', /resetTransient: resetTransient/.test(html), true);
 
+/* ---- 5. Deneme sınırında kalan süre yazılıyor ---- */
+
+const errTextGovde = (html.match(/function errText\(err\)\s*\{[\s\S]*?\n      \}/) || [''])[0];
+sina('errText tanımlı', errTextGovde !== '', true);
+sina('errText deneme sınırını ayrı ele alıyor',
+  /code === 'too_many_requests'/.test(errTextGovde), true);
+sina('errText retryAfter saniyesini dakikaya çeviriyor',
+  /Math\.ceil\(saniye \/ 60\)/.test(errTextGovde), true);
+for (const dil of ['tr', 'en']) {
+  sina(dil + ' çevirisinde too_many_requests_in var',
+    new RegExp("too_many_requests_in: '[^']*\\{min\\}").test(html), true);
+}
+
+/* ---- 6. Varsayılan şablonun # parçalı bağlantısı sessiz kalmıyor ---- */
+
+const linkGovde = (html.match(/function handleEmailLink\(\)\s*\{[\s\S]*?\n      \}/) || [''])[0];
+sina('handleEmailLink tanımlı', linkGovde !== '', true);
+sina('sorgu dizesindeki token_hash okunuyor',
+  /params\.get\('token_hash'\)/.test(linkGovde), true);
+sina('# parçalı (implicit) bağlantı yakalanıyor',
+  /access_token\|error_code\|error/.test(linkGovde), true);
+sina('yakalanınca geçersiz bağlantı mesajı gösteriliyor',
+  /showMsg\(t\('auth\.err\.link_invalid'\), 'error'\)/.test(linkGovde), true);
+
 console.log(hata === 0 ? '\nTümü geçti.' : '\n' + hata + ' sınama BAŞARISIZ.');
 process.exit(hata === 0 ? 0 : 1);
