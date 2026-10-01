@@ -18,7 +18,12 @@
  * endpoint'in çalıştığını hem de akışın doğru döndüğünü doğrulamak içindir.
  */
 
-const { findZoneId, applyTransformRule, maskToken } = require('./_lib/cloudflare.js');
+const { cf, findZoneId, applyTransformRule, maskToken } = require('./_lib/cloudflare.js');
+
+/** Rollback: ruleset icinden kurali siler. Token yalnizca bellekte. */
+async function cfRuleDelete(zoneId, rulesetId, ruleId, token) {
+  return cf('/zones/' + zoneId + '/rulesets/' + rulesetId + '/rules/' + ruleId, 'DELETE', token);
+}
 const db = require('./_lib/db.js');
 
 const FIX_TYPES = ['hsts', 'csp', 'xframe', 'all'];
@@ -45,8 +50,23 @@ async function recordAppliedFix(domain, fixType, ruleId) {
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
+  /* DELETE: rollback — Cloudflare'deki CyberLion kuralını siler (test temizliği). */
+  if (req.method === 'DELETE') {
+    let b = req.body;
+    if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = null; } }
+    const zId = b && typeof b.zoneId === 'string' ? b.zoneId.trim() : null;
+    const rsId = b && typeof b.rulesetId === 'string' ? b.rulesetId.trim() : null;
+    const rId = b && typeof b.ruleId === 'string' ? b.ruleId.trim() : null;
+    const dToken = (b && typeof b.token === 'string' && b.token) || process.env.CLOUDFLARE_TEST_TOKEN;
+    if (!zId || !rsId || !rId) return res.status(400).json({ error: { code: 'missing_ids' } });
+    if (!dToken || dToken.length < 20) return res.status(401).json({ error: { code: 'token_required' } });
+    const del = await cfRuleDelete(zId, rsId, rId, dToken);
+    if (!del.ok) return res.status(400).json({ error: { code: del.code } });
+    return res.status(200).json({ ok: true, deleted: true, ruleId: rId });
+  }
+
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+    res.setHeader('Allow', 'POST, DELETE');
     return res.status(405).json({ error: { code: 'method_not_allowed' } });
   }
 
@@ -110,6 +130,7 @@ module.exports = async function handler(req, res) {
     fixType: fixType,
     domain: domain,
     zoneId: zone,
+    rulesetId: applied.rulesetId,
     ruleId: applied.ruleId,
     findingId: findingId,
     tokenMasked: maskToken(),

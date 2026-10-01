@@ -98,9 +98,10 @@ async function applyTransformRule(zoneId, token, fixType) {
   // Mevcut faz ruleset'ini bul
   const list = await cf('/zones/' + zoneId + '/rulesets/phases/http_response_headers_transform/entrypoint', 'GET', token);
   if (list.ok && list.data && list.data.result && list.data.result.id) {
-    const r = await cf('/zones/' + zoneId + '/rulesets/' + list.data.result.id + '/rules', 'POST', token, rule);
+    const rsId = list.data.result.id;
+    const r = await cf('/zones/' + zoneId + '/rulesets/' + rsId + '/rules', 'POST', token, rule);
     if (!r.ok) return { ok: false, code: r.code };
-    return { ok: true, ruleId: r.data && r.data.result ? r.data.result.id : null };
+    return { ok: true, rulesetId: rsId, ruleId: r.data && r.data.result ? r.data.result.id : null };
   }
 
   // Yoksa oluştur
@@ -111,8 +112,12 @@ async function applyTransformRule(zoneId, token, fixType) {
     rules: [rule]
   });
   if (!create.ok) return { ok: false, code: create.code };
-  return { ok: true, ruleId: create.data && create.data.result && create.data.result.rules
-    ? create.data.result.rules[0].id : null };
+  const created = create.data && create.data.result ? create.data.result : null;
+  return {
+    ok: true,
+    rulesetId: created ? created.id : null,
+    ruleId: created && created.rules ? created.rules[0].id : null
+  };
 }
 
 module.exports = { cf, findZoneId, applyTransformRule, FIX_HEADERS, maskToken };

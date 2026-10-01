@@ -126,13 +126,13 @@
         <h2>Tarama Geçmişi</h2>
         <p>Tarama geçmişi, skor trendi ve PDF indirme paneli yakında burada olacak. Şimdilik ücretsiz taramaları ana sayfadan yapabilirsiniz.</p>
 
-        <h2 data-t-tr="Cloudflare Bağla" data-t-en="Connect Cloudflare">Cloudflare Bağla</h2>
+        <h2 data-t-tr="Cloudflare Bağla — 1-Tık Düzeltme (Gerçek)" data-t-en="Connect Cloudflare — 1-Click Fix (Live)">Cloudflare Bağla — 1-Tık Düzeltme (Gerçek)</h2>
         <div class="cf-card">
           <form id="cf-form" novalidate>
             <label for="cf-domain" data-t-tr="Alan adı" data-t-en="Domain">Alan adı</label>
             <input id="cf-domain" type="text" value="cyberlionai.com" autocomplete="off" spellcheck="false" />
             <label for="cf-token" data-t-tr="Cloudflare API Token" data-t-en="Cloudflare API Token">Cloudflare API Token</label>
-            <input id="cf-token" type="password" placeholder="cf_… — bizde saklanmaz" autocomplete="off" />
+            <input id="cf-token" type="password" placeholder="Boş bırakılırsa Preview env token kullanılır — bizde saklanmaz" autocomplete="off" />
             <label for="cf-fix" data-t-tr="Düzeltme Türü" data-t-en="Fix Type">Düzeltme Türü</label>
             <select id="cf-fix">
               <option value="hsts" selected>HSTS — max-age=31536000; includeSubDomains; preload</option>
@@ -140,7 +140,7 @@
               <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
               <option value="all">Tümü (HSTS + CSP + X-Frame)</option>
             </select>
-            <button type="submit" id="cf-btn" data-t-tr="1 Tıkla Ekle" data-t-en="Apply 1-Click Fix">1 Tıkla Ekle</button>
+            <button type="submit" id="cf-btn" data-t-tr="1 Tıkla Ekle (Gerçek)" data-t-en="Apply 1-Click Fix (Live)">1 Tıkla Ekle (Gerçek)</button>
             <p class="cf-result" id="cf-result" role="status" aria-live="polite"></p>
           </form>
           <p class="cf-warn" data-t-tr="Token'ınız bizde saklanmaz; yalnızca bu istek için kullanılır ve sonrasında bellekten silinir. Rollback için Cloudflare Dashboard > Rules > Transform Rules'dan kuralı silin. Bu 'Tam Otomatik Düzeltme' değil; 'Cloudflare ile 1-Tık Düzeltme (kendi API token'ınızla)'. Token iptali için Cloudflare > My Profile > API Tokens'dan silebilirsiniz."
@@ -164,7 +164,7 @@
             <label for="cf-domain">Domain</label>
             <input id="cf-domain" type="text" value="cyberlionai.com" autocomplete="off" spellcheck="false" />
             <label for="cf-token">Cloudflare API Token</label>
-            <input id="cf-token" type="password" placeholder="cf_… — never stored" autocomplete="off" />
+            <input id="cf-token" type="password" placeholder="Leave empty to use the Preview env token — never stored" autocomplete="off" />
             <label for="cf-fix">Fix Type</label>
             <select id="cf-fix">
               <option value="hsts" selected>HSTS — max-age=31536000; includeSubDomains; preload</option>
@@ -172,7 +172,7 @@
               <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
               <option value="all">All (HSTS + CSP + X-Frame)</option>
             </select>
-            <button type="submit" id="cf-btn">Apply 1-Click Fix</button>
+            <button type="submit" id="cf-btn">Apply 1-Click Fix (Live)</button>
             <p class="cf-result" id="cf-result" role="status" aria-live="polite"></p>
           </form>
           <p class="cf-warn">Your token is never stored; it is used only for this request and then discarded. To roll back, delete the rule in Cloudflare Dashboard &gt; Rules &gt; Transform Rules. This is not "fully automatic fixing"; it is "1-Click Fix via Cloudflare (with your own API token)". You can revoke the token in Cloudflare &gt; My Profile &gt; API Tokens.</p>
