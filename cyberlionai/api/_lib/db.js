@@ -313,8 +313,88 @@ async function saveAutofixFinding(jobId, domain, fixType, ruleId) {
   return rows && rows[0] ? rows[0].id : null;
 }
 
+/* ============================================================
+   Ana sayfadaki SAYAÇ için toplamlar.
+
+   SAHİPSİZ ve KİMLİKSİZ: yalnızca kaç tarama yapıldığı, kaç ayrı alan adı
+   tarandığı, ortalama skor ve son yedi günün günlük dağılımı. Alan adının
+   KENDİSİ dışarı çıkmıyor (yalnızca benzersiz sayısı için sayılıyor) ve
+   kullanıcı/oturum bilgisi bu yanıtta yok.
+
+   Neden SQL tarafında COUNT/AVG değil: `countryCounts` ile aynı sebep —
+   PostgREST'in toplama desteği sürüme bağlı ve bu depoda "sürüm tahmin etme"
+   kuralı var. Gereken sütunlar ÜST SINIRA kadar çekilip burada sayılıyor.
+   Sınıra dayanıldığında bu SAKLANMIYOR: `truncated` ile dışarı bildiriliyor
+   ve o noktada doğrusu bir veritabanı görünümü/RPC'ye geçmektir.
+
+   `cloudflare-transform://` ile başlayan satırlar bir TARAMA DEĞİL: Cloudflare
+   1-Tık Düzeltme'nin denetim izi aynı tabloya yazılıyor (bkz. saveAutofixJob).
+   Sayaca katılsalardı "taranan site" sayısı düzeltme sayısıyla şişerdi.
+   Ayıklama burada, JS tarafında yapılıyor — PostgREST'in `like` kalıbında
+   `://` kaçışını tahmin etmek yerine. */
+const STATS_LIMIT = 10000;
+const AUTOFIX_URL_PREFIX = 'cloudflare-transform://';
+const TREND_DAYS = 7;
+
+function utcDay(iso) {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
+async function scanStats() {
+  const query = 'scan_jobs'
+    + '?select=domain,score,status,url,created_at'
+    + '&order=created_at.desc'
+    + '&limit=' + (STATS_LIMIT + 1);
+
+  const rows = await request(query, {});
+  const list = Array.isArray(rows) ? rows : [];
+  const truncated = list.length > STATS_LIMIT;
+  const sayilan = truncated ? list.slice(0, STATS_LIMIT) : list;
+
+  /* Son yedi günün iskeleti ÖNCE kuruluyor: tarama olmayan gün listeden
+     düşerse grafik günleri kaydırır ve boş günü yoğun günün yanına koyar. */
+  const gunler = new Map();
+  const bugun = new Date();
+  for (let i = TREND_DAYS - 1; i >= 0; i--) {
+    const d = new Date(bugun.getTime() - i * 86400000);
+    gunler.set(d.toISOString().slice(0, 10), 0);
+  }
+
+  const alanAdlari = new Set();
+  let taramaSayisi = 0;
+  let skorToplami = 0;
+  let skorAdedi = 0;
+
+  sayilan.forEach(function (r) {
+    if (!r || typeof r.url !== 'string') return;
+    if (r.url.indexOf(AUTOFIX_URL_PREFIX) === 0) return;
+    if (r.status !== 'completed') return;
+
+    taramaSayisi += 1;
+    if (typeof r.domain === 'string' && r.domain) alanAdlari.add(r.domain.toLowerCase());
+    if (typeof r.score === 'number') { skorToplami += r.score; skorAdedi += 1; }
+
+    const gun = utcDay(r.created_at);
+    if (gun !== null && gunler.has(gun)) gunler.set(gun, gunler.get(gun) + 1);
+  });
+
+  return {
+    totalScans: taramaSayisi,
+    uniqueDomains: alanAdlari.size,
+    /* Ortalama yalnızca skoru OLAN taramalardan; başarısız tarama skoru
+       null bırakır ve sıfır sayılması ortalamayı yanlış aşağı çeker. */
+    averageScore: skorAdedi > 0 ? Math.round(skorToplami / skorAdedi) : null,
+    scoredScans: skorAdedi,
+    last7Days: Array.from(gunler.entries()).map(function (p) {
+      return { date: p[0], count: p[1] };
+    }),
+    truncated: truncated
+  };
+}
+
 module.exports = {
 
   isConfigured, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
-  sanitizeFindings, claimAnonymousScans
+  sanitizeFindings, claimAnonymousScans, scanStats
 };

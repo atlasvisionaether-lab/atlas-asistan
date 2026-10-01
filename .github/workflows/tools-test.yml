@@ -70,6 +70,12 @@ jobs:
       - name: Puanlama kalibrasyonu
         run: node cyberlionai/tools/calibration-test.js
 
+      # Ana sayfa sayaci NEYI sayiyor. scan_jobs tablosu Cloudflare duzeltme
+      # denetim izini de tutuyor; ayiklanmazsa "taranan site" sayisi her
+      # duzeltmede sisiyor ve ziyaretciye yanlis sayi gosteriliyor.
+      - name: Ana sayfa sayacı
+        run: node cyberlionai/tools/stats-test.js
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do

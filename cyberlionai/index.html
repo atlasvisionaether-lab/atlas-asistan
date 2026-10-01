@@ -1611,6 +1611,15 @@
         </div>
 
         <div class="hero__stats">
+          <!-- Sayaç ÖLÇÜLEN bir sayı: /api/stats -> scan_jobs tablosundaki
+               tamamlanmış tarama adedi. Uç cevap vermezse bu kutu hiç
+               görünmez (hidden kalkmaz): sayamadığımız bir sayıyı "0" diye
+               göstermek de uydurmak olurdu. Bu yüzden sunucu tarafında bir
+               değer gömülmüyor ve işaretlemede sabit sayı yok. -->
+          <div class="stat reveal" id="heroScans" hidden>
+            <span class="stat__value" id="heroScansValue" data-count="0" data-suffix="+">0+</span>
+            <span class="stat__label" data-i18n="hero.stat1">Taranan Site (Canlı)</span>
+          </div>
           <div class="stat reveal" style="--reveal-delay:240ms">
             <span class="stat__value" data-i18n="hero.stat3v">7/24</span>
             <span class="stat__label" data-i18n="hero.stat3">Hızlı Tarama</span>
@@ -2244,6 +2253,7 @@
           scanPlaceholder: 'ornek.com',
           scanNote: 'Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.',
           cta1: 'Hemen Tara', cta2: "Pro'ya Geç", cta3: 'Nasıl Çalışır?', cta4: 'Örnek Rapor (PDF)',
+          stat1: 'Taranan Site (Canlı)',
           stat3: 'Hızlı Tarama', stat3v: '7/24'
         },
         scan: {
@@ -2636,6 +2646,7 @@
           scanPlaceholder: 'example.com',
           scanNote: 'No sign-up required — 5 free tests, results in seconds.',
           cta1: 'Scan Now', cta2: 'Go Pro', cta3: 'How It Works', cta4: 'Sample Report (PDF)',
+          stat1: 'Sites Scanned (Live)',
           stat3: 'Fast Scanning', stat3v: '24/7'
         },
         scan: {
@@ -3225,6 +3236,45 @@
         else el.dataset.done = '1';
       })(performance.now());
     }
+
+    /**
+     * Ana sayfadaki sayacı ÖLÇÜLEN değerle doldurur.
+     *
+     * Kutu işaretlemede `hidden` duruyor ve yalnızca uç gerçek bir sayı
+     * döndürdüğünde açılıyor. Sebep: uç düştüğünde ya da veritabanı
+     * yapılandırılmadığında "0+ Taranan Site" yazmak, ölçemediğimiz bir şeyi
+     * ölçmüş gibi göstermek olur — uydurma 10.000 ile aynı hata, küçüğü.
+     * Sayının sıfır olması ise ayrı bir durum ve dürüstçe gösteriliyor.
+     *
+     * Sayaç `.reveal` gözlemcisinden bağımsız tetikleniyor: kutu açıldığında
+     * gözlemci büyük olasılıkla o bölgeyi çoktan geçmiş olur.
+     */
+    function loadLiveStats() {
+      var box = document.getElementById('heroScans');
+      var value = document.getElementById('heroScansValue');
+      if (!box || !value) return;
+
+      fetch('/api/stats', { headers: { 'Accept': 'application/json' } })
+        .then(function (res) {
+          if (!res.ok) throw new Error('stats_http_' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          if (!data || typeof data.totalScans !== 'number') throw new Error('stats_malformed');
+          value.setAttribute('data-count', String(data.totalScans));
+          value.dataset.done = '';
+          box.hidden = false;
+          box.classList.add('is-visible');
+          animateCounter(value);
+          log('canlı sayaç:', data.totalScans, 'tarama /', data.uniqueDomains, 'alan adı');
+        })
+        .catch(function (err) {
+          /* Kutu kapalı kalıyor. Hata YUTULMUYOR, loga yazılıyor. */
+          if (window.console) console.warn('stats:', err.message);
+        });
+    }
+
+    loadLiveStats();
 
     /** Dil değişince tamamlanmış sayaçları yeni yerel biçime çevirir. */
     function formatCounters() {
