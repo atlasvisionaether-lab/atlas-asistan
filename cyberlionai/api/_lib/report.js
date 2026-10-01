@@ -136,7 +136,9 @@ const CHECKS = {
        girmiyorlar (agirlik info=0) ama bulgu olarak raporlaniyorlar. */
     spf: ['SPF kaydı', 'SPF olmadan üçüncü bir kişi bu alan adı adına e-posta gönderebilir ve alıcının bunu eleyecek dayanağı olmaz.', 'TXT kaydı:  v=spf1 include:<posta sağlayıcınız> -all'],
     dmarc: ['DMARC politikası', 'DMARC olmadan (veya p=none ile) SPF/DKIM doğrulamasından geçemeyen sahte e-posta yine teslim edilir.', 'TXT kaydı:  _dmarc.<alan>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<alan>'],
-    dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.']
+    dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.'],
+    caa: ['CAA kaydı', 'CAA kaydı olmayan bir alan adına dünyadaki herhangi bir güvenilir sertifika makamı sertifika kesebilir; makamlardan biri ihlal edilirse sizin adınıza geçerli bir sertifika üretilebilir.', 'CAA kaydı ekleyin:  0 issue "letsencrypt.org"  — yalnızca kullandığınız makamı yazın.'],
+    dnssec: ['DNSSEC imzası', 'İmzasız bir DNS bölgesinde araya giren biri "bu alan adı şu IP\'de" yanıtını değiştirebilir; ziyaretçi sahte sunucuya bağlanır.', 'Alan adı kaydedicinizde DNSSEC\'i açın; DS kaydını üst bölgeye kayıt şirketi ekler.']
   },
   en: {
     https: ['HTTPS in use', 'Unencrypted traffic lets an interceptor read and modify data.', 'Serve all traffic over HTTPS; 301-redirect HTTP to HTTPS.'],
@@ -159,7 +161,9 @@ const CHECKS = {
     sri: ['Subresource Integrity (SRI)', 'If an external script is altered, the page will not notice.', '<script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous">'],
     spf: ['SPF record', 'Without SPF a third party can send email as this domain and the recipient has no basis to reject it.', 'TXT record:  v=spf1 include:<your mail provider> -all'],
     dmarc: ['DMARC policy', 'Without DMARC (or with p=none) forged email that fails SPF/DKIM is still delivered.', 'TXT record:  _dmarc.<domain>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<domain>'],
-    dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.']
+    dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.'],
+    caa: ['CAA record', 'Without a CAA record any publicly trusted certificate authority may issue a certificate for this domain; a breach at any one of them yields a valid certificate in your name.', 'Add a CAA record:  0 issue "letsencrypt.org"  — name only the CA you actually use.'],
+    dnssec: ['DNSSEC signing', 'In an unsigned DNS zone an interceptor can change the answer to "this domain is at that IP" and the visitor reaches a forged server.', 'Enable DNSSEC at your registrar; it publishes the DS record in the parent zone for you.']
   }
 };
 

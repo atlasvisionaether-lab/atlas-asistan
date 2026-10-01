@@ -61,6 +61,11 @@ jobs:
       - name: E-posta kimlik kayıtları
         run: node cyberlionai/tools/mail-test.js
 
+      # CAA ve DNSSEC degerlendiricileri. Olcut DS kaydinin VARLIGI; AD biti
+      # tek basina yaniltici (imzali OLUMSUZ yanitta da gelebiliyor).
+      - name: CAA ve DNSSEC
+        run: node cyberlionai/tools/dnszone-test.js
+
       # "Puan disi" etiketleri ve cevirilerin eksiksizligi. Bir musteri
       # raporunda ham anahtar ("scan_note_not_implemented") gorundugu icin var.
       - name: Puan dışı etiketleri ve çeviriler
