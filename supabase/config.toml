@@ -1,0 +1,4 @@
+project_id = "lfltontezrfcmjntsgix"
+
+[functions.atlas-auto-reply]
+verify_jwt = false

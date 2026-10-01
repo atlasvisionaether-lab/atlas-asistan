@@ -1,0 +1,13 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/supabase/:path*",
+      "destination": "https://lfltontezrfcmjntsgix.supabase.co/:path*"
+    }
+  ]
+}
