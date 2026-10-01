@@ -121,6 +121,27 @@ module.exports = async function handler(req, res) {
       result.scanId = null;
     }
 
+    /*
+     * TODO (Görev 6 — e-posta): RESEND_API_KEY eklendiğinde aktif olacak.
+     * TODO (Görev 6 — e-posta): await resend.emails.send({
+     *   from: 'Cyber Lion AI <destek@cyberlionai.com>',
+     *   to: owner.email || null,
+     *   subject: 'Cyber Lion AI - Tarama Raporu: ' + result.host,
+     *   attachments: [{ filename: 'rapor.pdf', content: pdfBase64 }]
+     * });
+     * Not: Google Workspace aktif olunca destek@ maili test et.
+     *
+     * TODO (Görev 6 — Telegram): TELEGRAM_BOT_TOKEN ve TELEGRAM_CHAT_ID
+     * eklendiğinde aktif olacak:
+     * TODO (Görev 6 — Telegram): await fetch('https://api.telegram.org/bot'
+     *   + process.env.TELEGRAM_BOT_TOKEN + '/sendMessage', {
+     *   method: 'POST',
+     *   headers: { 'Content-Type': 'application/json' },
+     *   body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID,
+     *     text: 'Yeni tarama: ' + result.host })
+     * });
+     */
+
     return res.status(200).json(result);
   } catch (err) {
     const code = (err && err.message) || 'scan_failed';
