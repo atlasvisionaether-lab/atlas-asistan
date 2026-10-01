@@ -66,10 +66,7 @@
     border-bottom:1px solid var(--hairline)}
   p{margin:0 0 15px;color:var(--text-gray)}
   strong{color:var(--text-white);font-weight:600}
-  /* Ödeme açılmamışsa gösterilen uyarı. Sessizce kaybolan bir buton yerine
-     ne olduğunu söyleyen bir satır: müşteri tıkladığında bir şey olmadığını
-     anlamakta kalmasın. */
-    /* Sandbox'ta görünen rozet. Müşteri gerçek bir kart girmeden önce ödemenin
+  /* Sandbox'ta görünen rozet. Müşteri gerçek bir kart girmeden önce ödemenin
      test modunda olduğunu BİLMEK zorunda; sessizce test modunda kalmak,
      çalıştığını sanılan bir ödeme sayfası bırakmak olurdu. */
   .testbadge{display:none;align-items:center;gap:9px;margin:0 0 22px;padding:11px 16px;
@@ -77,6 +74,9 @@
     font-family:var(--font-heading);font-size:.68rem;font-weight:600;letter-spacing:.08em;
     text-transform:uppercase;color:var(--gold-light)}
   .testbadge[data-on="1"]{display:inline-flex}
+  /* Ödeme açılmamışsa gösterilen uyarı. Sessizce kaybolan bir buton yerine
+     ne olduğunu söyleyen bir satır: müşteri tıkladığında bir şey olmadığını
+     anlamakta kalmasın. */
   .notice{margin:0 0 26px;padding:14px 18px;border-radius:10px;
     border:1px solid rgba(0,212,255,.3);background:rgba(0,212,255,.07);color:var(--text-white);font-size:.92rem}
   .plans{display:grid;gap:18px;grid-template-columns:1fr}
