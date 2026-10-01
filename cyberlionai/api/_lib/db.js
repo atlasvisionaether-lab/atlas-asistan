@@ -270,8 +270,51 @@ async function saveOwaspJob(result, owner, versions, consent) {
   return jobId;
 }
 
+
+/* ============================================================
+   Cloudflare 1-Tık Düzeltme denetim izi (token'sız).
+   Yazma yalnızca servis rolü; anon policy yok.
+   ============================================================ */
+async function saveAutofixJob(domain, fixType, ruleId) {
+  const row = {
+    domain: domain,
+    url: 'cloudflare-transform://' + domain + '/' + fixType,
+    status: 'completed',
+    result: { autofix: true, fixType: fixType, ruleId: ruleId || null },
+    score: null,
+    scanner_mode: 'passive',
+    completed_at: new Date().toISOString()
+  };
+  const rows = await request('scan_jobs', {
+    method: 'POST',
+    body: row,
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+async function saveAutofixFinding(jobId, domain, fixType, ruleId) {
+  const row = {
+    job_id: jobId,
+    owasp_category: 'A05',
+    severity: 'info',
+    title: 'Auto-Fix Applied via Cloudflare',
+    description: '1-click fix applied: ' + fixType.toUpperCase()
+      + ' header set via Cloudflare Transform Rule (user-provided token)',
+    evidence: 'zone=' + domain + '; ruleId=' + (ruleId || 'n/a')
+      + '; fixedAt=' + new Date().toISOString(),
+    fix_code: null
+  };
+  const rows = await request('scan_findings', {
+    method: 'POST',
+    body: row,
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
 module.exports = {
 
-  isConfigured, saveScan, saveOwaspJob, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
+  isConfigured, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans
 };
