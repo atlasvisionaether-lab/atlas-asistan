@@ -218,8 +218,60 @@ async function claimAnonymousScans(sessionId, userId) {
   return rows ? rows.length : 0;
 }
 
+
+/* ============================================================
+   OWASP LITE: scan_jobs + scan_findings kaydı (servis rolü).
+   Yazma yalnızca buradan; anon/authenticated INSERT policy yok.
+   ============================================================ */
+async function saveOwaspJob(result, owner, versions, consent) {
+  const row = {
+    user_id: owner.userId || null,
+    domain: result.host,
+    url: result.url,
+    status: 'completed',
+    result: {
+      score: result.score,
+      summary: result.summary,
+      owaspFailedCategories: result.owaspFailedCategories || {},
+      activeChecksConsent: consent === true
+    },
+    score: typeof result.score === 'number' ? result.score : null,
+    scanner_mode: consent === true ? 'active' : 'passive',
+    consent_ip: consent === true ? (owner.ip || null) : null,
+    consent_at: consent === true ? new Date().toISOString() : null,
+    country: result.country
+  };
+  const rows = await request('scan_jobs', {
+    method: 'POST',
+    body: row,
+    headers: { 'Prefer': 'return=representation' }
+  });
+  const jobId = rows && rows[0] ? rows[0].id : null;
+
+  const findings = result.owaspFindings || [];
+  if (jobId && findings.length) {
+    const payload = findings.map(function (f) {
+      return {
+        job_id: jobId,
+        owasp_category: f.owasp_category,
+        severity: f.severity,
+        title: f.title.slice(0, 300),
+        description: (f.description || '').slice(0, 2000),
+        evidence: (f.evidence || '').slice(0, 500),
+        fix_code: (f.fix_code || '').slice(0, 4000)
+      };
+    });
+    await request('scan_findings', {
+      method: 'POST',
+      body: payload,
+      headers: { 'Prefer': 'return=minimal' }
+    });
+  }
+  return jobId;
+}
+
 module.exports = {
 
-  isConfigured, saveScan, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
+  isConfigured, saveScan, saveOwaspJob, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans
 };

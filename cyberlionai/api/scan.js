@@ -78,6 +78,14 @@ module.exports = async function handler(req, res) {
   const url = body && body.url;
   if (!url) return res.status(400).json({ error: { code: 'empty' } });
 
+  /* Aktif kontroller (A03: XSS yansıma / SQLi hata) yalnızca sahiplik
+     onayı ile çalışır. Onay etiketi isteğe bağlıdır; yoksa tarama
+     pasif modda yapılır ve aktif kontroller 'skipped' döner. */
+  const consent = body && body.consent === true;
+  if (consent && !(body && typeof body.domainOwnership === 'boolean' ? body.domainOwnership : true)) {
+    return res.status(400).json({ error: { code: 'consent_required' } });
+  }
+
   // Kota önce ayrılır: eşzamanlı iki istek son hakkı iki kez harcayamaz.
   let quota;
   try {
@@ -99,7 +107,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const result = await scanSite(url);
+    const result = await scanSite(url, { consent: consent });
     result.quota = {
       used: quota.used,
       limit: FREE_SCAN_LIMIT,
@@ -110,6 +118,16 @@ module.exports = async function handler(req, res) {
     // Geçmişe kaydet. Kayıt başarısız olursa tarama sonucu yine döner:
     // geçmiş bir kolaylık, taramanın kendisi değil.
     if (db.isConfigured()) {
+      /* OWASP job kaydı: aktif kontrollerde sahiplik onayı IP ve zaman
+         damgasıyla loglanır (hukuki ispat). İstisnada tarama yine döner. */
+      try {
+        result.jobId = await db.saveOwaspJob(result,
+          { userId: owner.userId, ip: clientIp(req) },
+          { scanner: SCANNER_VERSION, report: REPORT_VERSION }, consent);
+      } catch (err) {
+        if (console && console.error) console.error('owasp job save failed:', err.message);
+        result.jobId = null;
+      }
       try {
         result.scanId = await db.saveScan(result, ownerRef(owner),
           { scanner: SCANNER_VERSION, report: REPORT_VERSION });

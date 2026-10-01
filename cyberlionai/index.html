@@ -1564,6 +1564,11 @@
               <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
               <span data-i18n="hero.cta1">Hemen Tara</span>
             </button>
+                    <label class="scan__consent" for="scanConsent" style="display:flex;gap:8px;align-items:flex-start;
+              margin:10px 0 0;font-size:0.72rem;line-height:1.5;color:var(--text-muted,#a0a0b0);cursor:pointer">
+              <input type="checkbox" id="scanConsent" style="margin-top:2px;accent-color:#d4af37" />
+              <span data-i18n="hero.consent">Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.</span>
+            </label>
           </form>
           <p class="scan__note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
@@ -3507,14 +3512,15 @@
        * güvenlik başlıklarını ve TLS yapılandırmasını ölçer ve sonucu tek
        * yanıtta döndürür (ayrı bir sonuç sorgusu gerekmez).
        */
-      startScan: function (url, type, mode) {
+      startScan: function (url, type, mode, consent) {
         if (!CONFIG.liveScan) {
           return Promise.reject({ code: 'scan_failed' });
         }
         return fetch(CONFIG.apiBaseUrl + '/api/scan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: url, type: type || 'quick', mode: mode || null })
+          body: JSON.stringify({ url: url, type: type || 'quick', mode: mode || null,
+            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true })
         }).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
