@@ -93,6 +93,66 @@
   @media(min-width:640px){.fbar{flex-direction:row;justify-content:space-between;text-align:left}}
   @media(max-width:400px){.logo span{display:none}}
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:.001ms!important}}
+  /* ---- Taramalarım panosu ---- */
+  .dash{margin-top:54px;padding-top:34px;border-top:1px solid var(--hairline)}
+  .dash h3{font-family:var(--font-heading);font-size:.82rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--gold-primary);margin:0 0 12px}
+  .dash-card{background:var(--glass-bg);border:1px solid var(--glass-border);
+    border-radius:12px;padding:18px;margin-bottom:18px}
+  .dash-card label{display:block;font-size:.78rem;color:var(--text-gray);margin:12px 0 6px}
+  .dash-card input{width:100%;padding:11px 12px;border-radius:8px;background:rgba(255,255,255,.04);
+    border:1px solid var(--glass-border);color:var(--text-white);font:inherit;font-size:.92rem}
+  .dash-card button[type=submit]{margin-top:14px;padding:11px 18px;border:none;border-radius:8px;
+    font-family:var(--font-heading);font-size:.72rem;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;cursor:pointer;color:#0a0a0f;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold-primary))}
+  .dash-card button[type=submit][disabled]{opacity:.55;cursor:progress}
+  .dash-note{font-size:.82rem;color:var(--text-gray);margin:10px 0 0}
+  .dash-who{display:flex;align-items:center;gap:12px;font-size:.85rem;color:var(--text-gray);margin:0 0 16px}
+  .dash-link{background:none;border:none;color:var(--gold-primary);font:inherit;font-size:.82rem;
+    text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0}
+  .dash-filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+  .dash-chip{font:inherit;font-family:var(--font-heading);font-size:.68rem;font-weight:600;
+    letter-spacing:.06em;text-transform:uppercase;padding:8px 13px;border-radius:999px;cursor:pointer;
+    background:rgba(255,255,255,.03);border:1px solid var(--glass-border);color:var(--text-gray)}
+  .dash-chip[aria-pressed=true]{color:#0a0a0f;border-color:transparent;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold-primary))}
+  .dash-list{display:grid;gap:10px}
+  .dash-row{background:var(--card-black);border:1px solid var(--hairline);border-radius:10px;padding:14px 16px}
+  .dash-row__top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .dash-row__domain{font-weight:600;color:var(--text-white);word-break:break-all}
+  .dash-row__meta{font-size:.78rem;color:var(--text-gray);margin-left:auto;white-space:nowrap}
+  .dash-score{font-family:var(--font-heading);font-weight:700;font-size:.9rem;padding:3px 9px;border-radius:6px}
+  .dash-score--low{background:rgba(28,120,61,.18);color:#5fd98a}
+  .dash-score--medium{background:rgba(184,135,10,.18);color:#ffd166}
+  .dash-score--high{background:rgba(217,102,13,.18);color:#ffb067}
+  .dash-score--critical{background:rgba(204,41,33,.18);color:#ff8f87}
+  .dash-state{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-gray)}
+  .dash-row__acts{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+  .dash-row__acts a,.dash-row__acts button{font-size:.78rem;color:var(--gold-primary);background:none;
+    border:none;padding:0;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:3px}
+  .dash-detail{margin-top:14px;padding-top:12px;border-top:1px dashed var(--hairline)}
+  .dash-group{margin-bottom:14px}
+  .dash-group__h{font-size:.8rem;font-weight:600;color:var(--gold-primary);margin:0 0 8px}
+  .dash-find{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .dash-find:last-child{border-bottom:none}
+  .dash-find__t{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+  .dash-sev{font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    padding:2px 7px;border-radius:4px;color:#0a0a0f;flex:0 0 auto}
+  .dash-sev--critical{background:#cc2921;color:#fff}
+  .dash-sev--high{background:#d9660d}
+  .dash-sev--medium{background:#b8870a}
+  .dash-sev--low{background:#4c6b8c;color:#fff}
+  .dash-sev--info{background:#6b6f78;color:#fff}
+  .dash-find__d{font-size:.82rem;color:var(--text-gray);margin:6px 0 0}
+  .dash-find__e{font-size:.76rem;color:var(--text-gray);margin:6px 0 0;word-break:break-all}
+  .dash-find__fix{margin:8px 0 0;padding:9px 11px;border-radius:8px;background:rgba(0,0,0,.35);
+    border:1px solid var(--hairline);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.74rem;color:#d7e3ea;white-space:pre-wrap;overflow-x:auto}
+  .dash-trend svg{display:block;width:100%;height:auto}
+  .dash-more{margin-top:14px;padding:10px 16px;border-radius:8px;cursor:pointer;font:inherit;
+    font-size:.82rem;background:rgba(255,255,255,.03);border:1px solid var(--glass-border);color:var(--text-white)}
+  @media(max-width:560px){.dash-row__meta{margin-left:0;width:100%}}
 </style>
 </head>
 <body>
@@ -179,6 +239,67 @@
         </div>
       </article>
     </div>
+
+      <!-- ==========================================================
+           TARAMALARIM — hesabın kendi scan_jobs kayıtları.
+
+           Tek blok, iki dil: metinler data-t-tr / data-t-en ile, çünkü
+           sayfanın üst kısmındaki TR/EN article ikizlemesi burada iki ayrı
+           pano demek olurdu ve ikisi zamanla birbirinden ayrışırdı.
+
+           Veri /api/panel/scans ucundan geliyor; tarayıcı Supabase'e
+           DOĞRUDAN bağlanmıyor (depodaki erişim modeli: tüm okuma sunucudan,
+           sahiplik filtresi sorgunun içinde).
+           ========================================================== -->
+      <section id="dash" class="dash">
+        <h2 data-t-tr="Taramalarım" data-t-en="My Scans">Taramalarım</h2>
+
+        <!-- Giriş yapılmamış durum -->
+        <div id="dash-auth" class="dash-card" hidden>
+          <p id="dash-auth-text"
+             data-t-tr="Taramalarınızı görmek için giriş yapın. E-posta adresinizi yazın, tek kullanımlık bir giriş bağlantısı gönderelim."
+             data-t-en="Sign in to see your scans. Enter your email and we will send a one-time sign-in link.">Taramalarınızı görmek için giriş yapın.</p>
+          <form id="dash-login" novalidate>
+            <label for="dash-email" data-t-tr="E-posta" data-t-en="Email">E-posta</label>
+            <input id="dash-email" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="ornek@sirket.com" />
+            <button type="submit" id="dash-login-btn" data-t-tr="Giriş bağlantısı gönder" data-t-en="Send sign-in link">Giriş bağlantısı gönder</button>
+            <p class="dash-note" id="dash-login-msg" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <!-- Giriş yapılmış durum -->
+        <div id="dash-main" hidden>
+          <p class="dash-who">
+            <span id="dash-email-label"></span>
+            <button type="button" id="dash-logout" class="dash-link" data-t-tr="Çıkış" data-t-en="Sign out">Çıkış</button>
+          </p>
+
+          <div class="dash-card" id="dash-trend-card" hidden>
+            <h3 data-t-tr="Skor eğilimi" data-t-en="Score trend">Skor eğilimi</h3>
+            <!-- Grafik satır içi SVG: Chart.js bir CDN script'i demekti ve
+                 script-src'yi gevşetmek gerekirdi. Bir güvenlik ürününün
+                 kendi CSP'sini raporladığı bir grafik için gevşetmesi
+                 tutarsız olurdu; çizgi elle çiziliyor. -->
+            <div id="dash-trend" class="dash-trend"></div>
+            <p class="dash-note" id="dash-trend-note"></p>
+          </div>
+
+          <div class="dash-filters" role="group" aria-label="Filtre">
+            <button type="button" class="dash-chip" data-filter="" aria-pressed="true" data-t-tr="Tümü" data-t-en="All">Tümü</button>
+            <button type="button" class="dash-chip" data-filter="completed" aria-pressed="false" data-t-tr="Tamamlandı" data-t-en="Completed">Tamamlandı</button>
+            <button type="button" class="dash-chip" data-filter="failed" aria-pressed="false" data-t-tr="Başarısız" data-t-en="Failed">Başarısız</button>
+          </div>
+
+          <div id="dash-list" class="dash-list"></div>
+          <p class="dash-note" id="dash-list-msg" role="status" aria-live="polite"></p>
+          <button type="button" id="dash-more" class="dash-more" hidden data-t-tr="Daha fazla" data-t-en="Load more">Daha fazla</button>
+        </div>
+
+        <!-- Uç kapalıysa -->
+        <p class="dash-note" id="dash-down" hidden
+           data-t-tr="Panel verisi şu an okunamıyor. Tarama geçmişiniz kaybolmadı; lütfen birazdan tekrar deneyin."
+           data-t-en="Panel data cannot be read right now. Your scan history is not lost; please try again shortly.">Panel verisi şu an okunamıyor.</p>
+      </section>
   </main>
 
   <footer>
@@ -296,6 +417,394 @@
     /* Dil değişince formlar zaten iki ayrı article içinde; ikisini de bağla. */
     document.addEventListener('DOMContentLoaded', bindAll);
     if (document.readyState !== 'loading') bindAll();
+  })();
+  </script>
+
+  <script>
+  (function () {
+    'use strict';
+    /**
+     * Taramalarım panosu.
+     *
+     * Veri tek bir sunucu ucundan: /api/panel/scans. Tarayıcı Supabase'e
+     * doğrudan bağlanmıyor ve elinde hiçbir anahtar yok; oturum HttpOnly
+     * çerezde, sahiplik filtresi sunucudaki sorgunun içinde.
+     *
+     * Dil: sayfanın kendi data-t-tr/data-t-en düzeni işaretlemedeki sabit
+     * metinleri çeviriyor. JS'in ürettiği metinler burada, L() ile.
+     */
+    var el = function (id) { return document.getElementById(id); };
+    var state = { filter: '', offset: 0, email: null, open: {} };
+
+    function lang() {
+      return document.documentElement.getAttribute('lang') === 'en' ? 'en' : 'tr';
+    }
+
+    var STR = {
+      tr: {
+        sent: 'Giriş bağlantısı gönderildi. E-postanızı kontrol edin.',
+        badEmail: 'Geçerli bir e-posta adresi girin.',
+        sending: 'Gönderiliyor…',
+        tooMany: 'Çok fazla deneme. Bir süre sonra tekrar deneyin.',
+        failed: 'Gönderilemedi. Birazdan tekrar deneyin.',
+        loading: 'Yükleniyor…',
+        empty: 'Henüz taramanız yok. Ana sayfadan bir tarama başlatın.',
+        emptyFiltered: 'Bu süzgeçle eşleşen tarama yok.',
+        pdf: 'PDF indir',
+        detail: 'Bulgular',
+        hide: 'Gizle',
+        noFindings: 'Bu taramada kayıtlı bulgu yok.',
+        evidence: 'Kanıt',
+        fix: 'Düzeltme',
+        other: 'Kategorilendirilmemiş',
+        scoreless: 'skor yok',
+        trendNote: function (n) { return n + ' taramanın skoru, eskiden yeniye.'; },
+        trendThin: 'Eğilim için en az iki skorlu tarama gerekiyor.',
+        state: { completed: 'tamamlandı', failed: 'başarısız', pending: 'bekliyor', running: 'çalışıyor' },
+        sev: { critical: 'kritik', high: 'yüksek', medium: 'orta', low: 'düşük', info: 'bilgi' }
+      },
+      en: {
+        sent: 'Sign-in link sent. Please check your email.',
+        badEmail: 'Enter a valid email address.',
+        sending: 'Sending…',
+        tooMany: 'Too many attempts. Please try again later.',
+        failed: 'Could not send. Please try again shortly.',
+        loading: 'Loading…',
+        empty: 'No scans yet. Start one from the home page.',
+        emptyFiltered: 'No scans match this filter.',
+        pdf: 'Download PDF',
+        detail: 'Findings',
+        hide: 'Hide',
+        noFindings: 'No findings were recorded for this scan.',
+        evidence: 'Evidence',
+        fix: 'Remediation',
+        other: 'Uncategorised',
+        scoreless: 'no score',
+        trendNote: function (n) { return 'Scores of ' + n + ' scans, oldest to newest.'; },
+        trendThin: 'A trend needs at least two scored scans.',
+        state: { completed: 'completed', failed: 'failed', pending: 'pending', running: 'running' },
+        sev: { critical: 'critical', high: 'high', medium: 'medium', low: 'low', info: 'info' }
+      }
+    };
+    function L() { return STR[lang()]; }
+
+    var OWASP = {
+      tr: { A01: 'Bozuk Erişim Denetimi', A02: 'Kriptografik Hatalar', A03: 'Enjeksiyon',
+        A04: 'Güvensiz Tasarım', A05: 'Hatalı Güvenlik Yapılandırması',
+        A06: 'Güncelliğini Yitirmiş Bileşenler', A07: 'Kimlik Doğrulama Hataları',
+        A08: 'Yazılım ve Veri Bütünlüğü Hataları', A09: 'Günlükleme ve İzleme Eksikleri',
+        A10: 'Sunucu Taraflı İstek Sahteciliği' },
+      en: { A01: 'Broken Access Control', A02: 'Cryptographic Failures', A03: 'Injection',
+        A04: 'Insecure Design', A05: 'Security Misconfiguration',
+        A06: 'Vulnerable and Outdated Components', A07: 'Identification and Authentication Failures',
+        A08: 'Software and Data Integrity Failures', A09: 'Security Logging and Monitoring Failures',
+        A10: 'Server-Side Request Forgery' }
+    };
+
+    /* Skor bandı api/_lib/report.js'teki RISK_BANDS ile aynı olmak zorunda:
+       aynı skorun panoda ve PDF'te farklı renkte görünmesi, müşteriye iki
+       farklı değerlendirme sunmak olurdu. */
+    function band(score) {
+      if (typeof score !== 'number') return null;
+      if (score >= 85) return 'low';
+      if (score >= 70) return 'medium';
+      if (score >= 50) return 'high';
+      return 'critical';
+    }
+
+    function fmtDate(iso) {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '—';
+      try {
+        return d.toLocaleDateString(lang() === 'tr' ? 'tr-TR' : 'en-US',
+          { year: 'numeric', month: 'short', day: 'numeric' })
+          + ' ' + d.toLocaleTimeString(lang() === 'tr' ? 'tr-TR' : 'en-US',
+          { hour: '2-digit', minute: '2-digit' });
+      } catch (e) { return iso.slice(0, 16).replace('T', ' '); }
+    }
+
+    /* Metin HER ZAMAN textContent ile yazılıyor, innerHTML ile değil: alan
+       adı, bulgu başlığı ve kanıt satırı taranan SİTEDEN gelen veridir ve
+       HTML olarak yorumlanması panoyu o sitenin eline verirdi. */
+    function tag(name, cls, text) {
+      var n = document.createElement(name);
+      if (cls) n.className = cls;
+      if (text !== undefined && text !== null) n.textContent = String(text);
+      return n;
+    }
+
+    /* ---- Giriş ---- */
+    function showLogin() {
+      el('dash-auth').hidden = false;
+      el('dash-main').hidden = true;
+    }
+
+    function bindLogin() {
+      var form = el('dash-login');
+      if (!form) return;
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var msg = el('dash-login-msg');
+        var btn = el('dash-login-btn');
+        var email = el('dash-email').value.trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { msg.textContent = L().badEmail; return; }
+        msg.textContent = L().sending;
+        btn.disabled = true;
+        fetch('/api/auth/magiclink', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        }).then(function (r) {
+          btn.disabled = false;
+          /* Uç, e-postanın kayıtlı olup olmadığını BİLEREK sızdırmıyor;
+             arayüz de aynı mesajı veriyor. */
+          if (r.ok) { msg.textContent = L().sent; return; }
+          msg.textContent = r.status === 429 ? L().tooMany : L().failed;
+        }).catch(function () { btn.disabled = false; msg.textContent = L().failed; });
+      });
+    }
+
+    el('dash-logout') && el('dash-logout').addEventListener('click', function () {
+      fetch('/api/auth/logout', { method: 'POST' })
+        .then(function () { location.reload(); })
+        .catch(function () { location.reload(); });
+    });
+
+    /* ---- Skor eğilimi: satır içi SVG ---- */
+    function drawTrend(points) {
+      var host = el('dash-trend');
+      var note = el('dash-trend-note');
+      host.textContent = '';
+      if (!points || points.length < 2) {
+        el('dash-trend-card').hidden = points && points.length ? false : true;
+        note.textContent = L().trendThin;
+        return;
+      }
+      el('dash-trend-card').hidden = false;
+      note.textContent = L().trendNote(points.length);
+
+      var W = 640, H = 170, padL = 34, padR = 10, padT = 12, padB = 24;
+      var ns = 'http://www.w3.org/2000/svg';
+      var svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', L().trendNote(points.length));
+
+      /* Y ekseni 0-100'de SABİT: veriye göre ölçeklenen bir eksen, 2 puanlık
+         bir oynamayı uçurum gibi gösterirdi. */
+      var x = function (i) { return padL + (i * (W - padL - padR)) / (points.length - 1); };
+      var y = function (v) { return padT + (1 - v / 100) * (H - padT - padB); };
+
+      [0, 50, 85, 100].forEach(function (v) {
+        var line = document.createElementNS(ns, 'line');
+        line.setAttribute('x1', padL); line.setAttribute('x2', W - padR);
+        line.setAttribute('y1', y(v)); line.setAttribute('y2', y(v));
+        line.setAttribute('stroke', 'rgba(255,255,255,.08)');
+        svg.appendChild(line);
+        var t = document.createElementNS(ns, 'text');
+        t.setAttribute('x', 4); t.setAttribute('y', y(v) + 4);
+        t.setAttribute('fill', 'rgba(160,160,176,.9)');
+        t.setAttribute('font-size', '10');
+        t.textContent = String(v);
+        svg.appendChild(t);
+      });
+
+      var d = points.map(function (p, i) {
+        return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.score).toFixed(1);
+      }).join(' ');
+      var path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', '#d4af37');
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(path);
+
+      points.forEach(function (p, i) {
+        var c = document.createElementNS(ns, 'circle');
+        c.setAttribute('cx', x(i).toFixed(1)); c.setAttribute('cy', y(p.score).toFixed(1));
+        c.setAttribute('r', '3');
+        c.setAttribute('fill', '#ffdf00');
+        var title = document.createElementNS(ns, 'title');
+        /* Nokta başlığı alan adını taşıyor: hangi sitenin skoru olduğu
+           bilinmeden eğilim okunamaz. */
+        title.textContent = p.domain + ' — ' + p.score + ' (' + fmtDate(p.createdAt) + ')';
+        c.appendChild(title);
+        svg.appendChild(c);
+      });
+
+      host.appendChild(svg);
+    }
+
+    /* ---- Bulgu ayrıntısı ---- */
+    function renderDetail(box, detail) {
+      box.textContent = '';
+      if (!detail.totalFindings) {
+        box.appendChild(tag('p', 'dash-note', L().noFindings));
+        return;
+      }
+      var names = OWASP[lang()];
+      detail.groups.forEach(function (g) {
+        var wrap = tag('div', 'dash-group');
+        var label = g.category === 'other'
+          ? L().other
+          : g.category + ' — ' + (names[g.category] || g.category);
+        wrap.appendChild(tag('p', 'dash-group__h', label));
+        g.findings.forEach(function (f) {
+          var item = tag('div', 'dash-find');
+          var head = tag('div', 'dash-find__t');
+          head.appendChild(tag('span', 'dash-sev dash-sev--' + f.severity, L().sev[f.severity] || f.severity));
+          head.appendChild(tag('strong', null, f.title || ''));
+          item.appendChild(head);
+          if (f.description) item.appendChild(tag('p', 'dash-find__d', f.description));
+          if (f.evidence) item.appendChild(tag('p', 'dash-find__e', L().evidence + ': ' + f.evidence));
+          if (f.fixCode) {
+            var pre = tag('pre', 'dash-find__fix', f.fixCode);
+            pre.setAttribute('aria-label', L().fix);
+            item.appendChild(pre);
+          }
+          wrap.appendChild(item);
+        });
+        box.appendChild(wrap);
+      });
+    }
+
+    function toggleDetail(row, job) {
+      var box = row.querySelector('.dash-detail');
+      var btn = row.querySelector('[data-act="detail"]');
+      if (box) {
+        box.remove();
+        btn.textContent = L().detail;
+        delete state.open[job.id];
+        return;
+      }
+      box = tag('div', 'dash-detail');
+      box.appendChild(tag('p', 'dash-note', L().loading));
+      row.appendChild(box);
+      btn.textContent = L().hide;
+      state.open[job.id] = true;
+
+      fetch('/api/panel/scans?id=' + encodeURIComponent(job.id), { headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+          if (!r.ok) throw new Error('detail_' + r.status);
+          return r.json();
+        })
+        .then(function (detail) { renderDetail(box, detail); })
+        .catch(function (err) {
+          box.textContent = '';
+          box.appendChild(tag('p', 'dash-note', L().failed));
+          if (window.console) console.warn('panel detail:', err.message);
+        });
+    }
+
+    /* ---- Liste ---- */
+    function renderRows(items, append) {
+      var list = el('dash-list');
+      if (!append) list.textContent = '';
+      items.forEach(function (job) {
+        var row = tag('div', 'dash-row');
+        var top = tag('div', 'dash-row__top');
+        top.appendChild(tag('span', 'dash-row__domain', job.domain));
+
+        var b = band(job.score);
+        if (b) top.appendChild(tag('span', 'dash-score dash-score--' + b, job.score));
+        else top.appendChild(tag('span', 'dash-state', L().scoreless));
+
+        top.appendChild(tag('span', 'dash-state', L().state[job.status] || job.status));
+        top.appendChild(tag('span', 'dash-row__meta', fmtDate(job.createdAt)));
+        row.appendChild(top);
+
+        var acts = tag('div', 'dash-row__acts');
+        var pdf = tag('a', null, L().pdf);
+        pdf.setAttribute('href', '/api/report?jobId=' + encodeURIComponent(job.id) + '&lang=' + lang());
+        /* İndirme bağlantısı: sunucu Content-Disposition: attachment veriyor. */
+        acts.appendChild(pdf);
+
+        var detailBtn = tag('button', null, L().detail);
+        detailBtn.setAttribute('type', 'button');
+        detailBtn.setAttribute('data-act', 'detail');
+        detailBtn.addEventListener('click', function () { toggleDetail(row, job); });
+        acts.appendChild(detailBtn);
+
+        row.appendChild(acts);
+        list.appendChild(row);
+      });
+    }
+
+    function load(append) {
+      var msg = el('dash-list-msg');
+      msg.textContent = L().loading;
+      var url = '/api/panel/scans?limit=10&offset=' + state.offset
+        + (state.filter ? '&status=' + state.filter : '');
+
+      return fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+          if (r.status === 401) { showLogin(); return null; }
+          if (!r.ok) throw new Error('list_' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data) return;
+          msg.textContent = '';
+          renderRows(data.items, append);
+          if (!data.items.length && !append) {
+            msg.textContent = state.filter ? L().emptyFiltered : L().empty;
+          }
+          el('dash-more').hidden = !data.hasMore;
+          state.offset = data.offset + data.items.length;
+          /* Eğilim yalnızca ilk yüklemede çiziliyor: süzgeçten bağımsız ve
+             sayfalama onu değiştirmiyor. */
+          if (!append) drawTrend(data.trend);
+        })
+        .catch(function (err) {
+          msg.textContent = L().failed;
+          if (window.console) console.warn('panel list:', err.message);
+        });
+    }
+
+    function bindFilters() {
+      var chips = document.querySelectorAll('.dash-chip');
+      for (var i = 0; i < chips.length; i++) {
+        chips[i].addEventListener('click', function () {
+          for (var j = 0; j < chips.length; j++) chips[j].setAttribute('aria-pressed', 'false');
+          this.setAttribute('aria-pressed', 'true');
+          state.filter = this.getAttribute('data-filter') || '';
+          state.offset = 0;
+          load(false);
+        });
+      }
+      el('dash-more').addEventListener('click', function () { load(true); });
+    }
+
+    /* ---- Açılış ---- */
+    function start() {
+      bindLogin();
+      bindFilters();
+
+      fetch('/api/auth/me', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (me) {
+          if (!me || !me.available) {
+            /* Kimlik hizmeti yapılandırılmamış: giriş formu göstermek,
+               çalışmayan bir kapıyı açıkmış gibi sunmak olurdu. */
+            el('dash-down').hidden = false;
+            return;
+          }
+          if (!me.authenticated) { showLogin(); return; }
+          state.email = me.user && me.user.email;
+          el('dash-main').hidden = false;
+          el('dash-auth').hidden = true;
+          el('dash-email-label').textContent = state.email || '';
+          load(false);
+        })
+        .catch(function () { el('dash-down').hidden = false; });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', start);
+    } else {
+      start();
+    }
   })();
   </script>
 

@@ -3249,6 +3249,8 @@
      * Sayaç `.reveal` gözlemcisinden bağımsız tetikleniyor: kutu açıldığında
      * gözlemci büyük olasılıkla o bölgeyi çoktan geçmiş olur.
      */
+    var STATS_MIN_TO_SHOW = 50;
+
     function loadLiveStats() {
       var box = document.getElementById('heroScans');
       var value = document.getElementById('heroScansValue');
@@ -3261,6 +3263,15 @@
         })
         .then(function (data) {
           if (!data || typeof data.totalScans !== 'number') throw new Error('stats_malformed');
+          /* Eşiğin ALTINDA kutu açılmıyor. Sayı doğru ama bir güvenlik
+             ürününün ana sayfasında "3+ taranan site" yazması ürünü
+             olduğundan zayıf gösteriyor; eşik dolana kadar hiç sayı
+             göstermemek, küçük bir sayı göstermekten de uydurma bir sayı
+             göstermekten de dürüst. Eşik tek yerde: aşağıdaki sabit. */
+          if (data.totalScans < STATS_MIN_TO_SHOW) {
+            log('canlı sayaç eşiğin altında, gizli:', data.totalScans, '<', STATS_MIN_TO_SHOW);
+            return;
+          }
           value.setAttribute('data-count', String(data.totalScans));
           value.dataset.done = '';
           box.hidden = false;

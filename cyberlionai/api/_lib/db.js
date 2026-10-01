@@ -393,8 +393,233 @@ async function scanStats() {
   };
 }
 
+/* ============================================================
+   PANEL: hesabın kendi scan_jobs kayıtları ve bulguları.
+
+   Sahiplik filtresi SORGUNUN İÇİNDE (`user_id=eq.…`), tıpkı `ownerFilter`
+   kullanan uçlarda olduğu gibi: başka bir kullanıcının iş kimliğini bilmek
+   işe yaramaz. Tarayıcı veritabanına hiç bağlanmıyor; panel bu sunucu
+   uçlarından okuyor. Tablodaki RLS bunun ikinci katmanı, tek katmanı değil.
+   ============================================================ */
+const PANEL_MAX_LIMIT = 50;
+
+function jobOwnerFilter(userId) {
+  return 'user_id=eq.' + encodeURIComponent(userId);
+}
+
+/** Bir satır gerçekten tarama mı, yoksa düzeltme denetim izi mi? */
+function isScanRow(row) {
+  return !!row && typeof row.url === 'string' && row.url.indexOf(AUTOFIX_URL_PREFIX) !== 0;
+}
+
+/**
+ * Hesabın taramaları, yeniden eskiye.
+ *
+ * `status` verilirse ona göre süzülür ('completed' | 'failed' | …). Düzeltme
+ * denetim satırları listede GÖRÜNMEZ: panel "taramalarım" diyor ve bir
+ * Cloudflare düzeltmesi tarama değil.
+ */
+async function listJobs(userId, options) {
+  const opts = options || {};
+  const limit = Math.min(Math.max(parseInt(opts.limit, 10) || 20, 1), PANEL_MAX_LIMIT);
+  const offset = Math.max(parseInt(opts.offset, 10) || 0, 0);
+
+  let query = 'scan_jobs'
+    + '?' + jobOwnerFilter(userId)
+    + '&select=id,domain,url,status,score,scanner_mode,country,created_at,completed_at'
+    + '&order=created_at.desc'
+    /* Bir fazlası isteniyor: sonraki sayfa var mı sorusunu ayrı bir sayım
+       turu yapmadan cevaplamak için (history.js ile aynı desen). */
+    + '&limit=' + (limit + 1) + '&offset=' + offset;
+
+  if (typeof opts.status === 'string' && /^[a-z]{1,16}$/.test(opts.status)) {
+    query += '&status=eq.' + opts.status;
+  }
+
+  const rows = await request(query, {});
+  const list = (Array.isArray(rows) ? rows : []).filter(isScanRow);
+  const hasMore = list.length > limit;
+
+  return {
+    items: (hasMore ? list.slice(0, limit) : list).map(function (r) {
+      return {
+        id: r.id, domain: r.domain, status: r.status, score: r.score,
+        scannerMode: r.scanner_mode, country: r.country,
+        createdAt: r.created_at, completedAt: r.completed_at
+      };
+    }),
+    limit: limit,
+    offset: offset,
+    hasMore: hasMore
+  };
+}
+
+/**
+ * Skor eğilimi: hesabın skoru olan taramaları, ESKİDEN YENİYE.
+ *
+ * Grafiğin x ekseni gün değil TARAMA: bir hesabın taramaları günlere seyrek
+ * dağılıyor ve günlük ortalama, tek taramalı bir günü yoğun bir günle aynı
+ * ağırlıkta gösterirdi. Nokta başına tarih veriliyor, arayüz etiketi ondan
+ * yazıyor.
+ */
+async function jobScoreTrend(userId, limit) {
+  const n = Math.min(Math.max(parseInt(limit, 10) || 30, 1), 200);
+  const query = 'scan_jobs'
+    + '?' + jobOwnerFilter(userId)
+    + '&status=eq.completed'
+    + '&score=not.is.null'
+    + '&select=id,domain,score,created_at,url'
+    + '&order=created_at.desc'
+    + '&limit=' + n;
+
+  const rows = await request(query, {});
+  return (Array.isArray(rows) ? rows : [])
+    .filter(isScanRow)
+    .map(function (r) {
+      return { id: r.id, domain: r.domain, score: r.score, createdAt: r.created_at };
+    })
+    .reverse();
+}
+
+/** Tek iş — sahiplik filtresi sorgunun içinde. */
+async function getJob(userId, jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const rows = await request('scan_jobs'
+    + '?' + jobOwnerFilter(userId)
+    + '&id=eq.' + encodeURIComponent(jobId)
+    + '&select=*&limit=1');
+  const row = rows && rows[0] ? rows[0] : null;
+  return isScanRow(row) ? row : null;
+}
+
+/**
+ * Bir işin bulguları, OWASP kategorisine göre gruplanmış.
+ *
+ * ÖNCE iş sahiplik filtresiyle okunuyor, bulgular ANCAK sonra: `job_id`
+ * üzerinden doğrudan sorgulamak, başkasının iş kimliğini bilen birine o işin
+ * bulgularını verirdi. `scan_findings` tablosunda sahip sütunu yok, sahiplik
+ * yalnızca iş üzerinden kurulabiliyor.
+ *
+ * Dönüş null ise iş yok ya da bu hesaba ait değil — ikisi arayüze AYNI
+ * görünüyor (404), çünkü ayırmak "bu kimlik var ama sizin değil" demek olurdu.
+ */
+const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info'];
+
+async function getJobWithFindings(userId, jobId) {
+  const job = await getJob(userId, jobId);
+  if (!job) return null;
+
+  const rows = await request('scan_findings'
+    + '?job_id=eq.' + encodeURIComponent(job.id)
+    + '&select=id,owasp_category,severity,title,description,evidence,fix_code,created_at'
+    + '&order=created_at.asc'
+    + '&limit=500');
+
+  const findings = Array.isArray(rows) ? rows : [];
+
+  /* Kategorisiz bulgu DÜŞÜRÜLMÜYOR: 'A00' gibi uydurma bir kategoriye de
+     atanmıyor, ayrı bir 'other' grubunda duruyor. Raporda görünmeyen bulgu,
+     olmayan bulgudan daha kötüdür. */
+  const gruplar = new Map();
+  findings.forEach(function (f) {
+    const key = /^A(0[1-9]|10)$/.test(String(f.owasp_category || '')) ? f.owasp_category : 'other';
+    if (!gruplar.has(key)) gruplar.set(key, []);
+    gruplar.get(key).push({
+      id: f.id,
+      owaspCategory: f.owasp_category || null,
+      severity: f.severity,
+      title: f.title,
+      description: f.description,
+      evidence: f.evidence,
+      fixCode: f.fix_code
+    });
+  });
+
+  const siraliGruplar = Array.from(gruplar.entries())
+    /* 'other' her zaman sonda; kalanlar A01..A10 sırasında. */
+    .sort(function (a, b) {
+      if (a[0] === 'other') return 1;
+      if (b[0] === 'other') return -1;
+      return a[0] < b[0] ? -1 : 1;
+    })
+    .map(function (p) {
+      return {
+        category: p[0],
+        findings: p[1].sort(function (x, y) {
+          return SEVERITY_ORDER.indexOf(x.severity) - SEVERITY_ORDER.indexOf(y.severity);
+        })
+      };
+    });
+
+  const sayac = {};
+  SEVERITY_ORDER.forEach(function (s) { sayac[s] = 0; });
+  findings.forEach(function (f) {
+    if (Object.prototype.hasOwnProperty.call(sayac, f.severity)) sayac[f.severity] += 1;
+  });
+
+  return {
+    job: {
+      id: job.id, domain: job.domain, url: job.url, status: job.status,
+      score: job.score, scannerMode: job.scanner_mode, country: job.country,
+      createdAt: job.created_at, completedAt: job.completed_at,
+      result: job.result || null
+    },
+    severityCounts: sayac,
+    totalFindings: findings.length,
+    groups: siraliGruplar
+  };
+}
+
+/* ============================================================
+   Haftalık tarama için abonelik kaynağı.
+
+   DİKKAT: `scan_jobs` tablosunda abonelik/plan sütunu YOK ve hiç olmadı.
+   Haftalık taramanın kimi tarayacağını söyleyen bir kayıt gerekiyor; bu
+   `cl_subscriptions` tablosu onun için (göç dosyası:
+   db/2026-10-01-cl-subscriptions.sql). Tablo HENÜZ UYGULANMADIYSA bu
+   fonksiyon uydurma bir liste döndürmüyor: `available: false` ve sebep
+   dönüyor, çağıran da hiçbir tarama tetiklemiyor. Olmayan müşteriyi
+   varsaymak, hiç taramamaktan kötüdür.
+   ============================================================ */
+async function enterpriseScanTargets(limit) {
+  const n = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+  const query = 'cl_subscriptions'
+    + '?plan=eq.enterprise'
+    + '&active=is.true'
+    + '&select=user_id,domain'
+    + '&order=created_at.asc'
+    + '&limit=' + n;
+
+  let rows;
+  try {
+    rows = await request(query, {});
+  } catch (err) {
+    /* Tablo yoksa PostgREST 404 veriyor. Bunu "abone yok" diye SESSİZCE
+       yutmak, kurulumun eksik olduğunu gizlemek olurdu. */
+    if (/db_error_404/.test(err.message)) {
+      return { available: false, reason: 'no_subscriptions_table', targets: [] };
+    }
+    throw err;
+  }
+
+  const list = (Array.isArray(rows) ? rows : []).filter(function (r) {
+    return r && UUID_RE.test(String(r.user_id || ''))
+      && typeof r.domain === 'string' && /^[a-z0-9.-]{1,253}\.[a-z]{2,}$/i.test(r.domain);
+  });
+
+  return {
+    available: true,
+    reason: list.length ? null : 'no_active_subscriptions',
+    targets: list.map(function (r) {
+      return { userId: r.user_id, domain: r.domain.toLowerCase() };
+    })
+  };
+}
+
 module.exports = {
 
   isConfigured, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
-  sanitizeFindings, claimAnonymousScans, scanStats
+  sanitizeFindings, claimAnonymousScans, scanStats,
+  listJobs, jobScoreTrend, getJob, getJobWithFindings, SEVERITY_ORDER,
+  enterpriseScanTargets
 };
