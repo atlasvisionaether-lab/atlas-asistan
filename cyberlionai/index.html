@@ -4077,6 +4077,7 @@
         document.body.style.overflow = '';
         hideTimer = setTimeout(function () { el.hidden = true; hideTimer = null; }, 320);
         if (lastFocused && lastFocused.focus) lastFocused.focus();
+        if (api && typeof api.onClose === 'function') { try { api.onClose(); } catch (e) {} }
       }
 
       // Dışına tıklayınca kapat
@@ -4099,7 +4100,11 @@
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       });
 
-      return { open: open, close: close, el: el };
+      /* Kapanışta dışarıya haber verilir: modalın İÇERİĞİNİ kim yönetiyorsa
+         (kimlik modülü) bıraktığı geçici durumu temizleyebilsin. Kapatma üç
+         yoldan geliyor (X, ESC, dışına tıklama) ve üçü de buradan geçiyor. */
+      var api = { open: open, close: close, el: el, onClose: null };
+      return api;
     }
 
     var modal = document.getElementById('authModal');
@@ -4165,6 +4170,29 @@
         return text === key ? t('auth.err.auth_failed') : text;
       }
 
+      /**
+       * Sıfırlama isteği formunun "gönderildi" hâli.
+       *
+       * NEDEN: istek başarılı olduktan sonra e-posta alanı ve gönder düğmesi
+       * olduğu gibi kalıyordu. Ekranda tek değişen, formun ÜSTÜNDEKİ yeşil
+       * satırdı; kullanıcı mesajın kendi isteğine mi ait olduğunu yoksa baştan
+       * mı orada durduğunu ayırt edemiyordu ve aynı düğmeye tekrar basıyordu
+       * (saatte 5 istek sınırı boşa harcanıyor). Gönderim başarılıysa form
+       * kapanıyor, yalnızca mesaj ve "Girişe dön" bağlantısı kalıyor.
+       */
+      function forgotSent(on) {
+        if (!VIEWS.forgot) return;
+        var parts = VIEWS.forgot.querySelectorAll('.auth__hint, .field, button[type="submit"]');
+        for (var i = 0; i < parts.length; i++) parts[i].hidden = !!on;
+      }
+
+      /** Modal kapanınca geçici durum sıfırlanır: bir sonraki açılış, önceki
+          denemenin yeşil mesajını ya da kapanmış formunu miras almasın. */
+      function resetTransient() {
+        clearMsg();
+        forgotSent(false);
+      }
+
       /* ---- Görünüm değiştirme ---- */
 
       /** Yalnızca metinleri ve sekme durumunu yazar; mesajı ve odağı değiştirmez.
@@ -4185,6 +4213,7 @@
         if (!VIEWS[name]) return;
         currentView = name;
         clearMsg();
+        forgotSent(false);
         Object.keys(VIEWS).forEach(function (k) {
           if (VIEWS[k]) VIEWS[k].hidden = (k !== name);
         });
@@ -4398,7 +4427,9 @@
           API.auth.recover(email.value.trim()).then(function () {
             busy(form, false);
             form.reset();
-            // Sunucu adresin kayıtlı olup olmadığını söylemez; mesaj da söylemez.
+            /* Sunucu adresin kayıtlı olup olmadığını söylemez; mesaj da söylemez.
+               Form kapanıyor: mesaj artık bu isteğin sonucu olarak okunuyor. */
+            forgotSent(true);
             showMsg(t('auth.msg.resetSent'), 'success');
           }, function (err) {
             busy(form, false);
@@ -4513,6 +4544,7 @@
       return {
         init: init,
         refresh: refresh,
+        resetTransient: resetTransient,
         open: function (view) {
           if (!available) { toast(t('auth.err.auth_unavailable'), 'error', 5000); return; }
           setView(view || 'login');
@@ -4523,6 +4555,9 @@
         user: function () { return currentUser; }
       };
     })();
+
+    /* Modal kapandığında kimlik modülü kendi geçici durumunu siliyor. */
+    if (authModal) authModal.onClose = function () { authManager.resetTransient(); };
 
     var openers = document.querySelectorAll('[data-open-modal]');
     for (var o = 0; o < openers.length; o++) {
