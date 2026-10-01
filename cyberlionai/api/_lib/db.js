@@ -654,7 +654,11 @@ async function upsertIyzicoSubscription(row) {
 
   const body = {
     user_id: row.userId,
-    domain: String(row.domain || '').toLowerCase(),
+    /* Alan adı YOKSA null yazılıyor, boş dizge DEĞİL: tabloda
+       unique (user_id, domain) var ve boş dizge gerçek bir değer sayılır.
+       '' yazılsa aynı hesabın ikinci aboneliği (Pro'dan sonra Enterprise)
+       tekillik ihlaliyle reddedilirdi; NULL'lar birbirinden farklı sayılıyor. */
+    domain: row.domain ? String(row.domain).toLowerCase() : null,
     plan: row.plan,
     active: row.active === true,
     status: row.status || null,

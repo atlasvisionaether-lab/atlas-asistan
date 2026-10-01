@@ -30,11 +30,20 @@ alter table public.cl_subscriptions
 
 -- Abonelik referansı iyzico tarafında tekil; webhook aynı referansla birden
 -- çok kez gelebiliyor (yeniden deneme) ve upsert'in dayanacağı bir anahtar
--- gerekiyor. Kısmi tekil indeks: referansı olmayan (elle açılmış) satırlar
--- kısıtın dışında kalıyor.
+-- gerekiyor. Referansı olmayan (elle açılmış) satırlar yine kısıtın dışında
+-- kalıyor: PostgreSQL'de NULL değerler tekil indekste birbirinden farklı
+-- sayılıyor, yani referanssız satır istenildiği kadar açılabiliyor.
+--
+-- İNDEKS KISMİ OLAMAZ. PostgREST'in `on_conflict=` parametresi ON CONFLICT
+-- yan tümcesine WHERE koşulu ekleyemiyor; PostgreSQL ise kısmi bir indeksi
+-- ancak o koşul yeniden belirtilirse arbiter olarak kabul ediyor. Kısmi
+-- indeksle upsert `42P10` ile patlar, yani hiçbir abonelik satırı oluşmazdı.
+--
+-- Önce düşürüyoruz: bu göçün ilk sürümü kısmi indeks kuruyordu ve
+-- `if not exists` onu olduğu gibi bırakırdı.
+drop index if exists public.cl_subscriptions_iyzico_subscription_ref_key;
 create unique index if not exists cl_subscriptions_iyzico_subscription_ref_key
-  on public.cl_subscriptions (iyzico_subscription_ref)
-  where iyzico_subscription_ref is not null;
+  on public.cl_subscriptions (iyzico_subscription_ref);
 
 create index if not exists cl_subscriptions_iyzico_customer_ref_idx
   on public.cl_subscriptions (iyzico_customer_ref)

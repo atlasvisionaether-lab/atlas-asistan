@@ -305,6 +305,24 @@ function fakeRes() {
     ret.planOf({ pricingPlanReferenceCode: 'baska-ref' }), null);
   sina('referans yoksa plan yok', ret.planOf({}), null);
 
+  /* ---- 11. Göç: upsert'in dayandığı tekil indeks KISMİ OLMAMALI ----
+     PostgREST'in `on_conflict=` parametresi ON CONFLICT'e WHERE koşulu
+     ekleyemiyor; kısmi indeks arbiter olarak kabul edilmediği için upsert
+     `42P10` ile patlıyor ve ödeyen müşteriye satır açılmıyor. Bu sınama,
+     koşulun göç dosyasına geri sızmasını engelliyor. */
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const gocYolu = path.join(__dirname, '..', 'db', '2026-10-01-cl-subscriptions-iyzico.sql');
+  const goc = fs.readFileSync(gocYolu, 'utf8');
+  const tekilIndeks = (goc.match(
+    /create unique index[^;]*cl_subscriptions_iyzico_subscription_ref_key[^;]*;/i) || [''])[0];
+  sina('abonelik referansı tekil indeksi göçte var', tekilIndeks !== '', true);
+  sina('tekil indeks kısmi değil (where yok)', /\bwhere\b/i.test(tekilIndeks), false);
+  sina('upsert bu indeksi arbiter olarak kullanıyor',
+    /on_conflict=iyzico_subscription_ref/.test(
+      fs.readFileSync(path.join(__dirname, '..', 'api', '_lib', 'db.js'), 'utf8')),
+    true);
+
   console.log(hata === 0 ? '\nTümü geçti.' : '\n' + hata + ' sınama BAŞARISIZ.');
   process.exit(hata === 0 ? 0 : 1);
 })();
