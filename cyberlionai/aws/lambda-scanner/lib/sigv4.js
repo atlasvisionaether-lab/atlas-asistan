@@ -121,6 +121,70 @@ function sign(req, creds, now) {
 }
 
 /**
+ * S3 GET için SÜRELİ, sorgu dizgesinde imzalı adres (presigned URL) üretir.
+ *
+ * NEDEN BURADA
+ *
+ * İmzayı yayında Supabase Edge Function atıyor (`supabase/functions/
+ * sign-report`), çünkü AWS gizli anahtarı yalnızca orada. Ama Deno kaynağı bu
+ * ortamda ÇALIŞTIRILAMIYOR. Bu işlev aynı algoritmanın çalıştırılabilir
+ * kopyası: imzalama anahtarı türetimini ve `stringToSign` biçimini, resmî AWS
+ * vektörleriyle doğrulanmış `sign()` ile AYNI ilkellerden kuruyor, dolayısıyla
+ * sınama onu gerçekten koşturup karşılaştırabiliyor. İki kopya ayrışırsa
+ * `tools/reportsign-test.js` düşer.
+ *
+ * Başlık imzalı istekten iki fark: imza sorgu dizgesine giriyor (tarayıcı 302
+ * sonrası Authorization başlığı ekleyemez) ve gövde özeti `UNSIGNED-PAYLOAD`.
+ *
+ * @param {object} req  { bucket, key, region, expiresIn, host? }
+ * @param {object} creds { accessKeyId, secretAccessKey, sessionToken? }
+ * @param {Date} now
+ * @returns {string} imzalı tam adres
+ */
+function presignS3Get(req, creds, now) {
+  const stamp = amzDate(now || new Date());
+  const day = stamp.slice(0, 8);
+  const host = req.host || (req.bucket + '.s3.' + req.region + '.amazonaws.com');
+  const scope = day + '/' + req.region + '/s3/aws4_request';
+
+  /* Kanonik sorgu parametreleri ADA GÖRE SIRALI olmak zorunda; sıra bozulursa
+     imza S3'ün hesapladığıyla eşleşmez. */
+  const params = [
+    ['X-Amz-Algorithm', ALGORITHM],
+    ['X-Amz-Credential', creds.accessKeyId + '/' + scope],
+    ['X-Amz-Date', stamp],
+    ['X-Amz-Expires', String(req.expiresIn)],
+    ['X-Amz-SignedHeaders', 'host']
+  ];
+  if (creds.sessionToken) params.push(['X-Amz-Security-Token', creds.sessionToken]);
+  params.sort(function (a, b) { return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0; });
+
+  const canonicalQuery = params.map(function (p) {
+    return uriEncode(p[0], true) + '=' + uriEncode(p[1], true);
+  }).join('&');
+
+  /* Yol parçaları ayrı ayrı kodlanır, '/' ayırıcı olarak korunur. */
+  const canonicalPath = '/' + String(req.key).split('/').map(function (p) {
+    return uriEncode(p, true);
+  }).join('/');
+
+  const canonicalRequest = [
+    'GET', canonicalPath, canonicalQuery,
+    'host:' + host + '\n', 'host', 'UNSIGNED-PAYLOAD'
+  ].join('\n');
+
+  const stringToSign = [ALGORITHM, stamp, scope, sha256Hex(canonicalRequest)].join('\n');
+
+  const signingKey = hmac(hmac(hmac(hmac(
+    'AWS4' + creds.secretAccessKey, day), req.region), 's3'), 'aws4_request');
+  const signature = crypto.createHmac('sha256', signingKey)
+    .update(stringToSign, 'utf8').digest('hex');
+
+  return 'https://' + host + canonicalPath + '?' + canonicalQuery
+    + '&X-Amz-Signature=' + signature;
+}
+
+/**
  * Ortamdan kimlik okur. Lambda'da bu üçlüyü yürütme ortamı KENDİSİ koyar
  * (görev rolünden); elle ortam değişkeni girmek gerekmez ve girilmemeli.
  * `AWS_ACCESS_KEY_ID` yerel sınama için okunur.
@@ -137,4 +201,6 @@ function credentialsFromEnv(env) {
   };
 }
 
-module.exports = { sign, credentialsFromEnv, amzDate, uriEncode, sha256Hex, ALGORITHM };
+module.exports = {
+  sign, presignS3Get, credentialsFromEnv, amzDate, uriEncode, sha256Hex, ALGORITHM
+};

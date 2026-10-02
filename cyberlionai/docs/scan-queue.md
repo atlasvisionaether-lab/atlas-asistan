@@ -30,6 +30,15 @@ AWS Lambda  cyberlionai-scan-worker   (Node 20, bağımlılık yok)
    └── status 'completed' + score + report_url/report_key
 
 tarayıcı  GET /api/scan-status?id=<jobId>   her 2 sn, en çok 60 tur (2 dk)
+
+tarayıcı  GET /api/report-download?id=<jobId>
+   │                           sahiplik süzgeci (hesap VEYA anonim oturum)
+   │ POST /functions/v1/sign-report   (report_key, DB'den)
+   ▼
+Supabase Edge Function          süreli imzalı S3 adresi (varsayılan 120 sn)
+   │ 302
+   ▼
+tarayıcı → S3'ten PDF
 ```
 
 ### İki uç, tek uygulama
@@ -179,7 +188,10 @@ Kuyruğa iş bırakan IAM kullanıcısının izni: `aws/iam/enqueue-user-policy.
 
 ### 4. Veritabanı göçü
 
-`db/2026-10-02-scan-queue.sql` canlı Supabase'de koşulmalı. RLS'e dokunmuyor,
+Üç göç dosyası canlı Supabase'de **bu sırayla** koşulmalı:
+`db/migrations/007_scan_jobs_progress.sql` (status kısıtının tek sahibi),
+`db/2026-10-02-scan-queue.sql`, `db/2026-10-02-clscans-job-link.sql`.
+Hiçbiri RLS'e dokunmuyor,
 yeni policy eklemiyor: yazma yalnızca servis rolünde kalıyor. Eklediği
 sütunlar: `session_id`, `report_url`, `report_key`, `queued_at`, `error_code`,
 `attempts`; `status` kontrolüne `'queued'` ekliyor.
@@ -234,6 +246,7 @@ aws sqs get-queue-attributes --region eu-central-1 \
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Vercel | zaten var |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SQS_URL` | **yalnızca Supabase** | Vercel'e girilmez |
 | `S3_BUCKET`, `SUPABASE_*` | Lambda | AWS kimliği girilmez (görev rolü) |
+| `SIGN_SHARED_SECRET` | Vercel + Supabase | iki tarafta **aynı** değer; `ENQUEUE_SHARED_SECRET`'ten **farklı** olmalı |
 | `SQS_MAX_RECEIVE_COUNT` | Lambda (isteğe bağlı) | kuyruğun `maxReceiveCount` değeriyle **aynı** olmalı; verilmezse 3 varsayılır |
 
 `SQS_MAX_RECEIVE_COUNT` neden gerekiyor: Lambda, işi hangi teslimde terminal
@@ -264,17 +277,34 @@ bağımlı hâle gelir:
 Geri alma: `SCAN_QUEUE_ENABLED`'ı silmek yeter. Kod eşzamanlı yola döner,
 kuyrukta kalan işler Lambda tarafından yine bitirilir.
 
+## Bayrağı açmadan önce
+
+Adım adım sınama planı ayrı bir belgede: `docs/scan-queue-preview-test.md`.
+Önkoşullar, Preview'da koşulacak 30'dan fazla ölçüt, hata yolları ve geri alma
+koşulları orada.
+
 ## Bilinen eksikler
 
 - **Pro 50 tarama kotası** hâlâ uygulanmıyor (Faz 6; bilinçli).
-- **S3 raporu için imzalı indirme ucu yok.** Lambda PDF'i yazıyor ve
-  `report_url` kolonuna adresini koyuyor, ama kova özel olduğu için o adres
-  doğrudan açılmıyor. Panel raporu eskisi gibi `/api/report?jobId=` ile istek
-  anında üretiliyor. İmzalı URL üreten uç ayrı bir iş.
-- **Anonim kuyruk taramasında ana sayfadaki PDF düğmesi gizli**: kuyruk
-  yolunda `cl_scans` kaydı açılmıyor, `/api/report?jobId=` ise giriş istiyor.
-  Oturum açıkken düğme görünüyor.
-- **Eşzamanlı yol `cl_scans`'e yazıyor, kuyruk yolu yazmıyor.** Dünya
-  haritasının "kendi etkinliğimiz" katmanı `cl_scans`'ten besleniyor; bayrak
-  açıldığında o katman yeni taramalarla büyümeyi bırakır. Düzeltme, Lambda'nın
-  `cl_scans`'e de yazması ya da haritanın `scan_jobs`'a geçmesi — ayrı bir iş.
+- ~~S3 raporu için imzalı indirme ucu yok.~~ **Kapandı:**
+  `/api/report-download?id=<jobId>` sahipliği hesap VEYA anonim oturum
+  üzerinden kuruyor, `report_key`'i işin satırından okuyor (istemci nesne
+  seçemez) ve `sign-report` Edge Function'ın ürettiği süreli imzalı adrese 302
+  ile yönlendiriyor. İmza Supabase'de atılıyor: AWS anahtarı Vercel'e
+  girmiyor. Adres yanıt gövdesinde dönmüyor ve varsayılan ömrü 120 saniye.
+- **S3'teki PDF yalnızca Türkçe.** Lambda raporu `tr` ile üretiyor. Oturum
+  açık kullanıcıya seçilen dilde rapor `/api/report?jobId=` üzerinden
+  veriliyor; anonim kullanıcı Türkçe kopyayı iniyor. Dil başına nesne üretmek
+  ayrı bir iş.
+- ~~Anonim kuyruk taramasında ana sayfadaki PDF düğmesi gizli.~~ **Kapandı:**
+  düğme `/api/report-download?id=` ucuna gidiyor; o uç anonim oturumu da sahip
+  sayıyor (sahiplik `user_id` VEYA `session_id`). Oturum açıkken dil duyarlı
+  `/api/report?jobId=` tercih ediliyor.
+- ~~Eşzamanlı yol `cl_scans`'e yazıyor, kuyruk yolu yazmıyor.~~ **Kapandı:**
+  Lambda taramayı bitirirken satırı kendisi açıyor (`lib/clscan.js`; alan
+  kümesi `db.saveScan()` ile aynı ve sınamada karşılaştırılıyor). Tekrar
+  teslimde harita aynı taramayı iki kez saymasın diye `scan_job_id` üzerinde
+  TAM bir tekil indeks var ve yazım `resolution=ignore-duplicates` ile
+  yapılıyor (göç: `db/2026-10-02-clscans-job-link.sql`). Yazım başarısız
+  olursa tarama yine `completed` yazılıyor: haritadaki eksik bir satır,
+  kullanıcının kaybettiği bir tarama kadar pahalı değil.
