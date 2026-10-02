@@ -41,10 +41,20 @@ create index if not exists scan_jobs_session_idx
   on public.scan_jobs (session_id, created_at desc)
   where session_id is not null;
 
--- 'queued' durumu: satır açıldı, mesaj SQS'e gitti, Lambda henüz almadı.
--- 'pending' zaten vardı ve "satır açıldı" anlamında kullanılıyor; ikisini
--- ayırmak kuyruğa düşmeyen işi görünür kılıyor.
-alter table public.scan_jobs drop constraint if exists scan_jobs_status_check;
-alter table public.scan_jobs
-  add constraint scan_jobs_status_check
-  check (status in ('pending','queued','running','completed','failed'));
+-- STATUS KISITINA BU DOSYA DOKUNMUYOR.
+--
+-- Kuyruk yolu 'queued' durumuna ihtiyaç duyuyor, ama o değeri
+-- `migrations/007_scan_jobs_progress.sql` zaten ekliyor ve kısıtı adım
+-- durumlarıyla birlikte (scanning_headers, scanning_ssl, scanning_ai,
+-- generating_report, done, error) yeniden yazıyor.
+--
+-- Burada kısıtı ikinci kez yeniden yazmak, hangi dosyanın en son koştuğuna
+-- göre değişen bir sonuç üretirdi: daraltan sürüm en son koşsa 007'nin adım
+-- durumları yazılamaz hâle gelir ve ilerleme çubuğu sessizce bozulur.
+-- Kısıtın tek sahibi 007; bu dosya yalnızca sütun ekliyor.
+--
+-- Ön koşul: 007 bu dosyadan ÖNCE uygulanmış olmalı (yoksa 'queued' yazılamaz).
+-- Doğrulama:
+--   select pg_get_constraintdef(oid) from pg_constraint
+--    where conname = 'scan_jobs_status_check';
+--   -- listede 'queued' görünmeli
