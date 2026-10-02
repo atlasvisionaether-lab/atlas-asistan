@@ -135,6 +135,11 @@ jobs:
       # index.html'den sokulen kodu sahte saatle CALISTIRIYOR.
       - name: Tarama ilerleme çubuğu (kaçak sayaç yok)
         run: node cyberlionai/tools/scanprogress-test.js
+      # /api/verify-dns: p=none'un KIRMIZI sayilmasi, SPF'te `found`un varlik
+      # degil koruma anlamina gelmesi ve POST'un hicbir hata yolunda 404
+      # donmemesi (ekran onu "uc yayinda degil" diye okuyor) burada sabit.
+      - name: Alan adı doğrulama ucu (SPF/DMARC)
+        run: node cyberlionai/tools/verifydns-test.js
 
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
