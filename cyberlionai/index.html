@@ -1545,10 +1545,10 @@
         </span>
 
         <h1 class="hero__title">
-          <span class="gold-text" data-i18n="hero.title">GÜVENLİK BAŞLIKLARI VE SSL'İ SANİYELERDE ANALİZ EDİN</span><span class="caret" aria-hidden="true"></span>
+          <span class="gold-text" data-i18n="hero.title">GÜVENLİK AÇIKLARINIZI AVLIYORUZ</span><span class="caret" aria-hidden="true"></span>
         </h1>
 
-        <p class="hero__subtitle" data-i18n="hero.subtitle">Yapay Zeka Destekli Hızlı Güvenlik Durum Tespiti — SSL ve Başlık Analizi</p>
+        <p class="hero__subtitle" data-i18n="hero.subtitle">Yapay Zeka ile Güçlendirilmiş Otomatik Güvenlik Taraması</p>
         <p class="hero__desc" data-i18n="hero.desc">Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin.</p>
 
         <!-- Canlı demo tarama -->
@@ -2248,8 +2248,8 @@
         },
         hero: {
           badge: 'Tarama motoru aktif',
-          title: "GÜVENLİK BAŞLIKLARI VE SSL'İ SANİYELERDE ANALİZ EDİN",
-          subtitle: 'Yapay Zeka Destekli Hızlı Güvenlik Durum Tespiti — SSL ve Başlık Analizi',
+          title: 'GÜVENLİK AÇIKLARINIZI AVLIYORUZ',
+          subtitle: 'Yapay Zeka ile Güçlendirilmiş Otomatik Güvenlik Taraması',
           desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin.',
           scanLabel: 'Taranacak adres',
           scanPlaceholder: 'ornek.com',
@@ -2263,6 +2263,14 @@
           step2: 'TLS/SSL el sıkışması analiz ediliyor',
           step3: 'Güvenlik başlıkları taranıyor',
           step4: 'Yapay zeka bulguları önceliklendiriyor',
+          progress: {
+            queued: 'Kuyrukta...',
+            headers: 'Başlıklar taranıyor',
+            ssl: 'SSL analiz ediliyor',
+            report: 'Rapor oluşturuluyor',
+            done: 'Bitti',
+            error: 'Tarama başarısız'
+          },
           done: 'Tarama tamamlandı',
           demoNote: 'Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.',
           fullReport: 'Tam Raporu Al',
@@ -2644,8 +2652,8 @@
         },
         hero: {
           badge: 'Scan engine online',
-          title: 'ANALYZE YOUR SECURITY HEADERS & SSL IN SECONDS',
-          subtitle: 'AI-Assisted Quick Security Posture Check — SSL & Header Analysis',
+          title: 'HUNTING YOUR VULNERABILITIES',
+          subtitle: 'AI-Powered Automated Security Scanning',
           desc: "Check your site's SSL and security headers in seconds.",
           scanLabel: 'Address to scan',
           scanPlaceholder: 'example.com',
@@ -2659,6 +2667,14 @@
           step2: 'Analyzing TLS/SSL handshake',
           step3: 'Scanning security headers',
           step4: 'AI is prioritizing findings',
+          progress: {
+            queued: 'Queued...',
+            headers: 'Scanning headers',
+            ssl: 'Analyzing SSL',
+            report: 'Generating report',
+            done: 'Done',
+            error: 'Scan failed'
+          },
           done: 'Scan complete',
           demoNote: 'This is a demo output. Full reports and remediation steps unlock with PRO.',
           fullReport: 'Get Full Report',
@@ -3600,6 +3616,21 @@
           throw { code: 'network' };
         });
       },
+      /** POST /api/enqueue-scan — kuyruk tabanlı tarama (Task 1). scanId
+          döner; endpoint henüz yoksa 404 reddeder ve arayüz eşzamanlı
+          /api/scan'e geri düşer. consent yalnızca onay kutusu işaretliyse
+          gönderilir; sunucu tarafında yeniden doğrulanır. */
+      enqueueScan: function (url) {
+        return fetch(CONFIG.apiBaseUrl + '/api/enqueue-scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url,
+            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true })
+        }).then(function (res) {
+          if (res.status === 404) throw { code: 'enqueue_unavailable' };
+          return res.json().catch(function () { return {}; });
+        });
+      },
 
       /** GET /api/scan/{scanId} — geçmiş tarama kaydı (backend bekliyor) */
       getScan: function (scanId) {
@@ -3928,18 +3959,35 @@
       });
     }
 
-    /** Yanıt beklenirken ilerleme çubuğunu adım adım ilerletir (asla %100 olmaz). */
+    /* İlerleme adımları: eşzamanlı taramada kaba tahmin, kuyruk tabanlı
+       taramada (Task 1) gerçek progress/current_step değerleriyle eşlenir.
+       %100 yalnızca sunucu yanıtı geldiğinde renderScanResult yazar. */
+    var PROGRESS_STEPS = [
+      { key: 'scan.progress.queued', pct: 5 },
+      { key: 'scan.progress.headers', pct: 25 },
+      { key: 'scan.progress.ssl', pct: 55 },
+      { key: 'scan.progress.report', pct: 85 }
+    ];
+    var STEP_KEY_MAP = {
+      queued: 'queued',
+      scanning_headers: 'headers',
+      scanning_ssl: 'ssl',
+      scanning_ai: 'report',
+      generating_report: 'report'
+    };
+
+    /** Yanıt beklenirken ilerleme çubuğunu adım adım, yüzdesiyle ilerletir. */
     function startProgress() {
-      var steps = ['scan.step1', 'scan.step2', 'scan.step3', 'scan.step4'];
       var index = 0;
-      setStatus(t(steps[0]), 'fa-solid fa-spinner fa-spin');
-      scanBar.style.width = '12%';
+      var renderStep = function (step) {
+        setStatus(t(step.key) + ' %' + step.pct, 'fa-solid fa-spinner fa-spin');
+        scanBar.style.width = step.pct + '%';
+      };
+      renderStep(PROGRESS_STEPS[0]);
 
       return setInterval(function () {
-        index = Math.min(index + 1, steps.length - 1);
-        setStatus(t(steps[index]), 'fa-solid fa-spinner fa-spin');
-        var width = parseFloat(scanBar.style.width) || 12;
-        scanBar.style.width = Math.min(width + 22, 88) + '%';
+        index = Math.min(index + 1, PROGRESS_STEPS.length - 1);
+        renderStep(PROGRESS_STEPS[index]);
       }, 900);
     }
 
@@ -3953,15 +4001,63 @@
 
       addNoticeRow(domain, 'fa-solid fa-globe', '--gold-primary');
       var ticker = startProgress();
+      var finish = function () {
+        clearInterval(ticker);
+        scanning = false;
+        if (scanSubmit) scanSubmit.disabled = false;
+      };
 
-      API.startScan(domain, 'quick', null)
-        .then(function (result) { renderScanResult(result); })
-        .catch(function (err) { renderScanError(err); })
-        .then(function () {
-          clearInterval(ticker);
-          scanning = false;
-          if (scanSubmit) scanSubmit.disabled = false;
+      /* 1) Önce kuyruk tabanlı tarama (Task 1: /api/enqueue-scan).
+         Endpoint yoksa 404 döner ve eşzamanlı /api/scan'e düşülür; iki
+         yol da aynı sonuç renderer'ını kullanır. */
+      API.enqueueScan(domain)
+        .then(function (enq) {
+          if (!enq || !enq.scanId) throw { code: 'enqueue_unavailable' };
+          return pollScan(enq.scanId, 40);
+        })
+        .then(function (result) { renderScanResult(result); finish(); })
+        .catch(function () {
+          /* 2) Eşzamanlı tarama — mevcut davranış, adımlı mock ilerleme. */
+          API.startScan(domain, 'quick', null)
+            .then(function (result) { renderScanResult(result); })
+            .catch(function (err) { renderScanError(err); })
+            .then(finish);
         });
+    }
+
+    /** Kuyruğa alınan taramayı belirli aralıklarla sorar; sunucunun
+        bildirdiği progress/current_step değerlerini çubuğa ve durum
+        metnine yansıtır. Biten taramanın kaydını döndürür. */
+    function pollScan(scanId, maxTries) {
+      var tries = 0;
+      return new Promise(function (resolve, reject) {
+        var timer = setInterval(function () {
+          tries += 1;
+          API.getScan(scanId).then(function (job) {
+            if (job && typeof job === 'object') {
+              if (typeof job.progress === 'number') {
+                scanBar.style.width = Math.max(0, Math.min(job.progress, 99)) + '%';
+              }
+              var stepKey = STEP_KEY_MAP[job.current_step];
+              if (stepKey) {
+                setStatus(t('scan.progress.' + stepKey) + ' %' + (typeof job.progress === 'number' ? job.progress : ''),
+                  'fa-solid fa-spinner fa-spin');
+              }
+              if (job.status === 'done' || job.status === 'completed') {
+                clearInterval(timer);
+                resolve(job.result || job);
+              } else if (job.status === 'failed' || job.status === 'error') {
+                clearInterval(timer);
+                reject(job);
+              }
+            }
+          }).catch(function () { /* kayıt henüz görünür değil; tekrar dene */ });
+          if (tries >= maxTries) {
+            clearInterval(timer);
+            reject({ code: 'enqueue_timeout' });
+          }
+        }, 2000);
+      });
     }
 
     function renderScanResult(result) {
