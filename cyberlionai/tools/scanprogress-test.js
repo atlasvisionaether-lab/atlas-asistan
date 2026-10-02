@@ -112,7 +112,8 @@ function saatYap() {
 
 /**
  * Bloğu saplamalarla çalıştırır ve `runScan`'i döndürür.
- * @param {object} ayar { kuyruk: 'ok'|'404', senkron: 'ok'|'hata',
+ * @param {object} ayar { kuyruk: 'ok'|'404', yoklama: 'ok'|'zamanAsimi',
+ *   senkron: 'ok'|'hata',
  *                        rendererDurdurur: bool }
  */
 function kur(ayar) {
@@ -150,9 +151,12 @@ function kur(ayar) {
   /* Kuyruk yolunun yoklaması (modül içi pollScan) saplanıyor. */
   function pollScan() {
     cagrilar.poll += 1;
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
       saat.setTimeout(function () {
-        resolve({ url: 'https://ornek.com/', score: 90,
+        /* Gerçek pollScan üst sınıra varınca { code: 'enqueue_timeout' }
+           ile reddediyor; o yolda eşzamanlı taramaya DÜŞÜLMEMELİ. */
+        if (ayar.yoklama === 'zamanAsimi') reject({ code: 'enqueue_timeout' });
+        else resolve({ url: 'https://ornek.com/', score: 90,
           summary: { passed: 9, failed: 1, skipped: 0 }, checks: [], warnings: [] });
       }, 3000);
     });
@@ -247,6 +251,26 @@ async function kos() {
     await k.saat.ilerle(5000);
     esit('hatadan sonra durum hata olarak kalıyor', k.ekran.durum, 'scan.error');
     esit('hatadan sonra çalışan sayaç kalmadı', k.saat.etkinSayac, 0);
+  }
+
+  /* ---- 3b. Yoklama zaman aşımı: İKİNCİ tarama başlatılmıyor ----
+     Kuyruk ucu çalıştıysa iş kuyrukta; geri düşmek ikinci bir tarama
+     başlatır ve kullanıcının kotasından iki hak yer. Hata dürüstçe
+     gösterilir. 404 (bayrak kapalı) ile zaman aşımı aynı şey DEĞİL. */
+  {
+    const k = kur({ kuyruk: 'ok', yoklama: 'zamanAsimi', senkron: 'ok',
+      rendererDurdurur: false });
+    k.runScan('ornek.com');
+    await Promise.resolve();
+    await k.saat.ilerle(4000);
+
+    esit('zaman aşımında yoklama denendi', k.cagrilar.poll, 1);
+    esit('zaman aşımında İKİNCİ tarama başlatılmadı', k.cagrilar.senkron, 0);
+    esit('zaman aşımında hata gösterildi', k.cagrilar.hata, 1);
+    esit('zaman aşımında sonuç ekranı yazılmadı', k.cagrilar.render, 0);
+    await k.saat.ilerle(5000);
+    esit('zaman aşımından sonra durum hata olarak kalıyor', k.ekran.durum, 'scan.error');
+    esit('zaman aşımından sonra çalışan sayaç kalmadı', k.saat.etkinSayac, 0);
   }
 
   /* ---- 4. Sayaç tek: iki kez başlatmak ikinciyi bırakmıyor ---- */
