@@ -198,6 +198,7 @@
   (function () {
     'use strict';
 
+    /* Dil: ana sayfayla aynı tercih anahtarı ve ?lang= parametresi. */
     var store = {
       get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
       set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -230,6 +231,8 @@
         apply(currentLang);
       });
     }
+
+    /* ---- Doğrulama ---- */
 
     var TXT = {
       tr: {
@@ -299,6 +302,11 @@
       el.textContent = label;
     }
 
+    /* Sözleşme: POST /api/verify-dns { domain }
+       - 200: { spf: { found, record }, dmarc: { found, policy, record } }  (eşzamanlı)
+       - 202: { jobId, statusUrl? }  → GET /api/verify-dns?id=<jobId> 2 sn'de
+         bir yoklanır; status done/failed olana dek. Backend henüz yoksa 404
+         döner ve sayfa dürüstçe "yayında değil" der. */
     function renderResult(res) {
       var spf = (res && res.spf) || {};
       var dmarc = (res && res.dmarc) || {};
@@ -309,6 +317,7 @@
       spfRecord.textContent = spf.record || '';
       spfHow.hidden = spfOk;
 
+      /* p=none etkisiz bir politika: bulunmuş ama "politikası yok" sayılır. */
       var policy = String(dmarc.policy || '').toLowerCase();
       var dmarcOk = dmarc.found === true && policy && policy !== 'none';
       badge(dmarcBadge, dmarcOk, dmarcOk ? L().dmarcFound : L().dmarcMissing);
@@ -340,7 +349,7 @@
                 reject(job);
               }
             })
-            .catch(function () { });
+            .catch(function () { /* kayıt henüz görünür değil; tekrar dene */ });
           if (tries >= maxTries) {
             clearInterval(timer);
             reject({ code: 'timeout' });
