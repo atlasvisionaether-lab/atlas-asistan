@@ -338,8 +338,15 @@ dogru('istemci olmayan /api/scan/<id> ucunu çağırmıyor',
    gerçek değer ile tahmin arasında zıplar. Artık yerel bir `ticker` yok;
    sayaç tek yerden (`stopProgress`) yönetiliyor — kaçak sayaç yayında
    taramayı %85'te dondurmuştu, bkz. tools/scanprogress-test.js. */
+/* Araya yorum girebilir, bu yüzden bitişiklik değil SIRA sınanıyor:
+   `return pollScan(` öncesindeki son DEYİM `stopProgress();` olmalı. */
+var kuyrukDali = html.slice(html.indexOf('API.enqueueScan(domain)'),
+  html.indexOf('return pollScan('));
+var sonDurdurma = kuyrukDali.lastIndexOf('stopProgress();');
 dogru('kuyruk yolunda tahmini ilerleme sayacı durduruluyor',
-  /stopProgress\(\);\s*\n\s*return pollScan/.test(html));
+  sonDurdurma !== -1 &&
+  kuyrukDali.slice(sonDurdurma + 'stopProgress();'.length)
+    .replace(/\/\*[\s\S]*?\*\//g, '').trim() === '');
 dogru('ilerleme sayacı tek yerden yönetiliyor (yerel ticker yok)',
   html.indexOf('var ticker') === -1 && html.indexOf('clearInterval(ticker)') === -1);
 
