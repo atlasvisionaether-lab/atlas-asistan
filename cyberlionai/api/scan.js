@@ -10,9 +10,28 @@
  *   - IP başına hız sınırı (kötüye kullanım)
  *   - Oturum başına ücretsiz tarama kotası (ürün politikası)
  * Tarayıcıdaki sayaç yalnızca gösterim içindir; karar burada verilir.
+ *
+ * İKİ YOL — EŞZAMANLI VE KUYRUKLU
+ *
+ * `SCAN_QUEUE_ENABLED=true` ise tarama BURADA yapılmaz: `scan_jobs` satırı
+ * açılır, iş Supabase Edge Function üzerinden SQS'e bırakılır ve uç 202 ile
+ * iş kimliğini döner. İstemci sonucu `/api/scan-status` üzerinden yoklar.
+ * Bayrak kapalıysa (varsayılan) eski eşzamanlı davranış AYNEN sürüyor.
+ *
+ * Bayrak NEDEN var: kuyruk yolu AWS kaynakları (SQS, S3, Lambda) yayına
+ * alınmadan çalışamaz. Bayrak olmasa, kodun yayına çıktığı ile Lambda'nın
+ * mesaj tüketmeye başladığı an arasında ana sayfadaki tarayıcı ölürdü.
+ * Bayrak yalnızca Lambda'nın gerçekten iş bitirdiği doğrulandıktan sonra
+ * açılmalı.
+ *
+ * Sınırlar (IP hızı ve ücretsiz kota) İKİ YOLDA DA aynı yerde uygulanıyor:
+ * kuyruğa bırakmak da bir tarama harcar, yoksa kota kuyruk üzerinden
+ * sınırsız hâle gelirdi.
  */
 
 const { scanSite, SCANNER_VERSION, REPORT_VERSION } = require('./_lib/scanner.js');
+const { normalizeTarget } = require('./_lib/guard.js');
+const scanqueue = require('./_lib/scanqueue.js');
 const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
@@ -106,6 +125,75 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  /* ---- Kuyruklu yol ---- */
+  if (scanqueue.isEnabled()) {
+    if (!scanqueue.isConfigured() || !db.isConfigured()) {
+      /* Bayrak açık ama kuyruk ya da veritabanı yapılandırılmamış. Burada
+         eşzamanlı yola DÜŞÜLMÜYOR: iki yol aynı istekte karışırsa hangi
+         yolun çalıştığı belirsizleşir ve yanlış yapılandırma sessizce
+         gizlenir. Harcanan hak geri veriliyor. */
+      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi */ }
+      return res.status(503).json({ error: { code: 'service_unavailable' } });
+    }
+
+    /* Hedef kuyruğa bırakılmadan ÖNCE doğrulanıyor: geçersiz ya da engelli
+       bir adres için satır açıp Lambda'yı uyandırmak gereksiz, ve hata
+       kullanıcıya hemen dönebilir. */
+    const target = normalizeTarget(url);
+    if (target.error) {
+      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi */ }
+      const durum = ERROR_STATUS[target.error] || 400;
+      return res.status(durum).json({ error: { code: target.error } });
+    }
+
+    let jobId = null;
+    try {
+      jobId = await db.createPendingJob(
+        { host: target.host, url: target.url.href },
+        { userId: owner.userId, sessionId: owner.sessionId, ip: clientIp(req) },
+        consent);
+    } catch (err) {
+      if (console && console.error) console.error('job create failed:', err.message);
+    }
+    if (!jobId) {
+      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi */ }
+      return res.status(503).json({ error: { code: 'service_unavailable' } });
+    }
+
+    try {
+      await scanqueue.enqueue({
+        url: target.url.href, userId: owner.userId, scanId: jobId, consent: consent
+      });
+    } catch (err) {
+      /* Satır açıldı ama mesaj kuyruğa gitmedi. İş 'pending' bırakılmıyor:
+         hiç işlenmeyecek bir iş, kullanıcının sonsuza kadar yokladığı bir
+         iş demek. 'failed' yazılıyor ve hak geri veriliyor. */
+      const kod = (err && err.message) || 'queue_rejected';
+      try { await db.markJobFailed(jobId, kod); } catch (e) { /* yazılamadı */ }
+      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi */ }
+      if (console && console.error) console.error('enqueue failed:', kod);
+      return res.status(503).json({ error: { code: 'service_unavailable' } });
+    }
+
+    try { await db.markJobQueued(jobId); } catch (e) { /* durum yazılamadı, iş yolda */ }
+
+    return res.status(202).json({
+      jobId: jobId,
+      status: 'queued',
+      host: target.host,
+      url: target.url.href,
+      statusUrl: '/api/scan-status?id=' + encodeURIComponent(jobId),
+      quota: {
+        used: quota.used,
+        limit: FREE_SCAN_LIMIT,
+        remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used),
+        scope: owner.isAuthenticated ? 'account' : 'anonymous'
+      },
+      versions: { scanner: SCANNER_VERSION, report: REPORT_VERSION }
+    });
+  }
+
+  /* ---- Eşzamanlı yol (varsayılan) ---- */
   try {
     const result = await scanSite(url, { consent: consent });
     result.quota = {

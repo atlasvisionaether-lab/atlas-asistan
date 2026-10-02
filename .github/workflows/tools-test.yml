@@ -108,6 +108,22 @@ jobs:
       - name: Pro'ya Geç düğmelerinin oturum davranışı
         run: node cyberlionai/tools/procta-test.js
 
+      # AWS SigV4: imza elle yazilmis bir beklentiye karsi degil, AWS'in
+      # YAYINLADIGI get-vanilla ve post-x-www-form-urlencoded vektorlerine
+      # karsi dogrulaniyor. Kendi urettigimizi kendimize dogrulatmak hicbir
+      # sey kanitlamaz; imza bozulursa SQS 403 doner ve tarama hic baslamaz.
+      - name: AWS SigV4 imzası (resmî test vektörleri)
+        run: node cyberlionai/tools/sigv4-test.js
+
+      # Kuyruk yolu: bayrak kapaliyken esizamanli taramanin bozulmadigi,
+      # her hata cikisinda ucretsiz hakkin iade edildigi ve CSP'ye yeni bir
+      # connect-src hedefi eklenmedigi burada sabitleniyor.
+      - name: Asenkron tarama kuyruğu (SQS/Lambda yolu)
+        run: node cyberlionai/tools/scanqueue-test.js
+
+      - name: Lambda paketi üretilebiliyor
+        run: cyberlionai/aws/lambda-scanner/build.sh
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do
