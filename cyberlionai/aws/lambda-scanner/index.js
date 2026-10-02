@@ -36,39 +36,7 @@ const { buildOwaspReport } = require('./_lib/report-owasp.js');
 const supabase = require('./lib/supabase.js');
 const s3 = require('./lib/s3.js');
 const { buildDetail } = require('./lib/detail.js');
-
-/** Yeniden denenmesi anlamlı olan hatalar. */
-const RETRYABLE = [
-  'timeout', 'unreachable', 'bad_redirect', 'too_many_redirects', 'dns_failed',
-  'db_unreachable', 's3_unreachable'
-];
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Hata kodunu şemanın kabul ettiği kısa koda indirir (serbest metin yazılmaz). */
-function errorCode(err) {
-  const ham = String((err && err.message) || 'scan_failed');
-  const kod = ham.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 40);
-  return kod || 'scan_failed';
-}
-
-function parseMessage(record) {
-  let payload;
-  try {
-    payload = JSON.parse(record.body);
-  } catch (e) {
-    throw new Error('bad_message');
-  }
-  const scanId = payload && (payload.scan_id || payload.scanId);
-  if (!UUID_RE.test(String(scanId || ''))) throw new Error('bad_scan_id');
-  if (!payload.url) throw new Error('empty');
-  return {
-    scanId: String(scanId),
-    url: String(payload.url),
-    userId: payload.user_id || payload.userId || null,
-    consent: payload.consent === true
-  };
-}
+const { parseMessage, errorCode, RETRYABLE } = require('./lib/message.js');
 
 /** Tek bir işi baştan sona yürütür. */
 async function processJob(message) {
@@ -179,4 +147,3 @@ exports.handler = async function handler(event) {
   return { batchItemFailures: basarisiz };
 };
 
-exports.__test = { parseMessage, errorCode, RETRYABLE };

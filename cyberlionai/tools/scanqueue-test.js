@@ -148,8 +148,11 @@ dogru('Lambda detayından TR PDF üretiliyor',
 dogru('Lambda detayından EN PDF üretiliyor',
   Buffer.isBuffer(pdfEn) && pdfEn.slice(0, 5).toString('latin1') === '%PDF-');
 
-const lambda = require('../aws/lambda-scanner/index.js');
-const T = lambda.__test;
+/* `index.js` DEĞİL, saf işlevlerin durduğu `lib/message.js` yükleniyor:
+   index.js ilk satırında tarama motorunu çağırıyor ve motor paket içine
+   build.sh tarafından kopyalanıyor. Sınamanın `build.sh` koşmuş olmasına
+   bağlı kalması, CI'da adım sırası değiştiğinde sessizce kırılır (kırıldı). */
+const T = require('../aws/lambda-scanner/lib/message.js');
 esit('mesaj ayrıştırma scan_id okuyor',
   T.parseMessage({ body: JSON.stringify({
     url: 'ornek.com', user_id: null, scan_id: jobRow.id }) }).scanId, jobRow.id);
@@ -176,6 +179,10 @@ dogru('geçici hatalar yeniden deneniyor',
   && T.RETRYABLE.indexOf('s3_unreachable') !== -1);
 dogru('kısmi başarısızlık bildiriliyor (diğer mesajlar geri atılmıyor)',
   /batchItemFailures/.test(lambdaSrc));
+/* Saf işlevler index.js'e geri taşınırsa bu sınama build.sh'e bağımlı
+   hâle gelir; bağımlılığın yönü burada sabitleniyor. */
+dogru('index.js saf işlevleri lib/message.js üzerinden alıyor',
+  /require\('\.\/lib\/message\.js'\)/.test(lambdaSrc));
 dogru('aynı mesaj tekrar gelirse bulgular ikiye katlanmıyor',
   /replaceFindings/.test(lambdaSrc)
   && /method: 'DELETE'/.test(oku('aws/lambda-scanner/lib/supabase.js')));
