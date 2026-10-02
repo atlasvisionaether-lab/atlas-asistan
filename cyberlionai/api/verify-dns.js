@@ -70,6 +70,7 @@
 const mail = require('./_lib/mail.js');
 const store = require('./_lib/store.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
+const tg = require('./_lib/telegram.js');
 
 /* Tarama kovasından AYRI: bu uç tarama hakkı harcamıyor, sorgu da ucuz.
    Yine de bir istemcinin uca yüklenmesini engelleyecek kadar dar. */
@@ -187,7 +188,7 @@ function govdeAl(req) {
   return null;
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   /* Yoklama yolu yok: iş kimliği üretmiyoruz (bkz. "NEDEN 202 YOK"). */
@@ -226,7 +227,16 @@ module.exports = async function handler(req, res) {
   const onbellekAnahtari = 'cl:dns:' + alan;
   try {
     const hazir = await store.cacheGet(onbellekAnahtari);
-    if (hazir) return res.status(200).json(hazir);
+    if (hazir) {
+      /* Önbellekten gelen cevap da bir doğrulama sonucudur: kullanıcı düğmeye
+         bastı ve bir cevap gördü. Bildirimi atlamak, Telegram'daki kaydı
+         ekranda olandan farklı yapardı. */
+      await tg.sendTelegram(
+        tg.mesaj.dnsDogrulama(alan, hazir.spf && hazir.spf.status,
+          hazir.dmarc && hazir.dmarc.policy),
+        { type: 'dns' });
+      return res.status(200).json(hazir);
+    }
   } catch (err) {
     /* Önbellek okunamadı: taze sorgu atılıyor, istek düşmüyor. */
   }
@@ -242,6 +252,9 @@ module.exports = async function handler(req, res) {
       kayitlar = await mail.spfDmarcKayitlari(alan);
     }
   } catch (err) {
+    tg.bildirimIsaretle(res);
+    await tg.sendTelegram(tg.mesaj.hata('/api/verify-dns', 502, 'dns_failed ' + alan),
+      { type: 'alert' });
     return res.status(502).json({ error: { code: 'dns_failed' } });
   }
 
@@ -258,6 +271,12 @@ module.exports = async function handler(req, res) {
      kullanıcıyı tekrar denemeye bırakmak, yanlış cevap vermekten iyidir. */
   if (!olculdu(kayitlar)) {
     const dusen = !(kayitlar.spfSorgu || {}).kesin ? 'spf' : 'dmarc';
+    /* Zaman aşımı/SERVFAIL uyarı üretiyor: kullanıcıya "ölçemedim" demek
+       dürüst ama sessiz kalmak çözücünün bozulduğunu bizden saklar. */
+    tg.bildirimIsaretle(res);
+    await tg.sendTelegram(
+      tg.mesaj.hata('/api/verify-dns', 502, 'timeout ' + dusen + ' ' + alan),
+      { type: 'alert' });
     return res.status(502).json({ error: { code: 'dns_failed', record: dusen } });
   }
 
@@ -269,5 +288,11 @@ module.exports = async function handler(req, res) {
     /* Önbelleğe yazılamadı: sonucu vermeye engel değil. */
   }
 
+  await tg.sendTelegram(
+    tg.mesaj.dnsDogrulama(alan, govdeYanit.spf.status, govdeYanit.dmarc.policy),
+    { type: 'dns' });
+
   return res.status(200).json(govdeYanit);
-};
+}
+
+module.exports = tg.ucuSar(handler, '/api/verify-dns');
