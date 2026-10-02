@@ -3644,9 +3644,11 @@
         });
       },
       /** POST /api/enqueue-scan — kuyruk tabanlı tarama (Task 1). scanId
-          döner; endpoint henüz yoksa 404 reddeder ve arayüz eşzamanlı
-          /api/scan'e geri düşer. consent yalnızca onay kutusu işaretliyse
-          gönderilir; sunucu tarafında yeniden doğrulanır. */
+          döner. Kuyruk yolu kapalıysa (SCAN_QUEUE_ENABLED yok ya da AWS
+          kaynakları hazır değil) uç 404 döner ve arayüz eşzamanlı
+          /api/scan'e geri düşer — uç o istekte kota HARCAMIYOR, yoksa geri
+          düşülen her tarama iki hak yerdi. consent yalnızca onay kutusu
+          işaretliyse gönderilir; sunucu tarafında yeniden doğrulanır. */
       enqueueScan: function (url) {
         return fetch(CONFIG.apiBaseUrl + '/api/enqueue-scan', {
           method: 'POST',
@@ -3722,8 +3724,13 @@
       },
 
       /** GET /api/scan/{scanId} — geçmiş tarama kaydı (backend bekliyor) */
+      /* GET /api/scan-status?id=<uuid> — kuyruktaki işin durumu.
+         `/api/scan/<id>` DEĞİL: öyle bir uç yok ve hiç olmadı; istek 404
+         dönüyor, yoklama döngüsü hatayı sessizce yutuyor ve üst sınır
+         dolunca tarama eşzamanlı yola düşüyordu. Durum ucu `scan_jobs`
+         satırını sahiplik süzgeciyle okuyan tek uç. */
       getScan: function (scanId) {
-        return API.request('/api/scan/' + encodeURIComponent(scanId));
+        return API.request('/api/scan-status?id=' + encodeURIComponent(scanId));
       },
 
       /* ---- Kimlik doğrulama ----
@@ -4102,11 +4109,19 @@
       API.enqueueScan(domain)
         .then(function (enq) {
           if (!enq || !enq.scanId) throw { code: 'enqueue_unavailable' };
+          /* Kuyruk yolu çalışıyor: tahmini ilerleme sayacı DURDURULUR.
+             Çubuğu bundan sonra sunucunun bildirdiği `progress` sürüyor;
+             ikisi birlikte çalışsaydı çubuk gerçek ve tahmini değer
+             arasında ileri geri zıplardı. */
+          clearInterval(ticker);
           return pollScan(enq.scanId, 40);
         })
         .then(function (result) { renderScanResult(result); finish(); })
         .catch(function () {
-          /* 2) Eşzamanlı tarama — mevcut davranış, adımlı mock ilerleme. */
+          /* 2) Eşzamanlı tarama — mevcut davranış, adımlı mock ilerleme.
+             Sayaç yukarıda durdurulmuş olabilir; eşzamanlı yolda ilerleme
+             tahminden geliyor, bu yüzden yeniden başlatılıyor. */
+          ticker = startProgress();
           API.startScan(domain, 'quick', null)
             .then(function (result) { renderScanResult(result); })
             .catch(function (err) { renderScanError(err); })

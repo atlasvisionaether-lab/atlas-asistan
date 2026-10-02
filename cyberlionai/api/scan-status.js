@@ -85,6 +85,12 @@ module.exports = async function handler(req, res) {
     scannerMode: row.scanner_mode,
     country: row.country || null,
     attempts: row.attempts || 0,
+    /* İlerleme çubuğunun okuduğu alanlar. Sunucunun bildirdiği gerçek
+       değerler: Lambda her adımda yazıyor (bkz. aws/lambda-scanner/index.js).
+       Göç uygulanmadıysa PostgREST bu sütunları döndürmez; null kalır ve
+       istemci çubuğu kendi tahminiyle sürdürür. */
+    progress: typeof row.progress === 'number' ? row.progress : null,
+    current_step: row.current_step || null,
     createdAt: row.created_at,
     completedAt: row.completed_at,
     /* Bulgu ayrıntısı yalnızca iş bittiğinde döner: yarı dolu bir sonucu

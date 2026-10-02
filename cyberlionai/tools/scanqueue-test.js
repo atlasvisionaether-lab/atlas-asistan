@@ -17,6 +17,11 @@
  *  5. TR ve EN sözlüklerinin kuyruk metinleri bakımından EŞİT olduğu.
  *  6. CSP'de `connect-src`'ın gevşetilmediği: yoklama aynı köken üzerinden
  *     yapılıyor, dışa açılan yeni bir hedef YOK.
+ *  7. Yeniden denenecek bir hatanın iş satırına TERMİNAL 'failed' YAZMADIĞI
+ *     — yazarsa istemci, SQS yeniden teslim etmeden önce çalışan bir
+ *     taramayı başarısız görür (PR #57 üzerinde bildirilen bulgu).
+ *  8. `/api/enqueue-scan` ile `/api/scan`'in kuyruk adımlarını PAYLAŞTIĞI ve
+ *     kuyruk kapalıyken verilen 404'ün KOTA HARCAMADIĞI.
  */
 
 const fs = require('node:fs');
@@ -30,6 +35,8 @@ const statusSrc = oku('api/scan-status.js');
 const queueSrc = oku('api/_lib/scanqueue.js');
 const dbSrc = oku('api/_lib/db.js');
 const lambdaSrc = oku('aws/lambda-scanner/index.js');
+const enqueueSrc = oku('api/enqueue-scan.js');
+const startSrc = oku('api/_lib/queuestart.js');
 const html = oku('index.html');
 const vercel = oku('vercel.json');
 const headers = oku('_headers');
@@ -61,33 +68,36 @@ dogru('kuyruk dalı eşzamanlı yoldan ÖNCE ve ayrı',
   scanSrc.indexOf('scanqueue.isEnabled()')
     < scanSrc.indexOf('const result = await scanSite('));
 dogru('bayrak açık ama yapılandırma eksikse eşzamanlı yola DÜŞÜLMÜYOR',
-  /!scanqueue\.isConfigured\(\) \|\| !db\.isConfigured\(\)/.test(scanSrc));
+  /scanqueue\.isEnabled\(\) && scanqueue\.isConfigured\(\) && db\.isConfigured\(\)/.test(startSrc));
 
-/* ---- 2. Kota iadesi ---- */
+/* ---- 2. Kota iadesi ----
 
-/* Kuyruk dalındaki her çıkış yolunda `refundQuota` olmalı. Dalı kesip
-   `return res.status(...)` sayısı ile iade sayısını karşılaştırıyoruz. */
-const dalBas = scanSrc.indexOf('if (scanqueue.isEnabled())');
-const dalSon = scanSrc.indexOf("/* ---- Eşzamanlı yol");
-dogru('kuyruk dalı bulunabiliyor', dalBas !== -1 && dalSon > dalBas);
-const dal = scanSrc.slice(dalBas, dalSon);
-const iade = (dal.match(/store\.refundQuota\(quotaKey\)/g) || []).length;
-const hataCikis = (dal.match(/return res\.status\(503\)|return res\.status\(durum\)/g) || []).length;
-esit('kuyruk dalındaki her hata çıkışında kota iadesi var', iade, hataCikis);
-esit('kuyruk dalında 4 hata çıkışı var (yapılandırma, hedef, satır, kuyruk)',
+   Kuyruk adımları `_lib/queuestart.js` içinde (iki uç paylaşıyor). Her hata
+   çıkışında `refund` çağrılmak ZORUNDA: iade edilmezse kullanıcı hiç tarama
+   almadan hak kaybeder. Çıkış sayısı ile iade sayısı karşılaştırılıyor, yani
+   yeni bir hata yolu eklenip iadesi unutulursa sınama kalır. */
+const iade = (startSrc.match(/await refund\(\);/g) || []).length;
+const hataCikis = (startSrc.match(/return \{ ok: false/g) || []).length;
+esit('kuyruk adımlarındaki her hata çıkışında kota iadesi var', iade, hataCikis);
+esit('kuyruk adımlarında 4 hata çıkışı var (yapılandırma, hedef, satır, kuyruk)',
   hataCikis, 4);
-dogru('kuyruğa bırakılamayan iş failed yazılıyor', /db\.markJobFailed\(jobId, kod\)/.test(dal));
-dogru('başarılı kuyruklama 202 dönüyor', /return res\.status\(202\)\.json\(/.test(dal));
-dogru('202 yanıtı jobId taşıyor', /jobId: jobId/.test(dal));
-dogru('202 yanıtı kotayı bildiriyor', /quota: \{/.test(dal));
+dogru('kuyruğa bırakılamayan iş failed yazılıyor',
+  /db\.markJobFailed\(jobId, kod\)/.test(startSrc));
+dogru('başarılı kuyruklama 202 dönüyor', /return res\.status\(202\)\.json\(/.test(scanSrc));
+dogru('202 yanıtı jobId taşıyor', /jobId: kuyruk\.jobId/.test(scanSrc));
+dogru('202 yanıtı kotayı bildiriyor', /quota: \{/.test(scanSrc));
 dogru('hedef kuyruğa bırakılmadan önce doğrulanıyor',
-  dal.indexOf('normalizeTarget(url)') !== -1
-  && dal.indexOf('normalizeTarget(url)') < dal.indexOf('createPendingJob'));
+  startSrc.indexOf('normalizeTarget(input.url)') !== -1
+  && startSrc.indexOf('normalizeTarget(input.url)') < startSrc.indexOf('createPendingJob'));
 dogru('iş kimliği SUNUCUDA üretiliyor (istemci kimlik seçemiyor)',
-  !/scan_id:\s*body\./.test(scanSrc) && !/jobId\s*=\s*body\./.test(scanSrc));
+  !/scan_id:\s*body\./.test(scanSrc + enqueueSrc + startSrc)
+    && !/jobId\s*=\s*body\./.test(scanSrc + enqueueSrc + startSrc));
 dogru('kuyruk yolunda da IP hız sınırı ve kota uygulanıyor',
-  scanSrc.indexOf('store.hitRateLimit') < dalBas
-  && scanSrc.indexOf('store.reserveQuota') < dalBas);
+  scanSrc.indexOf('store.hitRateLimit') < scanSrc.indexOf('startQueuedScan({')
+  && scanSrc.indexOf('store.reserveQuota') < scanSrc.indexOf('startQueuedScan({'));
+dogru('ikinci uçta da IP hız sınırı ve kota uygulanıyor',
+  enqueueSrc.indexOf('store.hitRateLimit') < enqueueSrc.indexOf('startQueuedScan({')
+  && enqueueSrc.indexOf('store.reserveQuota') < enqueueSrc.indexOf('startQueuedScan({'));
 
 /* ---- 3. Sahiplik ---- */
 
@@ -234,6 +244,98 @@ dogru('fiyat bölümü id değişmedi',
   dogru(c[0] + ' içinde amazonaws hedefi yok', c[1].indexOf('amazonaws.com') === -1);
   dogru(c[0] + ' içinde wss hedefi yok', c[1].indexOf('wss://') === -1);
 });
+
+/* ============================================================
+   Yeniden deneme penceresinde iş satırı TERMİNAL OLMAMALI.
+
+   Bildirilen bulgu: yeniden denenebilir hatalar (timeout, unreachable,
+   db/s3_unreachable) satıra 'failed' yazılıp mesaj SQS'e geri veriliyordu.
+   İstemci bu arada durumu yokluyor ve çalışmaya devam eden taramayı
+   başarısız görüyordu. Karar artık saf bir işlevde ve BURADA ÇALIŞTIRILIYOR.
+   ============================================================ */
+
+const mesaj = require('../aws/lambda-scanner/lib/message.js');
+const kayit = function (n) { return { attributes: { ApproximateReceiveCount: String(n) } }; };
+
+const ilk = mesaj.retryDecision('timeout', kayit(1), {});
+dogru('yeniden denenecek hata mesajı kuyruğa geri verir', ilk.retry === true);
+esit('yeniden deneme penceresinde durum terminal değil', ilk.patch.status, 'queued');
+esit('yeniden deneme penceresinde completed_at yazılmaz', ilk.patch.completed_at, null);
+esit('yeniden deneme penceresinde hata kodu teşhis için yazılır',
+  ilk.patch.error_code, 'timeout');
+
+mesaj.RETRYABLE.forEach(function (kod) {
+  const k = mesaj.retryDecision(kod, kayit(1), {});
+  dogru('`' + kod + '` ilk denemede failed YAZMAZ', k.patch.status === 'queued');
+});
+
+const son = mesaj.retryDecision('timeout', kayit(3), {});
+dogru('deneme hakkı tükendiğinde durum terminal', son.patch.status === 'failed');
+dogru('terminal durumda completed_at yazılır', typeof son.patch.completed_at === 'string');
+
+const ortam = mesaj.retryDecision('timeout', kayit(3), { SQS_MAX_RECEIVE_COUNT: '5' });
+esit('teslim sınırı ortam değişkeninden okunur', ortam.patch.status, 'queued');
+
+const kalici = mesaj.retryDecision('blocked_target', kayit(1), {});
+dogru('kalıcı hata yeniden denenmez', kalici.retry === false);
+esit('kalıcı hata terminal yazılır', kalici.patch.status, 'failed');
+
+esit('iş kaydı yoksa satıra hiç yazılmaz',
+  mesaj.retryDecision('job_not_found', kayit(1), {}).patch, null);
+
+/* Lambda kararı KENDİ İÇİNDE tekrar etmemeli: hata yolunda elle yazılmış bir
+   'failed' kalırsa yukarıdaki sınamalar yeşil kalır ama hata geri gelir. */
+const yakalaBlok = lambdaSrc.slice(lambdaSrc.indexOf('} catch (err) {', lambdaSrc.indexOf('exports.handler')));
+dogru('Lambda hata yolu kararı retryDecision\'a bırakır',
+  yakalaBlok.indexOf('retryDecision') === -1
+    ? false
+    : !/status:\s*'failed'/.test(yakalaBlok));
+
+/* İlerleme alanları gerçekten yazılıyor ve okunuyor mu. */
+dogru('Lambda current_step yazıyor', /current_step:\s*'scanning_headers'/.test(lambdaSrc));
+dogru('Lambda rapor adımını bildiriyor', /current_step:\s*'generating_report'/.test(lambdaSrc));
+dogru('durum ucu progress döndürüyor', /progress:\s*typeof row\.progress/.test(statusSrc));
+dogru('durum ucu current_step döndürüyor', statusSrc.indexOf('current_step: row.current_step') !== -1);
+dogru('durum sorgusu ilerleme sütunlarını seçiyor',
+  dbSrc.indexOf('attempts,progress,current_step') !== -1);
+
+/* ============================================================
+   İki uç tek uygulamayı paylaşıyor.
+   ============================================================ */
+
+dogru('/api/scan kuyruk adımlarını paylaşılan modülden çağırıyor',
+  scanSrc.indexOf('startQueuedScan') !== -1);
+dogru('/api/enqueue-scan kuyruk adımlarını paylaşılan modülden çağırıyor',
+  enqueueSrc.indexOf('startQueuedScan') !== -1);
+dogru('kuyruk adımları tek yerde: /api/scan satır açmıyor',
+  scanSrc.indexOf('createPendingJob') === -1);
+dogru('kuyruk adımları tek yerde: /api/enqueue-scan satır açmıyor',
+  enqueueSrc.indexOf('createPendingJob') === -1);
+dogru('paylaşılan modül hedefi doğruluyor', startSrc.indexOf('normalizeTarget') !== -1);
+dogru('paylaşılan modül her hata yolunda hakkı iade ediyor',
+  (startSrc.match(/await refund\(\)/g) || []).length === 4);
+
+/* Kuyruk kapalıyken 404 — ve o 404 KOTA HARCAMAMALI. İstemci 404 görünce
+   eşzamanlı /api/scan'e düşüyor; burada hak harcanırsa tek tarama iki hak
+   yer. Bu yüzden 404 kontrolü kota ayırmadan ÖNCE gelmek zorunda. */
+esit('kuyruk kapalıyken uç 404 dönüyor',
+  /isAvailable\(\)\)\s*\{\s*return res\.status\(404\)/.test(enqueueSrc.replace(/\n/g, ' ')), true);
+dogru('404 kota ayırmadan önce veriliyor',
+  enqueueSrc.indexOf('status(404)') < enqueueSrc.indexOf('reserveQuota'));
+dogru('404 hız sınırından önce veriliyor',
+  enqueueSrc.indexOf('status(404)') < enqueueSrc.indexOf('hitRateLimit'));
+dogru('uç istemcinin okuduğu scanId alanını dönüyor',
+  /scanId:\s*kuyruk\.jobId/.test(enqueueSrc));
+dogru('iki uç aynı hız sınırı kovasını kullanıyor',
+  enqueueSrc.indexOf("'cl:rl:'") !== -1 && scanSrc.indexOf("'cl:rl:'") !== -1);
+
+/* İstemci var olan ucu yokluyor. `/api/scan/<id>` diye bir uç YOK. */
+dogru('istemci durum ucunu yokluyor',
+  html.indexOf("'/api/scan-status?id=' + encodeURIComponent(scanId)") !== -1);
+dogru('istemci olmayan /api/scan/<id> ucunu çağırmıyor',
+  !/'\/api\/scan\/' \+ encodeURIComponent/.test(html));
+dogru('kuyruk yolunda tahmini ilerleme sayacı durduruluyor',
+  /clearInterval\(ticker\);\s*\n\s*return pollScan/.test(html));
 
 /* ---- Sırlar ---- */
 

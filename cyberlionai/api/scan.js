@@ -30,9 +30,8 @@
  */
 
 const { scanSite, SCANNER_VERSION, REPORT_VERSION } = require('./_lib/scanner.js');
-const { normalizeTarget } = require('./_lib/guard.js');
 const scanqueue = require('./_lib/scanqueue.js');
-const db = require('./_lib/db.js');
+const { startQueuedScan } = require('./_lib/queuestart.js');
 const store = require('./_lib/store.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
 const {
@@ -125,64 +124,29 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  /* ---- Kuyruklu yol ---- */
+  /* ---- Kuyruklu yol ----
+     Adımların kendisi `_lib/queuestart.js` içinde: aynı iş `/api/enqueue-scan`
+     ucundan da başlatılıyor ve iki uç tek uygulamayı paylaşıyor. Buradaki
+     tek fark yanıt biçimi (202 + jobId + kota). */
   if (scanqueue.isEnabled()) {
-    if (!scanqueue.isConfigured() || !db.isConfigured()) {
-      /* Bayrak açık ama kuyruk ya da veritabanı yapılandırılmamış. Burada
-         eşzamanlı yola DÜŞÜLMÜYOR: iki yol aynı istekte karışırsa hangi
-         yolun çalıştığı belirsizleşir ve yanlış yapılandırma sessizce
-         gizlenir. Harcanan hak geri veriliyor. */
-      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi */ }
-      return res.status(503).json({ error: { code: 'service_unavailable' } });
-    }
+    const kuyruk = await startQueuedScan({
+      url: url,
+      consent: consent,
+      owner: owner,
+      ip: clientIp(req),
+      refund: function () { return store.refundQuota(quotaKey); }
+    });
 
-    /* Hedef kuyruğa bırakılmadan ÖNCE doğrulanıyor: geçersiz ya da engelli
-       bir adres için satır açıp Lambda'yı uyandırmak gereksiz, ve hata
-       kullanıcıya hemen dönebilir. */
-    const target = normalizeTarget(url);
-    if (target.error) {
-      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi */ }
-      const durum = ERROR_STATUS[target.error] || 400;
-      return res.status(durum).json({ error: { code: target.error } });
+    if (!kuyruk.ok) {
+      return res.status(kuyruk.status).json({ error: { code: kuyruk.code } });
     }
-
-    let jobId = null;
-    try {
-      jobId = await db.createPendingJob(
-        { host: target.host, url: target.url.href },
-        { userId: owner.userId, sessionId: owner.sessionId, ip: clientIp(req) },
-        consent);
-    } catch (err) {
-      if (console && console.error) console.error('job create failed:', err.message);
-    }
-    if (!jobId) {
-      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi */ }
-      return res.status(503).json({ error: { code: 'service_unavailable' } });
-    }
-
-    try {
-      await scanqueue.enqueue({
-        url: target.url.href, userId: owner.userId, scanId: jobId, consent: consent
-      });
-    } catch (err) {
-      /* Satır açıldı ama mesaj kuyruğa gitmedi. İş 'pending' bırakılmıyor:
-         hiç işlenmeyecek bir iş, kullanıcının sonsuza kadar yokladığı bir
-         iş demek. 'failed' yazılıyor ve hak geri veriliyor. */
-      const kod = (err && err.message) || 'queue_rejected';
-      try { await db.markJobFailed(jobId, kod); } catch (e) { /* yazılamadı */ }
-      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi */ }
-      if (console && console.error) console.error('enqueue failed:', kod);
-      return res.status(503).json({ error: { code: 'service_unavailable' } });
-    }
-
-    try { await db.markJobQueued(jobId); } catch (e) { /* durum yazılamadı, iş yolda */ }
 
     return res.status(202).json({
-      jobId: jobId,
+      jobId: kuyruk.jobId,
       status: 'queued',
-      host: target.host,
-      url: target.url.href,
-      statusUrl: '/api/scan-status?id=' + encodeURIComponent(jobId),
+      host: kuyruk.host,
+      url: kuyruk.url,
+      statusUrl: '/api/scan-status?id=' + encodeURIComponent(kuyruk.jobId),
       quota: {
         used: quota.used,
         limit: FREE_SCAN_LIMIT,

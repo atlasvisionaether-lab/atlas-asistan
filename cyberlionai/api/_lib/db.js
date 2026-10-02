@@ -650,7 +650,7 @@ async function getJobStatus(owner, jobId) {
     + '?' + queueOwnerFilter(owner)
     + '&id=eq.' + encodeURIComponent(jobId)
     + '&select=id,domain,url,status,score,error_code,scanner_mode,country,'
-    + 'result,created_at,queued_at,completed_at,attempts&limit=1');
+    + 'result,created_at,queued_at,completed_at,attempts,progress,current_step&limit=1');
   const row = rows && rows[0] ? rows[0] : null;
   return isScanRow(row) ? row : null;
 }

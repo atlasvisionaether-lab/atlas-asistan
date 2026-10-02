@@ -8,9 +8,11 @@ değişmez: kuyruk `SCAN_QUEUE_ENABLED` açılmadan devreye girmez.
 
 ```
 tarayıcı
-   │ POST /api/scan            { url }
+   │ POST /api/enqueue-scan    { url }   ← ana sayfanın kullandığı uç
+   │ POST /api/scan            { url }   ← eski sözleşme, 202 + jobId
    ▼
-Vercel /api/scan               IP hız sınırı + ücretsiz kota (eskisi gibi)
+Vercel (iki uç)                IP hız sınırı + ücretsiz kota (aynı kovalar)
+   │                           _lib/queuestart.js: TEK uygulama
    │                           scan_jobs satırı açar → status 'pending'
    │ POST /functions/v1/enqueue-scan
    ▼
@@ -21,7 +23,7 @@ AWS SQS  cyberlionai-scan-queue
    │
    ▼
 AWS Lambda  cyberlionai-scan-worker   (Node 20, bağımlılık yok)
-   ├── status 'running'
+   ├── status 'running' + current_step/progress (ilerleme çubuğu bunu okur)
    ├── scanSite()  ← api/_lib/scanner.js'in KENDİSİ (build.sh kopyalar)
    ├── scan_findings yazar (önce eski bulguları siler → tekrar teslimde çift kayıt yok)
    ├── PDF üretir → S3 cyberlionai-reports  (özel kova, AES256)
@@ -30,9 +32,41 @@ AWS Lambda  cyberlionai-scan-worker   (Node 20, bağımlılık yok)
 tarayıcı  GET /api/scan-status?id=<jobId>   her 2 sn, en çok 60 tur (2 dk)
 ```
 
-`/api/scan`, kuyruk açıkken **202** döner (`jobId` + `statusUrl`). Kapalıyken
-eskisi gibi **200** ve sonucun tamamı. İstemci ikisini de tanıyor; çağıran
-taraf farkı görmüyor.
+### İki uç, tek uygulama
+
+Kuyruklu taramanın iki istemcisi var ve ikisi de yayında:
+
+| Uç | Yanıt | Kullanan |
+|---|---|---|
+| `POST /api/enqueue-scan` | **200** + `{ scanId }` | ana sayfa tarama kutusu |
+| `POST /api/scan` | **202** + `{ jobId, statusUrl, quota }` | eski sözleşme (`API.startScan`) |
+
+Adımların kendisi **tek yerde**: `api/_lib/queuestart.js`. Hedef doğrulama,
+satır açma, kuyruğa bırakma, kota iadesi ve `'queued'` yazımı iki uçta da
+aynı kodla yürüyor; uçlar yalnızca yanıt biçiminde ayrışıyor. Ayrı ayrı
+dursalardı biri düzeltilip öteki unutulurdu.
+
+Kuyruk **kapalıyken** `/api/enqueue-scan` **404** döner. Bu bir kaza değil,
+istemcinin sözleşmesi: 404 görünce eşzamanlı `/api/scan`'e düşüyor. O yüzden
+404, hız sınırından ve **kotadan önce** veriliyor — geri düşülecek istek hak
+harcarsa tek tarama iki hak yerdi.
+
+İstemci sonucu `/api/scan-status?id=` üzerinden yokluyor. `/api/scan/<id>`
+diye bir uç **yok ve hiç olmadı**; istemci önce oraya soruyordu ve her istek
+404 dönüyordu (yoklama döngüsü hatayı yutuyor, sınır dolunca tarama eşzamanlı
+yola düşüyordu).
+
+### Yeniden deneme penceresinde durum
+
+Yeniden denenebilir bir hatada (`timeout`, `unreachable`, `db_unreachable`,
+`s3_unreachable` …) iş satırına **terminal `'failed'` yazılmaz**: mesaj SQS'e
+geri veriliyor ve istemci bu arada durumu yokluyor; `'failed'` görürse
+çalışmaya devam eden —büyük olasılıkla başarıyla bitecek— bir taramayı
+başarısız sanar. Satır `'queued'`a geri alınır, hata kodu teşhis için
+yazılır, `completed_at` boş bırakılır. `'failed'` ancak teslim hakkı
+tükendiğinde (`maxReceiveCount`) ya da hata hiç yeniden denenmeyecek
+türdense yazılır. Karar `aws/lambda-scanner/lib/message.js` →
+`retryDecision` içinde ve sınanıyor.
 
 ## Neden Realtime değil, yoklama
 
@@ -200,6 +234,13 @@ aws sqs get-queue-attributes --region eu-central-1 \
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Vercel | zaten var |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SQS_URL` | **yalnızca Supabase** | Vercel'e girilmez |
 | `S3_BUCKET`, `SUPABASE_*` | Lambda | AWS kimliği girilmez (görev rolü) |
+| `SQS_MAX_RECEIVE_COUNT` | Lambda (isteğe bağlı) | kuyruğun `maxReceiveCount` değeriyle **aynı** olmalı; verilmezse 3 varsayılır |
+
+`SQS_MAX_RECEIVE_COUNT` neden gerekiyor: Lambda, işi hangi teslimde terminal
+`'failed'` yazacağına buna bakarak karar veriyor. Redrive ilkesindeki değer
+3'ten farklı yapılırsa bu değişken de güncellenmeli, yoksa iş DLQ'ya giderken
+satır `'queued'` kalır (kullanıcı sonsuza kadar yoklar) ya da erken `'failed'`
+yazılır.
 
 `AWS_ACCESS_KEY` adı istenmişti; AWS'in kendi adı `AWS_ACCESS_KEY_ID` ve
 Lambda çalışma ortamı bu adı kendisi kullanıyor. Farklı bir ad koymak,
@@ -210,7 +251,9 @@ Lambda çalışma ortamı bu adı kendisi kullanıyor. Farklı bir ad koymak,
 Bayrak **en son** açılır, çünkü açıldığı an ana sayfadaki tarayıcı kuyruğa
 bağımlı hâle gelir:
 
-1. Göç koşulur (adım 4).
+1. Göç koşulur (adım 4). `db/migrations/007_scan_jobs_progress.sql` **önce**
+   uygulanmış olmalı: `progress` ve `current_step` sütunları ile `status`
+   kısıtının tek sahibi o dosya.
 2. SQS, S3, Lambda ayağa kalkar (1–3), event source mapping etkin.
 3. Edge Function dağıtılır ve `invoke` ile 202 alınır (5).
 4. Bir `scan_jobs` satırı elle açılıp kuyruğa bırakılır; Lambda'nın satırı

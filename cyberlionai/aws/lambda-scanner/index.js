@@ -24,6 +24,12 @@
  * kuyruk ömrü boyunca dönüp durur. Bu yüzden iş 'failed' yazılır ve mesaj
  * başarıyla tüketilmiş sayılır.
  *
+ * Yeniden denenecek bir hatada iş satırı 'failed' YAZILMAZ: istemci durumu
+ * yokluyor ve mesaj henüz yeniden teslim edilmemişken terminal bir
+ * başarısızlık görürse, sürmekte olan taramayı başarısız sanar. Satır
+ * 'queued'a geri alınır; 'failed' ancak deneme hakkı tükendiğinde yazılır
+ * (bkz. lib/message.js → retryDecision).
+ *
  * ORTAM DEĞİŞKENLERİ (değerleri konsolda girilir, bu depoda DURMAZ)
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   — servis rolü, yalnızca sunucuda
  *   S3_BUCKET                                 — rapor kovası
@@ -36,7 +42,7 @@ const { buildOwaspReport } = require('./_lib/report-owasp.js');
 const supabase = require('./lib/supabase.js');
 const s3 = require('./lib/s3.js');
 const { buildDetail } = require('./lib/detail.js');
-const { parseMessage, errorCode, RETRYABLE } = require('./lib/message.js');
+const { parseMessage, errorCode, retryDecision } = require('./lib/message.js');
 
 /** Tek bir işi baştan sona yürütür. */
 async function processJob(message) {
@@ -44,7 +50,9 @@ async function processJob(message) {
      `attempts` hâlâ önceki değer. Deneme sayacı bu yüzden ikinci bir
      yazımda artırılıyor; tek yazımda artırmak için PostgREST'te sütunu
      kendisine ekleyen bir ifade gerekir ki REST katmanında yok. */
-  const jobRow = await supabase.patchJob(message.scanId, { status: 'running' });
+  const jobRow = await supabase.patchJob(message.scanId, {
+    status: 'running', current_step: 'scanning_headers', progress: 25
+  });
 
   if (!jobRow) {
     /* İş kaydı yok: silinmiş ya da hiç açılmamış. Yeniden denemek aynı
@@ -71,6 +79,14 @@ async function processJob(message) {
 
   await supabase.replaceFindings(message.scanId, findings);
 
+  /* Rapor üretimi ve yüklemesi işin en uzun adımı; istemci bu arada
+     yokluyor ve çubuğun durduğunu görmemeli. */
+  try {
+    await supabase.patchJob(message.scanId, {
+      current_step: 'generating_report', progress: 85
+    });
+  } catch (e) { /* ilerleme bildirimi taramayı bozmaz */ }
+
   /* PDF ve S3 yüklemesi taramanın SONUCUNU geçersiz kılmamalı: rapor
      üretilemezse iş yine 'completed' yazılır, `report_url` boş kalır ve
      panel raporu /api/report üzerinden istek anında üretmeye devam eder.
@@ -86,6 +102,8 @@ async function processJob(message) {
 
   await supabase.patchJob(message.scanId, {
     status: 'completed',
+    progress: 100,
+    current_step: null,
     score: typeof result.score === 'number' ? result.score : null,
     country: result.country || null,
     completed_at: new Date().toISOString(),
@@ -125,18 +143,19 @@ exports.handler = async function handler(event) {
       await processJob(message);
     } catch (err) {
       const kod = errorCode(err);
+      const karar = retryDecision(kod, record, process.env);
 
-      if (message && kod !== 'job_not_found') {
+      /* Yamanın NE OLDUĞUNA `retryDecision` karar veriyor: yeniden
+         denenecek bir hatada iş 'failed' değil 'queued' yazılır, yoksa
+         istemci yeniden teslim penceresinde terminal bir başarısızlık
+         görürdü (bkz. lib/message.js). */
+      if (message && karar.patch) {
         try {
-          await supabase.patchJob(message.scanId, {
-            status: 'failed',
-            error_code: kod,
-            completed_at: new Date().toISOString()
-          });
+          await supabase.patchJob(message.scanId, karar.patch);
         } catch (e) { /* durum yazılamadı; aşağıda yeniden denemeye bırakılır */ }
       }
 
-      if (RETRYABLE.indexOf(kod) !== -1) {
+      if (karar.retry) {
         basarisiz.push({ itemIdentifier: record.messageId });
       } else if (console && console.error) {
         console.error('scan job failed:', kod);
