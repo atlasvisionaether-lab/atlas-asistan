@@ -1,7 +1,9 @@
 name: Apply scan progress index
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [feat/scan-progress-ui]
+    paths: ['.github/workflows/apply-scan-progress.yml']
 
 permissions:
   contents: write
@@ -24,5 +26,6 @@ jobs:
           git config user.name "atlas-bot"
           git config user.email "noreply@users.noreply.github.com"
           git add cyberlionai/index.html
+          git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "feat(progress): step-based scan progress with percentages + enqueue-scan fallback polling"
           git push origin feat/scan-progress-ui
