@@ -128,6 +128,14 @@ jobs:
       - name: Tarama ucu gerçekten çağrılıyor (senkron + kuyruk yolu)
         run: node cyberlionai/tools/scanhandler-test.js
 
+      # Ilerleme cubugu: yayinda tarama %85'te sonsuza kadar donuyordu, cunku
+      # kuyruk ucu 404 dondugunde esizamanli yola duserken IKINCI bir sayac
+      # baslatiliyor ve ilki hic durdurulmuyordu. Kacak sayac, sonuc gelip
+      # cubuk %100 yazildiktan sonra ustune tekrar %85 yaziyordu. Bu adim
+      # index.html'den sokulen kodu sahte saatle CALISTIRIYOR.
+      - name: Tarama ilerleme çubuğu (kaçak sayaç yok)
+        run: node cyberlionai/tools/scanprogress-test.js
+
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
 
