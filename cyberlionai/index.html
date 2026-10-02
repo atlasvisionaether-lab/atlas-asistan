@@ -3636,6 +3636,21 @@
         setPassword: function (p)   { return API.auth.call('password', { password: p }); }
       },
 
+      /** GET /api/panel/subscription — hesabın kendi planı.
+          Plan bilgisi tarayıcıda SAKLANMIYOR, yalnızca hangi düğmenin
+          görüneceğine karar vermek için okunuyor; ödemeyi ve kota kararını
+          yine sunucu veriyor. Uç cevap vermezse plan bilinmiyor sayılıyor:
+          "Pro'ya Geç" görünür kalır, bu güvenli taraftır. */
+      subscription: function () {
+        return fetch(CONFIG.apiBaseUrl + '/api/panel/subscription', {
+          headers: { 'Accept': 'application/json' },
+          credentials: 'same-origin'
+        }).then(function (res) {
+          if (!res.ok) return null;
+          return res.json().catch(function () { return null; });
+        }, function () { return null; });
+      },
+
       /* ---- Düzeltme (remediation) uçları ---- */
 
       /** POST /api/user/preferences — tercih edilen düzeltme yöntemini kaydeder */
@@ -4274,8 +4289,36 @@
         if (accountEmail && signedIn) accountEmail.textContent = currentUser.email || '';
         if (!signedIn) closeAccountMenu();
 
+        /* Ücretli plandaki kullanıcıya "Pro'ya Geç" göstermek yanlış; çıkış
+           yapınca da eski planın izi kalmamalı, bu yüzden her iki yönde de
+           yeniden hesaplanıyor. */
+        if (!signedIn) {
+          showProCta(true);
+        } else {
+          API.subscription().then(function (data) {
+            var plan = data && data.plan;
+            showProCta(!(plan === 'pro' || plan === 'enterprise'));
+          });
+        }
+
         // Geçmiş paneli sahibi değiştiği için baştan yüklenmeli.
         if (window.__clHistoryReset) window.__clHistoryReset();
+      }
+
+      /**
+       * Yükseltme çağrılarını gösterir ya da gizler.
+       *
+       * Fiyat tablosunun İÇİNDEKİ düğme buna dahil değil: o tablo herkese
+       * açık fiyat listesi ve Pro satırının bedeli ücretli kullanıcıya da
+       * görünmeli; gizlense kart boş bir kutu olarak kalırdı. Gizlenen şey
+       * menüdeki ve hero'daki "Pro'ya Geç" çağrıları.
+       */
+      function showProCta(on) {
+        var ctas = document.querySelectorAll('[data-pro-intent]');
+        for (var i = 0; i < ctas.length; i++) {
+          if (ctas[i].closest && ctas[i].closest('#pricing')) continue;
+          ctas[i].hidden = !on;
+        }
       }
 
       function refresh() {
@@ -4589,9 +4632,30 @@
     /* Modal kapandığında kimlik modülü kendi geçici durumunu siliyor. */
     if (authModal) authModal.onClose = function () { authManager.resetTransient(); };
 
+    /* Fiyat bölümüne götüren ortak hareket. Fiyatlandırma herkese açık:
+       planları görmek için hesap gerekmiyor. */
+    function goToPricing() {
+      var section = document.getElementById('pricing');
+      if (!section) { window.location.href = '/pricing'; return; }
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      try { history.replaceState({}, '', '#pricing'); } catch (e) {}
+    }
+
+    /* HATA: "Pro'ya Geç" düğmeleri oturum durumuna HİÇ bakmadan "Hesap
+       Oluştur" modalını açıyordu, yani giriş yapmış kullanıcı fiyatları
+       göremiyor, zaten sahip olduğu hesabı yeniden kurması isteniyordu.
+       Artık yükseltme çağrıları her zaman fiyat bölümüne götürüyor; hesap
+       gerektiren adım ödemenin kendisi ve onu sunucu zorunlu kılıyor
+       (/api/checkout oturumsuz isteği /panel'e gönderiyor). Kayıt modalı
+       yalnızca oturumu OLMAYAN kullanıcıda ve yalnızca gerçekten hesap
+       isteyen düğmelerde açılıyor. */
     var openers = document.querySelectorAll('[data-open-modal]');
     for (var o = 0; o < openers.length; o++) {
-      openers[o].addEventListener('click', function () { authManager.open('register'); });
+      openers[o].addEventListener('click', function () {
+        if (this.hasAttribute('data-pro-intent')) return goToPricing();
+        if (authManager.isSignedIn()) return goToPricing();
+        authManager.open('register');
+      });
     }
     var authOpenBtn = document.getElementById('authOpen');
     if (authOpenBtn) authOpenBtn.addEventListener('click', function () { authManager.open('login'); });

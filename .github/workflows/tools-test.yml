@@ -105,6 +105,9 @@ jobs:
       - name: Şifre sıfırlama modalının durumu
         run: node cyberlionai/tools/authmodal-test.js
 
+      - name: Pro'ya Geç düğmelerinin oturum davranışı
+        run: node cyberlionai/tools/procta-test.js
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do
