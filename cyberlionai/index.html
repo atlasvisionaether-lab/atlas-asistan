@@ -4141,10 +4141,18 @@
              ikisi birlikte çalışsaydı çubuk gerçek ve tahmini değer
              arasında ileri geri zıplardı. */
           stopProgress();
-          return pollScan(enq.scanId, 40);
+          /* Sunucunun bildirdiği durum ucu kullanılır (enqueue-scan.js
+             statusUrl döndürüyor); GET /api/scan/{id} bir durum ucu DEĞİL. */
+          return pollScan(enq.scanId, enq.statusUrl, 40);
         })
         .then(function (result) { renderScanResult(result); finish(); })
-        .catch(function () {
+        .catch(function (err) {
+          /* Geri dönüş YALNIZ kuyruk ucu 404 döndüğünde (bayrak kapalı).
+             Yoklama zaman aşımında düşülmez: iş kuyruktadır, ikinci bir
+             tarama kotayı iki kez harcardı; hata dürüstçe gösterilir. */
+          if (err && err.code !== 'enqueue_unavailable') {
+            renderScanError(err); finish(); return;
+          }
           /* 2) Eşzamanlı tarama — mevcut davranış, adımlı mock ilerleme.
              Sayaç yukarıda durdurulmuş olabilir; eşzamanlı yolda ilerleme
              tahminden geliyor, bu yüzden yeniden başlatılıyor. `startProgress`
@@ -4160,12 +4168,13 @@
     /** Kuyruğa alınan taramayı belirli aralıklarla sorar; sunucunun
         bildirdiği progress/current_step değerlerini çubuğa ve durum
         metnine yansıtır. Biten taramanın kaydını döndürür. */
-    function pollScan(scanId, maxTries) {
+    function pollScan(scanId, statusUrl, maxTries) {
       var tries = 0;
+      var url = statusUrl || ('/api/scan-status?id=' + encodeURIComponent(scanId));
       return new Promise(function (resolve, reject) {
         var timer = setInterval(function () {
           tries += 1;
-          API.getScan(scanId).then(function (job) {
+          API.request(url).then(function (job) {
             if (job && typeof job === 'object') {
               if (typeof job.progress === 'number') {
                 scanBar.style.width = Math.max(0, Math.min(job.progress, 99)) + '%';
