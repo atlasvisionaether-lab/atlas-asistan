@@ -121,6 +121,13 @@ jobs:
       - name: Asenkron tarama kuyruğu (SQS/Lambda yolu)
         run: node cyberlionai/tools/scanqueue-test.js
 
+      # /api/scan ucunu GERCEKTEN cagiran sinama. Metin eslestiren sinamalar
+      # `const db = require(...)` satirinin silindigini YAKALAMADI: metin
+      # yerindeydi, eksik olan bildirimdi ve yayinda her tarama 500 dondu.
+      # Bu adim handler'i calistirip durum kodunu okuyor.
+      - name: Tarama ucu gerçekten çağrılıyor (senkron + kuyruk yolu)
+        run: node cyberlionai/tools/scanhandler-test.js
+
       # Faz 5.5: imzali rapor indirme ve cl_scans kaydi. Presign GERCEKTEN
       # kosturuluyor; kanonik istegin bicimi, parametre siralamasi ve imzanin
       # nesneye baglandigi dogrulaniyor. Ayrica report_key'in istemciden

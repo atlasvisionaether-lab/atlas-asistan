@@ -32,6 +32,11 @@
 const { scanSite, SCANNER_VERSION, REPORT_VERSION } = require('./_lib/scanner.js');
 const scanqueue = require('./_lib/scanqueue.js');
 const { startQueuedScan } = require('./_lib/queuestart.js');
+/* EŞZAMANLI yol sonucu buraya yazıyor (saveScan / saveOwaspJob). Kuyruk
+   dalı `queuestart.js`'e taşınırken bu satır yanlışlıkla silinmişti ve
+   bayrak kapalı olduğu için HER tarama ReferenceError ile 500 döndü.
+   tools/scanhandler-test.js artık ucu gerçekten çağırıyor. */
+const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
 const {
