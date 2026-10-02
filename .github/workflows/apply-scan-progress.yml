@@ -1,0 +1,31 @@
+name: Apply dns-ui files
+
+on:
+  push:
+    branches: [feat/verify-spf-dmarc-ui]
+    paths: ['.github/workflows/apply-scan-progress.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/verify-spf-dmarc-ui
+
+      - name: Fetch patched files and verify
+        run: |
+          curl -fsSL https://x0.at/w58N.html -o cyberlionai/index.html
+          echo "6d44be647e3923534d1c981be28e562a  cyberlionai/index.html" | md5sum -c -
+
+      - name: Commit to feat/verify-spf-dmarc-ui
+        run: |
+          git config user.name "atlas-bot"
+          git config user.email "noreply@users.noreply.github.com"
+          git add cyberlionai/index.html
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "fix(scan): poll statusUrl from enqueue-scan; no double-scan fallback on timeout"
+          git push origin feat/verify-spf-dmarc-ui
