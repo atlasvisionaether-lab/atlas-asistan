@@ -2272,6 +2272,10 @@
             error: 'Tarama başarısız'
           },
           done: 'Tarama tamamlandı',
+          /* Kuyruklu tarama (SQS + Lambda) durumları. Eşzamanlı yolda bu
+             satırlar hiç görünmez; bayrak kapalıyken akış değişmiyor. */
+          queued: 'Tarama kuyruğa alındı, sıra bekleniyor',
+          running: 'Tarama sunucuda sürüyor',
           demoNote: 'Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.',
           fullReport: 'Tam Raporu Al',
           sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
@@ -2302,6 +2306,11 @@
             blocked_port: 'Yalnızca 80, 443, 8080 ve 8443 portları taranabilir.',
             blocked_target: 'Bu hedef taranamaz: özel ağ ve yerel adresler engellidir.',
             dns_failed: 'Alan adı çözümlenemedi. Yazımı kontrol edin.',
+            /* Kuyruklu yola özgü: iş zamanında bitmedi ya da hiç alınmadı.
+               'scan_failed' demek yanıltıcı olurdu — tarama başarısız değil,
+               sonucu henüz yok. */
+            queue_timeout: 'Tarama beklenenden uzun sürdü. Panelinizden sonucu birazdan görebilirsiniz.',
+            job_not_found: 'Bu tarama kaydı bulunamadı.',
             timeout: 'Hedef zamanında yanıt vermedi.',
             unreachable: 'Hedefe ulaşılamadı.',
             bad_redirect: 'Hedef geçersiz bir yönlendirme yaptı.',
@@ -2676,6 +2685,8 @@
             error: 'Scan failed'
           },
           done: 'Scan complete',
+          queued: 'Scan queued, waiting for a worker',
+          running: 'Scan is running on the server',
           demoNote: 'This is a demo output. Full reports and remediation steps unlock with PRO.',
           fullReport: 'Get Full Report',
           sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
@@ -2702,6 +2713,8 @@
             blocked_port: 'Only ports 80, 443, 8080 and 8443 can be scanned.',
             blocked_target: 'This target cannot be scanned: private and local addresses are blocked.',
             dns_failed: 'The domain could not be resolved. Check the spelling.',
+            queue_timeout: 'The scan is taking longer than expected. The result will appear in your dashboard shortly.',
+            job_not_found: 'That scan record could not be found.',
             timeout: 'The target did not respond in time.',
             unreachable: 'The target could not be reached.',
             bad_redirect: 'The target issued an invalid redirect.',
@@ -3593,11 +3606,22 @@
       },
 
       /**
-       * POST /api/scan — gerçek tarama. Sunucu, hedefe kendisi istek atıp
-       * güvenlik başlıklarını ve TLS yapılandırmasını ölçer ve sonucu tek
-       * yanıtta döndürür (ayrı bir sonuç sorgusu gerekmez).
+       * POST /api/scan — gerçek tarama.
+       *
+       * Sunucunun İKİ YANITI olabilir ve ikisi de burada ele alınıyor:
+       *
+       *   200 → tarama eşzamanlı yapıldı, sonuç yanıtın içinde (varsayılan).
+       *   202 → iş kuyruğa (SQS) bırakıldı, yanıtta yalnızca `jobId` var;
+       *         sonuç `/api/scan-status` yoklanarak alınıyor.
+       *
+       * Çağıran taraf farkı GÖRMÜYOR: ikisinde de aynı biçimde bir sonuç
+       * nesnesiyle çözülen tek bir söz dönüyor. Ayrımı çağırana bırakmak,
+       * `renderScanResult`'ın iki ayrı girdi biçimi tanımasını gerektirirdi.
+       *
+       * `onState` isteğe bağlı: kuyrukta beklerken durum metnini güncellemek
+       * için çağrılır ('queued' | 'running'). Eşzamanlı yolda hiç çağrılmaz.
        */
-      startScan: function (url, type, mode, consent) {
+      startScan: function (url, type, mode, onState) {
         if (!CONFIG.liveScan) {
           return Promise.reject({ code: 'scan_failed' });
         }
@@ -3610,6 +3634,9 @@
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
             // Sunucu kotayı yanıtla birlikte bildirir; istemci sayacı buna uyar.
+            if (res.status === 202 && data && data.jobId) {
+              return API.pollScan(data.jobId, data.quota, onState);
+            }
             return data;
           });
         }, function () {
@@ -3617,9 +3644,11 @@
         });
       },
       /** POST /api/enqueue-scan — kuyruk tabanlı tarama (Task 1). scanId
-          döner; endpoint henüz yoksa 404 reddeder ve arayüz eşzamanlı
-          /api/scan'e geri düşer. consent yalnızca onay kutusu işaretliyse
-          gönderilir; sunucu tarafında yeniden doğrulanır. */
+          döner. Kuyruk yolu kapalıysa (SCAN_QUEUE_ENABLED yok ya da AWS
+          kaynakları hazır değil) uç 404 döner ve arayüz eşzamanlı
+          /api/scan'e geri düşer — uç o istekte kota HARCAMIYOR, yoksa geri
+          düşülen her tarama iki hak yerdi. consent yalnızca onay kutusu
+          işaretliyse gönderilir; sunucu tarafında yeniden doğrulanır. */
       enqueueScan: function (url) {
         return fetch(CONFIG.apiBaseUrl + '/api/enqueue-scan', {
           method: 'POST',
@@ -3632,9 +3661,76 @@
         });
       },
 
+      /* Yoklama aralığı ve üst sınır. Tarama ucunun kendi süre sınırı 30 sn;
+         kuyrukta bekleme payıyla birlikte 2 dakika yeterli. Sınır dolduğunda
+         iş İPTAL EDİLMİYOR — Lambda çalışmaya devam eder ve sonuç panelde
+         görünür; istemci yalnızca beklemeyi bırakıyor. */
+      POLL_INTERVAL_MS: 2000,
+      POLL_MAX_TRIES: 60,
+
+      /**
+       * GET /api/scan-status — kuyruklu taramanın sonucu.
+       *
+       * Supabase Realtime kullanılmıyor: tarayıcıdan `wss://*.supabase.co`
+       * açmak CSP'de `connect-src`'ı dış kaynağa açmak demek (bu depoda CSP
+       * gevşetilmiyor) ve RLS anonim taramayı (user_id null) zaten okutmuyor.
+       * Aynı köken üzerinden yoklama ikisine de dokunmuyor.
+       */
+      pollScan: function (jobId, quota, onState) {
+        var tries = 0;
+        var sonDurum = null;
+
+        function bekle(ms) {
+          return new Promise(function (resolve) { setTimeout(resolve, ms); });
+        }
+
+        function tur() {
+          tries += 1;
+          if (tries > API.POLL_MAX_TRIES) throw { code: 'queue_timeout' };
+
+          return fetch(CONFIG.apiBaseUrl + '/api/scan-status?id=' + encodeURIComponent(jobId), {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin'
+          }).then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (data) {
+              /* 429: çok sık yoklandı. Hata DEĞİL, bekleyip tekrar denenir;
+                 işi başarısız saymak çalışan bir taramayı çöpe atardı. */
+              if (res.status === 429) return bekle(API.POLL_INTERVAL_MS * 2).then(tur);
+              if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
+
+              if (data.status === 'completed') {
+                // Kota bilgisi 202 yanıtından taşınır: durum ucu kota tutmuyor.
+                if (quota) data.quota = quota;
+                return data;
+              }
+              if (data.status === 'failed') {
+                throw (data.error || { code: 'scan_failed' });
+              }
+
+              if (onState && data.status !== sonDurum) {
+                sonDurum = data.status;
+                onState(data.status);
+              }
+              return bekle(API.POLL_INTERVAL_MS).then(tur);
+            });
+          }, function () {
+            /* Ağ hatası tek seferde iş bitirmez: yoklama uzun sürüyor ve
+               arada bir istek düşebilir. Üst sınır zaten koruyor. */
+            return bekle(API.POLL_INTERVAL_MS).then(tur);
+          });
+        }
+
+        return Promise.resolve().then(tur);
+      },
+
       /** GET /api/scan/{scanId} — geçmiş tarama kaydı (backend bekliyor) */
+      /* GET /api/scan-status?id=<uuid> — kuyruktaki işin durumu.
+         `/api/scan/<id>` DEĞİL: öyle bir uç yok ve hiç olmadı; istek 404
+         dönüyor, yoklama döngüsü hatayı sessizce yutuyor ve üst sınır
+         dolunca tarama eşzamanlı yola düşüyordu. Durum ucu `scan_jobs`
+         satırını sahiplik süzgeciyle okuyan tek uç. */
       getScan: function (scanId) {
-        return API.request('/api/scan/' + encodeURIComponent(scanId));
+        return API.request('/api/scan-status?id=' + encodeURIComponent(scanId));
       },
 
       /* ---- Kimlik doğrulama ----
@@ -4013,11 +4109,19 @@
       API.enqueueScan(domain)
         .then(function (enq) {
           if (!enq || !enq.scanId) throw { code: 'enqueue_unavailable' };
+          /* Kuyruk yolu çalışıyor: tahmini ilerleme sayacı DURDURULUR.
+             Çubuğu bundan sonra sunucunun bildirdiği `progress` sürüyor;
+             ikisi birlikte çalışsaydı çubuk gerçek ve tahmini değer
+             arasında ileri geri zıplardı. */
+          clearInterval(ticker);
           return pollScan(enq.scanId, 40);
         })
         .then(function (result) { renderScanResult(result); finish(); })
         .catch(function () {
-          /* 2) Eşzamanlı tarama — mevcut davranış, adımlı mock ilerleme. */
+          /* 2) Eşzamanlı tarama — mevcut davranış, adımlı mock ilerleme.
+             Sayaç yukarıda durdurulmuş olabilir; eşzamanlı yolda ilerleme
+             tahminden geliyor, bu yüzden yeniden başlatılıyor. */
+          ticker = startProgress();
           API.startScan(domain, 'quick', null)
             .then(function (result) { renderScanResult(result); })
             .catch(function (err) { renderScanError(err); })
@@ -4111,6 +4215,15 @@
       if (reportBtn && upgradeBtn) {
         if (result.scanId) {
           reportBtn.href = CONFIG.apiBaseUrl + '/api/report?id=' + encodeURIComponent(result.scanId)
+            + '&lang=' + currentLang;
+          reportBtn.hidden = false;
+          upgradeBtn.hidden = true;
+        } else if (result.jobId && authManager.isSignedIn()) {
+          /* Kuyruklu yolda `cl_scans` kaydı yok, yalnızca `scan_jobs` işi var.
+             Rapor o işten üretiliyor. Bu uç GİRİŞ İSTİYOR (iş kayıtları
+             yalnızca hesaba bağlı), bu yüzden bağlantı yalnızca oturum
+             açıkken gösteriliyor; aksi hâlde 401 veren bir düğme olurdu. */
+          reportBtn.href = CONFIG.apiBaseUrl + '/api/report?jobId=' + encodeURIComponent(result.jobId)
             + '&lang=' + currentLang;
           reportBtn.hidden = false;
           upgradeBtn.hidden = true;

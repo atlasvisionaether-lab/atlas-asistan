@@ -571,6 +571,91 @@ async function getJobWithFindings(userId, jobId) {
 }
 
 /* ============================================================
+   Asenkron tarama kuyruğu (SQS + Lambda).
+
+   Satır BURADA açılır, iş SQS'e bırakılır, Lambda aynı satırı ilerletir.
+   Kimliği sunucu üretir; istemci "şu kimlikle iş aç" diyemez, yoksa
+   başkasının iş kimliğini seçip satırını ezebilirdi.
+
+   SAHİPLİK: giriş yapılmışsa `user_id`, değilse `session_id`. Anonim
+   taramanın da bir sahibi olmak zorunda, çünkü sonucu SONRADAN soruluyor;
+   sahip sütunu olmasa iş kimliğini bilen herkes sonucu okuyabilirdi.
+   ============================================================ */
+
+/** Kuyruğa bırakılmak üzere 'pending' bir iş satırı açar, kimliğini döner. */
+async function createPendingJob(input, owner, consent) {
+  const row = {
+    user_id: owner.userId || null,
+    session_id: owner.userId ? null : (owner.sessionId || null),
+    domain: input.host,
+    url: input.url,
+    status: 'pending',
+    scanner_mode: consent === true ? 'active' : 'passive',
+    consent_ip: consent === true ? (owner.ip || null) : null,
+    consent_at: consent === true ? new Date().toISOString() : null
+  };
+  const rows = await request('scan_jobs', {
+    method: 'POST', body: row, headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+/** Mesaj SQS'e gittikten sonra. 'pending' kalan iş = kuyruğa hiç düşmemiş iş. */
+async function markJobQueued(jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const rows = await request('scan_jobs?id=eq.' + encodeURIComponent(jobId), {
+    method: 'PATCH',
+    body: { status: 'queued', queued_at: new Date().toISOString() },
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0] : null;
+}
+
+/**
+ * Kuyruğa bırakılamayan işi kapatır. Kod şemanın kabul ettiği kısa biçime
+ * indirilir; serbest metin yazılmaz (istemciye çevrilmek üzere döner).
+ */
+async function markJobFailed(jobId, code) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const kod = String(code || 'scan_failed').toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_').slice(0, 40) || 'scan_failed';
+  const rows = await request('scan_jobs?id=eq.' + encodeURIComponent(jobId), {
+    method: 'PATCH',
+    body: { status: 'failed', error_code: kod, completed_at: new Date().toISOString() },
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0] : null;
+}
+
+/** Kuyruk işleri için sahiplik süzgeci: hesap varsa hesap, yoksa oturum. */
+function queueOwnerFilter(owner) {
+  return owner.userId
+    ? 'user_id=eq.' + encodeURIComponent(owner.userId)
+    : 'session_id=eq.' + encodeURIComponent(owner.sessionId);
+}
+
+/**
+ * İstemcinin yokladığı durum kaydı.
+ *
+ * Sahiplik filtresi SORGUNUN İÇİNDE: başka bir oturumun iş kimliğini bilmek
+ * işe yaramaz. İş yok ile "sizin değil" arayüze AYNI görünür (null), çünkü
+ * ayırmak "bu kimlik var ama sizin değil" demek olurdu.
+ *
+ * `result` bütünüyle dönmüyor; yalnızca istemcinin çizdiği alanlar. Ham
+ * başlık değerleri geçmiş listesinde de tutulmuyor (bkz. sanitizeFindings).
+ */
+async function getJobStatus(owner, jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const rows = await request('scan_jobs'
+    + '?' + queueOwnerFilter(owner)
+    + '&id=eq.' + encodeURIComponent(jobId)
+    + '&select=id,domain,url,status,score,error_code,scanner_mode,country,'
+    + 'result,created_at,queued_at,completed_at,attempts,progress,current_step&limit=1');
+  const row = rows && rows[0] ? rows[0] : null;
+  return isScanRow(row) ? row : null;
+}
+
+/* ============================================================
    Haftalık tarama için abonelik kaynağı.
 
    DİKKAT: `scan_jobs` tablosunda abonelik/plan sütunu YOK ve hiç olmadı.
@@ -718,6 +803,7 @@ module.exports = {
   sanitizeFindings, claimAnonymousScans, scanStats,
   listJobs, jobScoreTrend, getJob, getJobWithFindings, SEVERITY_ORDER,
   enterpriseScanTargets,
+  createPendingJob, markJobQueued, markJobFailed, getJobStatus,
   listSubscriptions, upsertIyzicoSubscription,
   findSubscriptionByRef, updateSubscriptionStatusByRef
 };

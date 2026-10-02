@@ -10,10 +10,28 @@
  *   - IP başına hız sınırı (kötüye kullanım)
  *   - Oturum başına ücretsiz tarama kotası (ürün politikası)
  * Tarayıcıdaki sayaç yalnızca gösterim içindir; karar burada verilir.
+ *
+ * İKİ YOL — EŞZAMANLI VE KUYRUKLU
+ *
+ * `SCAN_QUEUE_ENABLED=true` ise tarama BURADA yapılmaz: `scan_jobs` satırı
+ * açılır, iş Supabase Edge Function üzerinden SQS'e bırakılır ve uç 202 ile
+ * iş kimliğini döner. İstemci sonucu `/api/scan-status` üzerinden yoklar.
+ * Bayrak kapalıysa (varsayılan) eski eşzamanlı davranış AYNEN sürüyor.
+ *
+ * Bayrak NEDEN var: kuyruk yolu AWS kaynakları (SQS, S3, Lambda) yayına
+ * alınmadan çalışamaz. Bayrak olmasa, kodun yayına çıktığı ile Lambda'nın
+ * mesaj tüketmeye başladığı an arasında ana sayfadaki tarayıcı ölürdü.
+ * Bayrak yalnızca Lambda'nın gerçekten iş bitirdiği doğrulandıktan sonra
+ * açılmalı.
+ *
+ * Sınırlar (IP hızı ve ücretsiz kota) İKİ YOLDA DA aynı yerde uygulanıyor:
+ * kuyruğa bırakmak da bir tarama harcar, yoksa kota kuyruk üzerinden
+ * sınırsız hâle gelirdi.
  */
 
 const { scanSite, SCANNER_VERSION, REPORT_VERSION } = require('./_lib/scanner.js');
-const db = require('./_lib/db.js');
+const scanqueue = require('./_lib/scanqueue.js');
+const { startQueuedScan } = require('./_lib/queuestart.js');
 const store = require('./_lib/store.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
 const {
@@ -106,6 +124,40 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  /* ---- Kuyruklu yol ----
+     Adımların kendisi `_lib/queuestart.js` içinde: aynı iş `/api/enqueue-scan`
+     ucundan da başlatılıyor ve iki uç tek uygulamayı paylaşıyor. Buradaki
+     tek fark yanıt biçimi (202 + jobId + kota). */
+  if (scanqueue.isEnabled()) {
+    const kuyruk = await startQueuedScan({
+      url: url,
+      consent: consent,
+      owner: owner,
+      ip: clientIp(req),
+      refund: function () { return store.refundQuota(quotaKey); }
+    });
+
+    if (!kuyruk.ok) {
+      return res.status(kuyruk.status).json({ error: { code: kuyruk.code } });
+    }
+
+    return res.status(202).json({
+      jobId: kuyruk.jobId,
+      status: 'queued',
+      host: kuyruk.host,
+      url: kuyruk.url,
+      statusUrl: '/api/scan-status?id=' + encodeURIComponent(kuyruk.jobId),
+      quota: {
+        used: quota.used,
+        limit: FREE_SCAN_LIMIT,
+        remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used),
+        scope: owner.isAuthenticated ? 'account' : 'anonymous'
+      },
+      versions: { scanner: SCANNER_VERSION, report: REPORT_VERSION }
+    });
+  }
+
+  /* ---- Eşzamanlı yol (varsayılan) ---- */
   try {
     const result = await scanSite(url, { consent: consent });
     result.quota = {
