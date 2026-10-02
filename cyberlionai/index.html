@@ -2556,6 +2556,7 @@
             weak_password: 'Bu şifre yeterince güçlü değil. Daha uzun bir şifre deneyin.',
             link_invalid: 'Bağlantı geçersiz veya süresi dolmuş. Yeni bir bağlantı isteyin.',
             too_many_requests: 'Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.',
+            too_many_requests_in: 'Çok fazla deneme yapıldı. {min} dakika sonra tekrar deneyin.',
             not_authenticated: 'Oturumunuz sonlanmış. Tekrar giriş yapın.',
             auth_unavailable: 'Giriş servisi şu anda kullanılamıyor.',
             signup_unavailable: 'Kayıt şu anda tamamlanamıyor. Kısa süre içinde düzeltilecek; lütfen sonra tekrar deneyin.',
@@ -2947,6 +2948,7 @@
             weak_password: 'That password is not strong enough. Try a longer one.',
             link_invalid: 'The link is invalid or has expired. Request a new one.',
             too_many_requests: 'Too many attempts. Please try again later.',
+            too_many_requests_in: 'Too many attempts. Please try again in {min} minutes.',
             not_authenticated: 'Your session ended. Please sign in again.',
             auth_unavailable: 'The sign-in service is unavailable right now.',
             signup_unavailable: 'Sign-up cannot be completed right now. This is being fixed; please try again later.',
@@ -4077,6 +4079,7 @@
         document.body.style.overflow = '';
         hideTimer = setTimeout(function () { el.hidden = true; hideTimer = null; }, 320);
         if (lastFocused && lastFocused.focus) lastFocused.focus();
+        if (api && typeof api.onClose === 'function') { try { api.onClose(); } catch (e) {} }
       }
 
       // Dışına tıklayınca kapat
@@ -4099,7 +4102,11 @@
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       });
 
-      return { open: open, close: close, el: el };
+      /* Kapanışta dışarıya haber verilir: modalın İÇERİĞİNİ kim yönetiyorsa
+         (kimlik modülü) bıraktığı geçici durumu temizleyebilsin. Kapatma üç
+         yoldan geliyor (X, ESC, dışına tıklama) ve üçü de buradan geçiyor. */
+      var api = { open: open, close: close, el: el, onClose: null };
+      return api;
     }
 
     var modal = document.getElementById('authModal');
@@ -4157,12 +4164,48 @@
         msgEl.hidden = false;
       }
 
-      /** Sunucu hata kodunu kullanıcıya gösterilecek metne çevirir. */
+      /**
+       * Sunucu hata kodunu kullanıcıya gösterilecek metne çevirir.
+       *
+       * Deneme sınırında kalan süre de yazılıyor: sunucu 429 ile birlikte
+       * `retryAfter`'ı saniye olarak gönderiyor. "Bir süre sonra" diyen bir
+       * mesaj, kullanıcıyı düğmeye tekrar bastırıyor ve sayaç her istekte
+       * yeniden uzuyordu; dakikayı söylemek o döngüyü kesiyor.
+       */
       function errText(err) {
         var code = (err && err.code) || 'auth_failed';
+        if (code === 'too_many_requests') {
+          var saniye = Number(err && err.retryAfter);
+          if (isFinite(saniye) && saniye > 0) {
+            return t('auth.err.too_many_requests_in', { min: Math.ceil(saniye / 60) });
+          }
+        }
         var key = 'auth.err.' + code;
         var text = t(key);
         return text === key ? t('auth.err.auth_failed') : text;
+      }
+
+      /**
+       * Sıfırlama isteği formunun "gönderildi" hâli.
+       *
+       * NEDEN: istek başarılı olduktan sonra e-posta alanı ve gönder düğmesi
+       * olduğu gibi kalıyordu. Ekranda tek değişen, formun ÜSTÜNDEKİ yeşil
+       * satırdı; kullanıcı mesajın kendi isteğine mi ait olduğunu yoksa baştan
+       * mı orada durduğunu ayırt edemiyordu ve aynı düğmeye tekrar basıyordu
+       * (saatte 5 istek sınırı boşa harcanıyor). Gönderim başarılıysa form
+       * kapanıyor, yalnızca mesaj ve "Girişe dön" bağlantısı kalıyor.
+       */
+      function forgotSent(on) {
+        if (!VIEWS.forgot) return;
+        var parts = VIEWS.forgot.querySelectorAll('.auth__hint, .field, button[type="submit"]');
+        for (var i = 0; i < parts.length; i++) parts[i].hidden = !!on;
+      }
+
+      /** Modal kapanınca geçici durum sıfırlanır: bir sonraki açılış, önceki
+          denemenin yeşil mesajını ya da kapanmış formunu miras almasın. */
+      function resetTransient() {
+        clearMsg();
+        forgotSent(false);
       }
 
       /* ---- Görünüm değiştirme ---- */
@@ -4185,6 +4228,7 @@
         if (!VIEWS[name]) return;
         currentView = name;
         clearMsg();
+        forgotSent(false);
         Object.keys(VIEWS).forEach(function (k) {
           if (VIEWS[k]) VIEWS[k].hidden = (k !== name);
         });
@@ -4398,7 +4442,9 @@
           API.auth.recover(email.value.trim()).then(function () {
             busy(form, false);
             form.reset();
-            // Sunucu adresin kayıtlı olup olmadığını söylemez; mesaj da söylemez.
+            /* Sunucu adresin kayıtlı olup olmadığını söylemez; mesaj da söylemez.
+               Form kapanıyor: mesaj artık bu isteğin sonucu olarak okunuyor. */
+            forgotSent(true);
             showMsg(t('auth.msg.resetSent'), 'success');
           }, function (err) {
             busy(form, false);
@@ -4466,6 +4512,21 @@
         var type = params.get('type');
         var errCode = params.get('error_code') || params.get('error');
 
+        /* Supabase'in VARSAYILAN şablonu ({{ .ConfirmationURL }}) kodu adresin
+           sorgu dizesine değil, # sonrasındaki parçaya koyar. Bu sayfa parçayı
+           okumuyor: oturum HttpOnly çerezde tutuluyor, tarayıcıya jeton
+           verilmiyor. Böyle bir bağlantıyla eskiden HİÇBİR ŞEY olmuyordu —
+           kullanıcı siteye düşüyor, şifre yenileme adımı açılmıyordu. Artık
+           bağlantı kullanılamaz sayılıp söyleniyor; çözüm panodaki şablonu
+           {{ .TokenHash }} sürümüyle değiştirmek (docs/auth.md). */
+        var parca = String(window.location.hash || '');
+        if (!hash && !errCode && /[#&](access_token|error_code|error)=/.test(parca)) {
+          try { window.history.replaceState({}, '', window.location.pathname); } catch (e) {}
+          openModal(); setView('login');
+          showMsg(t('auth.err.link_invalid'), 'error');
+          return Promise.resolve(false);
+        }
+
         if (!hash && !errCode) return Promise.resolve(false);
 
         // Kod ne olursa olsun adres çubuğundan hemen silinir.
@@ -4513,6 +4574,7 @@
       return {
         init: init,
         refresh: refresh,
+        resetTransient: resetTransient,
         open: function (view) {
           if (!available) { toast(t('auth.err.auth_unavailable'), 'error', 5000); return; }
           setView(view || 'login');
@@ -4523,6 +4585,9 @@
         user: function () { return currentUser; }
       };
     })();
+
+    /* Modal kapandığında kimlik modülü kendi geçici durumunu siliyor. */
+    if (authModal) authModal.onClose = function () { authManager.resetTransient(); };
 
     var openers = document.querySelectorAll('[data-open-modal]');
     for (var o = 0; o < openers.length; o++) {

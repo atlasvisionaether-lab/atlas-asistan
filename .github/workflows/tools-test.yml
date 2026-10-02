@@ -102,6 +102,9 @@ jobs:
       - name: iyzico abonelik entegrasyonu (imza test vektörleri)
         run: node cyberlionai/tools/iyzico-test.js
 
+      - name: Şifre sıfırlama modalının durumu
+        run: node cyberlionai/tools/authmodal-test.js
+
       - name: Kabuk betiklerinin sözdizimi
         run: |
           for f in cyberlionai/tools/*.sh; do
