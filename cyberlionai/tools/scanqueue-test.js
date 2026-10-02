@@ -334,8 +334,14 @@ dogru('istemci durum ucunu yokluyor',
   html.indexOf("'/api/scan-status?id=' + encodeURIComponent(scanId)") !== -1);
 dogru('istemci olmayan /api/scan/<id> ucunu çağırmıyor',
   !/'\/api\/scan\/' \+ encodeURIComponent/.test(html));
+/* Kuyruk yolunda tahmini sayaç durdurulmalı, yoksa çubuk sunucunun bildirdiği
+   gerçek değer ile tahmin arasında zıplar. Artık yerel bir `ticker` yok;
+   sayaç tek yerden (`stopProgress`) yönetiliyor — kaçak sayaç yayında
+   taramayı %85'te dondurmuştu, bkz. tools/scanprogress-test.js. */
 dogru('kuyruk yolunda tahmini ilerleme sayacı durduruluyor',
-  /clearInterval\(ticker\);\s*\n\s*return pollScan/.test(html));
+  /stopProgress\(\);\s*\n\s*return pollScan/.test(html));
+dogru('ilerleme sayacı tek yerden yönetiliyor (yerel ticker yok)',
+  html.indexOf('var ticker') === -1 && html.indexOf('clearInterval(ticker)') === -1);
 
 /* ---- Sırlar ---- */
 

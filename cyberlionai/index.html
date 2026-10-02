@@ -4072,8 +4072,34 @@
       generating_report: 'report'
     };
 
+    /* Tahmini ilerleme sayacı TEK bir yerden yönetiliyor.
+
+       NEDEN: önceki sürümde sayaç yerel bir değişkende tutuluyordu ve
+       `ticker = startProgress()` İKİ kez çağrılabiliyordu — kuyruk ucu 404
+       döndüğünde (bayrak kapalı, normal durum) eşzamanlı yola düşerken.
+       İlk sayaç o yolda hiç durdurulmamıştı, dolayısıyla iki sayaç birden
+       koşuyor ve `clearInterval` yalnızca sonuncusunu durduruyordu. Kaçak
+       sayaç son adımda (%85 "rapor oluşturuluyor") sıkışıp kalıyor ve
+       `renderScanResult` çubuğu %100 yazdıktan ~900 ms sonra ÜSTÜNE tekrar
+       %85 ve döner spinner yazıyordu: tarama başarıyla bitse bile ekran
+       sonsuza kadar %85'te dönüyordu.
+
+       Artık sayaç kimliği modül düzeyinde duruyor ve `startProgress` işe
+       başlamadan önce öncekini durduruyor, yani iki sayacın birlikte
+       koşması YAPISAL olarak mümkün değil. */
+    var progressTimer = null;
+
+    /** Varsa çalışan tahmini ilerleme sayacını durdurur. Çağrılması güvenli. */
+    function stopProgress() {
+      if (progressTimer !== null) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+    }
+
     /** Yanıt beklenirken ilerleme çubuğunu adım adım, yüzdesiyle ilerletir. */
     function startProgress() {
+      stopProgress();
       var index = 0;
       var renderStep = function (step) {
         setStatus(t(step.key) + ' %' + step.pct, 'fa-solid fa-spinner fa-spin');
@@ -4081,10 +4107,11 @@
       };
       renderStep(PROGRESS_STEPS[0]);
 
-      return setInterval(function () {
+      progressTimer = setInterval(function () {
         index = Math.min(index + 1, PROGRESS_STEPS.length - 1);
         renderStep(PROGRESS_STEPS[index]);
       }, 900);
+      return progressTimer;
     }
 
     function runScan(domain) {
@@ -4096,9 +4123,9 @@
       scanBar.style.width = '0%';
 
       addNoticeRow(domain, 'fa-solid fa-globe', '--gold-primary');
-      var ticker = startProgress();
+      startProgress();
       var finish = function () {
-        clearInterval(ticker);
+        stopProgress();
         scanning = false;
         if (scanSubmit) scanSubmit.disabled = false;
       };
@@ -4113,15 +4140,16 @@
              Çubuğu bundan sonra sunucunun bildirdiği `progress` sürüyor;
              ikisi birlikte çalışsaydı çubuk gerçek ve tahmini değer
              arasında ileri geri zıplardı. */
-          clearInterval(ticker);
+          stopProgress();
           return pollScan(enq.scanId, 40);
         })
         .then(function (result) { renderScanResult(result); finish(); })
         .catch(function () {
           /* 2) Eşzamanlı tarama — mevcut davranış, adımlı mock ilerleme.
              Sayaç yukarıda durdurulmuş olabilir; eşzamanlı yolda ilerleme
-             tahminden geliyor, bu yüzden yeniden başlatılıyor. */
-          ticker = startProgress();
+             tahminden geliyor, bu yüzden yeniden başlatılıyor. `startProgress`
+             öncekini kendisi durduruyor, iki sayaç birden koşmuyor. */
+          startProgress();
           API.startScan(domain, 'quick', null)
             .then(function (result) { renderScanResult(result); })
             .catch(function (err) { renderScanError(err); })
@@ -4165,6 +4193,9 @@
     }
 
     function renderScanResult(result) {
+      /* Nihai durum yazılmadan önce tahmini sayaç durdurulur: sonradan
+         gelecek bir tik %100'ün üstüne %85 yazamasın. */
+      stopProgress();
       scanBar.style.width = '100%';
       setStatus(t('scan.done'), 'fa-solid fa-circle-check');
       scanLog.textContent = '';
@@ -4238,6 +4269,8 @@
     }
 
     function renderScanError(err) {
+      /* Hata ekranı da nihai bir durum: sayaç burada da durdurulur. */
+      stopProgress();
       var code = (err && err.code) || 'scan_failed';
 
       // Kota sunucuda bitti.
