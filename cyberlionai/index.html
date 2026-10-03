@@ -3671,10 +3671,10 @@
       /**
        * GET /api/scan-status — kuyruklu taramanın sonucu.
        *
-       * Supabase Realtime kullanılmıyor: tarayıcıdan `wss://*.supabase.co`
-       * açmak CSP'de `connect-src`'ı dış kaynağa açmak demek (bu depoda CSP
-       * gevşetilmiyor) ve RLS anonim taramayı (user_id null) zaten okutmuyor.
-       * Aynı köken üzerinden yoklama ikisine de dokunmuyor.
+       * Supabase Realtime kullanılmıyor: tarayıcıdan Supabase'in websocket
+       * ucuna bağlanmak CSP'de `connect-src`'ı dış kaynağa açmak demek (bu
+       * depoda CSP gevşetilmiyor) ve RLS anonim taramayı (user_id null) zaten
+       * okutmuyor. Aynı köken üzerinden yoklama ikisine de dokunmuyor.
        */
       pollScan: function (jobId, quota, onState) {
         var tries = 0;
