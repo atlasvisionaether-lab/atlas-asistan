@@ -197,6 +197,19 @@ select pg_get_constraintdef(oid) from pg_constraint
 -- 'queued' listede görünmeli
 ```
 
+`db/2026-10-02-clscans-job-link.sql` da aynı adımda, bundan sonra koşulmalı:
+`cl_scans` (eşzamanlı geçmiş) ile `scan_jobs` (kuyruk/OWASP işi) arasında
+`job_id` yabancı anahtarı kurar — `/api/scan`'in döndürdüğü `scanId` ve
+`jobId` şu ana kadar hiç ilişkilendirilmiyordu.
+
+Doğrulama:
+
+```sql
+select column_name from information_schema.columns
+ where table_name = 'cl_scans' and column_name = 'job_id';
+-- 1 satır beklenir
+```
+
 ### 5. Edge Function
 
 ```bash
