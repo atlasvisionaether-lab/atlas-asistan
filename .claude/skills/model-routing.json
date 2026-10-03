@@ -1,0 +1,9 @@
+{
+  "model_routing": {
+    "security-core": "anthropic/claude-3.5-sonnet",
+    "tr-legal": "openai/gpt-4o",
+    "market-scraper": "deepseek/deepseek-chat",
+    "seo-growth": "anthropic/claude-3.5-sonnet",
+    "frontend-system": "anthropic/claude-3.5-sonnet"
+  }
+}
