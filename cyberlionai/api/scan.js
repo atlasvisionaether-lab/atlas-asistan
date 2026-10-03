@@ -38,6 +38,7 @@ const { startQueuedScan } = require('./_lib/queuestart.js');
    tools/scanhandler-test.js artık ucu gerçekten çağırıyor. */
 const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
+const tg = require('./_lib/telegram.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
 const {
   RATE_WINDOW_SECONDS, RATE_MAX, FREE_SCAN_LIMIT, QUOTA_TTL_SECONDS
@@ -54,7 +55,7 @@ const ERROR_STATUS = {
 /** Hedefe ulaşılamamasından kaynaklanan hatalarda ücretsiz hak iade edilir. */
 const REFUNDABLE = ['timeout', 'unreachable', 'bad_redirect', 'too_many_redirects', 'dns_failed'];
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST') {
@@ -129,6 +130,13 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  /* Bildirim buradan sonra: adres doğrulandı ve kota ayrıldı, yani bu
+     gerçekten başlayan bir tarama. Daha önce gönderilse geçersiz istekler ve
+     kotası dolmuş denemeler de Telegram'a düşerdi.
+     BEKLENİYOR, arka plana atılmıyor: sunucusuz fonksiyon handler'ın sözü
+     çözülünce donuyor, beklenmeyen bir fetch yola çıkmadan kesilir. */
+  await tg.sendTelegram(tg.mesaj.taramaBasladi(url), { type: 'scan' });
+
   /* ---- Kuyruklu yol ----
      Adımların kendisi `_lib/queuestart.js` içinde: aynı iş `/api/enqueue-scan`
      ucundan da başlatılıyor ve iki uç tek uygulamayı paylaşıyor. Buradaki
@@ -143,8 +151,13 @@ module.exports = async function handler(req, res) {
     });
 
     if (!kuyruk.ok) {
+      tg.bildirimIsaretle(res);
+      await tg.sendTelegram(tg.mesaj.taramaBasarisiz(url, kuyruk.code),
+        { type: kuyruk.status >= 500 ? 'alert' : 'scan' });
       return res.status(kuyruk.status).json({ error: { code: kuyruk.code } });
     }
+
+    await tg.sendTelegram(tg.mesaj.taramaKuyruga(kuyruk.host || url), { type: 'scan' });
 
     return res.status(202).json({
       jobId: kuyruk.jobId,
@@ -217,6 +230,11 @@ module.exports = async function handler(req, res) {
      * });
      */
 
+    await tg.sendTelegram(
+      tg.mesaj.taramaBitti(result.host || url,
+        (result.summary && result.summary.failed) || 0, result.score),
+      { type: 'scan' });
+
     return res.status(200).json(result);
   } catch (err) {
     const code = (err && err.message) || 'scan_failed';
@@ -228,6 +246,18 @@ module.exports = async function handler(req, res) {
 
     const status = ERROR_STATUS[code] || 500;
     if (status >= 500 && console && console.error) console.error('scan error:', code);
+
+    /* Bildirim ucun KENDİ mesajıyla gidiyor, çünkü alan adını taşıyor;
+       `ucuSar`ın genel "500" uyarısı taşımıyor. İşaret, ikisinin birden
+       gönderilmesini engelliyor. */
+    tg.bildirimIsaretle(res);
+    await tg.sendTelegram(tg.mesaj.taramaBasarisiz(url, code),
+      { type: status >= 500 ? 'alert' : 'scan' });
+
     return res.status(status).json({ error: { code: code } });
   }
-};
+}
+
+/* Sarmalayıcı: try/catch DIŞINDA fırlatan bir hata (örneğin kimlik çözümü)
+   yoksa sessizce 500 dönerdi ve kimse haber almazdı. */
+module.exports = tg.ucuSar(handler, '/api/scan');

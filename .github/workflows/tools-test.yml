@@ -141,6 +141,12 @@ jobs:
       - name: Alan adı doğrulama ucu (SPF/DMARC)
         run: node cyberlionai/tools/verifydns-test.js
 
+      # Telegram bildirimleri. En onemlisi: belirtec ADRESIN icinde oldugu
+      # icin siradan bir hata logu onu sizdirir. Bu adim logda belirtecin
+      # tamamini, yalniz sir kismini ve api.telegram.org dizgesini ariyor.
+      - name: Telegram bildirimleri (belirteç sızmıyor)
+        run: node cyberlionai/tools/telegram-test.js
+
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
 
