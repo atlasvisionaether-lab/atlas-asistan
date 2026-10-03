@@ -817,10 +817,8 @@
   .footer__list a, .footer__list span { color: var(--text-gray); font-size: 0.9rem; transition: color var(--transition-speed) var(--transition-ease); }
   .footer__list a:hover { color: var(--gold-primary); }
 
-  .footer__contact { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; }
-  .footer__contact i { color: var(--gold-primary); }
-  .footer__contact a { color: var(--text-white); text-decoration: none; border-bottom: 1px solid var(--glass-border); }
-  .footer__contact a:hover { color: var(--gold-light); border-bottom-color: var(--gold-primary); }
+  .footer__copyright { font-size: 0.8rem; margin-top: 18px; }
+  .footer__list a i, .footer__list span i { color: var(--gold-primary); width: 1.1em; text-align: center; }
   .footer__bottom {
     margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--hairline);
     display: flex; flex-direction: column; gap: 12px;
@@ -1247,7 +1245,7 @@
     .hero__actions { flex-direction: row; justify-content: center; }
     .hero__stats { grid-template-columns: repeat(3, 1fr); }
     .scan__form { grid-template-columns: 1fr auto; }
-    .footer__bottom { flex-direction: row; justify-content: space-between; text-align: left; }
+    .footer__bottom { flex-direction: row; justify-content: center; text-align: left; }
     .cookie { flex-direction: row; align-items: center; justify-content: space-between; }
   }
 
@@ -1901,15 +1899,14 @@
             </svg>
             <span class="logo__text">CYBER LION<small>AI SECURITY</small></span>
           </a>
-          <p data-i18n="footer.about">Yapay zeka destekli sürekli güvenlik taraması. Zafiyetleri saldırganlardan önce bulun, önceliklendirin ve kapatın.</p>
+          <p data-i18n="footer.about">SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması.</p>
           <!-- Sosyal medya bağlantısı BİLEREK yok. Buradaki dört bağlantı
                marka adından kalıp üretilerek yazılmıştı; hiçbiri doğrulanmamıştı
                ve en az biri başkasına ait bir hesaba gidiyordu. Doğrulanmamış
                bağlantı koymaktansa hiç koymamak doğru. -->
-          <p class="footer__contact">
-            <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-            <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a>
-          </p>
+          <!-- FOOTER_ISLETME_START (tools/render-legal-pages.js bu bloğu legal-data.js'ten yeniler) -->
+          <p class="footer__copyright" data-i18n="footer.rights">© 2026 Ali Kotan - Şahıs İşletmesi</p>
+          <!-- FOOTER_ISLETME_END -->
         </div>
 
         <div>
@@ -1924,21 +1921,24 @@
 
         <div>
           <h4 class="footer__title" data-i18n="footer.contact">İletişim</h4>
+          <!-- FOOTER_ILETISIM_START (tools/render-legal-pages.js bu bloğu legal-data.js'ten yeniler) -->
           <ul class="footer__list">
+            <li><a href="https://www.google.com/maps/search/?api=1&query=Ritim+AVM+Cevizli+Mahallesi+Zuhal+Caddesi+No+46+Maltepe+Istanbul" target="_blank" rel="noopener"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Ritim AVM, Cevizli Mah. Zuhal Cad. No:46/50 Maltepe/İstanbul</a></li>
+            <li><a href="tel:+905344682769"><i class="fa-solid fa-phone" aria-hidden="true"></i> 0534 468 27 69</a></li>
             <li><a href="mailto:info@cyberlionai.com"><i class="fa-solid fa-envelope" aria-hidden="true"></i> info@cyberlionai.com</a></li>
             <li><a href="mailto:destek@cyberlionai.com"><i class="fa-solid fa-headset" aria-hidden="true"></i> destek@cyberlionai.com</a></li>
-            <li><span data-i18n="footer.hours">Destek: Hafta içi 09:00 – 18:00 (TSİ)</span></li>
-            <li><a href="https://www.cyberlionai.com">https://www.cyberlionai.com</a></li>
+            <li><span data-i18n="footer.hours">Çalışma Saatleri: Hafta içi 09:00 – 18:00 (TSİ)</span></li>
           </ul>
+          <!-- FOOTER_ILETISIM_END -->
         </div>
       </div>
 
       <div class="footer__bottom">
-        <span data-i18n="footer.rights">© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.</span>
         <nav class="footer__legal" aria-label="Yasal">
           <a href="/pages/kvkk-aydinlatma-metni" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a>
           <a href="/pages/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a>
-          <a href="/pages/mesafeli-satis-sozlesmesi" data-i18n="footer.dist">Mesafeli Satış</a>
+          <a href="/pages/mesafeli-satis-sozlesmesi" data-i18n="footer.dist">Mesafeli Satış Sözleşmesi</a>
+          <a href="/pages/on-bilgilendirme-formu" data-i18n="footer.predisclosure">Ön Bilgilendirme Formu</a>
           <a href="/pages/teslimat-ve-iade-sartlari" data-i18n="footer.refund">Teslimat ve İade</a>
           <a href="/pages/kullanim-sartlari" data-i18n="footer.terms">Kullanım Şartları</a>
           <a href="/pages/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a>
@@ -2140,9 +2140,18 @@
         "@type": "Organization",
         "@id": "https://cyberlionai.com/#organization",
         "name": "Cyber Lion AI",
+        "legalName": "Ali Kotan",
         "url": "https://cyberlionai.com/",
         "description": "Yapay zeka destekli web güvenlik tarama platformu.",
-        "email": "destek@cyberlionai.com"
+        "email": "destek@cyberlionai.com",
+        "telephone": "+905344682769",
+        "taxID": "5810910912",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Ritim AVM, Cevizli Mahallesi, Zuhal Caddesi No: 46, İç Kapı No: 50",
+          "addressLocality": "Maltepe/İstanbul",
+          "addressCountry": "TR"
+        }
       },
       {
         "@type": "WebSite",
@@ -2516,11 +2525,12 @@
           more: 'Planları yan yana karşılaştır'
         },
         footer: {
-          about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması. Destek: destek@cyberlionai.com — www.cyberlionai.com',
+          about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması.',
           quick: 'Hızlı Linkler', contact: 'İletişim',
-          kvkk: 'KVKK Aydınlatma Metni', dist: 'Mesafeli Satış Sözleşmesi', refund: 'Teslimat ve İade',
-          hours: 'Destek: Hafta içi 09:00 – 18:00 (TSİ)',
-          rights: '© 2026 Cyber Lion AI — www.cyberlionai.com — Tüm Hakları Saklıdır.',
+          kvkk: 'KVKK Aydınlatma Metni', dist: 'Mesafeli Satış Sözleşmesi',
+          predisclosure: 'Ön Bilgilendirme Formu', refund: 'Teslimat ve İade',
+          hours: 'Çalışma Saatleri: Hafta içi 09:00 – 18:00 (TSİ)',
+          rights: '© 2026 Ali Kotan - Şahıs İşletmesi',
           privacy: 'Gizlilik Politikası', terms: 'Kullanım Şartları', cookies: 'Çerez Politikası'
         },
         auth: {
@@ -2920,11 +2930,12 @@
           more: 'Compare the plans side by side'
         },
         footer: {
-          about: 'Fast security scanning that analyzes your SSL and security headers in seconds. Support: destek@cyberlionai.com — www.cyberlionai.com',
+          about: 'Fast security scanning that analyzes your SSL and security headers in seconds.',
           quick: 'Quick Links', contact: 'Contact',
-          kvkk: 'KVKK Privacy Notice', dist: 'Distance Sales Agreement', refund: 'Delivery & Returns',
-          hours: 'Support: Weekdays 09:00 – 18:00 (GMT+3)',
-          rights: '© 2026 Cyber Lion AI — www.cyberlionai.com — All Rights Reserved.',
+          kvkk: 'KVKK Privacy Notice', dist: 'Distance Sales Agreement',
+          predisclosure: 'Pre-Contractual Information Form', refund: 'Delivery & Returns',
+          hours: 'Business Hours: Weekdays 09:00 – 18:00 (GMT+3)',
+          rights: '© 2026 Ali Kotan - Sole Proprietorship',
           privacy: 'Privacy Policy', terms: 'Terms of Use', cookies: 'Cookie Policy'
         },
         auth: {
