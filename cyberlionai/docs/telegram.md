@@ -75,6 +75,7 @@ En sık iki hata: `400 chat not found` → sohbet kimliği yanlış (eksi işare
 | `/api/verify-dns` sonucu | `🛡️ DNS doğrulama: ornek.com SPF pass / DMARC p=reject` | olağan |
 | DNS zaman aşımı / 502 | `❌ Hata: /api/verify-dns 502 (timeout spf ornek.com)` | **uyarı** |
 | `/api/scan-status` okuma düştü | `❌ Hata: /api/scan-status 503 (job_status_read_failed)` | **uyarı** |
+| `/api/contact` gönderimi | `📩 İletişim formu\nAd: ...\nE-posta: ...\nMesaj: ...` | olağan, **sesli** |
 | herhangi bir uç 500/502/504 | `❌ Hata: /api/scan 500` | **uyarı** |
 
 Mesajların önüne `[CyberLion]` ekleniyor. Biçim tek yerde:
@@ -99,6 +100,12 @@ sokabilir. Kaybı yalnızca kalın yazı.
 raporun kendisi. Yalnız alan adı, sayı ve durum kodu. Alan adı da
 sadeleştiriliyor: şema, kullanıcı adı, port, yol ve **sorgu dizesi** atılıyor,
 çünkü sorgu dizesi müşterinin yazdığı rastgele metni dış bir servise taşır.
+
+**Tek istisna: `/api/contact`.** Burada e-posta BİLEREK gider. Yukarıdaki
+kural, müşterinin SEÇMEDİĞİ üçüncü taraf verisi (taranan sitenin alan adı)
+için — iletişim formunda e-posta müşterinin KENDİ adresi, kendi isteğiyle ve
+cevap alabilmek için yazılıyor. Form hiçbir şeyi kalıcı depoya yazmaz; tek
+hedefi Telegram'a bildirim düşürmek.
 
 **503 kritik uyarı üretmez.** Bu depoda 503 çöken bir uç değil, bilinçli
 kapalı devre cevabı: sayaç deposu yok, göç uygulanmamış, yapılandırma eksik.

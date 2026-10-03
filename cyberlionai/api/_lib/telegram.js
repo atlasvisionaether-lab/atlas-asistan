@@ -33,6 +33,12 @@
  * E-posta adresi, IP, oturum/kullanıcı kimliği, belirteç, tarama raporunun
  * kendisi. Telegram DIŞ bir servis; buraya yalnız alan adı, sayı ve durum
  * kodu gidiyor. Mesaj kuranlar bu dosyada toplandı ki kural tek yerde dursun.
+ *
+ * TEK İSTİSNA: `iletisimFormu`. Diğer mesajlardaki e-posta, müşterinin
+ * SEÇMEDİĞİ bir taramanın hedefine ait (üçüncü taraf verisi) — bu yüzden
+ * gitmiyor. İletişim formunda e-posta müşterinin KENDİ adresi, kendi
+ * isteğiyle ve CEVAP ALABİLMEK için yazılıyor; adres gitmezse bildirim
+ * amacına ulaşmaz.
  */
 
 const API_TABANI = 'https://api.telegram.org';
@@ -155,6 +161,13 @@ const mesaj = {
   },
   test: function (metin) {
     return ONEK + ' 🦁 ' + (metin || 'test');
+  },
+  /* E-posta burada BİLEREK var — yukarıdaki "TEK İSTİSNA" notuna bakın. */
+  iletisimFormu: function (ad, eposta, mesajMetni) {
+    return ONEK + ' 📩 İletişim formu\n'
+      + 'Ad: ' + ad + '\n'
+      + 'E-posta: ' + eposta + '\n'
+      + 'Mesaj: ' + mesajMetni;
   }
 };
 

@@ -78,6 +78,20 @@
     background:var(--gold-primary)}
   strong{color:var(--text-white);font-weight:600}
   a.inline{color:var(--gold-primary);text-decoration:underline;text-underline-offset:3px}
+  label{display:block;font-size:.85rem;color:var(--text-gray);margin:0 0 6px}
+  input,select{width:100%;font:inherit;background:rgba(255,255,255,.03);
+    border:1px solid var(--glass-border);border-radius:10px;padding:11px 13px;
+    color:var(--text-white);margin-bottom:16px}
+  input:focus,select:focus{outline:none;border-color:var(--gold-primary)}
+  .wl-consent{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.85rem;margin-bottom:18px}
+  .wl-consent input{width:auto;margin:0}
+  button[type="submit"]{font:inherit;font-family:var(--font-heading);font-weight:700;
+    font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;
+    padding:13px 22px;border-radius:10px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold-primary));color:#0a0a0f;
+    transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+  button[type="submit"]:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(212,175,55,.3)}
+  .wl-msg{font-size:.88rem;margin-top:10px;color:var(--text-gray)}
   .callout{margin:26px 0;padding:18px 20px;border-radius:12px;
     border:1px solid rgba(0,212,255,.28);background:rgba(0,212,255,.06)}
   .callout p{margin:0;color:var(--text-white);font-size:.93rem}
@@ -144,6 +158,12 @@
           </select>
           <label for="wl-domain" data-t-tr="Taramak istediğiniz alan adı (opsiyonel)" data-t-en="Domain you want to scan (optional)">Taramak istediğiniz alan adı (opsiyonel)</label>
           <input id="wl-domain" name="domain" type="text" autocomplete="off" maxlength="253" placeholder="sirketiniz.com" />
+          <label class="wl-consent">
+            <input type="checkbox" id="wl-consent" name="consent" required />
+            <span data-t-tr="Mesafeli Satış Sözleşmesi'ni ve Ön Bilgilendirme Formu'nu okudum, onaylıyorum." data-t-en="I have read and accept the Distance Sales Agreement and the Pre-Contractual Information Form.">Mesafeli Satış Sözleşmesi'ni ve Ön Bilgilendirme Formu'nu okudum, onaylıyorum.</span>
+            (<a class="inline" href="/pages/mesafeli-satis-sozlesmesi" target="_blank" rel="noopener" data-t-tr="Sözleşme" data-t-en="Agreement">Sözleşme</a>,
+            <a class="inline" href="/pages/on-bilgilendirme-formu" target="_blank" rel="noopener" data-t-tr="Form" data-t-en="Form">Form</a>)
+          </label>
           <button type="submit" data-t-tr="Ön Kayıt Bırak" data-t-en="Join the Waitlist">Ön Kayıt Bırak</button>
           <p id="wl-msg" class="wl-msg" role="status" aria-live="polite"></p>
         </form>
@@ -155,11 +175,12 @@
 
   <footer>
     <div class="container fbar">
-      <span data-t-tr="© 2026 Cyber Lion AI — Tüm Hakları Saklıdır." data-t-en="© 2026 Cyber Lion AI — All Rights Reserved.">© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.</span>
+      <span data-t-tr="© 2026 Ali Kotan - Şahıs İşletmesi" data-t-en="© 2026 Ali Kotan - Sole Proprietorship">© 2026 Ali Kotan - Şahıs İşletmesi</span>
       <nav class="flinks">
         <a href="/pages/kvkk-aydinlatma-metni" data-t-tr="KVKK Aydınlatma Metni" data-t-en="KVKK Privacy Notice">KVKK Aydınlatma Metni</a>
         <a href="/pages/gizlilik-politikasi" data-t-tr="Gizlilik Politikası" data-t-en="Privacy Policy">Gizlilik Politikası</a>
         <a href="/pages/mesafeli-satis-sozlesmesi" data-t-tr="Mesafeli Satış" data-t-en="Distance Sales">Mesafeli Satış</a>
+        <a href="/pages/on-bilgilendirme-formu" data-t-tr="Ön Bilgilendirme Formu" data-t-en="Pre-Contractual Information Form">Ön Bilgilendirme Formu</a>
         <a href="/pages/teslimat-ve-iade-sartlari" data-t-tr="Teslimat ve İade" data-t-en="Delivery &amp; Returns">Teslimat ve İade</a>
         <a href="/pages/kullanim-sartlari" data-t-tr="Kullanım Şartları" data-t-en="Terms of Use">Kullanım Şartları</a>
         <a href="/pages/cerez-politikasi" data-t-tr="Çerez Politikası" data-t-en="Cookie Policy">Çerez Politikası</a>
@@ -217,17 +238,19 @@
     var tr = {
       ok: 'Kaydınız alındı. 24 saat içinde e-posta ile dönüş yapacağız.',
       invalid: 'Lütfen geçerli bir e-posta adresi girin.',
+      consent: 'Devam etmek için Mesafeli Satış Sözleşmesi ve Ön Bilgilendirme Formu onayı gerekir.',
       fail: 'Kayıt alınamadı. Lütfen destek@cyberlionai.com adresine yazın.',
       wait: 'Gönderiliyor...'
     };
     var en = {
       ok: 'Registered. We will get back to you by email within 24 hours.',
       invalid: 'Please enter a valid email address.',
+      consent: 'You must accept the Distance Sales Agreement and the Pre-Contractual Information Form to continue.',
       fail: 'Could not register. Please email destek@cyberlionai.com.',
       wait: 'Sending...'
     };
     function lang() {
-      try { return document.documentElement.getAttribute('data-lang') === 'en' ? en : tr; }
+      try { return document.documentElement.getAttribute('lang') === 'en' ? en : tr; }
       catch (e) { return tr; }
     }
     form.addEventListener('submit', function (ev) {
@@ -237,6 +260,7 @@
       var plan = document.getElementById('wl-plan').value;
       var domain = document.getElementById('wl-domain').value.trim();
       if (!/^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/.test(email)) { msg.textContent = L.invalid; return; }
+      if (!document.getElementById('wl-consent').checked) { msg.textContent = L.consent; return; }
       msg.textContent = L.wait;
       fetch('/api/waitlist', {
         method: 'POST',
