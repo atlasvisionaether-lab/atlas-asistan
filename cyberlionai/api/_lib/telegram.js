@@ -315,6 +315,22 @@ const mesaj = {
       + 'E-posta: ' + eposta + '\n'
       + 'Son mesajlar: ' + mesajMetni;
   },
+  skorDustu: function (domain, onceki, simdi) {
+    return ONEK + ' 📉 Haftalık tarama: skor düştü: ' + alan(domain)
+      + ' ' + Number(onceki) + ' → ' + Number(simdi) + ' (' + (Number(simdi) - Number(onceki)) + ')';
+  },
+  alanDogrulandi: function (domain, yontem, eposta) {
+    return ONEK + ' 🔐 Alan adı doğrulandı: ' + alan(domain)
+      + ', yöntem=' + kod(yontem) + ', user=' + maskEmail(eposta);
+  },
+  /* Kötüye kullanım bildirimi: bildiren üçüncü kişinin e-postası maskeli,
+     gerekçe serbestMetin'den geçer. */
+  kotuyeKullanim: function (domain, gerekce, eposta, sonTaramaSayisi) {
+    return ONEK + ' 🚩 Kötüye kullanım bildirimi: ' + alan(domain)
+      + '\nBildiren: ' + (eposta ? maskEmail(eposta) : '-')
+      + '\nSon 30 günde bu alan adına tarama: ' + Number(sonTaramaSayisi || 0)
+      + '\nGerekçe: ' + serbestMetin(gerekce, 600);
+  },
   test: function (metin) {
     return ONEK + ' 🦁 ' + (metin || 'test');
   },

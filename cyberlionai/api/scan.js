@@ -42,6 +42,7 @@ const tg = require('./_lib/telegram.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
 const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
 const entitlement = require('./_lib/entitlement.js');
+const scanGate = require('./_lib/scan-gate.js');
 
 /** Motorun fırlattığı teknik hataları istemcinin çevirebileceği kodlara eşler. */
 const ERROR_STATUS = {
@@ -106,13 +107,20 @@ async function handler(req, res) {
   const url = body && body.url;
   if (!url) return res.status(400).json({ error: { code: 'empty' } });
 
-  /* Aktif kontroller (A03: XSS yansıma / SQLi hata) yalnızca sahiplik
-     onayı ile çalışır. Onay etiketi isteğe bağlıdır; yoksa tarama
-     pasif modda yapılır ve aktif kontroller 'skipped' döner. */
-  const consent = body && body.consent === true;
-  if (consent && !(body && typeof body.domainOwnership === 'boolean' ? body.domainOwnership : true)) {
+  /* Onay kutusu bir BEYAN. Aktif kontroller (XSS/SQLi yoklaması, hassas yol
+     denemesi) yalnızca beyan + DOĞRULANMIŞ sahiplik birlikteyken çalışır;
+     karar scan-gate.js'te. Kapı kotadan önce: reddedilen istek hak harcamaz. */
+  const declared = body && body.consent === true;
+  if (declared && !(body && typeof body.domainOwnership === 'boolean' ? body.domainOwnership : true)) {
     return res.status(400).json({ error: { code: 'consent_required' } });
   }
+  const gate = await scanGate.checkScan(req, {
+    url: url, owner: owner, consent: declared,
+    level: (body && body.level) || (req.query && req.query.level),
+    lang: body && body.lang
+  });
+  if (!gate.ok) return scanGate.reject(res, gate);
+  const consent = gate.activeConsent;
 
   // Kota önce ayrılır: eşzamanlı iki istek son hakkı iki kez harcayamaz.
   let quota;
@@ -175,6 +183,7 @@ async function handler(req, res) {
       url: kuyruk.url,
       statusUrl: '/api/scan-status?id=' + encodeURIComponent(kuyruk.jobId),
       quota: entitlement.quotaView(policy, quota.used, owner.isAuthenticated ? 'account' : 'anonymous'),
+      ownership: gate.ownership,
       versions: { scanner: SCANNER_VERSION, report: REPORT_VERSION }
     });
   }
@@ -183,6 +192,7 @@ async function handler(req, res) {
   try {
     const result = await scanSite(url, { consent: consent });
     result.quota = entitlement.quotaView(policy, quota.used, owner.isAuthenticated ? 'account' : 'anonymous');
+    result.ownership = gate.ownership;
 
     // Geçmişe kaydet. Kayıt başarısız olursa tarama sonucu yine döner:
     // geçmiş bir kolaylık, taramanın kendisi değil.

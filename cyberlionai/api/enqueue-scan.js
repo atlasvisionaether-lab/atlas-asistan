@@ -30,6 +30,7 @@ const store = require('./_lib/store.js');
 const { resolveOwner, clientIp, ipKey } = require('./_lib/session.js');
 const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
 const entitlement = require('./_lib/entitlement.js');
+const scanGate = require('./_lib/scan-gate.js');
 const tg = require('./_lib/telegram.js');
 
 module.exports = async function handler(req, res) {
@@ -57,10 +58,10 @@ module.exports = async function handler(req, res) {
   const url = body && body.url;
   if (!url) return res.status(400).json({ error: { code: 'empty' } });
 
-  /* Aktif kontroller yalnızca sahiplik onayı ile. Etiket isteğe bağlı;
-     yoksa onay verilmiş sayılır ve tarama pasif modda yapılır. */
-  const consent = body && body.consent === true;
-  if (consent && !(body && typeof body.domainOwnership === 'boolean' ? body.domainOwnership : true)) {
+  /* Onay kutusu bir BEYAN; aktif kontroller ancak beyan + doğrulanmış
+     sahiplik varken (scan-gate.js). Kuyruğa giden `consent` kapının kararı. */
+  const declared = body && body.consent === true;
+  if (declared && !(body && typeof body.domainOwnership === 'boolean' ? body.domainOwnership : true)) {
     return res.status(400).json({ error: { code: 'consent_required' } });
   }
 
@@ -83,6 +84,13 @@ module.exports = async function handler(req, res) {
   res.setHeader('X-RateLimit-Remaining', String(Math.max(0, RATE_MAX - rate.count)));
 
   const owner = await resolveOwner(req, res);
+  const gate = await scanGate.checkScan(req, {
+    url: url, owner: owner, consent: declared,
+    level: (body && body.level) || (req.query && req.query.level),
+    lang: body && body.lang
+  });
+  if (!gate.ok) return scanGate.reject(res, gate);
+  const consent = gate.activeConsent;
   /* Sınır plana göre: free/anonim ömür boyu, Pro aylık, Enterprise sınırsız
      (bkz. _lib/entitlement.js). Eskiden herkese ücretsiz sınır uygulanıyordu. */
   const policy = await entitlement.resolvePolicy(owner, store.quotaKey(owner));
@@ -135,6 +143,7 @@ module.exports = async function handler(req, res) {
     host: kuyruk.host,
     url: kuyruk.url,
     statusUrl: '/api/scan-status?id=' + encodeURIComponent(kuyruk.jobId),
+    ownership: gate.ownership,
     quota: entitlement.quotaView(policy, quota.used, owner.isAuthenticated ? 'account' : 'anonymous')
   });
 };

@@ -6,8 +6,9 @@
  * İlkeler (scanner.js ile aynı):
  *   1. Yalnızca gerçekten ölçülen kontrol puanlanır. Ölçülemeyen
  *      kontrol "skipped" döner ve skora girmez.
- *   2. Aktif kontroller (A03 payload) SADECE kullanıcının sahiplik
- *      onayı (consent) ile çalışır. Onay yoksa skipped + not.
+ *   2. Aktif kontroller (A03 payload, A01 hassas yol denemesi) SADECE
+ *      `consent` true iken çalışır. Çağıran bunu yalnızca beyan + DOĞRULANMIŞ
+ *      sahiplik varken true yapar (bkz. scan-levels.js). Yoksa skipped + not.
  *   3. Tüm istekler tek turda paralel atılır; her biri kendi zaman
  *      aşımına sahiptir. Böylece toplam süre tek isteğin süresini
  *      aşmaz ve 30 sn fonksiyon limiti içinde kalır.
@@ -88,7 +89,9 @@ async function probe(url, method) {
 }
 
 /* ------------------------------------------------------------
-   A01 — Broken Access Control: hassas dosya sızıntısı (pasif).
+   A01 — Broken Access Control: hassas dosya sızıntısı.
+   AKTİF (seviye 2): yayınlanmamış yolları tahmin etmek, izinsiz yapıldığında
+   dizin taraması sayılır. Yalnızca doğrulanmış alan adında.
    HEAD ile bakılır; 200 dönerse ve içerik HTML DEĞİLSE sızıntı
    sayılır. SPA'lar her yola 200 + HTML döndürdüğü için bu ayrım
    yanlış pozitifi engeller.
@@ -102,7 +105,16 @@ const SENSITIVE_PATHS = [
   { path: '/backup.zip', label: 'backup.zip' }
 ];
 
-async function a01ExposedFiles(origin) {
+async function a01ExposedFiles(origin, consent) {
+  if (!consent) {
+    return {
+      checks: SENSITIVE_PATHS.map(function (item) {
+        return owaspCheck('a01_' + item.path.replace(/[^a-z]/gi, '_'), 'A01', 'critical',
+          'skipped', null, { note: 'requires_verified_ownership', path: item.path });
+      }),
+      findings: []
+    };
+  }
   const results = await Promise.all(
     SENSITIVE_PATHS.map(function (item) { return probe(origin + item.path, 'HEAD'); })
   );
@@ -170,8 +182,8 @@ async function a03Active(origin, consent) {
   const findings = [];
 
   if (!consent) {
-    checks.push(owaspCheck('a03_xss_reflection', 'A03', 'high', 'skipped', null, { note: 'requires_ownership_consent' }));
-    checks.push(owaspCheck('a03_sqli_error', 'A03', 'critical', 'skipped', null, { note: 'requires_ownership_consent' }));
+    checks.push(owaspCheck('a03_xss_reflection', 'A03', 'high', 'skipped', null, { note: 'requires_verified_ownership' }));
+    checks.push(owaspCheck('a03_sqli_error', 'A03', 'critical', 'skipped', null, { note: 'requires_verified_ownership' }));
     return { checks: checks, findings: findings };
   }
 
@@ -336,7 +348,7 @@ async function runOwaspLite(context) {
   const consent = context.consent === true;
 
   const [a01, a03, a05, a06] = await Promise.all([
-    a01ExposedFiles(origin),
+    a01ExposedFiles(origin, consent),
     a03Active(origin, consent),
     a05BodyChecks(context.html, context.headers),
     a06OutdatedLibs(context.html)

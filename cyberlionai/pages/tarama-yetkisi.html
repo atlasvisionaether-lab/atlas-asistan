@@ -4,15 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0a0a0f" />
-  <title>Gizlilik Politikası | Cyber Lion AI</title>
-  <meta name="description" content="Cyber Lion AI gizlilik politikası: hangi verileri işliyoruz, ne kadar saklıyoruz ve haklarınız neler." />
+  <title>Tarama Yetkisi ve Seviyeleri | Cyber Lion AI</title>
+  <meta name="description" content="Cyber Lion AI tarama seviyeleri, alan adı sahipliği doğrulaması, TCK m.243/244 bilgilendirmesi ve izinsiz tarama bildirimi." />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.cyberlionai.com/pages/gizlilik-politikasi" />
+  <link rel="canonical" href="https://cyberlionai.com/tarama-yetkisi" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="Cyber Lion AI" />
-  <meta property="og:title" content="Gizlilik Politikası | Cyber Lion AI" />
-  <meta property="og:description" content="Cyber Lion AI gizlilik politikası: hangi verileri işliyoruz, ne kadar saklıyoruz ve haklarınız neler." />
-  <meta property="og:url" content="https://www.cyberlionai.com/pages/gizlilik-politikasi" />
+  <meta property="og:title" content="Tarama Yetkisi ve Seviyeleri | Cyber Lion AI" />
+  <meta property="og:description" content="Cyber Lion AI tarama seviyeleri, alan adı sahipliği doğrulaması, TCK m.243/244 bilgilendirmesi ve izinsiz tarama bildirimi." />
+  <meta property="og:url" content="https://cyberlionai.com/tarama-yetkisi" />
   <meta property="og:image" content="https://cyberlionai.com/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -88,6 +88,12 @@
   .flinks{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
   .flinks a{text-decoration:none}
   .flinks a:hover{color:var(--gold-primary)}
+  .abuse-form{display:grid;gap:12px;margin:14px 0 8px;max-width:560px}
+  .abuse-form label{display:grid;gap:6px;font-size:.9rem;color:var(--text-gray)}
+  .abuse-form input,.abuse-form textarea{padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--secondary-black);color:inherit;font:inherit}
+  .abuse-form button{justify-self:start;padding:10px 18px;border-radius:10px;border:1px solid var(--gold-primary);background:var(--gold-primary);color:#0a0a0f;font:inherit;font-weight:600;cursor:pointer}
+  .abuse-form button:disabled{opacity:.6;cursor:not-allowed}
+  .abuse-form__msg{margin:0;font-size:.9rem}
   [data-lang-block]{display:none}
   [data-lang-block].is-active{display:block}
   @media(min-width:640px){.fbar{flex-direction:row;justify-content:space-between;text-align:left}}
@@ -119,52 +125,37 @@
   <main>
     <div class="container">
       <article data-lang-block="tr" class="is-active">
-        <span class="eyebrow">KVKK & GDPR</span>
-        <h1>Gizlilik Politikası</h1>
-        <p class="updated">Son güncelleme: 03.10.2026</p>
-        <p class="lead">Hangi verileri neden işlediğimizi, ne kadar sakladığımızı ve bunlar üzerindeki haklarınızı açıkça anlatıyoruz.</p>
-        <h2>1. Veri Sorumlusu</h2>
-        <p>Bu politika, <strong>Cyber Lion AI</strong> tarafından <strong>cyberlionai.com</strong> üzerinden sunulan güvenlik tarama hizmetleri kapsamında işlenen kişisel verilere ilişkindir. 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) uyarınca veri sorumlusu Cyber Lion AI'dır. İletişim: <a class="inline" href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></p>
-        <h2>2. İşlenen Veriler</h2>
-        <p>Hizmetin niteliğine göre aşağıdaki veriler işlenir:</p>
+        <span class="eyebrow">Hukuki Çerçeve</span>
+        <h1>Tarama Yetkisi ve Seviyeleri</h1>
+        <p class="updated">Son güncelleme: 04.10.2026</p>
+        <p class="lead">Hangi testin ne yaptığını, hangisinin sahiplik doğrulaması istediğini ve izinsiz bir taramayı nasıl bildirebileceğinizi açıklar.</p>
+        <h2>1. Neden doğrulama istiyoruz?</h2>
+        <p>Bir bilişim sistemine yetkisiz erişim <strong>5237 sayılı TCK m.243</strong>, sistemin işleyişini engelleme, bozma veya verileri değiştirme <strong>m.244</strong> kapsamında suç olabilir. Onay kutusu bir beyandır, ispat değildir. Bu yüzden sitenin normal kullanımının ötesine geçen her işlemi yalnızca sahipliği <strong>kanıtlanmış</strong> alan adlarında yapıyoruz.</p>
+        <h2>2. Tarama seviyeleri</h2>
         <ul>
-          <li><strong>Hesap verileri:</strong> e-posta adresi ve şifrenizin geri döndürülemez özet (hash) değeri.</li>
-          <li><strong>Tarama verileri:</strong> taramak için girdiğiniz alan adı, tarama zamanı, tespit edilen bulgular ve oluşturulan raporlar.</li>
-          <li><strong>Teknik veriler:</strong> IP adresi, tarayıcı ve işletim sistemi bilgisi, istek zaman damgaları ve hata kayıtları.</li>
-          <li><strong>Tercih verileri:</strong> dil ve tema seçiminiz ile çerez onayınız. Bu veriler yalnızca tarayıcınızın yerel depolamasında (localStorage) tutulur, sunucularımıza gönderilmez.</li>
+          <li><strong>Seviye 1 — Pasif (herkes, doğrulama yok).</strong> Herhangi bir ziyaretçinin tarayıcısının gördüğü bilgileri okur: TLS sürümü ve sertifika, HSTS, CSP, X-Frame-Options ve diğer güvenlik başlıkları, çerez bayrakları, DNS'teki SPF/DMARC/DKIM kayıtları. Normal bir sayfa ziyaretiyle aynı türde isteklerdir.</li>
+          <li><strong>Seviye 2 — Aktif (doğrulama zorunlu).</strong> Sitenin normal kullanımında olmayan istekler: yansıyan XSS ve SQL hata yoklaması (zararsız test yükü, veri değiştirmez) ve <code>/.env</code>, <code>/.git/HEAD</code> gibi yayınlanmamış hassas dosya yollarının kontrolü. Yalnızca hesabınızda doğrulanmış ve tarama izniniz olduğunu beyan ettiğiniz alan adlarında çalışır.</li>
+          <li><strong>Seviye 3 — Değişiklik (doğrulama + sizin Cloudflare belirteciniz zorunlu).</strong> Cloudflare'de güvenlik başlığı ekleyen otomatik düzeltme. Alan adı doğrulanmış olmalı; zone'un adı Cloudflare'den okunur ve alan adıyla eşleşmezse işlem reddedilir. Belirteciniz saklanmaz.</li>
         </ul>
-        <h2>3. İşleme Amaçları ve Hukuki Sebepler</h2>
+        <h2>3. Sahipliği nasıl doğrularsınız?</h2>
+        <p><a class="inline" href="/verify">Alan adı doğrulama</a> sayfasında size özel bir belirteç üretilir. Üç yoldan birini seçin:</p>
         <ul>
-          <li>Hizmetin sunulması, tarama taleplerinin yürütülmesi ve raporların iletilmesi — <strong>sözleşmenin kurulması ve ifası</strong> (KVKK m.5/2-c).</li>
-          <li>Hesap güvenliği, kötüye kullanımın ve otomatik saldırıların engellenmesi — <strong>meşru menfaat</strong> (KVKK m.5/2-f).</li>
-          <li>Faturalandırma ve mali yükümlülüklerin yerine getirilmesi — <strong>hukuki yükümlülük</strong> (KVKK m.5/2-ç).</li>
-          <li>Ürün geliştirme amaçlı toplu ve anonim istatistik üretimi — anonimleştirildiği ölçüde KVKK kapsamı dışındadır.</li>
+          <li><strong>DNS TXT:</strong> <code>_cyberlion-verify.alanadiniz.com</code> adına TXT kaydı olarak belirteç. Alt alan adlarını da kapsar.</li>
+          <li><strong>Dosya:</strong> <code>https://alanadiniz.com/.well-known/cyberlion-verify.txt</code> içinde belirteç. Yalnızca o ana bilgisayarı kapsar.</li>
+          <li><strong>Meta etiketi:</strong> ana sayfanın <code>&lt;head&gt;</code> bölümünde <code>&lt;meta name="cyberlion-verify" content="…"&gt;</code>. Yalnızca o ana bilgisayarı kapsar.</li>
         </ul>
-        <h2>4. Saklama Süreleri</h2>
-        <ul>
-          <li>Hesap verileri: hesabınız açık kaldığı sürece; silme talebinizden sonra en geç <strong>30 gün</strong> içinde imha edilir.</li>
-          <li>Tarama raporları: oluşturulmasından itibaren <strong>12 ay</strong>; dilediğiniz zaman panelinizden silebilirsiniz.</li>
-          <li>Teknik kayıtlar (log): <strong>12 ay</strong> (5651 sayılı Kanun kapsamındaki yükümlülükler saklıdır).</li>
-          <li>Tarama günlüğü (taranan alan adı, tarama seviyesi, doğrulama durumu, IP adresi, tarayıcı bilgisi, zaman): <strong>12 ay</strong>. İzinsiz tarama iddialarında ispat amacıyla tutulur; bu nedenle hesabınızı silseniz de hesaptan ayrılmış olarak 12 aylık süre dolana kadar saklanır ve süre sonunda otomatik silinir.</li>
-          <li>Alan adı doğrulama kayıtları (alan adı, doğrulama belirteci ve yöntemi): hesabınız açık kaldığı sürece; hesap silinince birlikte silinir.</li>
-          <li>Faturalandırma kayıtları: vergi mevzuatı gereği <strong>10 yıl</strong>.</li>
-        </ul>
-        <h2>5. Aktarım</h2>
-        <p>Kişisel verileriniz pazarlama amacıyla üçüncü kişilere satılmaz. Yalnızca hizmetin sunulması için zorunlu olan hizmet sağlayıcılara (barındırma, e-posta iletimi, ödeme altyapısı) ve yalnızca gerekli olan ölçüde aktarılır. Bu sağlayıcıların bir kısmı yurt dışında bulunduğundan, aktarım KVKK m.9 kapsamında açık rızanız veya öngörülen diğer şartlar çerçevesinde gerçekleştirilir.</p>
-        <p>Sitemizin yazı tipleri ve ikonları Google Fonts ve Cloudflare (cdnjs) üzerinden yüklenir; bu isteklerde IP adresiniz ilgili sağlayıcıya iletilir.</p>
-        <h2>6. Haklarınız</h2>
-        <p>KVKK m.11 ve GDPR m.15–22 uyarınca; verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, işleme amacını öğrenme, yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme, eksik veya yanlış işlenmişse düzeltilmesini isteme, silinmesini veya yok edilmesini isteme, bu işlemlerin verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme, münhasıran otomatik sistemlerle analiz edilmesi suretiyle aleyhinize bir sonuç doğmasına itiraz etme ve zarara uğramanız hâlinde tazminat talep etme haklarına sahipsiniz.</p>
-        <p>Taleplerinizi <a class="inline" href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a> adresine iletebilirsiniz. Başvurular en geç <strong>30 gün</strong> içinde sonuçlandırılır.</p>
-        <h2>7. Güvenlik Tedbirleri</h2>
-        <ul>
-          <li>Tüm trafik TLS 1.2 ve üzeri ile şifrelenir; HTTP istekleri HTTPS'e yönlendirilir.</li>
-          <li>Şifreler yalnızca modern bir anahtar türetme algoritmasıyla özetlenerek saklanır, düz metin olarak tutulmaz.</li>
-          <li>Erişim yetkileri en az ayrıcalık ilkesine göre verilir ve düzenli olarak gözden geçirilir.</li>
-          <li>Sistemlerimiz kendi tarama motorumuzla düzenli olarak denetlenir.</li>
-        </ul>
-        <h2>8. Değişiklikler</h2>
-        <p>Bu politika güncellenebilir. Esaslı bir değişiklik hâlinde kayıtlı kullanıcılar e-posta ile bilgilendirilir ve sayfanın üst kısmındaki güncelleme tarihi değiştirilir.</p>
-       <strong>KVKK kapsamındaki başvurularınız için</strong> <a class="inline" href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a> adresine e-posta gönderebilirsiniz.
+        <p>Üç başarısız denemeden sonra bir saat beklemeniz gerekir. Doğrulama sırasında sitenize yalnızca bu dosya ya da ana sayfa için istek atılır.</p>
+        <h2>4. Sınırlar ve kayıt</h2>
+        <p>Doğrulanmamış bir alan adı, aynı IP adresinden günde en çok üç kez (pasif) taranabilir; devam etmek için doğrulama istenir. Her tarama; alan adı, seviye, doğrulama durumu, IP adresi, tarayıcı bilgisi ve zamanla kaydedilir ve 12 ay saklanır (<a class="inline" href="/pages/gizlilik-politikasi">Gizlilik Politikası</a>). Yetkisiz tarama şüphesinde bu kayıtlar incelenir, ilgili hesap askıya alınır; yasal zorunluluk hâlinde kayıtlar yetkili mercilerle paylaşılabilir.</p>
+        <h2 id="bildir">5. İzinsiz tarama bildirimi</h2>
+        <p>Sitenizin izniniz olmadan bu hizmetle tarandığını düşünüyorsanız bize bildirin. Bildiriminiz ekibimize hemen iletilir ve ilgili kayıtlar incelenir.</p>
+        <form class="abuse-form" data-abuse-form novalidate>
+          <label>Alan adınız<input name="domain" type="text" inputmode="url" autocomplete="off" required placeholder="ornek.com" /></label>
+          <label>Ne oldu?<textarea name="reason" rows="4" maxlength="2000" required></textarea></label>
+          <label>E-posta (isteğe bağlı, size dönüş için)<input name="email" type="email" autocomplete="email" maxlength="320" /></label>
+          <button type="submit">Bildir</button>
+          <p class="abuse-form__msg" role="status" aria-live="polite" data-ok="Bildiriminiz alındı. İnceleyip size dönüş yapacağız." data-err="Bildirim gönderilemedi. Lütfen destek@cyberlionai.com adresine yazın." data-invalid="Alan adı ve açıklama gerekli."></p>
+        </form>
         <h2>Satıcı Bilgileri</h2>
         <p>
           <strong>Ticari Unvan:</strong> Ali Kotan<br />
@@ -180,52 +171,37 @@
       </article>
 
       <article data-lang-block="en">
-        <span class="eyebrow">Data Protection</span>
-        <h1>Privacy Policy</h1>
-        <p class="updated">Last updated: 03.10.2026</p>
-        <p class="lead">A plain account of what data we process and why, how long we keep it, and what rights you have over it.</p>
-        <h2>1. Data Controller</h2>
-        <p>This policy covers personal data processed by <strong>Cyber Lion AI</strong> in connection with the security scanning services provided at <strong>cyberlionai.com</strong>. Cyber Lion AI acts as the data controller under the Turkish Personal Data Protection Law (KVKK) No. 6698 and the GDPR. Contact: <a class="inline" href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></p>
-        <h2>2. Data We Process</h2>
-        <p>Depending on how you use the service, we process:</p>
+        <span class="eyebrow">Legal Framework</span>
+        <h1>Scan Authorisation and Levels</h1>
+        <p class="updated">Last updated: 04.10.2026</p>
+        <p class="lead">What each test does, which ones require ownership verification, and how to report an unauthorised scan.</p>
+        <h2>1. Why we ask for verification</h2>
+        <p>Unauthorised access to an information system may be an offence under <strong>Turkish Criminal Code Art. 243</strong>, and hindering or corrupting a system or altering its data under <strong>Art. 244</strong>. A checkbox is a statement, not proof. That is why anything beyond ordinary use of a site runs only on domains whose ownership has been <strong>proven</strong>.</p>
+        <h2>2. Scan levels</h2>
         <ul>
-          <li><strong>Account data:</strong> your email address and an irreversible hash of your password.</li>
-          <li><strong>Scan data:</strong> the domain you submit, scan timestamps, detected findings and generated reports.</li>
-          <li><strong>Technical data:</strong> IP address, browser and operating system information, request timestamps and error logs.</li>
-          <li><strong>Preference data:</strong> your language and theme selection and your cookie choice. These are stored only in your browser's local storage and are never sent to our servers.</li>
+          <li><strong>Level 1 — Passive (everyone, no verification).</strong> Reads what any visitor's browser sees: TLS version and certificate, HSTS, CSP, X-Frame-Options and other security headers, cookie flags, SPF/DMARC/DKIM records in DNS. These are the same kind of requests as a normal page visit.</li>
+          <li><strong>Level 2 — Active (verification required).</strong> Requests outside normal use of the site: reflected XSS and SQL error probes (harmless test payloads that do not modify data) and checks for unpublished sensitive paths such as <code>/.env</code> and <code>/.git/HEAD</code>. They run only on domains verified in your account for which you have declared permission to scan.</li>
+          <li><strong>Level 3 — Modification (verification + your own Cloudflare token required).</strong> Automatic fixes that add security headers in Cloudflare. The domain must be verified; the zone name is read from Cloudflare and the request is refused if it does not match. Your token is not stored.</li>
         </ul>
-        <h2>3. Purposes and Legal Bases</h2>
+        <h2>3. How to verify ownership</h2>
+        <p>The <a class="inline" href="/verify">domain verification</a> page issues a token unique to you. Use one of three methods:</p>
         <ul>
-          <li>Delivering the service, running scans and returning reports — <strong>performance of a contract</strong> (GDPR Art. 6(1)(b)).</li>
-          <li>Account security and prevention of abuse or automated attacks — <strong>legitimate interests</strong> (GDPR Art. 6(1)(f)).</li>
-          <li>Billing and statutory financial obligations — <strong>legal obligation</strong> (GDPR Art. 6(1)(c)).</li>
-          <li>Aggregated, anonymous statistics for product development — outside the scope of data protection law once anonymised.</li>
+          <li><strong>DNS TXT:</strong> the token as a TXT record at <code>_cyberlion-verify.yourdomain.com</code>. Also covers subdomains.</li>
+          <li><strong>File:</strong> the token inside <code>https://yourdomain.com/.well-known/cyberlion-verify.txt</code>. Covers that host only.</li>
+          <li><strong>Meta tag:</strong> <code>&lt;meta name="cyberlion-verify" content="…"&gt;</code> in the <code>&lt;head&gt;</code> of the home page. Covers that host only.</li>
         </ul>
-        <h2>4. Retention</h2>
-        <ul>
-          <li>Account data: for as long as your account is active; erased within <strong>30 days</strong> of a deletion request.</li>
-          <li>Scan reports: <strong>12 months</strong> from creation; you can delete them from your dashboard at any time.</li>
-          <li>Technical logs: <strong>12 months</strong> (statutory retention obligations reserved).</li>
-          <li>Scan log (scanned domain, scan level, verification status, IP address, browser information, time): <strong>12 months</strong>. It is kept as evidence in case of unauthorised-scanning claims, so it is retained, detached from your account, until the 12 months expire even if you delete your account, and is then deleted automatically.</li>
-          <li>Domain verification records (domain, verification token and method): for as long as your account is open; deleted together with the account.</li>
-          <li>Billing records: <strong>10 years</strong>, as required by tax legislation.</li>
-        </ul>
-        <h2>5. Transfers</h2>
-        <p>We do not sell your personal data to third parties for marketing. Data is shared only with service providers strictly necessary to deliver the service (hosting, email delivery, payment infrastructure), and only to the extent required. Some of these providers are located outside Türkiye and the EEA; such transfers are carried out on the basis of your explicit consent or the applicable safeguards.</p>
-        <p>Our fonts and icons load from Google Fonts and Cloudflare (cdnjs); these requests disclose your IP address to those providers.</p>
-        <h2>6. Your Rights</h2>
-        <p>Under KVKK Art. 11 and GDPR Art. 15–22 you have the right to learn whether your data is processed, request information about the processing, learn its purpose, know the third parties to whom it is transferred, request rectification of incomplete or inaccurate data, request erasure or destruction, request that these actions be notified to recipients, object to outcomes produced solely by automated analysis, and claim compensation for damages.</p>
-        <p>Send requests to <a class="inline" href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a>. We respond within <strong>30 days</strong> at the latest.</p>
-        <h2>7. Security Measures</h2>
-        <ul>
-          <li>All traffic is encrypted with TLS 1.2 or above; HTTP requests are redirected to HTTPS.</li>
-          <li>Passwords are stored only as hashes produced by a modern key derivation function, never in plain text.</li>
-          <li>Access rights follow the principle of least privilege and are reviewed regularly.</li>
-          <li>Our own systems are audited regularly with our own scanning engine.</li>
-        </ul>
-        <h2>8. Changes</h2>
-        <p>This policy may be updated. For material changes we notify registered users by email and update the date shown at the top of this page.</p>
-       <strong>For requests under the Turkish KVKK law</strong>, send an email to <a class="inline" href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a>.
+        <p>After three failed attempts you must wait one hour. Verification only requests that file or the home page from your site.</p>
+        <h2>4. Limits and logging</h2>
+        <p>An unverified domain can be scanned (passively) at most three times a day from the same IP address; after that, verification is required. Every scan is recorded with the domain, level, verification status, IP address, browser information and time, and kept for 12 months (<a class="inline" href="/pages/gizlilik-politikasi">Privacy Policy</a>). When unauthorised scanning is suspected these records are reviewed and the account concerned is suspended; where required by law they may be shared with competent authorities.</p>
+        <h2 id="report">5. Report an unauthorised scan</h2>
+        <p>If you believe your site was scanned with this service without your permission, tell us. Your report reaches our team immediately and the related records are reviewed.</p>
+        <form class="abuse-form" data-abuse-form novalidate>
+          <label>Your domain<input name="domain" type="text" inputmode="url" autocomplete="off" required placeholder="example.com" /></label>
+          <label>What happened?<textarea name="reason" rows="4" maxlength="2000" required></textarea></label>
+          <label>Email (optional, so we can reply)<input name="email" type="email" autocomplete="email" maxlength="320" /></label>
+          <button type="submit">Report</button>
+          <p class="abuse-form__msg" role="status" aria-live="polite" data-ok="Your report has been received. We will review it and get back to you." data-err="The report could not be sent. Please write to destek@cyberlionai.com." data-invalid="Domain and description are required."></p>
+        </form>
         <h2>Seller Information</h2>
         <p>
           <strong>Legal Name:</strong> Ali Kotan<br />
@@ -279,7 +255,7 @@
       for (var k = 0; k < btns.length; k++) {
         btns[k].setAttribute('aria-pressed', btns[k].getAttribute('data-lang') === lang ? 'true' : 'false');
       }
-      document.title = (lang === 'tr' ? 'Gizlilik Politikası' : 'Privacy Policy') + ' | Cyber Lion AI';
+      document.title = (lang === 'tr' ? 'Kullanım Şartları' : 'Terms of Use') + ' | Cyber Lion AI';
     }
 
     // Ana sayfayla aynı dil tercihi anahtarını kullanır
@@ -298,6 +274,7 @@
     }
   })();
   </script>
+  <script src="/abuse-form.js" defer></script>
   <script src="/mail-links.js" defer></script>
 </body>
 </html>

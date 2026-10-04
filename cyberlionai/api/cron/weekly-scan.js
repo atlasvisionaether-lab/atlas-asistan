@@ -28,6 +28,24 @@
  */
 
 const db = require('../_lib/db.js');
+const ownership = require('../_lib/ownership.js');
+const tg = require('../_lib/telegram.js');
+
+/* Skor bu kadar ya da daha çok düşerse uyarı. Küçük oynamalar (bir başlığın
+   ölçülememesi gibi) kanalı doldurmasın. */
+const SCORE_DROP_ALERT = 5;
+
+/** Hesabın bu alan adındaki son tamamlanmış taramasının skoru (yoksa null). */
+async function previousScore(userId, domain) {
+  try {
+    const rows = await db.request('scan_jobs?user_id=eq.' + encodeURIComponent(userId)
+      + '&domain=eq.' + encodeURIComponent(domain)
+      + '&status=eq.completed&score=not.is.null&select=score&order=created_at.desc&limit=1');
+    return rows && rows[0] && typeof rows[0].score === 'number' ? rows[0].score : null;
+  } catch (err) {
+    return null;
+  }
+}
 const qstash = require('../_lib/qstash.js');
 const { scanSite, SCANNER_VERSION, REPORT_VERSION } = require('../_lib/scanner.js');
 
@@ -93,6 +111,15 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: { code: 'db_unavailable' } });
   }
 
+  /* Tarama günlüğü saklama süresi (12 ay, gizlilik metniyle aynı). Silme
+     düşerse tarama yine sürer; bir sonraki haftada tekrar denenir. */
+  let purgedBefore = null;
+  try {
+    purgedBefore = await ownership.purgeOldLogs();
+  } catch (err) {
+    if (console && console.error) console.error('scan log purge failed:', err.message);
+  }
+
   let source;
   try {
     source = await db.enterpriseScanTargets(MAX_TARGETS_PER_RUN);
@@ -121,6 +148,7 @@ module.exports = async function handler(req, res) {
   const results = [];
   for (const target of source.targets) {
     try {
+      const onceki = await previousScore(target.userId, target.domain);
       const scan = await scanSite('https://' + target.domain, { consent: false });
       let jobId = null;
       try {
@@ -133,7 +161,11 @@ module.exports = async function handler(req, res) {
       } catch (err) {
         if (console && console.error) console.error('weekly-scan save failed for a target:', err.message);
       }
-      results.push({ domain: target.domain, ok: true, jobId: jobId, score: scan.score });
+      results.push({ domain: target.domain, ok: true, jobId: jobId, score: scan.score, previous: onceki });
+      if (typeof onceki === 'number' && typeof scan.score === 'number'
+          && onceki - scan.score >= SCORE_DROP_ALERT) {
+        await tg.sendTelegram(tg.mesaj.skorDustu(target.domain, onceki, scan.score), { type: 'alert' });
+      }
     } catch (err) {
       /* Hedefin alan adı loglanıyor (müşterinin kendi alan adı, sır değil);
          hata metni kısaltılıyor. */
@@ -147,6 +179,7 @@ module.exports = async function handler(req, res) {
     triggered: results.filter(function (r) { return r.ok; }).length,
     skipped: results.filter(function (r) { return !r.ok; }).length,
     results: results,
+    logsPurgedBefore: purgedBefore,
     ranAt: new Date().toISOString()
   });
 };

@@ -115,6 +115,11 @@
   @media(min-width:640px){.fbar{flex-direction:row;justify-content:space-between;text-align:left}}
   @media(max-width:400px){.logo span{display:none}}
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:.001ms!important}}
+  .checkout-decl{max-width:760px;margin:28px auto 0;padding:14px 16px;border:1px solid rgba(212,175,55,.25);border-radius:12px;background:rgba(26,26,36,.7);font-size:.9rem}
+  .checkout-decl label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+  .checkout-decl input{margin-top:4px;accent-color:#d4af37}
+  .checkout-decl a{color:#d4af37}
+  .checkout-decl__msg{margin:8px 0 0;color:#ffd166}
 </style>
 </head>
 <body>
@@ -211,11 +216,13 @@
 
       </div>
 
+      <div data-checkout-declaration></div>
       <p class="foot-note"
          data-t-tr="Tüm fiyatlar KDV hariçtir. Ödeme iyzico üzerinden alınır; kart bilgileriniz bize hiç gelmez. Abonelik iptali, teslimat ve iade koşulları için Mesafeli Satış Sözleşmesi ile Teslimat ve İade Şartları sayfalarına bakın."
          data-t-en="All prices exclude VAT. Payments are taken through iyzico; your card details never reach us. For cancellation, delivery and refund terms see the Distance Sales Agreement and the Delivery &amp; Returns pages.">Tüm fiyatlar KDV hariçtir.</p>
     </div>
   </main>
+  <script src="/checkout-declaration.js" defer></script>
 
   <footer>
     <div class="container fbar">

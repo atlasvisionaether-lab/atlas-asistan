@@ -32,6 +32,33 @@ async function cfRuleDelete(zoneId, rulesetId, ruleId, token) {
 const db = require('./_lib/db.js');
 const { requireUser, validToken } = require('./_lib/cfaccess.js');
 const tg = require('./_lib/telegram.js');
+const ownership = require('./_lib/ownership.js');
+const levels = require('./_lib/scan-levels.js');
+const { clientIp } = require('./_lib/session.js');
+
+/**
+ * Zone'un GERÇEK adını Cloudflare'den okur. İstemcinin verdiği zoneId'ye
+ * güvenilmiyor: başka bir zone kimliği verip doğrulanmış alan adının
+ * kapısından başka bir siteye kural yazdırmak mümkün olmasın.
+ */
+async function zoneName(zoneId, token) {
+  const r = await cf('/zones/' + encodeURIComponent(zoneId), 'GET', token);
+  if (!r.ok) return { ok: false, code: r.code };
+  const name = r.data && r.data.result && r.data.result.name;
+  return name ? { ok: true, name: String(name).toLowerCase() } : { ok: false, code: 'zone_not_found' };
+}
+
+/** Alan adı bu zone'un kendisi ya da alt alanı mı. */
+function inZone(domain, zone) {
+  return domain === zone || domain.slice(-(zone.length + 1)) === '.' + zone;
+}
+
+function modificationLog(req, user, domain, verified) {
+  return ownership.logScan({
+    userId: user.id, ip: clientIp(req), domain: domain, level: 'modification',
+    verified: verified, consent: true, userAgent: req.headers && req.headers['user-agent']
+  });
+}
 
 /** fixType'ın eklediği başlık sayısı ('all' hepsini ekler). */
 function headerCount(fixType) {
@@ -86,6 +113,13 @@ async function handler(req, res) {
     const dToken = b && typeof b.token === 'string' ? b.token : null;
     if (!zId || !rsId || !rId) return res.status(400).json({ error: { code: 'missing_ids' } });
     if (!validToken(dToken)) return res.status(400).json({ error: { code: 'token_required' } });
+    /* Geri alma da bir değişiklik (seviye 3): zone'un adı okunur ve o alan
+       adı bu hesap için doğrulanmış olmalı. */
+    const zn = await zoneName(zId, dToken);
+    if (!zn.ok) return res.status(zn.code === 'cf_unreachable' ? 502 : 400).json({ error: { code: zn.code } });
+    const dVerified = await ownership.isVerified(user.id, zn.name);
+    await modificationLog(req, user, zn.name, dVerified);
+    if (!dVerified) return res.status(403).json(levels.ownershipRequired(zn.name));
     const del = await cfRuleDelete(zId, rsId, rId, dToken);
     if (!del.ok) return res.status(400).json({ error: { code: del.code } });
     return res.status(200).json({ ok: true, deleted: true, ruleId: rId });
@@ -113,12 +147,31 @@ async function handler(req, res) {
   }
   const useToken = token;
 
+  /* Seviye 3: alan adı bu hesap için DOĞRULANMIŞ olmalı. Token'ın bir zone'a
+     erişebilmesi sahiplik kanıtı değil (çalıntı ya da paylaşılmış olabilir). */
+  const verified = await ownership.isVerified(user.id, domain);
+  await modificationLog(req, user, domain, verified);
+  if (!verified) {
+    await tg.sendTelegram(tg.mesaj.autofixBasarisiz(domain, 'ownership_required'), { type: 'autofix' });
+    return res.status(403).json(levels.ownershipRequired(domain, body && body.lang));
+  }
+
   await tg.sendTelegram(tg.mesaj.autofixIstendi(domain, user.email, zoneId || 'auto', fixType),
     { type: 'autofix', priority: true });
 
   /* Zone çözümü. */
   let zone = zoneId;
-  if (!zone) {
+  if (zone) {
+    const zn = await zoneName(zone, useToken);
+    if (!zn.ok) {
+      await bildirBasarisiz(res, domain, zn.code);
+      return res.status(zn.code === 'cf_unreachable' ? 502 : 400).json({ error: { code: zn.code } });
+    }
+    if (!inZone(domain, zn.name)) {
+      await bildirBasarisiz(res, domain, 'zone_mismatch');
+      return res.status(403).json({ error: { code: 'zone_mismatch' } });
+    }
+  } else {
     const found = await findZoneId(domain, useToken);
     if (!found.ok) {
       const status = found.code === 'zone_not_found' ? 404 : (found.code === 'cf_unreachable' ? 502 : 401);
@@ -158,3 +211,4 @@ async function handler(req, res) {
 
 /* 500/502/504 ya da fırlatan bir hata kritik uyarı üretir (bkz. telegram.js). */
 module.exports = tg.ucuSar(handler, '/api/autofix-cloudflare');
+module.exports.inZone = inZone;

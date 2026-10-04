@@ -1155,6 +1155,11 @@
                 border-color var(--transition-speed) var(--transition-ease);
   }
   .chip:hover { color: var(--gold-primary); border-color: var(--gold-primary); }
+  .checkout-decl { max-width: 760px; margin: 28px auto 0; padding: 14px 16px; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: var(--glass-bg); font-size: 0.9rem; text-align: left; }
+  .checkout-decl label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+  .checkout-decl input { margin-top: 4px; accent-color: var(--gold-primary); }
+  .checkout-decl a { color: var(--gold-primary); }
+  .checkout-decl__msg { margin: 8px 0 0; color: var(--sev-medium); }
   .fixhow { margin-top: 8px; font-size: 0.8rem; }
   .fixhow summary { cursor: pointer; color: var(--gold-primary); font-weight: 600; }
   .fixhow summary:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: 2px; }
@@ -1923,6 +1928,7 @@
 
         </div>
 
+        <div data-checkout-declaration></div>
         <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal fatura ve yıllık ödeme talepleri için destek@cyberlionai.com adresine yazın.</p>
         <p class="pricing__foot reveal"><a class="pricing__more" href="/pricing" data-i18n="pricing.more">Planları yan yana karşılaştır</a></p>
       </div>
@@ -1992,6 +1998,7 @@
           <a href="/pages/mesafeli-satis-sozlesmesi" data-i18n="footer.dist">Mesafeli Satış Sözleşmesi</a>
           <a href="/pages/on-bilgilendirme-formu" data-i18n="footer.predisclosure">Ön Bilgilendirme Formu</a>
           <a href="/pages/teslimat-ve-iade-sartlari" data-i18n="footer.refund">Teslimat ve İade</a>
+          <a href="/pages/tarama-yetkisi" data-i18n="footer.scanAuth">Tarama Yetkisi</a>
           <a href="/pages/kullanim-sartlari" data-i18n="footer.terms">Kullanım Şartları</a>
           <a href="/pages/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a>
         </nav>
@@ -2361,6 +2368,8 @@
           quotaOutMonthly: "Bu ayki {limit} tarama hakkınız doldu. Hakkınız yeni ayda yenilenir; sınırsız tarama için Enterprise'a geçebilirsiniz.",
           fixLabel: 'Düzeltme',
           howTitle: 'Nasıl düzeltirim?',
+          activeLocked: 'Aktif testler (XSS/SQLi yoklaması, hassas dosya kontrolü) çalıştırılmadı: bu alan adı hesabınız için doğrulanmamış. Pasif tarama tamamlandı.',
+          activeLockedLink: 'Alan adını doğrula',
           howNote: 'Değişiklikten sonra sunucuyu yeniden yükleyin ve taramayı tekrarlayın. Apache için mod_headers modülü açık olmalıdır.',
           howCf: 'Cloudflare panelinde: Rules › Transform Rules › Modify Response Header › Set static\nBaşlık: {name}\nDeğer: {value}',
           howCfHttps: 'Cloudflare panelinde: SSL/TLS › Edge Certificates › Always Use HTTPS: Açık',
@@ -2393,7 +2402,9 @@
             scan_failed: 'Tarama tamamlanamadı. Lütfen tekrar deneyin.',
             network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.',
             service_unavailable: 'Tarama servisi şu anda yapılandırılıyor. Kısa süre sonra tekrar deneyin.',
-            quota_exceeded: "Ücretsiz tarama hakkınız doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay)."
+            quota_exceeded: "Ücretsiz tarama hakkınız doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
+            ownership_required: 'Bu test için alan adı sahipliğini doğrulamanız gerekiyor (TCK m.243/244). Doğrulama: cyberlionai.com/verify',
+            verify_to_continue: 'Doğrulanmamış bu alan adı bugün 3 kez tarandı. Devam etmek için alan adını doğrulayın: cyberlionai.com/verify'
           },
           note: {
             unsafe_inline: "script-src 'unsafe-inline' içeriyor; koruma büyük ölçüde etkisiz",
@@ -2539,7 +2550,7 @@
           about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması.',
           quick: 'Hızlı Linkler', contact: 'İletişim',
           kvkk: 'KVKK Aydınlatma Metni', dist: 'Mesafeli Satış Sözleşmesi',
-          predisclosure: 'Ön Bilgilendirme Formu', refund: 'Teslimat ve İade',
+          predisclosure: 'Ön Bilgilendirme Formu', refund: 'Teslimat ve İade', scanAuth: 'Tarama Yetkisi',
           vkn: 'VKN: 5810910912',
           hours: 'Çalışma Saatleri: Hafta içi 09:00 – 18:00 (TSİ)',
           rights: '© 2026 Ali Kotan - Şahıs İşletmesi',
@@ -2730,6 +2741,8 @@
           quotaOutMonthly: 'You have used this month\'s {limit} scans. Your allowance renews next month; upgrade to Enterprise for unlimited scans.',
           fixLabel: 'Fix',
           howTitle: 'How do I fix it?',
+          activeLocked: 'Active tests (XSS/SQLi probes, sensitive file checks) were not run: this domain is not verified for your account. The passive scan is complete.',
+          activeLockedLink: 'Verify the domain',
           howNote: 'Reload the server after the change and run the scan again. Apache needs mod_headers enabled.',
           howCf: 'In the Cloudflare dashboard: Rules › Transform Rules › Modify Response Header › Set static\nHeader: {name}\nValue: {value}',
           howCfHttps: 'In the Cloudflare dashboard: SSL/TLS › Edge Certificates › Always Use HTTPS: On',
@@ -2759,7 +2772,9 @@
             scan_failed: 'The scan could not be completed. Please try again.',
             network: 'Could not reach the server. Check your connection.',
             service_unavailable: 'The scanning service is being configured. Please try again shortly.',
-            quota_exceeded: 'You have used your free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.'
+            quota_exceeded: 'You have used your free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
+            ownership_required: 'This test requires verified ownership of the domain (Turkish Penal Code arts. 243/244). Verify at cyberlionai.com/verify',
+            verify_to_continue: 'This unverified domain has been scanned 3 times today. Verify the domain to continue: cyberlionai.com/verify'
           },
           note: {
             unsafe_inline: "script-src allows 'unsafe-inline'; most of the protection is lost",
@@ -2905,7 +2920,7 @@
           about: 'Fast security scanning that analyzes your SSL and security headers in seconds.',
           quick: 'Quick Links', contact: 'Contact',
           kvkk: 'KVKK Privacy Notice', dist: 'Distance Sales Agreement',
-          predisclosure: 'Pre-Contractual Information Form', refund: 'Delivery & Returns',
+          predisclosure: 'Pre-Contractual Information Form', refund: 'Delivery & Returns', scanAuth: 'Scan Authorisation',
           vkn: 'Tax ID (VKN): 5810910912',
           hours: 'Business Hours: Weekdays 09:00 – 18:00 (GMT+3)',
           rights: '© 2026 Ali Kotan - Sole Proprietorship',
@@ -4285,6 +4300,21 @@
         addNoticeRow(t('scan.warn.' + code, { status: result.httpStatus }),
           'fa-solid fa-circle-info', '--accent-blue');
       });
+
+      /* Beyan verildi ama sahiplik kanıtlanmadı: aktif testlerin neden
+         çalışmadığını söyle ve doğrulamaya yönlendir. Sessizce atlamak,
+         kullanıcıya testlerin geçtiğini düşündürebilirdi. */
+      var consentBox = document.getElementById('scanConsent');
+      if (result.ownership && !result.ownership.activeChecks && result.ownership.verifyUrl
+          && consentBox && consentBox.checked) {
+        var lockRow = addNoticeRow(t('scan.activeLocked'), 'fa-solid fa-lock', '--sev-medium');
+        var lockLink = document.createElement('a');
+        lockLink.href = result.ownership.verifyUrl;
+        lockLink.textContent = t('scan.activeLockedLink');
+        lockLink.style.display = 'block';
+        lockLink.style.color = 'var(--gold-primary)';
+        lockRow.querySelector('b').appendChild(lockLink);
+      }
 
       // Önce kalanlar, sonra geçenler, en sonda ölçülemeyenler
       var order = { fail: 0, pass: 1, skipped: 2 };
@@ -6309,6 +6339,7 @@
   })();
   </script>
 
+ <script src="/checkout-declaration.js" defer></script>
  <script src="/mail-links.js" defer></script>
 </body>
 </html>

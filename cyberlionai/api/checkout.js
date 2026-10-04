@@ -142,6 +142,18 @@ async function handler(req, res) {
     return res.status(400).json({ error: { code: 'invalid_plan' } });
   }
 
+  /* --- Tarama yetkisi beyanı ---
+     Ödeme, kullanıcının taranacak alan adlarının sahibi ya da yetkilisi
+     olduğunu beyan etmesine bağlı (fiyatlandırmadaki onay kutusu). Beyan
+     yoksa ödeme BAŞLAMAZ; tarayıcı fiyat sayfasına geri gönderilir. */
+  if (!req.query || req.query.declaration !== '1') {
+    if (wantsHtml(req)) {
+      res.setHeader('Location', '/pricing?checkout=declaration_required&plan=' + encodeURIComponent(planId));
+      return res.status(303).end();
+    }
+    return res.status(400).json({ error: { code: 'declaration_required' } });
+  }
+
   /* --- Yapılandırma --- */
   if (!iyzico.isConfigured() || !iyzico.isEnabled()) {
     return unavailable(req, res, 'iyzico_unconfigured', planId);
