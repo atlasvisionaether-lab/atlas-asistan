@@ -549,6 +549,10 @@ async function kos() {
     yollar.push(sapla('_lib/session.js', {
       clientIp: function () { return '1.2.3.4'; }, ipKey: function () { return 'ip'; }
     }));
+    /* DNSSEC ağa çıkmasın (yalnızca Telegram çağrısı sayılıyor). */
+    yollar.push(sapla('_lib/dnssec.js', {
+      dnssecDurumu: async function () { return { ok: true, enabled: true, zone: 'cyberlionai.com' }; }
+    }));
 
     const ucYolu = require.resolve(path.join(API, 'verify-dns.js'));
     delete require.cache[ucYolu];
@@ -562,6 +566,7 @@ async function kos() {
 
     esit('doğrulama 200', res.statusCode, 200);
     esit('tek bildirim', f.cagrilar.length, 1);
+    esit('DNSSEC yanıtta', JSON.stringify(res.body && res.body.dnssec), JSON.stringify({ measured: true, enabled: true, zone: 'cyberlionai.com' }));
     esit('DNS bildirim metni',
       JSON.parse(f.cagrilar[0].secenek.body).text,
       '[CyberLion] 🛡️ DNS doğrulama: cyberlionai.com SPF pass / DMARC p=reject');

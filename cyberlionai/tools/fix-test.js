@@ -57,6 +57,11 @@ async function cagir(h, req) { const r = res(); await h(Object.assign({ headers:
   const yedi = ['dnssec', 'dmarc', 'permissions', 'referrer', 'nosniff', 'xframe', 'tls_legacy'];
   esit('7 bulgu: liste 4993', pricing.quote(yedi, 'single', 'free').price, 4993);
   esit('7 bulgu: Pro 2497', pricing.quote(yedi, 'single', 'pro').priceDiscounted, 2497);
+  /* iyzico başvurusu öncesi kontrol: 7 bulgu + "Tam paket" seçimi → liste 5000, Pro/Enterprise 2500. */
+  esit('7 bulgu tam paket: liste 5000', pricing.quote(yedi, 'full', 'free').price, 5000);
+  esit('7 bulgu tam paket: Pro 2500', pricing.quote(yedi, 'full', 'pro').priceDiscounted, 2500);
+  esit('7 bulgu tam paket: Enterprise 2500', pricing.quote(yedi, 'full', 'enterprise').priceDiscounted, 2500);
+  esit('7 bulgu tam paket: Free indirimsiz 5000', pricing.quote(yedi, 'full', 'free').priceDiscounted, 5000);
   const cok = ['https', 'csp', 'tls_cert', 'tls_protocol', 'spf', 'dmarc'];
   esit('sepet tam paket tavanıyla sınırlı (6×999 → 5000)', pricing.quote(cok, 'single', 'free').price, 5000);
   esit('tavana ulaşınca tür full', pricing.quote(cok, 'single', 'free').type, 'full');

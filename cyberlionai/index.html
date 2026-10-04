@@ -2423,8 +2423,12 @@
           cartFull: 'Tam paket',
           cartVat: '+ KDV',
           cartAgree1: '',
-          cartAgreeLink: 'Mesafeli Satış Sözleşmesi, Ön Bilgilendirme Formu ve iade koşullarını',
-          cartAgree2: ' okudum, onaylıyorum.',
+          cartAgreeLink: 'Mesafeli Satış Sözleşmesi',
+          cartAgreeSep1: ', ',
+          cartAgreeLink2: 'Ön Bilgilendirme Formu',
+          cartAgreeSep2: ' ile ',
+          cartAgreeLink3: 'Teslimat ve İade Şartları',
+          cartAgree2: '\'nı okudum, onaylıyorum.',
           cartStart: 'Hizmetin cayma süresi içinde ifasına başlanmasını onaylıyorum; ifaya başlanınca cayma hakkımın sona ereceğini biliyorum.',
           cartOrder: 'Sipariş ver',
           cartConsentNeeded: 'Sipariş için iki onay kutusunu da işaretleyin.',
@@ -2830,7 +2834,11 @@
           cartFull: 'Full package',
           cartVat: '+ VAT',
           cartAgree1: 'I have read and accept the ',
-          cartAgreeLink: 'Distance Sales Agreement, Pre-Contractual Information Form and returns terms',
+          cartAgreeLink: 'Distance Sales Agreement',
+          cartAgreeSep1: ', the ',
+          cartAgreeLink2: 'Pre-Contractual Information Form',
+          cartAgreeSep2: ' and the ',
+          cartAgreeLink3: 'Delivery and Returns terms',
           cartAgree2: '.',
           cartStart: 'I consent to the service starting within the withdrawal period and understand that my right of withdrawal ends once it starts.',
           cartOrder: 'Place order',
@@ -4323,12 +4331,19 @@
         l.appendChild(c); l.appendChild(sp);
         return l;
       }
-      var c1 = consent('fixAgree', [t('scan.cartAgree1'), [t('scan.cartAgreeLink'), '/pages/mesafeli-satis-sozlesmesi'], t('scan.cartAgree2')]);
+      var c1 = consent('fixAgree', [t('scan.cartAgree1'),
+        [t('scan.cartAgreeLink'), '/pages/mesafeli-satis-sozlesmesi'], t('scan.cartAgreeSep1'),
+        [t('scan.cartAgreeLink2'), '/pages/on-bilgilendirme-formu'], t('scan.cartAgreeSep2'),
+        [t('scan.cartAgreeLink3'), '/pages/teslimat-ve-iade-sartlari'], t('scan.cartAgree2')]);
       var c2 = consent('fixStart', [t('scan.cartStart')]);
       var go = document.createElement('button');
       go.type = 'button';
       go.className = 'btn btn--gold btn--sm';
       go.textContent = t('scan.cartOrder');
+      /* İki onay da işaretlenene kadar düğme KAPALI (sunucu da onaysız siparişi reddeder). */
+      function syncGo() { go.disabled = !(c1.querySelector('input').checked && c2.querySelector('input').checked); if (!go.disabled) msg.textContent = ''; }
+      c1.querySelector('input').addEventListener('change', function () { syncGo(); });
+      c2.querySelector('input').addEventListener('change', function () { syncGo(); });
       var msg = document.createElement('p');
       msg.className = 'fixcart__msg';
       msg.setAttribute('role', 'alert');
@@ -4344,7 +4359,7 @@
         }).then(function (r) {
           return r.json().catch(function () { return {}; }).then(function (b) { return { s: r.status, b: b }; });
         }).then(function (x) {
-          go.disabled = false;
+          syncGo();
           if (x.s === 201 && x.b.checkoutUrl) { window.location.href = x.b.checkoutUrl; return; }
           var code = x.b && x.b.error && x.b.error.code;
           if (x.s === 401) msg.textContent = t('scan.cartLogin');
@@ -4354,13 +4369,14 @@
             a.href = x.b.error.verifyUrl; a.textContent = t('scan.activeLockedLink');
             msg.appendChild(a);
           } else msg.textContent = t('scan.cartErr');
-        }, function () { go.disabled = false; msg.textContent = t('scan.cartErr'); });
+        }, function () { syncGo(); msg.textContent = t('scan.cartErr'); });
       });
       cartBar.appendChild(info);
       cartBar.appendChild(c1);
       cartBar.appendChild(c2);
       cartBar.appendChild(go);
       cartBar.appendChild(msg);
+      syncGo();
     }
 
     /* Fiyat tablosu sabit; sayfa açılışında bir kez alınır ki sonuç satırları

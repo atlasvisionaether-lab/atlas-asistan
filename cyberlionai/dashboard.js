@@ -67,6 +67,7 @@
       'tools.domain': 'Alan adı', 'tools.check': 'Kontrol Et',
       'tools.spfHow': 'TXT kaydı olarak kök alan adına şu biçimde ekleyin (örnek):',
       'tools.dmarcHow': '_dmarc alt alan adına TXT kaydı ekleyin (örnek):',
+      'tools.dnssecHow': 'DNSSEC\'i alan adı kayıt firmanızın (ya da Cloudflare) panelinden açın; DS kaydı kayıt firmasına eklenir.',
       'tools.cfTitle': 'Cloudflare ile 1-Tık Düzeltme', 'tools.cfToken': "Cloudflare API token'ınız", 'tools.cfFix': 'Düzeltme türü',
       'tools.cfAll': 'Tümü (HSTS + CSP + X-Frame)', 'tools.cfApply': '1 Tıkla Uygula',
       'tools.cfWarn': "Token'ınız bizde saklanmaz; yalnızca bu istek için kullanılır. Geri almak için Cloudflare Dashboard > Rules > Transform Rules'dan CyberLion kuralını silin. CSP seçeneği sitenizin dış kaynaklarını (yazı tipi, analitik vb.) engelleyebilir; önce test ortamında deneyin.",
@@ -128,6 +129,7 @@
       dnsUnavailable: 'Doğrulama servisi şu an yayında değil.', dnsTimeout: 'Sorgu zaman aşımına uğradı.',
       spfFound: 'SPF kaydı bulundu', spfMissing: 'SPF kaydı bulunamadı',
       dmarcFound: 'DMARC kaydı bulundu', dmarcMissing: 'DMARC politikası yok', policy: 'Politika', checked: 'Kontrol edildi:',
+      dnssecOn: 'DNSSEC açık', dnssecOff: 'DNSSEC kapalı',
       cfToken: "Cloudflare API token'ınızı girin (Zone > Transform Rules > Edit yetkili).",
       cfOk: function (f, d) { return f.toUpperCase() + ' kuralı eklendi (' + d + '). Geri alma: Cloudflare > Rules > Transform Rules.'; },
       cfFail: 'Düzeltme uygulanamadı. Alan adını ve token yetkilerini kontrol edin.',
@@ -175,6 +177,7 @@
       'tools.domain': 'Domain', 'tools.check': 'Check',
       'tools.spfHow': 'Add to the root domain as a TXT record (example):',
       'tools.dmarcHow': 'Add a TXT record on the _dmarc subdomain (example):',
+      'tools.dnssecHow': 'Enable DNSSEC in your registrar\'s (or Cloudflare\'s) panel; the DS record is added at the registrar.',
       'tools.cfTitle': '1-Click Fix via Cloudflare', 'tools.cfToken': 'Your Cloudflare API token', 'tools.cfFix': 'Fix type',
       'tools.cfAll': 'All (HSTS + CSP + X-Frame)', 'tools.cfApply': 'Apply in 1 Click',
       'tools.cfWarn': 'Your token is never stored; it is used for this request only. To roll back, delete the CyberLion rule in Cloudflare Dashboard > Rules > Transform Rules. The CSP option can block your site\'s external resources (fonts, analytics…); try it on staging first.',
@@ -235,6 +238,7 @@
       dnsUnavailable: 'The verification service is not available right now.', dnsTimeout: 'The check timed out.',
       spfFound: 'SPF record found', spfMissing: 'No SPF record found',
       dmarcFound: 'DMARC record found', dmarcMissing: 'No DMARC policy', policy: 'Policy', checked: 'Checked:',
+      dnssecOn: 'DNSSEC enabled', dnssecOff: 'DNSSEC disabled',
       cfToken: 'Enter your Cloudflare API token (with Zone > Transform Rules > Edit).',
       cfOk: function (f, d) { return f.toUpperCase() + ' rule added (' + d + '). Roll back: Cloudflare > Rules > Transform Rules.'; },
       cfFail: 'The fix could not be applied. Check the domain and token permissions.',
@@ -901,6 +905,13 @@
     $('dmarcRecord').hidden = !dmarc.found || !dmarc.record; $('dmarcRecord').textContent = dmarc.record || '';
     $('dmarcPolicy').hidden = !dmarc.found || !pol; $('dmarcPolicy').textContent = t('policy') + ': p=' + (pol || '?');
     $('dmarcHow').hidden = dOk;
+    /* DNSSEC: ölçülemediyse satır hiç gösterilmez ("kapalı" demek yanlış olurdu). */
+    var ds = (res && res.dnssec) || {};
+    $('dnssecRow').hidden = ds.measured !== true;
+    if (ds.measured === true) {
+      badge($('dnssecBadge'), ds.enabled === true, ds.enabled ? t('dnssecOn') : t('dnssecOff'));
+      $('dnssecHow').hidden = ds.enabled === true;
+    }
     $('dnsResult').hidden = false;
   }
 
