@@ -137,6 +137,7 @@ const CHECKS = {
     spf: ['SPF kaydı', 'SPF olmadan üçüncü bir kişi bu alan adı adına e-posta gönderebilir ve alıcının bunu eleyecek dayanağı olmaz.', 'TXT kaydı:  v=spf1 include:<posta sağlayıcınız> -all'],
     dmarc: ['DMARC politikası', 'DMARC olmadan (veya p=none ile) SPF/DKIM doğrulamasından geçemeyen sahte e-posta yine teslim edilir.', 'TXT kaydı:  _dmarc.<alan>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<alan>'],
     dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.'],
+    blacklist: ['Kara liste (URLhaus)', 'Alan adınızın abuse.ch URLhaus kötü amaçlı yazılım listesinde olup olmadığını gösterir; listedeyse tarayıcılar ve güvenlik ürünleri sitenizi engelleyebilir.', 'Zararlı dosyayı/bağlantıyı kaldırın, sunucuyu temizleyin ve URLhaus üzerinden kaldırma talebi gönderin (urlhaus.abuse.ch).'],
     dnssec: ['DNSSEC', 'DNSSEC, alan adınızın DNS yanıtlarını imzalar; sahte DNS yanıtıyla ziyaretçilerin başka bir sunucuya yönlendirilmesini zorlaştırır.', 'DNS sağlayıcınızda (ör. Cloudflare: DNS › Settings › DNSSEC) DNSSEC\'i açın ve verilen DS kaydını kayıt firmanıza ekleyin.']
   },
   en: {
@@ -161,6 +162,7 @@ const CHECKS = {
     spf: ['SPF record', 'Without SPF a third party can send email as this domain and the recipient has no basis to reject it.', 'TXT record:  v=spf1 include:<your mail provider> -all'],
     dmarc: ['DMARC policy', 'Without DMARC (or with p=none) forged email that fails SPF/DKIM is still delivered.', 'TXT record:  _dmarc.<domain>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<domain>'],
     dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.'],
+    blacklist: ['Blacklist (URLhaus)', 'Shows whether your domain is on the abuse.ch URLhaus malware list; if it is, browsers and security products may block your site.', 'Remove the malicious file or link, clean the server and request removal via URLhaus (urlhaus.abuse.ch).'],
     dnssec: ['DNSSEC', 'DNSSEC signs your domain\'s DNS answers, making it harder to send visitors to another server with forged DNS responses.', 'Enable DNSSEC at your DNS provider (e.g. Cloudflare: DNS › Settings › DNSSEC) and add the DS record it gives you at your registrar.']
   }
 };

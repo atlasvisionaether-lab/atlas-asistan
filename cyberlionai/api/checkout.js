@@ -154,6 +154,18 @@ async function handler(req, res) {
     return res.status(400).json({ error: { code: 'declaration_required' } });
   }
 
+  /* --- Sözleşme onayı ---
+     Mesafeli Sözleşmeler Yönetmeliği: tüketici ön bilgilendirmeyi ve
+     sözleşmeyi okuduğunu SİPARİŞTEN ÖNCE onaylamalı. Fiyat sayfasındaki
+     ikinci kutu; onaysız ödeme başlamaz. */
+  if (req.query.agreements !== '1') {
+    if (wantsHtml(req)) {
+      res.setHeader('Location', '/pricing?checkout=agreements_required&plan=' + encodeURIComponent(planId));
+      return res.status(303).end();
+    }
+    return res.status(400).json({ error: { code: 'agreements_required' } });
+  }
+
   /* --- Yapılandırma --- */
   if (!iyzico.isConfigured() || !iyzico.isEnabled()) {
     return unavailable(req, res, 'iyzico_unconfigured', planId);

@@ -190,284 +190,45 @@ function probeLegacyTls(host, port, version) {
 
 const WEIGHTS = { critical: 10, high: 7, medium: 4, low: 2, info: 0 };
 
-function check(id, severity, status, detail, extra) {
-  const item = { id: id, severity: severity, status: status, detail: detail || null };
-  if (extra) Object.assign(item, extra);
-  return item;
+/* ============================================================
+   Alt motorlar (api/_lib/engines/). Kontrol mantığı motorlarda; burada
+   yalnızca birleştirme ve SIRA. Sıra eski buildChecks ile birebir aynı
+   (rapor ve sınamalar buna dayanıyor); tools/engines-test.js eski çıktıyla
+   karşılaştırır.
+   ============================================================ */
+const headerEngine = require('./engines/header-scanner.js');
+const cookieEngine = require('./engines/cookie-scanner.js');
+const tlsEngine = require('./engines/tls-scanner.js');
+const dnsEngine = require('./engines/dns-scanner.js');
+const blacklistEngine = require('./engines/blacklist-scanner.js');
+
+const ENGINES = [headerEngine, cookieEngine, tlsEngine, dnsEngine, blacklistEngine];
+
+/* Eski buildChecks sırası: başlıkların ilk yedisi, çerez, kalan başlıklar,
+   TLS, DNS, kara liste. */
+const ORDER = headerEngine.IDS.slice(0, 7)
+  .concat(cookieEngine.IDS, headerEngine.IDS.slice(7), tlsEngine.IDS, dnsEngine.IDS, blacklistEngine.IDS);
+
+function orderIndex(id) {
+  const i = ORDER.indexOf(id);
+  return i === -1 ? ORDER.length : i;
 }
 
-function parseMaxAge(value) {
-  const match = /max-age\s*=\s*"?(\d+)"?/i.exec(value || '');
-  return match ? Number(match[1]) : null;
+/** Tüm motorları çalıştırır: { checks, findings, fixCode } (checks eski sırada). */
+function runEngines(context, lang) {
+  const parts = ENGINES.map(function (e) { return e.analyze(context, lang); });
+  const checks = [].concat.apply([], parts.map(function (p) { return p.checks; }))
+    .map(function (c, i) { return { c: c, i: i }; })
+    .sort(function (x, y) { return (orderIndex(x.c.id) - orderIndex(y.c.id)) || (x.i - y.i); })
+    .map(function (x) { return x.c; });
+  const fixCode = {};
+  parts.forEach(function (p) { Object.assign(fixCode, p.fixCode || {}); });
+  return { checks: checks, findings: [].concat.apply([], parts.map(function (p) { return p.findings || []; })), fixCode: fixCode };
 }
 
-/** Set-Cookie başlıklarını sürüm farklarından bağımsız olarak dizi hâlinde verir. */
-function getSetCookies(headers) {
-  if (typeof headers.getSetCookie === 'function') return headers.getSetCookie();
-  const raw = headers.get('set-cookie');
-  return raw ? [raw] : [];
-}
-
+/** Geriye uyum: kalibrasyon ve diğer sınamalar yalnızca kontrol dizisini ister. */
 function buildChecks(context) {
-  const h = context.headers;
-  const checks = [];
-  const isHttps = context.finalUrl.protocol === 'https:';
-
-  /* --- Aktarım güvenliği --- */
-  checks.push(check('https', 'critical', isHttps ? 'pass' : 'fail',
-    isHttps ? context.finalUrl.origin : 'HTTP: ' + context.finalUrl.origin));
-
-  const hsts = h.get('strict-transport-security');
-  const hstsAge = parseMaxAge(hsts);
-  checks.push(check('hsts', 'high',
-    hsts && hstsAge && hstsAge >= 15552000 ? 'pass' : 'fail',
-    hsts || null,
-    { note: hsts && (!hstsAge || hstsAge < 15552000) ? 'max_age_low' : null }));
-
-  /* --- İçerik güvenliği başlıkları --- */
-  const csp = h.get('content-security-policy');
-  let cspStatus = 'fail';
-  let cspNote = null;
-  if (csp) {
-    const scriptSrc = /script-src[^;]*/i.exec(csp);
-    const source = scriptSrc ? scriptSrc[0] : csp;
-    if (/'unsafe-inline'/i.test(source) && !/'(nonce-|sha256-)/i.test(source)) {
-      cspStatus = 'fail';
-      cspNote = 'unsafe_inline';
-    } else {
-      cspStatus = 'pass';
-    }
-  }
-  checks.push(check('csp', 'critical', cspStatus, csp ? csp.slice(0, 300) : null, { note: cspNote }));
-
-  const xfo = h.get('x-frame-options');
-  const frameAncestors = csp && /frame-ancestors/i.test(csp);
-  checks.push(check('xframe', 'medium', xfo || frameAncestors ? 'pass' : 'fail',
-    xfo || (frameAncestors ? 'CSP: frame-ancestors' : null)));
-
-  const nosniff = h.get('x-content-type-options');
-  checks.push(check('nosniff', 'medium',
-    nosniff && /nosniff/i.test(nosniff) ? 'pass' : 'fail', nosniff));
-
-  const referrer = h.get('referrer-policy');
-  checks.push(check('referrer', 'low', referrer ? 'pass' : 'fail', referrer));
-
-  const permissions = h.get('permissions-policy') || h.get('feature-policy');
-  checks.push(check('permissions', 'low', permissions ? 'pass' : 'fail',
-    permissions ? permissions.slice(0, 200) : null));
-
-  /* --- Çerezler --- */
-  const cookies = getSetCookies(h);
-  if (!cookies.length) {
-    checks.push(check('cookies', 'high', 'skipped', null, { note: 'no_cookies' }));
-  } else {
-    const weak = cookies.filter(function (c) {
-      return !/;\s*secure/i.test(c) || !/;\s*httponly/i.test(c) || !/;\s*samesite/i.test(c);
-    });
-    checks.push(check('cookies', 'high', weak.length ? 'fail' : 'pass',
-      weak.length ? weak.length + '/' + cookies.length : cookies.length + ' çerez',
-      { note: weak.length ? 'missing_flags' : null }));
-  }
-
-  /* --- Bilgi ifşası --- */
-  const server = h.get('server');
-  const powered = h.get('x-powered-by');
-  const disclosed = [server, powered].filter(Boolean);
-  const versioned = disclosed.some(function (v) { return /\d+\.\d+/.test(v); });
-  checks.push(check('disclosure', 'low', versioned ? 'fail' : 'pass',
-    disclosed.length ? disclosed.join(' | ') : null));
-
-  /* --- Karışık içerik (yalnızca HTTPS sayfalarda anlamlı) --- */
-  if (!isHttps) {
-    checks.push(check('mixed_content', 'high', 'skipped', null, { note: 'not_https' }));
-  } else if (context.html === null) {
-    checks.push(check('mixed_content', 'high', 'skipped', null, { note: 'no_html' }));
-  } else {
-    const matches = context.html.match(/(?:src|href)\s*=\s*["']http:\/\/[^"']+/gi) || [];
-    const insecure = matches.filter(function (m) { return !/http:\/\/(localhost|127\.)/i.test(m); });
-    checks.push(check('mixed_content', 'high', insecure.length ? 'fail' : 'pass',
-      insecure.length ? insecure.length + ' kaynak' : null,
-      { samples: insecure.slice(0, 3).map(function (m) { return m.replace(/^[^=]*=\s*["']/, '').slice(0, 120); }) }));
-  }
-
-  /* --- Çapraz köken sertleştirmesi ---------------------------------------
-     ÖLÇÜLDÜ (koşu 34663226505): Observatory bu başlıkların YOKLUĞUNU
-     başarısızlık saymıyor —
-
-       coop-not-implemented  pass=true   m=0
-       coep-not-implemented  pass=true   m=0
-       corp-not-implemented  pass=null   m=0
-
-     Bu doğru bir duruş: bunlar derinlemesine savunma katmanları, kusur değil.
-     Yoklukta "fail" versek hem hemen her siteyle çelişirdik hem de haksız
-     olurduk. O yüzden: yoksa `skipped`, varsa ve BİLEREK zayıflatılmışsa
-     `fail`. Ağırlık `info` (0) — mevcut müşterilerin skoru bu eklemeyle
-     kaymıyor; bunlar tavsiye, ceza değil. */
-
-  const coop = (h.get('cross-origin-opener-policy') || '').trim().toLowerCase();
-  if (!coop) {
-    checks.push(check('coop', 'info', 'skipped', null, { note: 'not_implemented' }));
-  } else {
-    /* `unsafe-none` tarayıcı varsayılanı ama BİLEREK yazılmışsa korumayı
-       kapatma niyetidir; onu ayrıca işaretliyoruz. */
-    checks.push(check('coop', 'info', coop === 'unsafe-none' ? 'fail' : 'pass', coop));
-  }
-
-  const coep = (h.get('cross-origin-embedder-policy') || '').trim().toLowerCase();
-  if (!coep) {
-    checks.push(check('coep', 'info', 'skipped', null, { note: 'not_implemented' }));
-  } else {
-    checks.push(check('coep', 'info', coep === 'unsafe-none' ? 'fail' : 'pass', coep));
-  }
-
-  const corp = (h.get('cross-origin-resource-policy') || '').trim().toLowerCase();
-  if (!corp) {
-    checks.push(check('corp', 'info', 'skipped', null, { note: 'not_implemented' }));
-  } else {
-    const gecerli = corp === 'same-origin' || corp === 'same-site' || corp === 'cross-origin';
-    checks.push(check('corp', 'info', gecerli ? 'pass' : 'fail', corp));
-  }
-
-  /* CORS: `*` tek başına kusur DEĞİL — herkese açık bir API için doğru
-     olabilir; Observatory de m=0 veriyor. Gerçek sorun `*` ile birlikte
-     kimlik bilgisi istenmesi: tarayıcı bu ikiliyi zaten reddeder, yani
-     yapılandırma yanlış yazılmış demektir. Bunu ayrıca işaretliyoruz ve
-     bu, Observatory'den BİLEREK ayrıldığımız tek nokta. */
-  const acao = (h.get('access-control-allow-origin') || '').trim();
-  const acac = (h.get('access-control-allow-credentials') || '').trim().toLowerCase();
-  if (!acao) {
-    checks.push(check('cors', 'info', 'skipped', null, { note: 'not_implemented' }));
-  } else if (acao === '*' && acac === 'true') {
-    /* Onem derecesi CIKTIYA gore degismemeli — kalibrasyon sinamasi bunu
-       yakaladi ve hakliydi. Bu grubun tamami `info`: tarayici zaten bu
-       ikiliyi reddediyor, yani somurulebilir bir acik degil, yanlis yazilmis
-       bir yapilandirma. Raporda basarisiz kontrol olarak gorunuyor ama skoru
-       kaydirmiyor. */
-    checks.push(check('cors', 'info', 'fail', acao + ' + credentials',
-      { note: 'wildcard_with_credentials' }));
-  } else {
-    checks.push(check('cors', 'info', 'pass', acao.slice(0, 120)));
-  }
-
-  /* SRI: yalnızca BAŞKA bir kökenden yüklenen script'ler için anlamlıdır.
-     Kendi kökeninden yüklenen dosyada bütünlük özniteliği beklenmez —
-     Observatory de öyle yapıyor (sri-not-implemented-but-no-scripts-loaded
-     ve ...-all-scripts-loaded-from-secure-origin, ikisi de pass=null). */
-  if (context.html === null) {
-    checks.push(check('sri', 'low', 'skipped', null, { note: 'no_html' }));
-  } else {
-    const scriptler = context.html.match(/<script\b[^>]*\bsrc\s*=\s*["'][^"']+["'][^>]*>/gi) || [];
-    const disKokenli = scriptler.filter(function (etiket) {
-      const m = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(etiket);
-      if (!m) return false;
-      let u;
-      try { u = new URL(m[1], context.finalUrl); } catch (e) { return false; }
-      return u.origin !== context.finalUrl.origin;
-    });
-    const butunluksuz = disKokenli.filter(function (etiket) {
-      return !/\bintegrity\s*=\s*["'][^"']+["']/i.test(etiket);
-    });
-    if (!disKokenli.length) {
-      checks.push(check('sri', 'low', 'skipped', null, { note: 'no_external_scripts' }));
-    } else {
-      checks.push(check('sri', 'low', butunluksuz.length ? 'fail' : 'pass',
-        butunluksuz.length ? butunluksuz.length + '/' + disKokenli.length + ' script'
-                           : disKokenli.length + ' script',
-        { samples: butunluksuz.slice(0, 3).map(function (e) {
-            const m = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(e);
-            return m ? m[1].slice(0, 120) : '';
-          }) }));
-    }
-  }
-
-  /* --- TLS --- */
-  const t = context.tls;
-  if (!isHttps || !t || !t.ok) {
-    checks.push(check('tls_protocol', 'high', 'skipped', t && t.reason ? t.reason : null, { note: 'not_measured' }));
-    checks.push(check('tls_cert', 'high', 'skipped', null, { note: 'not_measured' }));
-  } else {
-    const modern = t.protocol === 'TLSv1.3' || t.protocol === 'TLSv1.2';
-    checks.push(check('tls_protocol', 'high', modern ? 'pass' : 'fail', t.protocol));
-
-    let certStatus = 'pass';
-    let certNote = null;
-    if (!t.authorized) { certStatus = 'fail'; certNote = t.authorizationError || 'untrusted'; }
-    else if (t.daysLeft !== null && t.daysLeft < 0) { certStatus = 'fail'; certNote = 'expired'; }
-    else if (t.daysLeft !== null && t.daysLeft < 15) { certStatus = 'fail'; certNote = 'expiring_soon'; }
-    checks.push(check('tls_cert', 'high', certStatus,
-      t.daysLeft !== null ? t.daysLeft + ' gün' : null,
-      { note: certNote, issuer: t.issuer }));
-  }
-
-  /* --- Eski TLS sürümleri --- */
-  const legacy = context.legacyTls;
-  if (!isHttps || !legacy || !legacy.tested) {
-    checks.push(check('tls_legacy', 'high', 'skipped', legacy && legacy.reason ? legacy.reason : null,
-      { note: 'not_measured' }));
-  } else {
-    checks.push(check('tls_legacy', 'high', legacy.accepted ? 'fail' : 'pass',
-      legacy.accepted ? 'TLS 1.0/1.1 kabul ediliyor' : 'Yalnızca modern TLS'));
-  }
-
-  /* --- E-posta kimlik doğrulaması (SPF / DMARC / DKIM) --------------------
-     Ağırlık `info` (0): bu üçü POSTA yüzeyini ölçüyor, skor ise WEB yüzeyi
-     için kalibre edilmiş. Ağırlık vermek, hiçbir şeyini değiştirmemiş
-     müşterilerin skorunu bir gecede düşürürdü. Bulgu olarak görünüyorlar,
-     düzeltmesi raporda yazıyor, skor sabit kalıyor. Ayrıntılı gerekçe:
-     _lib/mail.js başlığı. */
-  const m = context.mail;
-
-  if (!m || !m.ok) {
-    /* Sebep saklanmıyor: alan adı yoksa "SPF yok" demek yanlış olur, sorgu
-       düştüyse de bilmiyoruz demektir. İkisi de ölçüm başarısızlığı. */
-    const sebep = (m && m.sebep) || 'not_measured';
-    ['spf', 'dmarc', 'dkim'].forEach(function (id) {
-      checks.push(check(id, 'info', 'skipped', null, { note: sebep }));
-    });
-  } else {
-    const spf = mail.spfDegerlendir(m.spf);
-    if (spf.durum === 'none') {
-      /* Yokluk BURADA başarısızlıktır ve bu, COOP/COEP'ten bilinçli bir
-         ayrım: orada yokluk zararsız bir eksik katmandı, burada yokluk
-         "herkes bu alan adı adına e-posta gönderebilir" demek. Üstelik
-         yokluğu ÖLÇTÜK (NOERROR/NODATA), varsayımda bulunmuyoruz. */
-      checks.push(check('spf', 'info', 'fail', null, { note: 'spf_missing' }));
-    } else {
-      checks.push(check('spf', 'info', spf.durum, spf.detay || null,
-        spf.not ? { note: spf.not } : null));
-    }
-
-    const dmarc = mail.dmarcDegerlendir(m.dmarc);
-    if (dmarc.durum === 'none') {
-      checks.push(check('dmarc', 'info', 'fail', null, { note: 'dmarc_missing' }));
-    } else {
-      checks.push(check('dmarc', 'info', dmarc.durum, dmarc.detay || null,
-        dmarc.not ? { note: dmarc.not } : null));
-    }
-
-    /* DKIM ASLA `fail` olmuyor. Bir alan adının seçicileri DNS'ten
-       numaralandırılamaz (ölçüldü); bulamamak "yok" demek değil, "bilmiyoruz"
-       demektir. Yokluğu başarısızlık saymak, ölçmediğimiz bir şeyi
-       cezalandırmak olurdu. */
-    if (m.dkimJoker) {
-      checks.push(check('dkim', 'info', 'skipped', null, { note: 'dkim_wildcard' }));
-    } else if (m.dkimSecici) {
-      checks.push(check('dkim', 'info', 'pass', m.dkimSecici + '._domainkey'));
-    } else {
-      checks.push(check('dkim', 'info', 'skipped', null, { note: 'dkim_not_enumerable' }));
-    }
-  }
-
-  /* DNSSEC (bkz. _lib/dnssec.js). Bağlamda yoksa kontrol hiç eklenmez:
-     kalibrasyon sınaması buildChecks'i DNSSEC'siz çağırıyor. */
-  const ds = context.dnssec;
-  if (ds) {
-    checks.push(ds.ok
-      ? check('dnssec', 'info', ds.enabled ? 'pass' : 'fail', ds.zone || null)
-      : check('dnssec', 'info', 'skipped', null, { note: ds.reason || 'not_measured' }));
-  }
-
-  return checks;
+  return runEngines(context).checks;
 }
 
 /** Skor: yalnızca ölçülebilmiş kontroller üzerinden. */
@@ -506,6 +267,8 @@ async function scanSite(rawUrl, options) {
   const mailSozu = mail.mailKayitlari(host).catch(function (e) {
     return { ok: false, sebep: 'query_failed', hata: e && e.message };
   });
+  /* Kara liste (URLhaus) da paralel; önbellekli, düşerse null → skipped. */
+  const blacklistSozu = blacklistEngine.loadBlacklist().catch(function () { return null; });
   /* DNSSEC sorgusu da paralel: hedef siteye değil genel DNS'e. */
   const dnssecSozu = dnssec.dnssecDurumu(host).catch(function () { return { ok: false, reason: 'not_measured' }; });
 
@@ -533,15 +296,17 @@ async function scanSite(rawUrl, options) {
   const mailInfo = await mailSozu;
   const dnssecInfo = await dnssecSozu;
 
-  const baseChecks = buildChecks({
+  const engineResult = runEngines({
     headers: response.headers,
     finalUrl: finalUrl,
     html: html,
     tls: tlsInfo,
     legacyTls: legacyInfo,
     mail: mailInfo,
-    dnssec: dnssecInfo
-  });
+    dnssec: dnssecInfo,
+    blacklist: await blacklistSozu
+  }, opts.lang);
+  const baseChecks = engineResult.checks;
 
   /* OWASP Top 10 LITE: paralel tek tur. Aktif kontroller (A03) yalnızca
      kullanıcının sahiplik onayı ile çalışır; onay yoksa skipped döner.
@@ -606,6 +371,8 @@ async function scanSite(rawUrl, options) {
     score: scoreOf(checks),
     /* Ana skordan ayrı (bkz. _lib/dnssec.js): SPF/DMARC/DKIM/DNSSEC. */
     emailScore: dnssec.emailScore(checks),
+    /* Kalan kontrollerin sunucuya göre düzeltme parçaları (engines/fixes.js). */
+    fixCode: engineResult.fixCode,
     checks: checks,
     summary: {
       total: checks.length,
@@ -626,4 +393,4 @@ async function scanSite(rawUrl, options) {
 /* buildChecks ve scoreOf, kalibrasyon sinamasi icin disari aciliyor
    (tools/calibration-test.js). Skorun dogrulugu ancak bilinen girdilerle
    olculebilir; agdan gecen bir sinama bunu yapamaz. */
-module.exports = { scanSite, buildChecks, scoreOf, WEIGHTS, SCANNER_VERSION, REPORT_VERSION };
+module.exports = { scanSite, buildChecks, runEngines, ORDER, scoreOf, WEIGHTS, SCANNER_VERSION, REPORT_VERSION };

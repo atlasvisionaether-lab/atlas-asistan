@@ -245,9 +245,15 @@ function fakeRes() {
   res = fakeRes();
   await require('../api/checkout.js')({ method: 'GET', query: { plan: 'pro', declaration: 'true' }, headers: {} }, res);
   sina('beyan yalnızca "1" kabul', res.statusCode, 400);
-
   res = fakeRes();
   await require('../api/checkout.js')({ method: 'GET', query: { plan: 'pro', declaration: '1' }, headers: {} }, res);
+  sina('sözleşme onayı yoksa 400', res.body, { error: { code: 'agreements_required' } });
+  res = fakeRes();
+  await require('../api/checkout.js')({ method: 'GET', query: { plan: 'pro', declaration: '1' }, headers: { accept: 'text/html' } }, res);
+  sina('sözleşme onayı yoksa fiyat sayfasına', res.headers.location, '/pricing?checkout=agreements_required&plan=pro');
+
+  res = fakeRes();
+  await require('../api/checkout.js')({ method: 'GET', query: { plan: 'pro', declaration: '1', agreements: '1' }, headers: {} }, res);
   sina('yapılandırma yoksa 503', res.statusCode, 503);
   sina('yapılandırma yoksa sebep kodu', res.body, { error: { code: 'checkout_unconfigured' } });
   sina('yapılandırma yoksa Location başlığı YOK', res.headers.location === undefined, true);
@@ -255,7 +261,7 @@ function fakeRes() {
   /* Tarayıcı isteği: fiyat sayfasına geri. */
   res = fakeRes();
   await require('../api/checkout.js')(
-    { method: 'GET', query: { plan: 'pro', declaration: '1' }, headers: { accept: 'text/html' } }, res);
+    { method: 'GET', query: { plan: 'pro', declaration: '1', agreements: '1' }, headers: { accept: 'text/html' } }, res);
   sina('tarayıcı /pricing uyarısına dönüyor', res.statusCode, 303);
   sina('dönüş adresi fiyat sayfası',
     res.headers.location, '/pricing?checkout=unavailable&plan=pro');

@@ -38,8 +38,6 @@ const SSL_THRESHOLDS = [30, 7, 1];
 const DOMAIN_THRESHOLDS = [30, 7];
 const UPTIME_TIMEOUT_MS = 10000;
 const UPTIME_FAILS_FOR_DOWN = 2;
-const BLACKLIST_URL = 'https://urlhaus.abuse.ch/downloads/hostfile/';
-const BLACKLIST_MAX_BYTES = 4 * 1024 * 1024;
 const UA = 'CyberLionAI-Monitor/1.0 (+https://www.cyberlionai.com/pages/tarama-yetkisi)';
 
 /* ------------------------------------------------------------------
@@ -121,29 +119,10 @@ function crossedThreshold(daysLeft, thresholds) {
 /* Kayıtlı alan adı tek yerde: _lib/dnssec.js (DNSSEC ve RDAP aynı kuralı kullanıyor). */
 const registrableDomain = require('./dnssec.js').registrableDomain;
 
-/** URLhaus host listesini kümeye çevirir ("127.0.0.1<TAB>host" satırları). */
-function parseHostfile(text) {
-  const set = new Set();
-  String(text || '').split('\n').forEach(function (line) {
-    const l = line.trim();
-    if (!l || l[0] === '#') return;
-    const parts = l.split(/\s+/);
-    const host = (parts[1] || parts[0] || '').toLowerCase();
-    if (host && host !== 'localhost') set.add(host);
-  });
-  return set;
-}
-
-/** Alan adı ya da üst alanlarından biri listede mi. */
-function blacklistedHost(domain, set) {
-  if (!set || !set.size) return null;
-  const parts = String(domain).toLowerCase().split('.');
-  for (let i = 0; i <= parts.length - 2; i++) {
-    const cand = parts.slice(i).join('.');
-    if (set.has(cand)) return cand;
-  }
-  return null;
-}
+/* Kara liste ayrıştırma ve eşleştirme tek yerde: engines/blacklist-scanner.js. */
+const blacklistEngine = require('./engines/blacklist-scanner.js');
+const parseHostfile = blacklistEngine.parseHostfile;
+const blacklistedHost = blacklistEngine.blacklistedHost;
 
 /** RDAP olaylarından kayıt bitiş tarihi (ISO) ya da null. */
 function rdapExpiration(json) {
@@ -171,17 +150,9 @@ async function timedFetch(url, opts, ms) {
   }
 }
 
-/** Kara liste: koşu başına bir kez indirilir. Düşerse boş küme (kontrol atlanır). */
+/** Kara liste: koşu başına bir kez (motorun 30 dk önbelleği). Düşerse boş küme. */
 async function loadBlacklist() {
-  try {
-    const res = await timedFetch(BLACKLIST_URL, { headers: { 'User-Agent': UA } }, 15000);
-    if (!res.ok) return new Set();
-    const text = await res.text();
-    return parseHostfile(text.length > BLACKLIST_MAX_BYTES ? text.slice(0, BLACKLIST_MAX_BYTES) : text);
-  } catch (err) {
-    if (console && console.warn) console.warn('monitor: blacklist unavailable -', err.message);
-    return new Set();
-  }
+  return (await blacklistEngine.loadBlacklist()) || new Set();
 }
 
 /** RDAP alan adı bitişi; .tr gibi RDAP sunmayan uzantılarda null. */

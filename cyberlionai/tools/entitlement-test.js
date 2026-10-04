@@ -184,7 +184,7 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
   esit('me Free: 2/5', [m.q.remaining, m.q.limit, m.q.period], [2, 5, 'lifetime']);
 
   /* ================= 4. Cloudflare erişim kapısı ================= */
-  async function cfUcu(rel, girisli, req, envToken, dogrulanmis) {
+  async function cfUcu(rel, girisli, req, envToken, dogrulanmis, plan) {
     temizle();
     const cfCagri = [];
     if (envToken) process.env.CLOUDFLARE_TEST_TOKEN = envToken; else delete process.env.CLOUDFLARE_TEST_TOKEN;
@@ -193,6 +193,10 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
     sapla('_lib/db.js', { isConfigured: function () { return false; } });
     /* Seviye 3: autofix doğrulanmış alan adı ister. Varsayılan doğrulanmış;
        doğrulanmamış durum ayrıca sınanıyor. */
+    /* Model A yalnızca Enterprise; varsayılan enterprise, diğer plan ayrıca sınanıyor. */
+    sapla('_lib/entitlement.js', Object.assign({}, require(path.join(API, '_lib', 'entitlement.js')), {
+      planFor: async function () { return plan || 'enterprise'; }
+    }));
     sapla('_lib/ownership.js', {
       isVerified: async function () { return dogrulanmis !== false; },
       logScan: async function () { return true; }
@@ -225,6 +229,9 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
   c = await cfUcu('autofix-cloudflare.js', true, POST, SUNUCU, false);
   esit('autofix: doğrulanmamış alan adı → 403', [c.res.statusCode, ((c.res.body && c.res.body.error) || {}).code], [403, 'ownership_required']);
   esit('autofix: doğrulanmamışta Cloudflare çağrılmıyor', c.cfCagri.length, 0);
+  c = await cfUcu('autofix-cloudflare.js', true, POST, SUNUCU, true, 'pro');
+  esit('autofix: Pro planı → 402 (Model A yalnız Enterprise)', [c.res.statusCode, ((c.res.body && c.res.body.error) || {}).code], [402, 'plan_required']);
+  esit('autofix: Pro planında Cloudflare çağrılmıyor', c.cfCagri.length, 0);
   c = await cfUcu('autofix-cloudflare.js', false, { method: 'DELETE', body: { zoneId: 'z', rulesetId: 'rs', ruleId: 'r' } }, SUNUCU);
   esit('autofix DELETE: oturumsuz 401', c.res.statusCode, 401);
   c = await cfUcu('autofix-cloudflare.js', true, { method: 'DELETE', body: { zoneId: 'z', rulesetId: 'rs', ruleId: 'r' } }, SUNUCU);

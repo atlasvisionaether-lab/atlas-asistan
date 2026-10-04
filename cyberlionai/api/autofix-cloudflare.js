@@ -35,6 +35,7 @@ const tg = require('./_lib/telegram.js');
 const ownership = require('./_lib/ownership.js');
 const levels = require('./_lib/scan-levels.js');
 const { clientIp } = require('./_lib/session.js');
+const entitlement = require('./_lib/entitlement.js');
 
 /**
  * Zone'un GERÇEK adını Cloudflare'den okur. İstemcinin verdiği zoneId'ye
@@ -146,6 +147,13 @@ async function handler(req, res) {
     return res.status(400).json({ error: { code: token ? 'invalid_token' : 'token_required' } });
   }
   const useToken = token;
+
+  /* Model A (Cloudflare 1-Tık) Enterprise planına dahil. Diğer planlar
+     "Nasıl düzeltirim?" kodunu ya da "Biz düzeltelim" hizmetini kullanır. */
+  const plan = await entitlement.planFor({ userId: user.id });
+  if (plan !== 'enterprise') {
+    return res.status(402).json({ error: { code: 'plan_required', plan: 'enterprise' } });
+  }
 
   /* Seviye 3: alan adı bu hesap için DOĞRULANMIŞ olmalı. Token'ın bir zone'a
      erişebilmesi sahiplik kanıtı değil (çalıntı ya da paylaşılmış olabilir). */

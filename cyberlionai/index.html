@@ -1171,6 +1171,30 @@
     background: var(--primary-black); border: 1px solid var(--hairline); color: var(--gold-primary); font-size: 0.76rem;
   }
   .fixhow__note { display: block; margin-top: 6px; color: var(--text-gray); font-size: 0.74rem; }
+  .fixhow__copy, .fixact__btn {
+    margin-top: 6px; padding: 5px 10px; font: inherit; font-size: 0.78rem; cursor: pointer;
+    color: var(--text-white); background: transparent; border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  }
+  .fixact { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .fixact__btn--svc[aria-pressed="true"] { border-color: var(--gold-primary); background: rgba(212, 175, 55, 0.14); color: var(--gold-light); }
+  .fixact__btn--cf { border-color: rgba(0, 212, 255, 0.4); }
+  .fixact__btn s { color: var(--text-gray); }
+  .fixact__badge { margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 0.7rem; background: var(--gold-primary); color: #0a0a0f; }
+  .fixact__cf { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+  .fixact__cf input { flex: 1 1 200px; min-width: 0; padding: 6px 9px; font: inherit; font-size: 0.8rem; color: var(--text-white); background: var(--surface-raised); border: 1px solid var(--hairline); border-radius: var(--radius-sm); }
+  .fixcart {
+    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 60;
+    width: min(760px, calc(100% - 32px)); padding: 12px 16px; border-radius: var(--radius-sm);
+    background: var(--glass-bg); border: 1px solid var(--gold-primary); box-shadow: var(--shadow-deep);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); font-size: 0.85rem;
+  }
+  .fixcart[hidden] { display: none; }
+  .fixcart__info { margin: 0 0 6px; font-weight: 600; }
+  .fixcart__info s { color: var(--text-gray); font-weight: 400; }
+  .fixcart__consent { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 6px; font-size: 0.8rem; color: var(--text-gray); }
+  .fixcart__consent a { color: var(--gold-primary); }
+  .fixcart__msg { margin: 6px 0 0; font-size: 0.8rem; color: var(--sev-medium); }
+  .fixcart__msg:empty { display: none; }
   .assist-handoff { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
   .assist-handoff input {
     flex: 1 1 140px; min-width: 0; padding: 8px 10px; font: inherit; font-size: 0.85rem;
@@ -1907,6 +1931,7 @@
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f4">Panelde Tarama Geçmişi ve Skor Eğilimi</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f6">Günlük İzleme: skor düşüşü, SSL / alan adı bitişi ve kara liste uyarıları (panelde)</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f7">Canlı Güven Rozeti (gerçek skor + tarih, sitenize yerleştirilebilir)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f8">Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">E-posta Desteği (destek@cyberlionai.com)</span></li>
             </ul>
             <a class="btn btn--gold btn--block" href="/api/checkout?plan=pro" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
@@ -1921,10 +1946,11 @@
             <span class="plan__period" data-i18n="pricing.ent.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">Sınırsız Tarama</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Cloudflare ile 1-Tık Düzeltme, sınırsız (kendi token'ınızla)</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f3">Günlük İzleme + 5 dakikada bir erişilebilirlik (uptime) kontrolü</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f4">Skor Eğilimi ve Alan Adı Karşılaştırması</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span><a href="/guven-damgasi-kontrol" data-i18n="pricing.ent.f6">Güven Damgası Ön Kontrolü + KVKK Çerez / Üçüncü Taraf Betik Analizi</a></span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f7">Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Öncelikli Destek ve Kurumsal Faturalandırma</span></li>
             </ul>
             <a class="btn btn--blue btn--block" href="/api/checkout?plan=enterprise" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
@@ -1932,6 +1958,7 @@
 
         </div>
 
+        <p class="pricing__foot reveal" data-i18n="pricing.fixNote">Tek seferlik düzeltme hizmeti ("Biz düzeltelim"): güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺1.999 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.</p>
         <div data-checkout-declaration></div>
         <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal fatura ve yıllık ödeme talepleri için destek@cyberlionai.com adresine yazın.</p>
         <p class="pricing__foot reveal"><a class="pricing__more" href="/pricing" data-i18n="pricing.more">Planları yan yana karşılaştır</a></p>
@@ -1967,6 +1994,8 @@
                bağlantı koymaktansa hiç koymamak doğru. -->
           <!-- FOOTER_ISLETME_START (tools/render-legal-pages.js bu bloğu legal-data.js'ten yeniler) -->
           <p class="footer__copyright" data-i18n="footer.rights">© 2026 Ali Kotan - Şahıs İşletmesi</p>
+          <p class="footer__copyright" data-i18n="footer.vat">Cyber Lion AI · Tüm fiyatlar KDV hariçtir · Ödemeler iyzico güvencesiyle alınır; kart bilgileriniz bize ulaşmaz.</p>
+          <p class="footer__copyright" data-i18n="footer.fixSupport">Tek seferlik düzeltme hizmeti ve teknik destek: destek@cyberlionai.com</p>
           <!-- FOOTER_ISLETME_END -->
         </div>
 
@@ -2371,14 +2400,33 @@
           quotaUnlimited: 'Enterprise: sınırsız tarama',
           quotaOutMonthly: "Bu ayki {limit} tarama hakkınız doldu. Hakkınız yeni ayda yenilenir; sınırsız tarama için Enterprise'a geçebilirsiniz.",
           fixLabel: 'Düzeltme',
-          howTitle: 'Nasıl düzeltirim?',
+          howTitle: 'Nasıl düzeltirim? (ücretsiz kod)',
+          howNone: 'Bu bulgu için genel bir sunucu yapılandırması yok; düzeltme siteye özgü. Biz düzeltelim hizmetiyle çözebiliriz.',
+          howErr: 'Düzeltme kodu alınamadı. Tekrar açmayı deneyin.',
+          copy: 'Kopyala', copied: 'Kopyalandı',
+          cfBtn: 'Cloudflare ile 1-Tık Düzelt',
+          cfToken: 'Cloudflare API belirteciniz (saklanmaz)',
+          cfApply: 'Uygula',
+          cfOk: 'Cloudflare kuralı eklendi. Birkaç dakika içinde etkin olur; taramayı tekrarlayın.',
+          cfZone: 'Bu belirteçle alan adınızın Cloudflare bölgesi bulunamadı.',
+          cfErr: 'Cloudflare kuralı eklenemedi',
+          svcBtn: 'Biz düzeltelim',
+          svcDiscount: '%{n} indirim',
+          cartCount: '{n} bulgu seçildi',
+          cartFull: 'Tam paket',
+          cartVat: '+ KDV',
+          cartAgree1: '',
+          cartAgreeLink: 'Mesafeli Satış Sözleşmesi, Ön Bilgilendirme Formu ve iade koşullarını',
+          cartAgree2: ' okudum, onaylıyorum.',
+          cartStart: 'Hizmetin cayma süresi içinde ifasına başlanmasını onaylıyorum; ifaya başlanınca cayma hakkımın sona ereceğini biliyorum.',
+          cartOrder: 'Sipariş ver',
+          cartConsentNeeded: 'Sipariş için iki onay kutusunu da işaretleyin.',
+          cartLogin: 'Sipariş için giriş yapın (sağ üstteki Giriş Yap).',
+          cartErr: 'Sipariş oluşturulamadı. Lütfen tekrar deneyin.',
           emailScore: 'E-posta güvenlik skoru (SPF, DMARC, DKIM, DNSSEC): {n}/100',
           activeLocked: 'Aktif testler (XSS/SQLi yoklaması, hassas dosya kontrolü) çalıştırılmadı: bu alan adı hesabınız için doğrulanmamış. Pasif tarama tamamlandı.',
           activeLockedLink: 'Alan adını doğrula',
           howNote: 'Değişiklikten sonra sunucuyu yeniden yükleyin ve taramayı tekrarlayın. Apache için mod_headers modülü açık olmalıdır.',
-          howCf: 'Cloudflare panelinde: Rules › Transform Rules › Modify Response Header › Set static\nBaşlık: {name}\nDeğer: {value}',
-          howCfHttps: 'Cloudflare panelinde: SSL/TLS › Edge Certificates › Always Use HTTPS: Açık',
-          howCfTls: 'Cloudflare panelinde: SSL/TLS › Edge Certificates › Minimum TLS Version: TLS 1.2',
           downloadPdf: 'PDF Raporu İndir',
           warn: {
             error_response: 'Hedef {status} hata kodu döndürdü; ölçülen başlıklar normal sayfanınkinden farklı olabilir.',
@@ -2463,6 +2511,7 @@
             spf:           { name: 'SPF kaydı', fix: 'TXT kaydı ekleyin:  v=spf1 include:&lt;posta sağlayıcınız&gt; -all' },
             dmarc:         { name: 'DMARC politikası', fix: '_dmarc.&lt;alan adınız&gt; altında TXT kaydı:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;alan adınız&gt;' },
             dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını &lt;seçici&gt;._domainkey.&lt;alan adınız&gt; altında yayınlayın.' },
+            blacklist:     { name: 'Kara liste (URLhaus)', fix: 'Sitenizdeki zararlı dosyayı/bağlantıyı kaldırın, sunucuyu temizleyin ve URLhaus üzerinden kaldırma talebi gönderin (urlhaus.abuse.ch).' },
             dnssec:        { name: 'DNSSEC', fix: 'Alan adı sağlayıcınızın (veya Cloudflare: DNS › Settings › DNSSEC) panelinden DNSSEC\'i açın ve verilen DS kaydını kayıt firmanıza ekleyin.' }
           }
         },
@@ -2525,6 +2574,7 @@
         pricing: {
           eyebrow: 'Planlar', title: 'SİZE UYGUN PLANI SEÇİN',
           subtitle: 'Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.',
+          fixNote: 'Tek seferlik düzeltme hizmeti ("Biz düzeltelim"): güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺1.999 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.',
           foot: 'Tüm planlar KDV hariçtir. Kurumsal fatura ve yıllık ödeme talepleri için destek@cyberlionai.com adresine yazın. | All prices exclude VAT.',
           free: {
             badge: 'Deneme', name: 'Free', tagline: 'Sitenizin güvenlik durumuna hızlı bir bakış.',
@@ -2543,15 +2593,17 @@
             f5: 'E-posta Desteği (destek@cyberlionai.com)',
             f6: 'Günlük İzleme: skor düşüşü, SSL / alan adı bitişi ve kara liste uyarıları (panelde)',
             f7: 'Canlı Güven Rozeti (gerçek skor + tarih, sitenize yerleştirilebilir)',
+            f8: 'Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim',
             cta: "Pro'ya Geç"
           },
           ent: {
             badge: 'Kurumsal', name: 'Enterprise', tagline: 'Sürekli izleme ve düzeltme isteyen kurumlar için.',
             price: '₺2.499/ay', period: 'Aylık, istediğiniz zaman iptal',
-            f1: 'Sınırsız Tarama', f2: "Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)",
+            f1: 'Sınırsız Tarama', f2: "Cloudflare ile 1-Tık Düzeltme, sınırsız (kendi token'ınızla)",
             f3: 'Günlük İzleme + 5 dakikada bir erişilebilirlik (uptime) kontrolü', f4: 'Skor Eğilimi ve Alan Adı Karşılaştırması',
             f5: 'Öncelikli Destek ve Kurumsal Faturalandırma',
             f6: 'Güven Damgası Ön Kontrolü + KVKK Çerez / Üçüncü Taraf Betik Analizi',
+            f7: 'Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim',
             cta: "Enterprise'a Geç"
           },
           more: 'Planları yan yana karşılaştır'
@@ -2564,6 +2616,8 @@
           vkn: 'VKN: 5810910912',
           hours: 'Çalışma Saatleri: Hafta içi 09:00 – 18:00 (TSİ)',
           rights: '© 2026 Ali Kotan - Şahıs İşletmesi',
+          vat: 'Cyber Lion AI · Tüm fiyatlar KDV hariçtir · Ödemeler iyzico güvencesiyle alınır; kart bilgileriniz bize ulaşmaz.',
+          fixSupport: 'Tek seferlik düzeltme hizmeti ve teknik destek: destek@cyberlionai.com',
           privacy: 'Gizlilik Politikası', terms: 'Kullanım Şartları', cookies: 'Çerez Politikası'
         },
         auth: {
@@ -2750,14 +2804,33 @@
           quotaUnlimited: 'Enterprise: unlimited scans',
           quotaOutMonthly: 'You have used this month\'s {limit} scans. Your allowance renews next month; upgrade to Enterprise for unlimited scans.',
           fixLabel: 'Fix',
-          howTitle: 'How do I fix it?',
+          howTitle: 'How do I fix it? (free code)',
+          howNone: 'There is no generic server configuration for this finding; the fix is site-specific. Our fix service can handle it.',
+          howErr: 'Could not load the fix code. Try opening it again.',
+          copy: 'Copy', copied: 'Copied',
+          cfBtn: '1-Click Fix with Cloudflare',
+          cfToken: 'Your Cloudflare API token (not stored)',
+          cfApply: 'Apply',
+          cfOk: 'Cloudflare rule added. It takes effect within a few minutes; run the scan again.',
+          cfZone: 'Your domain\'s Cloudflare zone could not be found with this token.',
+          cfErr: 'Could not add the Cloudflare rule',
+          svcBtn: 'We fix it',
+          svcDiscount: '{n}% off',
+          cartCount: '{n} findings selected',
+          cartFull: 'Full package',
+          cartVat: '+ VAT',
+          cartAgree1: 'I have read and accept the ',
+          cartAgreeLink: 'Distance Sales Agreement, Pre-Contractual Information Form and returns terms',
+          cartAgree2: '.',
+          cartStart: 'I consent to the service starting within the withdrawal period and understand that my right of withdrawal ends once it starts.',
+          cartOrder: 'Place order',
+          cartConsentNeeded: 'Please tick both boxes to order.',
+          cartLogin: 'Please sign in to order (Sign In at the top right).',
+          cartErr: 'The order could not be created. Please try again.',
           emailScore: 'Email security score (SPF, DMARC, DKIM, DNSSEC): {n}/100',
           activeLocked: 'Active tests (XSS/SQLi probes, sensitive file checks) were not run: this domain is not verified for your account. The passive scan is complete.',
           activeLockedLink: 'Verify the domain',
           howNote: 'Reload the server after the change and run the scan again. Apache needs mod_headers enabled.',
-          howCf: 'In the Cloudflare dashboard: Rules › Transform Rules › Modify Response Header › Set static\nHeader: {name}\nValue: {value}',
-          howCfHttps: 'In the Cloudflare dashboard: SSL/TLS › Edge Certificates › Always Use HTTPS: On',
-          howCfTls: 'In the Cloudflare dashboard: SSL/TLS › Edge Certificates › Minimum TLS Version: TLS 1.2',
           downloadPdf: 'Download PDF Report',
           warn: {
             error_response: 'The target returned status {status}; the headers measured may differ from the normal page.',
@@ -2839,6 +2912,7 @@
             spf:           { name: 'SPF record', fix: 'Add a TXT record:  v=spf1 include:&lt;your mail provider&gt; -all' },
             dmarc:         { name: 'DMARC policy', fix: 'TXT record at _dmarc.&lt;your domain&gt;:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;your domain&gt;' },
             dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at &lt;selector&gt;._domainkey.&lt;your domain&gt;.' },
+            blacklist:     { name: 'Blacklist (URLhaus)', fix: 'Remove the malicious file or link from your site, clean the server and request removal via URLhaus (urlhaus.abuse.ch).' },
             dnssec:        { name: 'DNSSEC', fix: 'Enable DNSSEC in your DNS provider (or Cloudflare: DNS › Settings › DNSSEC) and add the DS record it gives you at your registrar.' }
           }
         },
@@ -2901,6 +2975,7 @@
         pricing: {
           eyebrow: 'Plans', title: 'CHOOSE YOUR PLAN',
           subtitle: 'Start free. Upgrade when you are ready. No long-term commitment.',
+          fixNote: 'One-time fix service ("We fix it"): security header ₺499, TLS/DNS ₺999, full package ₺1,999 + VAT; 50% off for Pro and Enterprise subscribers. Free fix code with every scan.',
           foot: 'All prices exclude VAT. For corporate invoicing or annual billing, write to destek@cyberlionai.com. | Tüm planlar KDV hariçtir.',
           free: {
             badge: 'Trial', name: 'Free', tagline: 'A fast look at your site security posture.',
@@ -2919,15 +2994,17 @@
             f5: 'Email Support via destek@cyberlionai.com',
             f6: 'Daily Monitoring: score drop, SSL / domain expiry and blacklist alerts (in your panel)',
             f7: 'Live Trust Badge (real score + date, embeddable on your site)',
+            f8: '50% off the one-time "We fix it" service',
             cta: 'Go Pro'
           },
           ent: {
             badge: 'Enterprise', name: 'Enterprise', tagline: 'For organizations that want continuous monitoring and remediation.',
             price: '₺2,499/mo', period: 'Monthly, cancel anytime',
-            f1: 'Unlimited Scans', f2: '1-Click Fix via Cloudflare (with your own token)',
+            f1: 'Unlimited Scans', f2: '1-Click Fix via Cloudflare, unlimited (with your own token)',
             f3: 'Daily Monitoring + availability (uptime) check every 5 minutes', f4: 'Score Trend and Domain Comparison',
             f5: 'Priority Support and Corporate Invoicing',
             f6: 'Trust Stamp Pre-Check + KVKK Cookie / Third-Party Script Analysis',
+            f7: '50% off the one-time "We fix it" service',
             cta: 'Go Enterprise'
           },
           more: 'Compare the plans side by side'
@@ -2940,6 +3017,8 @@
           vkn: 'Tax ID (VKN): 5810910912',
           hours: 'Business Hours: Weekdays 09:00 – 18:00 (GMT+3)',
           rights: '© 2026 Ali Kotan - Sole Proprietorship',
+          vat: 'Cyber Lion AI · All prices exclude VAT · Payments are processed securely by iyzico; your card details never reach us.',
+          fixSupport: 'One-time fix service and technical support: destek@cyberlionai.com',
           privacy: 'Privacy Policy', terms: 'Terms of Use', cookies: 'Cookie Policy'
         },
         auth: {
@@ -3982,85 +4061,303 @@
     };
 
     /** Tek bir kontrolü listeye ekler: ad, kanıt, önem etiketi ve düzeltme. */
-    /**
-     * Kalan kontrol için sunucuya göre düzeltme parçaları.
-     *
-     * Başlık kontrolleri için parça, kontrolün KENDİ düzeltme satırından
-     * ("Başlık: değer") türetiliyor: önerilen değer tek yerde duruyor ve
-     * Nginx/Apache/Cloudflare biçimi ondan ayrışamıyor. Başlık olmayan
-     * kontroller için (yönlendirme, TLS, sürüm gizleme, çerez) elle yazılmış
-     * karşılıklar var. Genel bir sunucu karşılığı olmayan kontrollerde (DNS
-     * kayıtları, CORS, SRI) null döner ve düğme gösterilmez.
-     */
-    var HOW_FIXED = {
-      https: {
-        nginx: 'server {\n  listen 80;\n  server_name _;\n  return 301 https://$host$request_uri;\n}',
-        apache: 'RewriteEngine On\nRewriteCond %{HTTPS} off\nRewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]',
-        cfKey: 'scan.howCfHttps'
-      },
-      tls_legacy: { nginx: 'ssl_protocols TLSv1.2 TLSv1.3;', apache: 'SSLProtocol -all +TLSv1.2 +TLSv1.3', cfKey: 'scan.howCfTls' },
-      tls_protocol: { nginx: 'ssl_protocols TLSv1.2 TLSv1.3;', apache: 'SSLProtocol -all +TLSv1.2 +TLSv1.3', cfKey: 'scan.howCfTls' },
-      disclosure: { nginx: 'server_tokens off;', apache: 'ServerTokens Prod\nServerSignature Off' },
-      cookies: {
-        nginx: '# nginx 1.19.3+ (ters vekil)\nproxy_cookie_flags ~ secure httponly samesite=lax;',
-        apache: 'Header always edit Set-Cookie ^(.*)$ "$1; Secure; HttpOnly; SameSite=Lax"'
-      }
-    };
+    /* ==========================================================
+       DÜZELTME: "Nasıl düzeltirim?" (ücretsiz kod), Cloudflare 1-Tık
+       (Model A, Enterprise), "Biz düzeltelim" (Model B, ücretli hizmet).
+       Kod ve fiyat SUNUCUDAN: /api/fix-suggestion, /api/fix-pricing.
+       Sipariş fiyatı sunucuda yeniden hesaplanır; burada yalnızca gösterim.
+       ========================================================== */
+    var fixState = { host: null, plan: 'free', verified: false, pricing: null, cart: {} };
+    var pricingPromise = null;
 
-    function howToFix(item) {
-      var fixed = HOW_FIXED[item.id];
-      if (fixed) {
-        return { nginx: fixed.nginx, apache: fixed.apache, cloudflare: fixed.cfKey ? t(fixed.cfKey) : null };
+    function loadFixPricing() {
+      if (!pricingPromise) {
+        pricingPromise = fetch('/api/fix-pricing', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .catch(function () { return null; });
       }
-      var line = String(t('scan.checks.' + item.id + '.fix')).split('\n')[0]
-        .replace(/\s+\(.*\)\s*$/, '').trim();
-      var m = /^([A-Z][A-Za-z-]+):\s*(\S.*)$/.exec(line);
-      if (!m || m[1] === 'Set-Cookie') return null;
-      var name = m[1], value = m[2].replace(/"/g, '\\"');
-      return {
-        nginx: 'add_header ' + name + ' "' + value + '" always;',
-        apache: 'Header always set ' + name + ' "' + value + '"',
-        cloudflare: t('scan.howCf', { name: name, value: m[2] })
-      };
+      return pricingPromise;
     }
 
-    /** "Nasıl düzeltirim?" açılır bölmesi: sunucu sekmeleri + kod. */
+    function fmtTL(n) {
+      try { return '₺' + Number(n).toLocaleString(currentLang === 'en' ? 'en-US' : 'tr-TR'); } catch (e) { return '₺' + n; }
+    }
+
+    function isDiscounted() {
+      var p = fixState.pricing;
+      return !!(p && p.discountPlans && p.discountPlans.indexOf(fixState.plan) !== -1);
+    }
+    function discounted(n) {
+      var p = fixState.pricing;
+      return isDiscounted() ? Math.round(n * (100 - p.discountPercent) / 100) : n;
+    }
+    function priceOf(id) {
+      var p = fixState.pricing;
+      if (!p) return null;
+      var tier = (p.tierById && p.tierById[id]) || 'full';
+      return p.tiers[tier];
+    }
+
+    /** "Nasıl düzeltirim?" bölmesi: açılınca kodu sunucudan alır. */
     function howToFixBlock(item) {
-      var parts = howToFix(item);
-      if (!parts) return null;
       var box = document.createElement('details');
       box.className = 'fixhow';
       var sum = document.createElement('summary');
       sum.textContent = t('scan.howTitle');
       box.appendChild(sum);
-
-      var tabs = document.createElement('div');
-      tabs.className = 'fixhow__tabs';
-      tabs.setAttribute('role', 'group');
-      var code = document.createElement('code');
-      code.className = 'fixhow__code';
-
-      var keys = ['nginx', 'apache', 'cloudflare'].filter(function (k) { return parts[k]; });
-      var labels = { nginx: 'Nginx', apache: 'Apache', cloudflare: 'Cloudflare' };
-      keys.forEach(function (k, i) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.textContent = labels[k];
-        b.setAttribute('aria-pressed', String(i === 0));
-        b.addEventListener('click', function () {
-          Array.prototype.forEach.call(tabs.children, function (o) { o.setAttribute('aria-pressed', String(o === b)); });
-          code.textContent = parts[k];
-        });
-        tabs.appendChild(b);
+      var loaded = false;
+      box.addEventListener('toggle', function () {
+        if (!box.open || loaded) return;
+        loaded = true;
+        var wait = document.createElement('span');
+        wait.className = 'fixhow__note';
+        wait.textContent = '…';
+        box.appendChild(wait);
+        fetch('/api/fix-suggestion', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ domain: fixState.host, findingId: item.id, lang: currentLang })
+        }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+          box.removeChild(wait);
+          var fix = d && d.fix;
+          var keys = fix ? ['nginx', 'apache', 'cloudflare', 'dns'].filter(function (k) { return fix[k]; }) : [];
+          if (!keys.length) {
+            var none = document.createElement('span');
+            none.className = 'fixhow__note';
+            none.textContent = t('scan.howNone');
+            box.appendChild(none);
+            return;
+          }
+          var labels = { nginx: 'Nginx', apache: 'Apache', cloudflare: 'Cloudflare', dns: 'DNS' };
+          var tabs = document.createElement('div');
+          tabs.className = 'fixhow__tabs';
+          tabs.setAttribute('role', 'group');
+          var code = document.createElement('code');
+          code.className = 'fixhow__code';
+          keys.forEach(function (k, i) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = labels[k];
+            b.setAttribute('aria-pressed', String(i === 0));
+            b.addEventListener('click', function () {
+              Array.prototype.forEach.call(tabs.children, function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+              code.textContent = fix[k];
+            });
+            tabs.appendChild(b);
+          });
+          code.textContent = fix[keys[0]];
+          var copy = document.createElement('button');
+          copy.type = 'button';
+          copy.className = 'fixhow__copy';
+          copy.textContent = t('scan.copy');
+          copy.addEventListener('click', function () {
+            if (navigator.clipboard) navigator.clipboard.writeText(code.textContent).then(function () {
+              copy.textContent = t('scan.copied');
+              setTimeout(function () { copy.textContent = t('scan.copy'); }, 1500);
+            }, function () {});
+          });
+          var note = document.createElement('span');
+          note.className = 'fixhow__note';
+          note.textContent = t('scan.howNote');
+          box.appendChild(tabs);
+          box.appendChild(code);
+          box.appendChild(copy);
+          box.appendChild(note);
+        }).catch(function () { loaded = false; if (wait.parentNode) wait.textContent = t('scan.howErr'); });
       });
-      code.textContent = parts[keys[0]];
-      box.appendChild(tabs);
-      box.appendChild(code);
-      var note = document.createElement('span');
-      note.className = 'fixhow__note';
-      note.textContent = t('scan.howNote');
-      box.appendChild(note);
       return box;
+    }
+
+    /* Model A: Cloudflare 1-Tık — yalnızca Enterprise + doğrulanmış alan adı,
+       yalnızca Cloudflare kuralıyla düzeltilebilen başlıklar. Token istemcide
+       tutulmaz, sunucuda saklanmaz. */
+    var CF_FIXABLE = { hsts: 'hsts', csp: 'csp', xframe: 'xframe' };
+
+    function cloudflareBlock(item) {
+      if (!CF_FIXABLE[item.id] || fixState.plan !== 'enterprise' || !fixState.verified) return null;
+      var wrap = document.createElement('div');
+      wrap.className = 'fixact';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fixact__btn fixact__btn--cf';
+      btn.textContent = '☁️ ' + t('scan.cfBtn');
+      var form = document.createElement('form');
+      form.className = 'fixact__cf';
+      form.hidden = true;
+      var input = document.createElement('input');
+      input.type = 'password';
+      input.autocomplete = 'off';
+      input.placeholder = t('scan.cfToken');
+      input.setAttribute('aria-label', t('scan.cfToken'));
+      var go = document.createElement('button');
+      go.type = 'submit';
+      go.className = 'fixact__btn';
+      go.textContent = t('scan.cfApply');
+      var msg = document.createElement('span');
+      msg.className = 'fixhow__note';
+      msg.setAttribute('role', 'status');
+      form.appendChild(input); form.appendChild(go); form.appendChild(msg);
+      btn.addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) input.focus(); });
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var token = input.value.trim();
+        if (!token) return;
+        go.disabled = true;
+        msg.textContent = '…';
+        fetch('/api/autofix-cloudflare', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ domain: fixState.host, token: token, fixType: CF_FIXABLE[item.id], lang: currentLang })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (b) { return { s: r.status, b: b }; });
+        }).then(function (x) {
+          go.disabled = false;
+          input.value = '';
+          var code = x.b && x.b.error && x.b.error.code;
+          msg.textContent = x.s === 200 ? t('scan.cfOk')
+            : code === 'ownership_required' ? t('scan.err.ownership_required')
+            : code === 'zone_not_found' ? t('scan.cfZone')
+            : t('scan.cfErr') + (code ? ' (' + code + ')' : '');
+        }, function () { go.disabled = false; msg.textContent = t('scan.cfErr'); });
+      });
+      wrap.appendChild(btn);
+      wrap.appendChild(form);
+      return wrap;
+    }
+
+    /* Model B: "Biz düzeltelim" — bulgu sepete eklenir; alttaki çubuk toplamı
+       ve iki zorunlu onayı gösterir. */
+    function fixServiceBlock(item) {
+      var price = priceOf(item.id);
+      if (price === null) return null;
+      var wrap = document.createElement('div');
+      wrap.className = 'fixact';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fixact__btn fixact__btn--svc';
+      btn.setAttribute('aria-pressed', 'false');
+      var label = document.createElement('span');
+      label.textContent = '🛠️ ' + t('scan.svcBtn') + ' – ';
+      btn.appendChild(label);
+      if (isDiscounted()) {
+        var old = document.createElement('s');
+        old.textContent = fmtTL(price);
+        btn.appendChild(old);
+        btn.appendChild(document.createTextNode(' ' + fmtTL(discounted(price)) + ' '));
+        var badge = document.createElement('span');
+        badge.className = 'fixact__badge';
+        badge.textContent = t('scan.svcDiscount', { n: fixState.pricing.discountPercent });
+        btn.appendChild(badge);
+      } else {
+        btn.appendChild(document.createTextNode(fmtTL(price)));
+      }
+      btn.addEventListener('click', function () {
+        var on = !fixState.cart[item.id];
+        if (on) fixState.cart[item.id] = price; else delete fixState.cart[item.id];
+        btn.setAttribute('aria-pressed', String(on));
+        renderCart();
+      });
+      wrap.appendChild(btn);
+      return wrap;
+    }
+
+    var cartBar = null;
+    function renderCart() {
+      var ids = Object.keys(fixState.cart);
+      if (!cartBar) {
+        cartBar = document.createElement('div');
+        cartBar.className = 'fixcart';
+        cartBar.setAttribute('role', 'region');
+        cartBar.setAttribute('aria-label', t('scan.svcBtn'));
+        document.body.appendChild(cartBar);
+      }
+      cartBar.textContent = '';
+      cartBar.hidden = !ids.length;
+      if (!ids.length) return;
+      var p = fixState.pricing;
+      var sum = ids.reduce(function (a, id) { return a + fixState.cart[id]; }, 0);
+      var full = sum >= p.tiers.full;
+      var list = full ? p.tiers.full : sum;
+
+      var info = document.createElement('p');
+      info.className = 'fixcart__info';
+      info.textContent = t('scan.cartCount', { n: ids.length }) + ' · '
+        + (full ? t('scan.cartFull') + ' · ' : '');
+      if (isDiscounted()) {
+        var s = document.createElement('s');
+        s.textContent = fmtTL(list);
+        info.appendChild(s);
+        info.appendChild(document.createTextNode(' ' + fmtTL(discounted(list)) + ' (' + t('scan.svcDiscount', { n: p.discountPercent }) + ')'));
+      } else {
+        info.appendChild(document.createTextNode(fmtTL(list)));
+      }
+      info.appendChild(document.createTextNode(' ' + t('scan.cartVat')));
+
+      function consent(key, html) {
+        var l = document.createElement('label');
+        l.className = 'fixcart__consent';
+        var c = document.createElement('input');
+        c.type = 'checkbox';
+        c.id = key;
+        var sp = document.createElement('span');
+        html.forEach(function (part) {
+          if (typeof part === 'string') sp.appendChild(document.createTextNode(part));
+          else { var a = document.createElement('a'); a.href = part[1]; a.target = '_blank'; a.rel = 'noopener'; a.textContent = part[0]; sp.appendChild(a); }
+        });
+        l.appendChild(c); l.appendChild(sp);
+        return l;
+      }
+      var c1 = consent('fixAgree', [t('scan.cartAgree1'), [t('scan.cartAgreeLink'), '/pages/mesafeli-satis-sozlesmesi'], t('scan.cartAgree2')]);
+      var c2 = consent('fixStart', [t('scan.cartStart')]);
+      var go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'btn btn--gold btn--sm';
+      go.textContent = t('scan.cartOrder');
+      var msg = document.createElement('p');
+      msg.className = 'fixcart__msg';
+      msg.setAttribute('role', 'alert');
+      go.addEventListener('click', function () {
+        if (!c1.querySelector('input').checked || !c2.querySelector('input').checked) { msg.textContent = t('scan.cartConsentNeeded'); return; }
+        go.disabled = true;
+        msg.textContent = '…';
+        fetch('/api/fix-order', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ domain: fixState.host, findingIds: ids, type: full ? 'full' : 'single',
+            agreements: true, startConsent: true, lang: currentLang })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (b) { return { s: r.status, b: b }; });
+        }).then(function (x) {
+          go.disabled = false;
+          if (x.s === 201 && x.b.checkoutUrl) { window.location.href = x.b.checkoutUrl; return; }
+          var code = x.b && x.b.error && x.b.error.code;
+          if (x.s === 401) msg.textContent = t('scan.cartLogin');
+          else if (code === 'ownership_required') {
+            msg.textContent = t('scan.err.ownership_required') + ' ';
+            var a = document.createElement('a');
+            a.href = x.b.error.verifyUrl; a.textContent = t('scan.activeLockedLink');
+            msg.appendChild(a);
+          } else msg.textContent = t('scan.cartErr');
+        }, function () { go.disabled = false; msg.textContent = t('scan.cartErr'); });
+      });
+      cartBar.appendChild(info);
+      cartBar.appendChild(c1);
+      cartBar.appendChild(c2);
+      cartBar.appendChild(go);
+      cartBar.appendChild(msg);
+    }
+
+    /* Fiyat tablosu sabit; sayfa açılışında bir kez alınır ki sonuç satırları
+       fiyatı beklemeden çizilsin. İndirim, taramanın plan bilgisinden. */
+    loadFixPricing().then(function (p) { fixState.pricing = p; });
+
+    /** Yeni sonuç: durumu sıfırla, fiyatları hazırla. */
+    function prepareFixState(result) {
+      fixState.host = result.host || null;
+      fixState.plan = (result.quota && result.quota.plan) || 'free';
+      fixState.verified = !!(result.ownership && result.ownership.verified);
+      fixState.cart = {};
+      if (cartBar) renderCart();
     }
 
     function addCheckRow(item) {
@@ -4112,8 +4409,11 @@
         fix.style.overflowWrap = 'anywhere';
         fix.textContent = t('scan.checks.' + item.id + '.fix');
         body.appendChild(fix);
-        var how = howToFixBlock(item);
-        if (how) body.appendChild(how);
+        body.appendChild(howToFixBlock(item));
+        var cf = cloudflareBlock(item);
+        if (cf) body.appendChild(cf);
+        var svc = fixServiceBlock(item);
+        if (svc) body.appendChild(svc);
       }
 
       var tag = document.createElement('span');
@@ -4309,6 +4609,7 @@
     }
 
     function renderScanResult(result) {
+      prepareFixState(result);
       /* Nihai durum yazılmadan önce tahmini sayaç durdurulur: sonradan
          gelecek bir tik %100'ün üstüne %85 yazamasın. */
       stopProgress();

@@ -235,7 +235,7 @@ async function kos() {
   esit('Gmail alıcısı müşteri', p.get('to'), 'hamza@ornek.com');
   esit('Gmail konusu konuya göre', p.get('su'), 'Re: Cyber Lion AI - ' + KB.intents.pricing.tr.q);
   dogru('Gmail gövdesi selamla başlıyor', p.get('body').indexOf('Merhaba hamza,') === 0);
-  dogru('Gmail gövdesi kanonik cevabı içeriyor', p.get('body').indexOf('Tüm planlar KDV hariçtir.') !== -1);
+  dogru('Gmail gövdesi kanonik cevabı içeriyor', p.get('body').indexOf('KDV hariçtir.') !== -1);
   dogru('Gmail gövdesinde imza', /Cyber Lion AI Destek Ekibi/.test(p.get('body')));
 
   const yalniz = contact.cevapTaslagi({ name: 'Ali', lang: 'tr', last: ['İnsan bir uzmanla konuşmak istiyorum'] });

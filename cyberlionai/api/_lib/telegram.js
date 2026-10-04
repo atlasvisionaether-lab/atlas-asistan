@@ -315,6 +315,22 @@ const mesaj = {
       + 'E-posta: ' + eposta + '\n'
       + 'Son mesajlar: ' + mesajMetni;
   },
+  /* "Biz düzeltelim" tek seferlik hizmet. E-posta maskeli; bulgu kimlikleri
+     kısa koddur (kişisel veri değil). Tutar KDV hariç TL. */
+  fixSiparis: function (orderId, domain, ids, price, priceDiscounted, eposta) {
+    return ONEK + ' 🛠️ Fix siparişi: ' + alan(domain)
+      + '\nSipariş: ' + kod(orderId)
+      + '\nBulgular: ' + (ids || []).map(function (i) { return kod(i); }).join(', ')
+      + '\nTutar: ' + Number(priceDiscounted) + ' TL' + (price !== priceDiscounted ? ' (liste ' + Number(price) + ' TL)' : '') + ' + KDV'
+      + '\nKullanıcı: ' + maskEmail(eposta)
+      + '\nSonraki adım: iyzico ödeme bağlantısı gönderin, ödeme gelince panelden "ödendi" işaretleyin.';
+  },
+  fixOdendi: function (orderId, domain) {
+    return ONEK + ' ✅ Fix ödemesi alındı: ' + kod(orderId) + ' — ' + alan(domain);
+  },
+  fixTamamlandi: function (domain, ids) {
+    return ONEK + ' ✅ Fix tamamlandı: ' + alan(domain) + ' — ' + (ids || []).map(function (i) { return kod(i); }).join(', ');
+  },
   /* İzleme uyarısı (monitor.js). `data` yalnızca sayı ve kısa kod taşır. */
   izlemeUyarisi: function (tur, domain, data) {
     const d = data || {};
