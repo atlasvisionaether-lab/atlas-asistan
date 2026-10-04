@@ -315,6 +315,19 @@ const mesaj = {
       + 'E-posta: ' + eposta + '\n'
       + 'Son mesajlar: ' + mesajMetni;
   },
+  /* İzleme uyarısı (monitor.js). `data` yalnızca sayı ve kısa kod taşır. */
+  izlemeUyarisi: function (tur, domain, data) {
+    const d = data || {};
+    const a = alan(domain);
+    if (tur === 'score_drop') return ONEK + ' 📉 Skor düştü: ' + a + ' ' + Number(d.from) + ' → ' + Number(d.to);
+    if (tur === 'ssl_expiry') return ONEK + ' 🔒 SSL bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
+    if (tur === 'domain_expiry') return ONEK + ' 📅 Alan adı kaydı bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
+    if (tur === 'blacklist') return ONEK + ' ☣️ Kara listede: ' + a + ' (' + kod(d.source) + ': ' + kod(d.match) + ')';
+    if (tur === 'downtime') return ONEK + ' 🔴 Erişilemiyor: ' + a + ' (' + kod(d.reason) + ')';
+    if (tur === 'recovered') return ONEK + ' 🟢 Yeniden erişilebilir: ' + a
+      + (typeof d.downMinutes === 'number' ? ' (' + d.downMinutes + ' dk kesinti)' : '');
+    return ONEK + ' ℹ️ İzleme: ' + a + ' ' + kod(tur);
+  },
   skorDustu: function (domain, onceki, simdi) {
     return ONEK + ' 📉 Haftalık tarama: skor düştü: ' + alan(domain)
       + ' ' + Number(onceki) + ' → ' + Number(simdi) + ' (' + (Number(simdi) - Number(onceki)) + ')';

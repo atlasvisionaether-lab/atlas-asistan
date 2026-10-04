@@ -19,6 +19,10 @@
       "maxDuration": 60,
       "memory": 512
     },
+    "api/cron/tick.js": {
+      "maxDuration": 60,
+      "memory": 512
+    },
     "api/report.js": {
       "maxDuration": 30,
       "memory": 1024
@@ -202,7 +206,7 @@
   "crons": [
     {
       "path": "/api/cron/weekly-scan",
-      "schedule": "0 9 * * 1"
+      "schedule": "0 6 * * *"
     }
   ]
 }

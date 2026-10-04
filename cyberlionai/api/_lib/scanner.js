@@ -582,6 +582,11 @@ async function scanSite(rawUrl, options) {
     owaspFailedCategories: owaspFailByCat,
     activeChecksConsent: opts.consent === true,
     country: country,
+    /* Sertifika bitişi: izleme (monitor.js) 30/7/1 gün uyarısı için okuyor.
+       Yalnızca tarih ve kalan gün; sertifikanın kendisi dışarı çıkmaz. */
+    tls: tlsInfo && tlsInfo.ok
+      ? { validTo: tlsInfo.validTo || null, daysLeft: typeof tlsInfo.daysLeft === 'number' ? tlsInfo.daysLeft : null }
+      : null,
     httpStatus: response.status,
     redirects: chain.length - 1,
     score: scoreOf(checks),

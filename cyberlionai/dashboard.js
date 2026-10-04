@@ -57,7 +57,9 @@
       'security.access': 'Erişim', 'security.thisDevice': 'Bu cihaz', 'security.active': 'Aktif',
       'security.sessions': 'Diğer oturumlar', 'security.twofa': 'İki adımlı doğrulama (2FA)', 'security.apiToken': 'API token (Enterprise)',
       'security.cfNote': "Cloudflare 1-Tık Düzeltme bugün de kullanılabilir: Araçlar bölümünde kendi Cloudflare token'ınızla çalışır, token bizde saklanmaz.",
-      'notif.title': 'Bildirimler', 'notif.weekly': 'Haftalık otomatik tarama', 'notif.email': 'E-posta bildirim tercihleri',
+      'notif.title': 'Bildirimler', 'notif.weekly': 'Günlük izleme ve uyarılar', 'notif.email': 'E-posta bildirim tercihleri',
+      'mon.domain': 'İzlenecek alan adı', 'mon.save': 'Kaydet',
+      'alerts.title': 'İzleme uyarıları', 'alerts.markRead': 'Tümünü okundu işaretle',
       'tools.title': 'Araçlar', 'tools.dnsTitle': 'SPF ve DMARC Doğrulama',
       'tools.dnsDesc': 'Alan adınızın e-posta sahteciliğine karşı SPF ve DMARC kayıtlarını kontrol edin. Sorgu sunucu tarafında gerçek DNS üzerinden yapılır.',
       'tools.domain': 'Alan adı', 'tools.check': 'Kontrol Et',
@@ -98,8 +100,22 @@
       testMode: 'Test modu', toEnterprise: "Enterprise'a Geç",
       billNoteFree: 'Ücretsiz plandasınız. PRO ile ayda 50 tarama, OWASP gruplu PDF rapor ve skor eğilimi açılır.',
       billNotePaid: 'Fatura ve iptal talepleriniz şimdilik destek@cyberlionai.com üzerinden işleniyor.',
-      weeklyOn: 'Enterprise planınıza dahil; alan adınız her hafta otomatik taranır.',
-      weeklyOff: 'Enterprise planında her hafta otomatik çalışır.',
+      weeklyOn: 'Planınıza dahil: {domain} her gün pasif olarak taranır. Skor düşüşü, SSL ve alan adı bitişi ile kara liste uyarıları aşağıda listelenir.',
+      weeklyOnUptime: ' Enterprise: site erişilebilirliği 5 dakikada bir yoklanır.',
+      weeklyNoDomain: 'Planınıza dahil. İzlenecek alan adını aşağıya yazın; alan adı hesabınızda doğrulanmış olmalı.',
+      weeklyOff: 'Pro ve Enterprise planlarında alan adınız her gün taranır ve sorunlarda uyarı alırsınız.',
+      monSaved: 'İzlenecek alan adı kaydedildi. İlk tarama 24 saat içinde yapılır.',
+      monVerify: 'Bu alan adı hesabınızda doğrulanmamış. Önce doğrulayın: /verify',
+      monNoSub: 'Etkin bir Pro veya Enterprise aboneliği bulunamadı.',
+      monInvalid: 'Geçerli bir alan adı girin.',
+      alertsNone: 'Henüz uyarı yok.',
+      alertsUnavailable: 'Uyarılar şu anda okunamıyor.',
+      al_score_drop: 'Skor düştü: {from} → {to}',
+      al_ssl_expiry: 'SSL sertifikasının bitmesine {daysLeft} gün kaldı',
+      al_domain_expiry: 'Alan adı kaydının bitmesine {daysLeft} gün kaldı',
+      al_blacklist: 'Kara listede görünüyor ({source})',
+      al_downtime: 'Site erişilemiyor ({reason})',
+      al_recovered: 'Site yeniden erişilebilir',
       pwShort: 'Şifre en az 10 karakter olmalı.', pwLong: 'Şifre çok uzun.', pwMismatch: 'Şifreler eşleşmiyor.',
       pwWeak: 'Bu şifre çok zayıf; daha uzun ve tahmin edilmesi zor bir şifre seçin.',
       pwOk: 'Şifreniz güncellendi.', pwAuth: 'Oturumunuzun süresi dolmuş. Lütfen yeniden giriş yapın.',
@@ -144,7 +160,9 @@
       'security.access': 'Access', 'security.thisDevice': 'This device', 'security.active': 'Active',
       'security.sessions': 'Other sessions', 'security.twofa': 'Two-factor authentication (2FA)', 'security.apiToken': 'API token (Enterprise)',
       'security.cfNote': 'Cloudflare 1-Click Fix is available today in Tools; it uses your own Cloudflare token, which we never store.',
-      'notif.title': 'Notifications', 'notif.weekly': 'Weekly automatic scan', 'notif.email': 'Email notification preferences',
+      'notif.title': 'Notifications', 'notif.weekly': 'Daily monitoring and alerts', 'notif.email': 'Email notification preferences',
+      'mon.domain': 'Domain to monitor', 'mon.save': 'Save',
+      'alerts.title': 'Monitoring alerts', 'alerts.markRead': 'Mark all as read',
       'tools.title': 'Tools', 'tools.dnsTitle': 'SPF & DMARC Check',
       'tools.dnsDesc': "Check your domain's SPF and DMARC records against email spoofing. The query runs server-side against real DNS.",
       'tools.domain': 'Domain', 'tools.check': 'Check',
@@ -184,8 +202,22 @@
       testMode: 'Test mode', toEnterprise: 'Upgrade to Enterprise',
       billNoteFree: 'You are on the free plan. PRO unlocks 50 scans a month, OWASP-grouped PDF reports and score trends.',
       billNotePaid: 'Invoice and cancellation requests are handled via destek@cyberlionai.com for now.',
-      weeklyOn: 'Included in your Enterprise plan; your domain is scanned automatically every week.',
-      weeklyOff: 'Runs automatically every week on the Enterprise plan.',
+      weeklyOn: 'Included in your plan: {domain} is scanned passively every day. Score drops, SSL and domain expiry, and blacklist alerts are listed below.',
+      weeklyOnUptime: ' Enterprise: site availability is checked every 5 minutes.',
+      weeklyNoDomain: 'Included in your plan. Enter the domain to monitor below; it must be verified in your account.',
+      weeklyOff: 'On the Pro and Enterprise plans your domain is scanned every day and you are alerted to problems.',
+      monSaved: 'Domain to monitor saved. The first scan runs within 24 hours.',
+      monVerify: 'This domain is not verified in your account. Verify it first: /verify',
+      monNoSub: 'No active Pro or Enterprise subscription was found.',
+      monInvalid: 'Enter a valid domain.',
+      alertsNone: 'No alerts yet.',
+      alertsUnavailable: 'Alerts cannot be read right now.',
+      al_score_drop: 'Score dropped: {from} → {to}',
+      al_ssl_expiry: 'SSL certificate expires in {daysLeft} days',
+      al_domain_expiry: 'Domain registration expires in {daysLeft} days',
+      al_blacklist: 'Appears on a blacklist ({source})',
+      al_downtime: 'Site unreachable ({reason})',
+      al_recovered: 'Site reachable again',
       pwShort: 'Password must be at least 10 characters.', pwLong: 'Password is too long.', pwMismatch: 'Passwords do not match.',
       pwWeak: 'This password is too weak; choose a longer, harder-to-guess one.',
       pwOk: 'Your password has been updated.', pwAuth: 'Your session has expired. Please sign in again.',
@@ -713,10 +745,90 @@
   }
 
   /* ================= F) bildirimler ================= */
+  function monitoredDomain() {
+    var subs = (S.sub && S.sub.subscriptions) || [];
+    for (var i = 0; i < subs.length; i++) if (subs[i].domain) return subs[i].domain;
+    return null;
+  }
+
+  function fill(s, p) {
+    return String(s).replace(/\{(\w+)\}/g, function (m, k) { return p && p[k] !== undefined && p[k] !== null ? p[k] : m; });
+  }
+
   function renderNotifications() {
-    var on = S.plan === 'enterprise';
-    $('weeklySwitch').setAttribute('aria-checked', on ? 'true' : 'false');
-    $('weeklyNote').textContent = on ? t('weeklyOn') : t('weeklyOff');
+    var on = S.plan === 'pro' || S.plan === 'enterprise';
+    var dom = monitoredDomain();
+    $('weeklySwitch').setAttribute('aria-checked', on && dom ? 'true' : 'false');
+    var note = !on ? t('weeklyOff') : dom ? fill(t('weeklyOn'), { domain: dom }) : t('weeklyNoDomain');
+    if (on && dom && S.plan === 'enterprise') note += t('weeklyOnUptime');
+    $('weeklyNote').textContent = note;
+    $('monForm').hidden = !on;
+    if (on && dom && !$('monDomain').value) $('monDomain').value = dom;
+    bindMonitor();
+    loadAlerts();
+  }
+
+  var monBound = false;
+  function bindMonitor() {
+    if (monBound) return;
+    monBound = true;
+    $('monForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = $('monMsg');
+      var d = normalizeDomain($('monDomain').value);
+      if (!d) { setMsg(msg, t('monInvalid'), 'err'); return; }
+      $('monBtn').disabled = true;
+      postJSON('/api/panel/subscription', { domain: d }).then(function (r) {
+        $('monBtn').disabled = false;
+        var code = r.data && r.data.error && r.data.error.code;
+        if (r.ok) {
+          setMsg(msg, t('monSaved'), 'ok');
+          var subs = (S.sub && S.sub.subscriptions) || [];
+          if (subs[0]) subs[0].domain = r.data.domain;
+          renderNotifications();
+          return;
+        }
+        if (code === 'ownership_required') setMsg(msg, t('monVerify'), 'err');
+        else if (code === 'no_paid_subscription') setMsg(msg, t('monNoSub'), 'err');
+        else if (code === 'invalid_domain') setMsg(msg, t('monInvalid'), 'err');
+        else setMsg(msg, t('failed'), 'err');
+      }).catch(function () { $('monBtn').disabled = false; setMsg(msg, t('failed'), 'err'); });
+    });
+    $('alertsRead').addEventListener('click', function () {
+      postJSON('/api/panel/alerts', { read: true }).then(function () { loadAlerts(); });
+    });
+  }
+
+  function loadAlerts() {
+    var ul = $('alertsList');
+    getJSON('/api/panel/alerts').then(function (r) {
+      ul.textContent = '';
+      if (!r.ok || !r.data) {
+        var e = document.createElement('li'); e.textContent = t('alertsUnavailable'); ul.appendChild(e);
+        $('alertsRead').hidden = true;
+        return;
+      }
+      var items = r.data.items || [];
+      if (!items.length) {
+        var n = document.createElement('li'); n.textContent = t('alertsNone'); ul.appendChild(n);
+      }
+      items.forEach(function (a) {
+        var li = document.createElement('li');
+        var dot = document.createElement('span');
+        dot.className = 'sev sev--' + (a.severity === 'critical' || a.severity === 'warning' ? a.severity : 'info');
+        dot.setAttribute('aria-hidden', 'true');
+        var body = document.createElement('span');
+        if (!a.read) body.className = 'unread';
+        body.textContent = a.domain + ' — ' + fill(t('al_' + a.kind) || a.kind, a.data || {});
+        var when = document.createElement('time');
+        when.dateTime = a.createdAt;
+        try { when.textContent = new Date(a.createdAt).toLocaleString(lang === 'en' ? 'en-GB' : 'tr-TR'); } catch (err) { when.textContent = a.createdAt; }
+        body.appendChild(when);
+        li.appendChild(dot); li.appendChild(body);
+        ul.appendChild(li);
+      });
+      $('alertsRead').hidden = !(r.data.unread > 0);
+    }).catch(function () { $('alertsRead').hidden = true; });
   }
 
   /* ================= Araçlar: SPF/DMARC ================= */

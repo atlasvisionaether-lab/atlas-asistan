@@ -34,6 +34,13 @@
   .container{width:100%;max-width:1120px;margin:0 auto;padding:0 20px}
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
+  .alerts{list-style:none;margin:0 0 10px;padding:0}
+  .alerts li{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:.92rem}
+  .alerts li:last-child{border-bottom:0}
+  .alerts .sev{flex:0 0 auto;width:9px;height:9px;border-radius:50%;margin-top:7px}
+  .alerts .sev--critical{background:var(--bad)} .alerts .sev--warning{background:var(--warn)} .alerts .sev--info{background:var(--ok)}
+  .alerts .unread{font-weight:600}
+  .alerts time{display:block;color:var(--text-gray);font-size:.8rem}
   /* ---- Üst çubuk (diğer alt sayfalarla aynı) ---- */
   header.top{position:sticky;top:0;z-index:50;background:var(--glass-bg);
     backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
@@ -484,10 +491,23 @@
               <span class="soon-row__t"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i><span><span data-i18n="notif.weekly">Haftalık otomatik tarama</span><br /><small class="muted" id="weeklyNote"></small></span></span>
               <span class="switch" role="switch" id="weeklySwitch" aria-checked="false" aria-disabled="true" aria-labelledby="notifTitle"></span>
             </div>
+          <form class="form-row" id="monForm" novalidate hidden style="margin-top:12px">
+            <div class="grow">
+              <label class="sr-only" for="monDomain" data-i18n="mon.domain">İzlenecek alan adı</label>
+              <input class="input" id="monDomain" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="ornek.com" />
+            </div>
+            <button class="btn btn--gold" id="monBtn" type="submit"><span data-i18n="mon.save">Kaydet</span></button>
+          </form>
+          <p class="msg" id="monMsg" role="status" aria-live="polite"></p>
             <div class="soon-row">
               <span class="soon-row__t"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i><span data-i18n="notif.email">E-posta bildirim tercihleri</span></span>
               <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
             </div>
+          </div>
+          <div class="card" id="alertsCard" style="margin-top:16px">
+            <p class="card__title"><i class="fa-solid fa-bell" aria-hidden="true"></i><span data-i18n="alerts.title">İzleme uyarıları</span></p>
+            <ul class="alerts" id="alertsList"></ul>
+            <button class="btn btn--ghost" id="alertsRead" type="button" hidden><span data-i18n="alerts.markRead">Tümünü okundu işaretle</span></button>
           </div>
         </section>
 
