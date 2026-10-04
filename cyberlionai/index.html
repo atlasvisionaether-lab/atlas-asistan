@@ -459,19 +459,23 @@
     align-items: stretch; margin-bottom: 40px;
   }
 
+  /* auto-fit: canlı sayaç açılınca (eşik üstü) beşinci kart olarak satıra
+     katılır, kapalıyken dört kart satırı doldurur. */
   .hero__stats {
-    display: grid; grid-template-columns: 1fr; gap: 14px;
-    max-width: 900px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;
+    max-width: 900px; margin: 36px auto 0;
   }
   .stat {
     padding: 20px 16px; border-radius: var(--radius);
     border: 1px solid var(--glass-border); background: var(--glass-bg);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
+  .stat__icon { display: block; margin-bottom: 8px; font-size: 1.2rem; color: var(--gold-primary); }
   .stat__value {
     display: block; font-family: var(--font-heading); font-weight: 800;
     font-size: 1.7rem; color: var(--gold-primary); line-height: 1.1;
   }
+  .stat__value--text { font-size: 1.25rem; letter-spacing: 0.06em; text-transform: uppercase; }
   .stat__label {
     display: block; margin-top: 6px; font-size: 0.8rem;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-gray);
@@ -1254,7 +1258,6 @@
      ============================================================ */
   @media (min-width: 560px) {
     .hero__actions { flex-direction: row; justify-content: center; }
-    .hero__stats { grid-template-columns: repeat(3, 1fr); }
     .scan__form { grid-template-columns: 1fr auto; }
     .footer__bottom { flex-direction: row; justify-content: center; text-align: left; }
     .cookie { flex-direction: row; align-items: center; justify-content: space-between; }
@@ -1633,12 +1636,31 @@
                göstermek de uydurmak olurdu. Bu yüzden sunucu tarafında bir
                değer gömülmüyor ve işaretlemede sabit sayı yok. -->
           <div class="stat reveal" id="heroScans" hidden>
+            <i class="stat__icon fa-solid fa-chart-line" aria-hidden="true"></i>
             <span class="stat__value" id="heroScansValue" data-count="0" data-suffix="+">0+</span>
             <span class="stat__label" data-i18n="hero.stat1">Taranan Site (Canlı)</span>
           </div>
-          <div class="stat reveal" style="--reveal-delay:240ms">
+          <!-- Özellik kartları sayaçtan BAĞIMSIZ: sayaç eşiğin altındayken
+               (STATS_MIN_TO_SHOW) satır tek karta düşüp boş görünüyordu. -->
+          <div class="stat reveal" style="--reveal-delay:120ms">
+            <i class="stat__icon fa-solid fa-clock" aria-hidden="true"></i>
             <span class="stat__value" data-i18n="hero.stat3v">7/24</span>
             <span class="stat__label" data-i18n="hero.stat3">Hızlı Tarama</span>
+          </div>
+          <div class="stat reveal" style="--reveal-delay:200ms">
+            <i class="stat__icon fa-solid fa-robot" aria-hidden="true"></i>
+            <span class="stat__value stat__value--text" data-i18n="hero.f2v">Yapay Zeka</span>
+            <span class="stat__label" data-i18n="hero.f2">Güçlendirilmiş Analiz</span>
+          </div>
+          <div class="stat reveal" style="--reveal-delay:280ms">
+            <i class="stat__icon fa-solid fa-file-shield" aria-hidden="true"></i>
+            <span class="stat__value stat__value--text" data-i18n="hero.f3v">Anlık Rapor</span>
+            <span class="stat__label" data-i18n="hero.f3">PDF + Düzeltme Önerisi</span>
+          </div>
+          <div class="stat reveal" style="--reveal-delay:360ms">
+            <i class="stat__icon fa-solid fa-lock" aria-hidden="true"></i>
+            <span class="stat__value stat__value--text" data-i18n="hero.f4v">KVKK Uyumlu</span>
+            <span class="stat__label" data-i18n="hero.f4">İzleme Çerezi Yok</span>
           </div>
         </div>
       </div>
@@ -2285,6 +2307,9 @@
           cta1: 'Hemen Tara', cta2: "Pro'ya Geç", cta3: 'Nasıl Çalışır?', cta4: 'Örnek Rapor (PDF)',
           stat1: 'Taranan Site (Canlı)',
           stat3: 'Hızlı Tarama', stat3v: '7/24',
+          f2v: 'Yapay Zeka', f2: 'Güçlendirilmiş Analiz',
+          f3v: 'Anlık Rapor', f3: 'PDF + Düzeltme Önerisi',
+          f4v: 'KVKK Uyumlu', f4: 'İzleme Çerezi Yok',
           consent: 'Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.'
         },
         scan: {
@@ -2652,6 +2677,9 @@
           cta1: 'Scan Now', cta2: 'Go Pro', cta3: 'How It Works', cta4: 'Sample Report (PDF)',
           stat1: 'Sites Scanned (Live)',
           stat3: 'Fast Scanning', stat3v: '24/7',
+          f2v: 'AI-Powered', f2: 'Security Analysis',
+          f3v: 'Instant Report', f3: 'PDF + Fix Guidance',
+          f4v: 'KVKK Compliant', f4: 'No Tracking Cookies',
           consent: 'I confirm that I own this domain or am authorised to scan it. With consent, the safe XSS/SQLi checks also run.'
         },
         scan: {
