@@ -13,9 +13,10 @@
  *     fixType + zone adı içerir.
  *   - Yanıtta token yalnız maskeli döner.
  *
- * Mock mod: CLOUDFLARE_TEST_TOKEN env'i yoksa gerçek Cloudflare çağrısı
- * YAPILMAZ; { mocked: true } döner. Bu, token'sız deployment'ta hem
- * endpoint'in çalıştığını hem de akışın doğru döndüğünü doğrulamak içindir.
+ * Erişim (bkz. _lib/cfaccess.js): oturum zorunlu, token YALNIZCA müşteriden.
+ * Eskiden token yoksa sunucudaki CLOUDFLARE_TEST_TOKEN kullanılıyordu ve uç
+ * kimlik doğrulamasızdı; o değişken tanımlansa herkes bizim Cloudflare
+ * hesabımızla kural ekleyip silebilirdi. Sunucu token'ına düşüş kaldırıldı.
  */
 
 const { cf, findZoneId, applyTransformRule, maskToken } = require('./_lib/cloudflare.js');
@@ -25,6 +26,7 @@ async function cfRuleDelete(zoneId, rulesetId, ruleId, token) {
   return cf('/zones/' + zoneId + '/rulesets/' + rulesetId + '/rules/' + ruleId, 'DELETE', token);
 }
 const db = require('./_lib/db.js');
+const { requireUser, validToken } = require('./_lib/cfaccess.js');
 
 const FIX_TYPES = ['hsts', 'csp', 'xframe', 'all'];
 
@@ -50,6 +52,14 @@ async function recordAppliedFix(domain, fixType, ruleId) {
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
+  if (req.method !== 'POST' && req.method !== 'DELETE') {
+    res.setHeader('Allow', 'POST, DELETE');
+    return res.status(405).json({ error: { code: 'method_not_allowed' } });
+  }
+
+  const user = await requireUser(req, res);
+  if (!user) return;
+
   /* DELETE: rollback — Cloudflare'deki CyberLion kuralını siler (test temizliği). */
   if (req.method === 'DELETE') {
     let b = req.body;
@@ -57,17 +67,12 @@ module.exports = async function handler(req, res) {
     const zId = b && typeof b.zoneId === 'string' ? b.zoneId.trim() : null;
     const rsId = b && typeof b.rulesetId === 'string' ? b.rulesetId.trim() : null;
     const rId = b && typeof b.ruleId === 'string' ? b.ruleId.trim() : null;
-    const dToken = (b && typeof b.token === 'string' && b.token) || process.env.CLOUDFLARE_TEST_TOKEN;
+    const dToken = b && typeof b.token === 'string' ? b.token : null;
     if (!zId || !rsId || !rId) return res.status(400).json({ error: { code: 'missing_ids' } });
-    if (!dToken || dToken.length < 20) return res.status(401).json({ error: { code: 'token_required' } });
+    if (!validToken(dToken)) return res.status(400).json({ error: { code: 'token_required' } });
     const del = await cfRuleDelete(zId, rsId, rId, dToken);
     if (!del.ok) return res.status(400).json({ error: { code: del.code } });
     return res.status(200).json({ ok: true, deleted: true, ruleId: rId });
-  }
-
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST, DELETE');
-    return res.status(405).json({ error: { code: 'method_not_allowed' } });
   }
 
   let body = req.body;
@@ -86,22 +91,11 @@ module.exports = async function handler(req, res) {
   if (!FIX_TYPES.includes(fixType)) {
     return res.status(400).json({ error: { code: 'invalid_fix_type' } });
   }
-  const envToken = process.env.CLOUDFLARE_TEST_TOKEN;
-  const useToken = token || envToken;
-
-  /* Mock mod: token yoksa (env + body boş) gerçek çağrı yapılmaz. */
-  if (!useToken || useToken.length < 20) {
-    if (token && token.length < 20) {
-      return res.status(400).json({ error: { code: 'invalid_token' } });
-    }
-    return res.status(200).json({
-      mocked: true,
-      message: 'Cloudflare token sağlanmadı — mock mod. Panelden kendi API token\'ınızı girin.',
-      fixType: fixType,
-      domain: domain,
-      tokenMasked: maskToken()
-    });
+  /* Token zorunlu ve yalnızca müşteriden: sunucu token'ına düşüş yok. */
+  if (!validToken(token)) {
+    return res.status(400).json({ error: { code: token ? 'invalid_token' : 'token_required' } });
   }
+  const useToken = token;
 
   /* Zone çözümü. */
   let zone = zoneId;
