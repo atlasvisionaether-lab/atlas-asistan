@@ -149,11 +149,11 @@
       ],
       "tr": {
         "q": "Planlar ne kadar?",
-        "a": "Free ₺0 (5 tarama, temel SSL ve güvenlik başlığı kontrolü, e-posta güvenlik skoru), Pro ₺299/ay (ayda 50 OWASP Lite taraması, OWASP gruplu PDF rapor, panelde tarama geçmişi ve skor eğilimi, günlük izleme: skor düşüşü, SSL / alan adı bitişi ve kara liste uyarıları), Enterprise ₺2.499/ay (sınırsız tarama, Cloudflare ile 1-Tık Düzeltme, günlük izleme + 5 dakikada bir erişilebilirlik kontrolü, Güven Damgası ön kontrolü ve KVKK çerez analizi, öncelikli destek).|Tüm planlar KDV hariçtir."
+        "a": "Free ₺0 (5 tarama, temel SSL ve güvenlik başlığı kontrolü, e-posta güvenlik skoru), Pro ₺299/ay (ayda 50 OWASP Lite taraması, OWASP gruplu PDF rapor, panelde tarama geçmişi ve skor eğilimi, günlük izleme: skor düşüşü, SSL / alan adı bitişi ve kara liste uyarıları, canlı güven rozeti), Enterprise ₺2.499/ay (sınırsız tarama, Cloudflare ile 1-Tık Düzeltme, günlük izleme + 5 dakikada bir erişilebilirlik kontrolü, Güven Damgası ön kontrolü ve KVKK çerez analizi, öncelikli destek).|Tüm planlar KDV hariçtir."
       },
       "en": {
         "q": "What do the plans cost?",
-        "a": "Free ₺0 (5 scans, basic SSL and security header checks, email security score), Pro ₺299/mo (50 OWASP Lite scans per month, PDF report grouped by OWASP, scan history and score trend in the panel, daily monitoring: score drop, SSL / domain expiry and blacklist alerts), Enterprise ₺2,499/mo (unlimited scans, 1-Click Fix via Cloudflare, daily monitoring + availability check every 5 minutes, Trust Stamp pre-check and KVKK cookie analysis, priority support).|All prices exclude VAT."
+        "a": "Free ₺0 (5 scans, basic SSL and security header checks, email security score), Pro ₺299/mo (50 OWASP Lite scans per month, PDF report grouped by OWASP, scan history and score trend in the panel, daily monitoring: score drop, SSL / domain expiry and blacklist alerts, live trust badge), Enterprise ₺2,499/mo (unlimited scans, 1-Click Fix via Cloudflare, daily monitoring + availability check every 5 minutes, Trust Stamp pre-check and KVKK cookie analysis, priority support).|All prices exclude VAT."
       }
     },
     "csp": {
