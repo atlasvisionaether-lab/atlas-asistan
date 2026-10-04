@@ -1,0 +1,3 @@
+# Panel statik olarak (Output Directory ".") yayınlanır; şema ve iç belgeler yayınlanmaz.
+migrations/
+docs/
