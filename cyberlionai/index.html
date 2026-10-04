@@ -968,6 +968,7 @@
   .account__item:hover { background: var(--surface-raised); color: var(--gold-primary); }
   .account__item:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: -2px; }
   .account__item--danger:hover { color: #ff8a80; }
+  a.account__item { text-decoration: none; }
 
   @media (max-width: 640px) {
     /* Dar ekranda e-posta yerine yalnızca simge; menü tam genişliğe yayılır. */
@@ -1503,6 +1504,7 @@
               <span class="account__email" id="accountEmail"></span>
             </button>
             <div class="account__menu" id="accountMenu" hidden>
+              <a class="account__item" id="accountDashboard" href="/dashboard" data-i18n="auth.dashboard">Panelim</a>
               <button type="button" class="account__item" id="accountHistory" data-i18n="history.title">Tarama Geçmişi</button>
               <button type="button" class="account__item" id="accountPassword" data-i18n="auth.changePassword">Şifreyi Değiştir</button>
               <button type="button" class="account__item account__item--danger" id="accountLogout" data-i18n="auth.signOut">Çıkış Yap</button>
@@ -2539,6 +2541,7 @@
           signIn: 'Giriş Yap', signUp: 'Hesap Oluştur', signOut: 'Çıkış Yap',
           tabsLabel: 'Giriş veya kayıt',
           changePassword: 'Şifreyi Değiştir',
+          dashboard: 'Panelim',
           forgot: 'Şifremi unuttum',
           magic: 'E-posta ile bağlantı gönder',
           forgotHint: 'Kayıtlı e-posta adresinizi girin; sıfırlama bağlantısı gönderelim.',
@@ -2945,6 +2948,7 @@
           signIn: 'Sign In', signUp: 'Create Account', signOut: 'Sign Out',
           tabsLabel: 'Sign in or register',
           changePassword: 'Change Password',
+          dashboard: 'My Dashboard',
           forgot: 'Forgot password',
           magic: 'Send me a sign-in link',
           forgotHint: 'Enter your registered email address and we will send a reset link.',
