@@ -196,6 +196,11 @@ async function kos() {
   esit('5 dakikada bir', istek.o.headers['Upstash-Cron'], '*/5 * * * *');
   esit('sabit kimlik (kopya yok)', istek.o.headers['Upstash-Schedule-Id'], 'cyberlion-monitor-tick');
   esit('POST ile çağrılır', istek.o.headers['Upstash-Method'], 'POST');
+  esit('gövde düz metin (imza özeti tutsun)', istek.o.headers['Content-Type'], 'text/plain');
+  esit('gövde sabit', istek.o.body, monitor.TICK_BODY);
+  /* Uçta: QStash gövdesi string gelir, imzadaki özetle aynı baytlar. */
+  const cronauth = require(path.join(API, '_lib', 'cronauth.js'));
+  esit('ham gövde string aynen', cronauth.readRawBody({ body: monitor.TICK_BODY }), monitor.TICK_BODY);
   delete process.env.QSTASH_TOKEN;
 
   if (hatalar.length) {

@@ -360,6 +360,8 @@ async function uptimeCheck(target, deps) {
  * `Upstash-Schedule-Id` ile çağrıldığı için tekrar çağırmak kopya üretmez.
  * Günlük cron'dan çağrılır: Upstash konsolunda elle ayar gerekmez.
  */
+const TICK_BODY = 'cyberlion-monitor-tick';
+
 async function ensureTickSchedule(siteUrl, fetcher) {
   const token = process.env.QSTASH_TOKEN;
   if (!token) return { ok: false, code: 'qstash_token_missing' };
@@ -373,9 +375,13 @@ async function ensureTickSchedule(siteUrl, fetcher) {
         'Upstash-Cron': '*/5 * * * *',
         'Upstash-Schedule-Id': 'cyberlion-monitor-tick',
         'Upstash-Method': 'POST',
-        'Content-Type': 'application/json'
+        /* Gövde düz metin ve SABİT: QStash imzası gövde özetini taşıyor
+           (claims.body). Boş JSON gövdesinde Vercel'in ayrıştırması
+           yüzünden yeniden hesaplanan özet tutmuyordu (body_mismatch, üretim
+           2026-10-04). text/plain gövde handler'a aynen string geliyor. */
+        'Content-Type': 'text/plain'
       },
-      body: ''
+      body: TICK_BODY
     });
     return res.ok ? { ok: true } : { ok: false, code: 'qstash_status_' + res.status };
   } catch (err) {
@@ -386,6 +392,6 @@ async function ensureTickSchedule(siteUrl, fetcher) {
 module.exports = {
   paidTargets, claimDue, dailyCheck, uptimeCheck, probe, raise, loadBlacklist, domainExpiry,
   ensureTickSchedule, crossedThreshold, registrableDomain, parseHostfile, blacklistedHost,
-  rdapExpiration, previousScore,
+  rdapExpiration, previousScore, TICK_BODY,
   SSL_THRESHOLDS, DOMAIN_THRESHOLDS, SCORE_DROP_ALERT, UPTIME_FAILS_FOR_DOWN
 };
