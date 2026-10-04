@@ -42,10 +42,6 @@ const BLACKLIST_URL = 'https://urlhaus.abuse.ch/downloads/hostfile/';
 const BLACKLIST_MAX_BYTES = 4 * 1024 * 1024;
 const UA = 'CyberLionAI-Monitor/1.0 (+https://www.cyberlionai.com/pages/tarama-yetkisi)';
 
-/* Türkiye'deki ikinci seviye uzantılar: kayıtlı alan adı bir etiket daha uzun. */
-const TR_SECOND_LEVEL = ['com', 'net', 'org', 'gen', 'web', 'biz', 'info', 'tv', 'name',
-  'bel', 'av', 'dr', 'edu', 'gov', 'k12', 'pol', 'tsk', 'bbs', 'tel', 'kep'];
-
 /* ------------------------------------------------------------------
    Hedefler
    ------------------------------------------------------------------ */
@@ -122,15 +118,8 @@ function crossedThreshold(daysLeft, thresholds) {
   return hit;
 }
 
-/** Kayıtlı alan adı: www.ornek.com.tr → ornek.com.tr, a.b.ornek.com → ornek.com */
-function registrableDomain(host) {
-  const parts = String(host || '').toLowerCase().split('.').filter(Boolean);
-  if (parts.length < 2) return null;
-  const tld = parts[parts.length - 1];
-  const sld = parts[parts.length - 2];
-  const take = tld === 'tr' && TR_SECOND_LEVEL.indexOf(sld) !== -1 ? 3 : 2;
-  return parts.length >= take ? parts.slice(-take).join('.') : null;
-}
+/* Kayıtlı alan adı tek yerde: _lib/dnssec.js (DNSSEC ve RDAP aynı kuralı kullanıyor). */
+const registrableDomain = require('./dnssec.js').registrableDomain;
 
 /** URLhaus host listesini kümeye çevirir ("127.0.0.1<TAB>host" satırları). */
 function parseHostfile(text) {

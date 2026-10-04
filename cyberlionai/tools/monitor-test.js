@@ -169,6 +169,22 @@ async function kos() {
   esit('zaman aşımı da kesinti', u.event, 'downtime');
   dogru('kesinti sebebi timeout', uyarilar[uyarilar.length - 1].data.reason === 'timeout');
 
+  /* ---------- DNSSEC + e-posta skoru ---------- */
+  const dnssec = require(path.join(API, '_lib', 'dnssec.js'));
+  const doh = function (json) { return async function (url) { doh.son = url; return { ok: true, json: async function () { return json; } }; }; };
+  let ds = await dnssec.dnssecDurumu('www.ornek.com.tr', doh({ Status: 0, Answer: [{ type: 43 }] }));
+  esit('DNSSEC açık', ds.enabled, true);
+  dogru('DS kayıtlı alan adında sorulur', /name=ornek\.com\.tr&type=DS/.test(doh.son));
+  ds = await dnssec.dnssecDurumu('ornek.com', doh({ Status: 0 }));
+  esit('DNSSEC yok', ds.ok && ds.enabled === false, true);
+  ds = await dnssec.dnssecDurumu('ornek.com', doh({ Status: 2 }));
+  esit('SERVFAIL ölçülemedi (yok sayılmaz)', ds.ok, false);
+  esit('e-posta skoru: skipped paydan düşer', dnssec.emailScore([
+    { id: 'spf', status: 'pass' }, { id: 'dmarc', status: 'fail' },
+    { id: 'dkim', status: 'skipped' }, { id: 'dnssec', status: 'pass' }]).score, 50);
+  esit('e-posta skoru: tamamı', dnssec.emailScore([{ id: 'spf', status: 'pass' }, { id: 'dmarc', status: 'pass' }]).score, 100);
+  esit('e-posta skoru: ölçüm yok', dnssec.emailScore([{ id: 'hsts', status: 'pass' }]), null);
+
   /* ---------- QStash zamanlayıcısı ---------- */
   delete process.env.QSTASH_TOKEN;
   esit('belirteç yoksa oluşturulmaz', (await monitor.ensureTickSchedule()).code, 'qstash_token_missing');

@@ -136,7 +136,8 @@ const CHECKS = {
        girmiyorlar (agirlik info=0) ama bulgu olarak raporlaniyorlar. */
     spf: ['SPF kaydı', 'SPF olmadan üçüncü bir kişi bu alan adı adına e-posta gönderebilir ve alıcının bunu eleyecek dayanağı olmaz.', 'TXT kaydı:  v=spf1 include:<posta sağlayıcınız> -all'],
     dmarc: ['DMARC politikası', 'DMARC olmadan (veya p=none ile) SPF/DKIM doğrulamasından geçemeyen sahte e-posta yine teslim edilir.', 'TXT kaydı:  _dmarc.<alan>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<alan>'],
-    dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.']
+    dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.'],
+    dnssec: ['DNSSEC', 'DNSSEC, alan adınızın DNS yanıtlarını imzalar; sahte DNS yanıtıyla ziyaretçilerin başka bir sunucuya yönlendirilmesini zorlaştırır.', 'DNS sağlayıcınızda (ör. Cloudflare: DNS › Settings › DNSSEC) DNSSEC\'i açın ve verilen DS kaydını kayıt firmanıza ekleyin.']
   },
   en: {
     https: ['HTTPS in use', 'Unencrypted traffic lets an interceptor read and modify data.', 'Serve all traffic over HTTPS; 301-redirect HTTP to HTTPS.'],
@@ -159,7 +160,8 @@ const CHECKS = {
     sri: ['Subresource Integrity (SRI)', 'If an external script is altered, the page will not notice.', '<script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous">'],
     spf: ['SPF record', 'Without SPF a third party can send email as this domain and the recipient has no basis to reject it.', 'TXT record:  v=spf1 include:<your mail provider> -all'],
     dmarc: ['DMARC policy', 'Without DMARC (or with p=none) forged email that fails SPF/DKIM is still delivered.', 'TXT record:  _dmarc.<domain>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<domain>'],
-    dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.']
+    dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.'],
+    dnssec: ['DNSSEC', 'DNSSEC signs your domain\'s DNS answers, making it harder to send visitors to another server with forged DNS responses.', 'Enable DNSSEC at your DNS provider (e.g. Cloudflare: DNS › Settings › DNSSEC) and add the DS record it gives you at your registrar.']
   }
 };
 

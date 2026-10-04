@@ -2369,6 +2369,7 @@
           quotaOutMonthly: "Bu ayki {limit} tarama hakkınız doldu. Hakkınız yeni ayda yenilenir; sınırsız tarama için Enterprise'a geçebilirsiniz.",
           fixLabel: 'Düzeltme',
           howTitle: 'Nasıl düzeltirim?',
+          emailScore: 'E-posta güvenlik skoru (SPF, DMARC, DKIM, DNSSEC): {n}/100',
           activeLocked: 'Aktif testler (XSS/SQLi yoklaması, hassas dosya kontrolü) çalıştırılmadı: bu alan adı hesabınız için doğrulanmamış. Pasif tarama tamamlandı.',
           activeLockedLink: 'Alan adını doğrula',
           howNote: 'Değişiklikten sonra sunucuyu yeniden yükleyin ve taramayı tekrarlayın. Apache için mod_headers modülü açık olmalıdır.',
@@ -2458,7 +2459,8 @@
             sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
             spf:           { name: 'SPF kaydı', fix: 'TXT kaydı ekleyin:  v=spf1 include:&lt;posta sağlayıcınız&gt; -all' },
             dmarc:         { name: 'DMARC politikası', fix: '_dmarc.&lt;alan adınız&gt; altında TXT kaydı:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;alan adınız&gt;' },
-            dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını &lt;seçici&gt;._domainkey.&lt;alan adınız&gt; altında yayınlayın.' }
+            dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını &lt;seçici&gt;._domainkey.&lt;alan adınız&gt; altında yayınlayın.' },
+            dnssec:        { name: 'DNSSEC', fix: 'Alan adı sağlayıcınızın (veya Cloudflare: DNS › Settings › DNSSEC) panelinden DNSSEC\'i açın ve verilen DS kaydını kayıt firmanıza ekleyin.' }
           }
         },
         history: {
@@ -2743,6 +2745,7 @@
           quotaOutMonthly: 'You have used this month\'s {limit} scans. Your allowance renews next month; upgrade to Enterprise for unlimited scans.',
           fixLabel: 'Fix',
           howTitle: 'How do I fix it?',
+          emailScore: 'Email security score (SPF, DMARC, DKIM, DNSSEC): {n}/100',
           activeLocked: 'Active tests (XSS/SQLi probes, sensitive file checks) were not run: this domain is not verified for your account. The passive scan is complete.',
           activeLockedLink: 'Verify the domain',
           howNote: 'Reload the server after the change and run the scan again. Apache needs mod_headers enabled.',
@@ -2829,7 +2832,8 @@
             sri:           { name: 'Subresource Integrity (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
             spf:           { name: 'SPF record', fix: 'Add a TXT record:  v=spf1 include:&lt;your mail provider&gt; -all' },
             dmarc:         { name: 'DMARC policy', fix: 'TXT record at _dmarc.&lt;your domain&gt;:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;your domain&gt;' },
-            dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at &lt;selector&gt;._domainkey.&lt;your domain&gt;.' }
+            dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at &lt;selector&gt;._domainkey.&lt;your domain&gt;.' },
+            dnssec:        { name: 'DNSSEC', fix: 'Enable DNSSEC in your DNS provider (or Cloudflare: DNS › Settings › DNSSEC) and add the DS record it gives you at your registrar.' }
           }
         },
         history: {
@@ -4317,6 +4321,12 @@
         lockLink.style.display = 'block';
         lockLink.style.color = 'var(--gold-primary)';
         lockRow.querySelector('b').appendChild(lockLink);
+      }
+
+      /* E-posta güvenlik skoru ana skordan ayrı gösteriliyor (bkz. _lib/dnssec.js). */
+      if (result.emailScore && typeof result.emailScore.score === 'number') {
+        addNoticeRow(t('scan.emailScore', { n: result.emailScore.score }), 'fa-solid fa-envelope-circle-check',
+          result.emailScore.score >= 80 ? '--sev-low' : result.emailScore.score >= 50 ? '--sev-medium' : '--sev-critical');
       }
 
       // Önce kalanlar, sonra geçenler, en sonda ölçülemeyenler

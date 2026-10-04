@@ -14,6 +14,7 @@ const tls = require('node:tls');
 const { normalizeTarget, assertPublicHost } = require('./guard.js');
 const geo = require('./geo.js');
 const mail = require('./mail');
+const dnssec = require('./dnssec.js');
 const owaspLite = require('./owasp.js');
 
 const FETCH_TIMEOUT_MS = 9000;
@@ -457,6 +458,15 @@ function buildChecks(context) {
     }
   }
 
+  /* DNSSEC (bkz. _lib/dnssec.js). Bağlamda yoksa kontrol hiç eklenmez:
+     kalibrasyon sınaması buildChecks'i DNSSEC'siz çağırıyor. */
+  const ds = context.dnssec;
+  if (ds) {
+    checks.push(ds.ok
+      ? check('dnssec', 'info', ds.enabled ? 'pass' : 'fail', ds.zone || null)
+      : check('dnssec', 'info', 'skipped', null, { note: ds.reason || 'not_measured' }));
+  }
+
   return checks;
 }
 
@@ -496,6 +506,8 @@ async function scanSite(rawUrl, options) {
   const mailSozu = mail.mailKayitlari(host).catch(function (e) {
     return { ok: false, sebep: 'query_failed', hata: e && e.message };
   });
+  /* DNSSEC sorgusu da paralel: hedef siteye değil genel DNS'e. */
+  const dnssecSozu = dnssec.dnssecDurumu(host).catch(function () { return { ok: false, reason: 'not_measured' }; });
 
   let tlsInfo = null;
   let legacyInfo = null;
@@ -519,6 +531,7 @@ async function scanSite(rawUrl, options) {
   }
 
   const mailInfo = await mailSozu;
+  const dnssecInfo = await dnssecSozu;
 
   const baseChecks = buildChecks({
     headers: response.headers,
@@ -526,7 +539,8 @@ async function scanSite(rawUrl, options) {
     html: html,
     tls: tlsInfo,
     legacyTls: legacyInfo,
-    mail: mailInfo
+    mail: mailInfo,
+    dnssec: dnssecInfo
   });
 
   /* OWASP Top 10 LITE: paralel tek tur. Aktif kontroller (A03) yalnızca
@@ -590,6 +604,8 @@ async function scanSite(rawUrl, options) {
     httpStatus: response.status,
     redirects: chain.length - 1,
     score: scoreOf(checks),
+    /* Ana skordan ayrı (bkz. _lib/dnssec.js): SPF/DMARC/DKIM/DNSSEC. */
+    emailScore: dnssec.emailScore(checks),
     checks: checks,
     summary: {
       total: checks.length,
