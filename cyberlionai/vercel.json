@@ -67,13 +67,19 @@
       ]
     },
     {
-      "source": "/(.*).(png|jpg|jpeg|svg|webp|ico|woff2)",
+      "source": "/((?!badge/).*).(png|jpg|jpeg|svg|webp|ico|woff2)",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/badge/:domain.svg",
+      "destination": "/api/badge?domain=:domain"
     }
   ],
   "redirects": [

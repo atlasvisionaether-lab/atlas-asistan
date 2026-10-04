@@ -515,6 +515,12 @@
         <section class="section" id="tools" aria-labelledby="toolsTitle">
           <h2 id="toolsTitle" data-i18n="tools.title">Araçlar</h2>
           <div class="grid grid--2">
+            <div class="card" id="badgeCard">
+              <p class="card__title"><i class="fa-solid fa-certificate" aria-hidden="true"></i><span data-i18n="badge.title">Canlı Güven Rozeti</span></p>
+              <p class="muted" style="font-size:.9rem;margin:0 0 12px" data-i18n="badge.desc">Doğrulanmış alan adınızın son tarama skorunu ve tarihini gösteren rozet. Skor 80'in altındaysa gri görünür. Pro ve Enterprise planlarına dahildir.</p>
+              <div id="badgeList"></div>
+              <p class="msg" id="badgeMsg" role="status" aria-live="polite"></p>
+            </div>
             <div class="card">
               <p class="card__title"><i class="fa-solid fa-envelope-circle-check" aria-hidden="true"></i><span data-i18n="tools.dnsTitle">SPF ve DMARC Doğrulama</span></p>
               <p class="muted" style="font-size:.9rem;margin:0 0 12px" data-i18n="tools.dnsDesc">Alan adınızın e-posta sahteciliğine karşı SPF ve DMARC kayıtlarını kontrol edin. Sorgu sunucu tarafında gerçek DNS üzerinden yapılır.</p>

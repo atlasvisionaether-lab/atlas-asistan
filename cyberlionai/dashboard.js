@@ -61,6 +61,8 @@
       'mon.domain': 'İzlenecek alan adı', 'mon.save': 'Kaydet',
       'alerts.title': 'İzleme uyarıları', 'alerts.markRead': 'Tümünü okundu işaretle',
       'tools.title': 'Araçlar', 'tools.dnsTitle': 'SPF ve DMARC Doğrulama',
+      'badge.title': 'Canlı Güven Rozeti',
+      'badge.desc': "Doğrulanmış alan adınızın son tarama skorunu ve tarihini gösteren rozet. Skor 80'in altındaysa gri görünür. Pro ve Enterprise planlarına dahildir.",
       'tools.dnsDesc': 'Alan adınızın e-posta sahteciliğine karşı SPF ve DMARC kayıtlarını kontrol edin. Sorgu sunucu tarafında gerçek DNS üzerinden yapılır.',
       'tools.domain': 'Alan adı', 'tools.check': 'Kontrol Et',
       'tools.spfHow': 'TXT kaydı olarak kök alan adına şu biçimde ekleyin (örnek):',
@@ -109,6 +111,9 @@
       monNoSub: 'Etkin bir Pro veya Enterprise aboneliği bulunamadı.',
       monInvalid: 'Geçerli bir alan adı girin.',
       alertsNone: 'Henüz uyarı yok.',
+      badgeNone: 'Rozet için önce alan adınızı doğrulayın: /verify',
+      badgeFree: 'Rozet Pro ve Enterprise planlarında etkin olur; şimdilik "doğrulanmadı" görünür.',
+      badgeCopy: 'Kodu kopyala', badgeCopied: 'Kopyalandı',
       alertsUnavailable: 'Uyarılar şu anda okunamıyor.',
       al_score_drop: 'Skor düştü: {from} → {to}',
       al_ssl_expiry: 'SSL sertifikasının bitmesine {daysLeft} gün kaldı',
@@ -164,6 +169,8 @@
       'mon.domain': 'Domain to monitor', 'mon.save': 'Save',
       'alerts.title': 'Monitoring alerts', 'alerts.markRead': 'Mark all as read',
       'tools.title': 'Tools', 'tools.dnsTitle': 'SPF & DMARC Check',
+      'badge.title': 'Live Trust Badge',
+      'badge.desc': 'A badge showing the latest scan score and date of your verified domain. It turns grey below 80. Included in the Pro and Enterprise plans.',
       'tools.dnsDesc': "Check your domain's SPF and DMARC records against email spoofing. The query runs server-side against real DNS.",
       'tools.domain': 'Domain', 'tools.check': 'Check',
       'tools.spfHow': 'Add to the root domain as a TXT record (example):',
@@ -211,6 +218,9 @@
       monNoSub: 'No active Pro or Enterprise subscription was found.',
       monInvalid: 'Enter a valid domain.',
       alertsNone: 'No alerts yet.',
+      badgeNone: 'Verify your domain first to get a badge: /verify',
+      badgeFree: 'The badge activates on the Pro and Enterprise plans; until then it shows "not verified".',
+      badgeCopy: 'Copy code', badgeCopied: 'Copied',
       alertsUnavailable: 'Alerts cannot be read right now.',
       al_score_drop: 'Score dropped: {from} → {to}',
       al_ssl_expiry: 'SSL certificate expires in {daysLeft} days',
@@ -766,6 +776,7 @@
     if (on && dom && !$('monDomain').value) $('monDomain').value = dom;
     bindMonitor();
     loadAlerts();
+    loadBadges();
   }
 
   var monBound = false;
@@ -797,6 +808,44 @@
     $('alertsRead').addEventListener('click', function () {
       postJSON('/api/panel/alerts', { read: true }).then(function () { loadAlerts(); });
     });
+  }
+
+  /* ================= Canlı güven rozeti ================= */
+  function loadBadges() {
+    var box = $('badgeList');
+    if (!box) return;
+    getJSON('/api/verify/list').then(function (r) {
+      box.textContent = '';
+      var items = r.ok && r.data && r.data.items ? r.data.items.filter(function (i) { return i.status === 'verified'; }) : [];
+      if (!items.length) { setMsg($('badgeMsg'), t('badgeNone')); return; }
+      setMsg($('badgeMsg'), S.plan === 'pro' || S.plan === 'enterprise' ? '' : t('badgeFree'));
+      items.forEach(function (it) {
+        var src = 'https://www.cyberlionai.com/badge/' + it.domain + '.svg';
+        var code = '<a href="https://www.cyberlionai.com/" rel="noopener"><img src="' + src
+          + '" alt="Cyber Lion AI güvenlik skoru: ' + it.domain + '" height="22"></a>';
+        var wrap = document.createElement('div');
+        wrap.style.margin = '0 0 14px';
+        var img = document.createElement('img');
+        img.src = '/badge/' + encodeURIComponent(it.domain) + '.svg';
+        img.alt = it.domain;
+        img.height = 22;
+        var pre = document.createElement('pre');
+        pre.className = 'record';
+        pre.textContent = code;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn--ghost';
+        btn.textContent = t('badgeCopy');
+        btn.addEventListener('click', function () {
+          if (navigator.clipboard) navigator.clipboard.writeText(code).then(function () {
+            btn.textContent = t('badgeCopied');
+            setTimeout(function () { btn.textContent = t('badgeCopy'); }, 1500);
+          }, function () {});
+        });
+        wrap.appendChild(img); wrap.appendChild(pre); wrap.appendChild(btn);
+        box.appendChild(wrap);
+      });
+    }).catch(function () { box.textContent = ''; });
   }
 
   function loadAlerts() {
