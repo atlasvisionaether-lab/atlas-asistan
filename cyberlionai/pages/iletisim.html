@@ -80,6 +80,7 @@
   .info-list i{color:var(--gold-primary);width:1.2em;text-align:center;margin-top:3px}
   .info-list a{color:var(--text-white);text-decoration:none}
   .info-list a:hover{color:var(--gold-primary)}
+  .mail-hint{margin:22px 0 0;color:var(--text-gray);font-size:.86rem;line-height:1.6}
   label{display:block;font-size:.85rem;color:var(--text-gray);margin:0 0 6px}
   input,textarea{width:100%;font:inherit;background:rgba(255,255,255,.03);
     border:1px solid var(--glass-border);border-radius:10px;padding:11px 13px;
@@ -155,7 +156,7 @@
               <span>Ritim AVM, Cevizli Mah. Zuhal Cad. No:46/50 Maltepe/İstanbul</span>
             </li>
             <li><i class="fa-solid fa-phone" aria-hidden="true"></i>
-              <a href="tel:+90534 468 27 69</a>
+              <a href="tel:+905344682769">0534 468 27 69</a>
             </li>
             <li><i class="fa-solid fa-envelope" aria-hidden="true"></i>
               <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a>
@@ -167,7 +168,9 @@
               <span data-t-tr="Hafta içi 09:00 – 18:00 (TSİ)" data-t-en="Weekdays 09:00 – 18:00 (GMT+3)">Hafta içi 09:00 – 18:00 (TSİ)</span>
             </li>
           </ul>
-<p class="mail-hint" style="margin:22px 0 0;color:#888;font-size:.86rem">Mail uygulamanız yoksa e-posta adresine tıkladığınızda Gmail yeni sekmede açılır ve adres panoya kopyalanır.</p>
+          <p class="mail-hint"
+             data-t-tr="Mail uygulamanız yoksa e-posta adresine tıkladığınızda Gmail yeni sekmede açılır ve adres panoya kopyalanır."
+             data-t-en="No mail app? Clicking an email address opens Gmail in a new tab and copies the address to your clipboard.">Mail uygulamanız yoksa e-posta adresine tıkladığınızda Gmail yeni sekmede açılır ve adres panoya kopyalanır.</p>
         </div>
 
         <div class="card">
@@ -261,13 +264,13 @@
       tr: {
         sending: 'Gönderiliyor…',
         ok: 'Mesajınız alındı, teşekkürler.',
-        errGeneric: 'Mesaj gönderilemedi. Lütfen biraz sonra tekrar deneyin veya <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a> adresine yazın.',
+        errGeneric: 'Mesaj gönderilemedi. Lütfen biraz sonra tekrar deneyin veya info@cyberlionai.com adresine yazın.',
         errRate: 'Çok fazla deneme yapıldı. Lütfen biraz sonra tekrar deneyin.'
       },
       en: {
         sending: 'Sending…',
         ok: 'Your message has been received, thank you.',
-        errGeneric: 'Could not send your message. Please try again shortly or email <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a>.',
+        errGeneric: 'Could not send your message. Please try again shortly or email info@cyberlionai.com.',
         errRate: 'Too many attempts. Please try again shortly.'
       }
     };
@@ -320,6 +323,6 @@
     });
   })();
   </script>
- <script src="/mail-links.js" defer></script>
+  <script src="/mail-links.js" defer></script>
 </body>
 </html>
