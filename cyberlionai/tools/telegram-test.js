@@ -684,6 +684,44 @@ async function kos() {
     y.geriAl();
   }
 
+  /* ---------- Gmail ile cevapla düğmesi ---------- */
+  {
+    const y = tgYukle(TAM_ENV);
+    const url = y.tg.gmailComposeUrl('ali@ornek.com', 'Re: Konu', 'Merhaba Ali,\n\nCevap & 100%');
+    const u = new URL(url);
+    esit('gmail adresi', u.origin + u.pathname, 'https://mail.google.com/mail/');
+    esit('gmail alıcı', u.searchParams.get('to'), 'ali@ornek.com');
+    esit('gmail konu', u.searchParams.get('su'), 'Re: Konu');
+    esit('gmail gövde (satır sonu ve & korunuyor)', u.searchParams.get('body'), 'Merhaba Ali,\n\nCevap & 100%');
+    esit('gmail yeni ileti görünümü', u.searchParams.get('view'), 'cm');
+
+    const kb = y.tg.buildSupportKeyboard('ali@ornek.com', 'Re: Konu', 'kısa');
+    esit('düğme metni', kb.inline_keyboard[0][0].text, "📧 Gmail'de Cevapla");
+    const uzun = y.tg.buildSupportKeyboard('ali@ornek.com', 'Re: Konu', 'çok uzun gövde '.repeat(400));
+    const uzunUrl = uzun.inline_keyboard[0][0].url;
+    dogru('uzun gövde sınıra kısaltılıyor', uzunUrl.length <= y.tg.DUGME_URL_MAX);
+    esit('kısaltmada alıcı korunuyor', new URL(uzunUrl).searchParams.get('to'), 'ali@ornek.com');
+
+    const f = fetchSapla([{ status: 200, json: { ok: true } }]);
+    await y.tg.sendTelegram('deneme', { type: 'contact', replyMarkup: kb });
+    const govde = JSON.parse(f.cagrilar[0].secenek.body);
+    f.geriAl();
+    esit('reply_markup gönderiliyor', govde.reply_markup.inline_keyboard[0][0].text, "📧 Gmail'de Cevapla");
+
+    const f2 = fetchSapla([{ status: 200, json: { ok: true } }]);
+    await y.tg.sendTelegram('deneme', { type: 'contact',
+      replyMarkup: { inline_keyboard: [[{ text: 'x', url: 'http://duz.example' }]] } });
+    await y.tg.sendTelegram('deneme', { type: 'contact',
+      replyMarkup: { inline_keyboard: [[{ text: 'x', callback_data: 'sil' }]] } });
+    await y.tg.sendTelegram('deneme', { type: 'contact' });
+    const govdeler = f2.cagrilar.map(function (c) { return JSON.parse(c.secenek.body); });
+    f2.geriAl();
+    esit('http düğmesi atılıyor, mesaj gidiyor', govdeler[0].reply_markup, undefined);
+    esit('callback düğmesi atılıyor', govdeler[1].reply_markup, undefined);
+    esit('düğmesiz mesajda reply_markup yok', govdeler[2].reply_markup, undefined);
+    y.geriAl();
+  }
+
   /* ---------- tekSefer: aynı olay için tek bildirim ---------- */
   {
     const y = tgYukle(Object.assign({}, TAM_ENV, {

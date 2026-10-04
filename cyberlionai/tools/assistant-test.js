@@ -214,6 +214,40 @@ async function kos() {
     body: { name: 'Ali', email: 'ali@ornek.com', message: 'Merhaba' } }, res);
   dogru('olağan form başlığı değişmedi', /İletişim formu/.test(giden[1] || ''));
 
+  /* ---------- önerilen cevap + Gmail düğmesi ---------- */
+  const sonGovde = [];
+  global.fetch = async function (adres, secenek) {
+    sonGovde.push(JSON.parse(secenek.body));
+    return { ok: true, status: 200, json: async function () { return { ok: true }; } };
+  };
+  res = resSahte();
+  await contact({ method: 'POST', headers: {}, query: {}, body: {
+    name: 'hamza', email: 'hamza@ornek.com', source: 'assistant', lang: 'tr',
+    message: 'fiyat ne kadar | İnsan bir uzmanla konuşmak istiyorum',
+    lastMessages: ['fiyat ne kadar', 'İnsan bir uzmanla konuşmak istiyorum'] } }, res);
+  esit('taslaklı talep 200', res.statusCode, 200);
+  const g = sonGovde[0];
+  dogru('Telegram metninde önerilen cevap (pricing)', /Önerilen cevap \(pricing\)/.test(g.text));
+  dogru('önerilen cevap fiyat bilgisini içeriyor', g.text.indexOf('₺299') !== -1);
+  const gmailDugme = g.reply_markup && g.reply_markup.inline_keyboard[0][0];
+  dogru('Gmail düğmesi var', gmailDugme && /^https:\/\/mail\.google\.com\/mail\/\?/.test(gmailDugme.url));
+  const p = new URL(gmailDugme.url).searchParams;
+  esit('Gmail alıcısı müşteri', p.get('to'), 'hamza@ornek.com');
+  esit('Gmail konusu konuya göre', p.get('su'), 'Re: Cyber Lion AI - ' + KB.intents.pricing.tr.q);
+  dogru('Gmail gövdesi selamla başlıyor', p.get('body').indexOf('Merhaba hamza,') === 0);
+  dogru('Gmail gövdesi kanonik cevabı içeriyor', p.get('body').indexOf('Tüm planlar KDV hariçtir.') !== -1);
+  dogru('Gmail gövdesinde imza', /Cyber Lion AI Destek Ekibi/.test(p.get('body')));
+
+  const yalniz = contact.cevapTaslagi({ name: 'Ali', lang: 'tr', last: ['İnsan bir uzmanla konuşmak istiyorum'] });
+  esit('yalnız uzman isteği → konu yok', yalniz.konu, null);
+  dogru('yalnız uzman isteği → genel cevap', /Talebinizi aldık/.test(yalniz.govde));
+  esit('yalnız uzman isteği → genel konu', yalniz.konuBasligi, 'Re: Cyber Lion AI - Destek talebiniz');
+  const en = contact.cevapTaslagi({ name: 'Ann', lang: 'en', last: ['How much is Pro?', 'I want to talk to a human'] });
+  esit('EN taslak konusu', en.konu, 'pricing');
+  dogru('EN taslak İngilizce', en.govde.indexOf('Hello Ann,') === 0 && /All prices exclude VAT/.test(en.govde));
+  const kodlu = contact.cevapTaslagi({ name: 'A', lang: 'tr', last: ['CSP nasıl eklenir'] });
+  dogru('kod bloğu taslakta', kodlu.govde.indexOf("default-src 'self'") !== -1);
+
   if (hatalar.length) {
     console.error('\nAsistan sınaması: ' + hatalar.length + ' KALDI, ' + gecti + ' geçti\n');
     hatalar.forEach(function (h) { console.error('  ✗ ' + h); });

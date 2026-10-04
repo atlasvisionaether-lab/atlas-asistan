@@ -5229,8 +5229,11 @@
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({
-              name: name, email: email, source: 'assistant',
-              message: son.length ? son.join(' | ') : '-'
+              name: name, email: email, source: 'assistant', lang: lang(),
+              message: son.length ? son.join(' | ') : '-',
+              /* Ayrı dizi: sunucu her mesajı ayrı puanlayıp ekibe önerilecek
+                 cevabın konusunu buluyor. */
+              lastMessages: son
             })
           }).then(function (r) {
             if (!r.ok) throw new Error('http_' + r.status);

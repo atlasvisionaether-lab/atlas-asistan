@@ -43,7 +43,7 @@
  */
 
 const crypto = require('node:crypto');
-const KB = require('../data/knowledge.json');
+const { KB, normalize, hasKeyword, classify } = require('./_lib/kb.js');
 const store = require('./_lib/store.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
 const tg = require('./_lib/telegram.js');
@@ -53,61 +53,6 @@ const MAX_MESSAGE = 500;
 const MAX_HISTORY = 6;
 const RATE_WINDOW_SECONDS = 60;
 const RATE_MAX = 30;
-
-/** Küçük harf + Türkçe karakter sadeleştirme. */
-function normalize(text) {
-  return String(text === null || text === undefined ? '' : text)
-    .replace(/İ/g, 'i').replace(/I/g, 'ı')
-    .toLowerCase()
-    .replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c')
-    .replace(/[^a-z0-9@.\-\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Bir anahtar kelime mesajda var mı.
- * Çok kelimeli ifade: sadeleşmiş metnin içinde aranır.
- * Tek kelime: bir sözcüğün başında aranır (Türkçe ekler). 3 harf ve daha kısa
- * kelime yalnızca birebir eşleşir: "pro" "protokol"ü, "tls" başka bir şeyi
- * yakalamasın.
- */
-function hasKeyword(normalized, words, keyword) {
-  if (keyword.indexOf(' ') !== -1) return (' ' + normalized + ' ').indexOf(' ' + keyword) !== -1;
-  for (let i = 0; i < words.length; i++) {
-    const w = words[i];
-    if (keyword.length <= 3 ? w === keyword : w.indexOf(keyword) === 0) return true;
-  }
-  return false;
-}
-
-/** Bir niyetin puanı (0–1). */
-function scoreIntent(normalized, words, intent) {
-  let miss = 1;
-  ['strong', 'weak'].forEach(function (kind) {
-    const weight = KB.weights[kind];
-    (intent.keywords[kind] || []).forEach(function (k) {
-      if (hasKeyword(normalized, words, k)) miss *= (1 - weight);
-    });
-  });
-  return 1 - miss;
-}
-
-/**
- * En iyi niyet. Eşitlikte knowledge.json'daki SIRA kazanır, böylece sonuç
- * deterministik kalır.
- */
-function classify(message) {
-  const normalized = normalize(message);
-  const words = normalized.split(' ').filter(Boolean);
-  let best = null, bestScore = 0;
-  Object.keys(KB.intents).forEach(function (id) {
-    const s = scoreIntent(normalized, words, KB.intents[id]);
-    if (s > bestScore) { best = id; bestScore = s; }
-  });
-  return { intent: best, score: Math.round(bestScore * 100) / 100 };
-}
 
 function isUrgent(message) {
   const normalized = normalize(message);

@@ -152,6 +152,50 @@ function serbestMetin(metin, enFazla) {
   return s.length > sinir ? s.slice(0, sinir - 1) + '…' : s;
 }
 
+/* ---------- Gmail ile cevapla düğmesi ---------- */
+
+/* Telegram satır içi düğme adresini sınırlıyor (belgelenmiş sabit yok; uzun
+   adres BUTTON_URL_INVALID ile mesajın TAMAMINI düşürüyor). Güvenli pay. */
+const DUGME_URL_MAX = 2000;
+
+/** Gmail'in "yeni ileti" penceresini alıcı, konu ve gövdeyle açan adres. */
+function gmailComposeUrl(to, subject, body) {
+  const p = new URLSearchParams({ view: 'cm', fs: '1', to: to, su: subject, body: body });
+  return 'https://mail.google.com/mail/?' + p.toString();
+}
+
+/**
+ * "Gmail'de Cevapla" düğmesi. Adres sınırı aşarsa GÖVDE kısaltılıyor (alıcı
+ * ve konu korunuyor); düğmesiz mesaj göndermektense kısa taslak daha iyi,
+ * taslak zaten Gmail'de düzenleniyor.
+ */
+function buildSupportKeyboard(to, subject, body) {
+  let govde = String(body || '');
+  let url = gmailComposeUrl(to, subject, govde);
+  while (url.length > DUGME_URL_MAX && govde.length > 0) {
+    govde = govde.slice(0, Math.floor(govde.length * 0.85)).replace(/\s+\S*$/, '') + '…';
+    if (govde === '…') govde = '';
+    url = gmailComposeUrl(to, subject, govde);
+  }
+  return { inline_keyboard: [[{ text: "📧 Gmail'de Cevapla", url: url }]] };
+}
+
+/**
+ * replyMarkup yalnızca satır içi URL düğmesi olabilir ve adresi https olmak
+ * zorunda. Başka biçim (callback_data, sınırsız klavye) bu katmanın işi değil;
+ * yanlış biçim mesajın tamamını 400'e düşürmesin diye gönderilmeden atılıyor.
+ */
+function gecerliDugmeler(m) {
+  if (!m || !Array.isArray(m.inline_keyboard)) return null;
+  const ok = m.inline_keyboard.every(function (satir) {
+    return Array.isArray(satir) && satir.every(function (d) {
+      return d && typeof d.text === 'string' && typeof d.url === 'string'
+        && /^https:\/\//.test(d.url) && d.url.length <= DUGME_URL_MAX;
+    });
+  });
+  return ok ? { inline_keyboard: m.inline_keyboard } : null;
+}
+
 /** Kısa bir kod/sebep metni: boşluk ve denetim karakteri sadeleşir, kırpılır. */
 function kod(deger, yedek) {
   const s = String(deger === null || deger === undefined ? '' : deger)
@@ -305,7 +349,7 @@ async function hizSiniriAsildi(oncelikli) {
 }
 
 /** Tek gönderim denemesi. Adres loglanmaz: belirteç içinde. */
-async function dene(cfg, chatId, metin, sessiz) {
+async function dene(cfg, chatId, metin, sessiz, dugmeler) {
   const controller = new AbortController();
   const timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
 
@@ -320,7 +364,8 @@ async function dene(cfg, chatId, metin, sessiz) {
         chat_id: chatId,
         text: metin,
         disable_notification: sessiz === true,
-        disable_web_page_preview: true
+        disable_web_page_preview: true,
+        reply_markup: dugmeler || undefined
       })
     });
   } catch (err) {
@@ -363,6 +408,8 @@ async function dene(cfg, chatId, metin, sessiz) {
  * @param {{type?: string, silent?: boolean, priority?: boolean}} [secenek]
  *   priority: ödeme/düzeltme gibi kaçmaması gereken bildirimler; ayrı hız
  *   kovası ve geçici hatada 1 sn sonra bir tekrar.
+ *   replyMarkup: { inline_keyboard } — yalnızca https URL düğmeleri
+ *   (bkz. buildSupportKeyboard). Geçersizse düğmesiz gönderilir.
  * @returns {Promise<{ok: boolean, code?: string, status?: number}>}
  */
 async function sendTelegram(metin, secenek) {
@@ -380,12 +427,13 @@ async function sendTelegram(metin, secenek) {
   if (!govde.trim()) return { ok: false, code: 'empty' };
 
   const oncelikli = ayar.priority === true;
+  const dugmeler = gecerliDugmeler(ayar.replyMarkup);
   if (await hizSiniriAsildi(oncelikli)) {
     if (console && console.error) console.error('telegram skipped: local_rate_limited');
     return { ok: false, code: 'local_rate_limited' };
   }
 
-  let sonuc = await dene(cfg, chatId, govde, sessiz);
+  let sonuc = await dene(cfg, chatId, govde, sessiz, dugmeler);
 
   /* Yalnızca 429'da tekrar: diğer hatalarda ikinci deneme çoğunlukla aynı
      cevabı alır ve isteğin süresine boşuna eklenir. */
@@ -394,12 +442,12 @@ async function sendTelegram(metin, secenek) {
       ? sonuc.retryAfterMs : RETRY_MAX_BEKLEME_MS;
     if (bekle <= RETRY_MAX_BEKLEME_MS) {
       if (bekle > 0) await new Promise(function (r) { setTimeout(r, bekle); });
-      sonuc = await dene(cfg, chatId, govde, sessiz);
+      sonuc = await dene(cfg, chatId, govde, sessiz, dugmeler);
     }
   } else if (!sonuc.ok && oncelikli
       && (sonuc.code === 'timeout' || sonuc.code === 'unreachable' || sonuc.status >= 500)) {
     await new Promise(function (r) { setTimeout(r, ONCELIK_TEKRAR_MS); });
-    sonuc = await dene(cfg, chatId, govde, sessiz);
+    sonuc = await dene(cfg, chatId, govde, sessiz, dugmeler);
   }
 
   if (!sonuc.ok && console && console.error) {
@@ -495,5 +543,5 @@ function bildirimIsaretle(res) {
 
 module.exports = {
   sendTelegram, isConfigured, kritik, ucuSar, bildirimIsaretle, mesaj, gizle,
-  maskEmail, serbestMetin, tekSefer, HIZ_MAX, ONCELIK_MAX, MAX_UZUNLUK
+  maskEmail, serbestMetin, tekSefer, gmailComposeUrl, buildSupportKeyboard, DUGME_URL_MAX, HIZ_MAX, ONCELIK_MAX, MAX_UZUNLUK
 };
