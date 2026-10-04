@@ -97,7 +97,12 @@ function verify(signature, rawBody) {
     return { ok: false, reason: 'issuer_mismatch' };
   }
   if (typeof claims.body === 'string' && claims.body) {
-    if (claims.body !== bodyHash(rawBody)) return { ok: false, reason: 'body_mismatch' };
+    /* QStash claim'i base64url'i DOLGULU ('=') gönderiyor; Upstash'in kendi
+       SDK'sı da karşılaştırmadan önce dolguyu atıyor. Atmadan karşılaştırmak
+       her imzalı isteği body_mismatch ile reddetti (üretim, 2026-10-04).
+       Standart base64 karakterleri de ('+', '/') url-güvenli biçime çevrilir. */
+    const claimed = claims.body.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    if (claimed !== bodyHash(rawBody)) return { ok: false, reason: 'body_mismatch' };
   }
 
   return { ok: true, claims: claims };
