@@ -128,12 +128,17 @@
         <h2>2. Çerez ve Yerel Depolama Nedir?</h2>
         <p>Çerezler, ziyaret ettiğiniz sitelerin tarayıcınıza kaydettiği küçük metin dosyalarıdır ve her istekte sunucuya geri gönderilir. <strong>Yerel depolama</strong> (localStorage) ise benzer bir saklama alanıdır, ancak sunucuya otomatik olarak gönderilmez; veri cihazınızda kalır.</p>
         <h2>3. Kullandığımız Kayıtlar</h2>
-        <p>Tanıtım sayfamız çerez değil, yalnızca yerel depolama kullanır:</p>
+        <p>Yalnızca hizmetin çalışması için gerekli <strong>birinci taraf</strong> kayıtlar kullanılır. Zorunlu çerezler (hepsi HttpOnly, Secure, SameSite=Lax; JavaScript okuyamaz):</p>
+        <ul>
+          <li><strong>cl_sid</strong> — giriş yapmadan yaptığınız taramaları ve ücretsiz tarama hakkınızı tarayıcınıza bağlayan anonim oturum kimliği. İlk taramada oluşur.</li>
+          <li><strong>cl_at</strong>, <strong>cl_rt</strong> — yalnızca giriş yaptığınızda oluşur ve oturumunuzu açık tutar. Çıkış yaptığınızda silinir.</li>
+        </ul>
+        <p>Yerel depolama (sunucuya gönderilmez):</p>
         <ul>
           <li><strong>preferredLang</strong> — seçtiğiniz arayüz dili (tr / en). Her ziyarette dili yeniden seçmenizi önler.</li>
           <li><strong>preferredTheme</strong> — karanlık veya aydınlık tema tercihiniz.</li>
           <li><strong>cookieConsent</strong> — bu bildirime verdiğiniz yanıt. Bildirimin tekrar tekrar gösterilmesini önler.</li>
-          <li><strong>authToken</strong> — yalnızca giriş yaptığınızda oluşur ve oturumunuzu açık tutar. Çıkış yaptığınızda silinir.</li>
+          <li><strong>preferredRemediationMode</strong>, <strong>freeScansUsed</strong> — düzeltme önerisi görünümü ve ekranda gösterilen kalan tarama sayısı (asıl sayaç sunucudadır).</li>
         </ul>
         <p>Bu kayıtların hiçbiri reklam amacıyla kullanılmaz, üçüncü taraflarla paylaşılmaz ve sizi siteler arasında takip etmez.</p>
         <h2>4. Üçüncü Taraf İstekleri</h2>
@@ -158,12 +163,17 @@
         <h2>2. Cookies and Local Storage</h2>
         <p>Cookies are small text files that sites store in your browser and that are sent back to the server with every request. <strong>Local storage</strong> is a similar store, but it is never sent to the server automatically — the data stays on your device.</p>
         <h2>3. What We Store</h2>
-        <p>Our marketing site uses local storage only, not cookies:</p>
+        <p>We use only <strong>first-party</strong> records needed for the service to work. Essential cookies (all HttpOnly, Secure, SameSite=Lax; JavaScript cannot read them):</p>
+        <ul>
+          <li><strong>cl_sid</strong> — an anonymous session ID that ties scans made without signing in, and your free scan allowance, to your browser. Created on your first scan.</li>
+          <li><strong>cl_at</strong>, <strong>cl_rt</strong> — created only when you sign in, to keep your session open. Removed when you sign out.</li>
+        </ul>
+        <p>Local storage (never sent to our servers):</p>
         <ul>
           <li><strong>preferredLang</strong> — your chosen interface language (tr / en), so you do not have to pick it on every visit.</li>
           <li><strong>preferredTheme</strong> — your dark or light theme preference.</li>
           <li><strong>cookieConsent</strong> — your answer to this notice, so it is not shown repeatedly.</li>
-          <li><strong>authToken</strong> — created only when you sign in, to keep your session open. Removed when you sign out.</li>
+          <li><strong>preferredRemediationMode</strong>, <strong>freeScansUsed</strong> — the fix-guidance view and the remaining-scan count shown on screen (the real counter is on our server).</li>
         </ul>
         <p>None of these are used for advertising, shared with third parties, or used to track you across sites.</p>
         <h2>4. Third-Party Requests</h2>

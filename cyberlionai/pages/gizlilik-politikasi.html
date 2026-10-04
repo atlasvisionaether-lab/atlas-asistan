@@ -131,7 +131,13 @@
           <li><strong>Hesap verileri:</strong> e-posta adresi ve şifrenizin geri döndürülemez özet (hash) değeri.</li>
           <li><strong>Tarama verileri:</strong> taramak için girdiğiniz alan adı, tarama zamanı, tespit edilen bulgular ve oluşturulan raporlar.</li>
           <li><strong>Teknik veriler:</strong> IP adresi, tarayıcı ve işletim sistemi bilgisi, istek zaman damgaları ve hata kayıtları.</li>
-          <li><strong>Tercih verileri:</strong> dil ve tema seçiminiz ile çerez onayınız. Bu veriler yalnızca tarayıcınızın yerel depolamasında (localStorage) tutulur, sunucularımıza gönderilmez.</li>
+          <li><strong>Tercih verileri:</strong> dil ve tema seçiminiz, çerez onayınız, düzeltme önerisi görünümü ve ekranda gösterilen kalan tarama sayısı. Bu veriler yalnızca tarayıcınızın yerel depolamasında (localStorage) tutulur, sunucularımıza gönderilmez.</li>
+        </ul>
+        <p><strong>"İzleme çerezi yok" ne demek?</strong> Sitede üçüncü taraf takip, reklam ya da analitik çerezi ve betiği kullanılmaz; ziyaretiniz hiçbir reklam ağıyla veya analitik hizmetiyle paylaşılmaz. Hizmetin çalışması için yalnızca şunlar kullanılır:</p>
+        <ul>
+          <li><strong>Birinci taraf oturum çerezleri:</strong> giriş yapmadan yaptığınız taramaları ve ücretsiz tarama hakkınızı tarayıcınıza bağlayan anonim bir oturum kimliği (<code>cl_sid</code>) ve giriş yaptığınızda oturum çerezleri. Hepsi HttpOnly, Secure ve SameSite=Lax'tir; JavaScript okuyamaz, başka sitelere gönderilmez.</li>
+          <li><strong>Yerel depolama (localStorage):</strong> yukarıdaki tercih verileri; yalnızca tarayıcınızda kalır.</li>
+          <li><strong>IP adresine dayalı anonim sayaçlar:</strong> kötüye kullanımı önlemek ve tarama sınırlarını uygulamak için IP adresiniz geri döndürülemez biçimde özetlenir (SHA-256) ve geçici bir sayaçta tutulur; sayaç süresi dolunca (dakikalar ile bir gün arası) kendiliğinden silinir. Tarama günlüğündeki IP kaydı bundan ayrıdır (aşağıda, 12 ay).</li>
         </ul>
         <h2>3. İşleme Amaçları ve Hukuki Sebepler</h2>
         <ul>
@@ -192,7 +198,13 @@
           <li><strong>Account data:</strong> your email address and an irreversible hash of your password.</li>
           <li><strong>Scan data:</strong> the domain you submit, scan timestamps, detected findings and generated reports.</li>
           <li><strong>Technical data:</strong> IP address, browser and operating system information, request timestamps and error logs.</li>
-          <li><strong>Preference data:</strong> your language and theme selection and your cookie choice. These are stored only in your browser's local storage and are never sent to our servers.</li>
+          <li><strong>Preference data:</strong> your language and theme selection, your cookie choice, the fix-guidance view and the remaining-scan count shown on screen. These are stored only in your browser's local storage and are never sent to our servers.</li>
+        </ul>
+        <p><strong>What does "no tracking cookies" mean?</strong> The site uses no third-party tracking, advertising or analytics cookies or scripts; your visit is not shared with any ad network or analytics service. To make the service work we use only:</p>
+        <ul>
+          <li><strong>First-party session cookies:</strong> an anonymous session ID (<code>cl_sid</code>) that ties scans made without signing in, and your free scan allowance, to your browser; and session cookies when you sign in. All are HttpOnly, Secure and SameSite=Lax; JavaScript cannot read them and they are not sent to other sites.</li>
+          <li><strong>Local storage (localStorage):</strong> the preference data above; it stays in your browser.</li>
+          <li><strong>Anonymous IP-based counters:</strong> to prevent abuse and enforce scan limits, your IP address is irreversibly hashed (SHA-256) and kept in a temporary counter that deletes itself when it expires (between minutes and one day). The IP entry in the scan log is separate (see below, 12 months).</li>
         </ul>
         <h2>3. Purposes and Legal Bases</h2>
         <ul>

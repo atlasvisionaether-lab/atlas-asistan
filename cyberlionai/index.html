@@ -3644,7 +3644,11 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: url, type: type || 'quick', mode: mode || null,
-            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true })
+            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true,
+            /* İşaretsizse açıkça pasif. İşaretliyse seviye gönderilmez: sunucu
+               ancak alan adı doğrulanmışsa aktif testleri açar, değilse pasif
+               döner ve sonuçta 'aktif testler çalıştırılmadı' notu çıkar. */
+            level: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true ? undefined : 'passive' })
         }).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
@@ -3669,7 +3673,11 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: url,
-            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true })
+            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true,
+            /* İşaretsizse açıkça pasif. İşaretliyse seviye gönderilmez: sunucu
+               ancak alan adı doğrulanmışsa aktif testleri açar, değilse pasif
+               döner ve sonuçta 'aktif testler çalıştırılmadı' notu çıkar. */
+            level: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true ? undefined : 'passive' })
         }).then(function (res) {
           if (res.status === 404) throw { code: 'enqueue_unavailable' };
           return res.json().catch(function () { return {}; });
