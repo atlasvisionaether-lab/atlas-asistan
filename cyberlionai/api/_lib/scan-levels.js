@@ -58,8 +58,8 @@ function ownershipRequired(domain, lang) {
       code: 'ownership_required',
       verifyUrl: verifyUrl(domain),
       message: lang === 'en'
-        ? 'This test requires verified ownership of the domain (Turkish Penal Code arts. 243/244).'
-        : 'Bu test için alan adı sahipliğini doğrulamanız gerekiyor (TCK m.243/244).'
+        ? 'This domain is not verified for the account you are signed in with. Verify it at cyberlionai.com/verify (DNS TXT, file or meta tag), or sign in with the account that verified it. Required for active tests and changes (Turkish Penal Code arts. 243/244).'
+        : 'Bu alan adı giriş yaptığınız hesapta doğrulanmamış. cyberlionai.com/verify adresinden doğrulayın (DNS TXT, dosya ya da meta etiketi) veya alan adını doğrulamış hesapla giriş yapın. Aktif testler ve değişiklikler için zorunludur (TCK m.243/244).'
     }
   };
 }

@@ -57,7 +57,7 @@ async function cf(path, method, token, body) {
 /** Domain'e göre zone kimliğini bulur. */
 async function findZoneId(domain, token) {
   const r = await cf('/zones?name=' + encodeURIComponent(domain), 'GET', token);
-  if (!r.ok) return { ok: false, code: r.code };
+  if (!r.ok) return { ok: false, code: r.code, status: r.status };
   const zones = (r.data && r.data.result) || [];
   if (!zones.length) return { ok: false, code: 'zone_not_found' };
   return { ok: true, zoneId: zones[0].id, zoneName: zones[0].name };
@@ -100,7 +100,7 @@ async function applyTransformRule(zoneId, token, fixType) {
   if (list.ok && list.data && list.data.result && list.data.result.id) {
     const rsId = list.data.result.id;
     const r = await cf('/zones/' + zoneId + '/rulesets/' + rsId + '/rules', 'POST', token, rule);
-    if (!r.ok) return { ok: false, code: r.code };
+    if (!r.ok) return { ok: false, code: r.code, status: r.status };
     return { ok: true, rulesetId: rsId, ruleId: r.data && r.data.result ? r.data.result.id : null };
   }
 
@@ -111,7 +111,7 @@ async function applyTransformRule(zoneId, token, fixType) {
     phase: 'http_response_headers_transform',
     rules: [rule]
   });
-  if (!create.ok) return { ok: false, code: create.code };
+  if (!create.ok) return { ok: false, code: create.code, status: create.status };
   const created = create.data && create.data.result ? create.data.result : null;
   return {
     ok: true,

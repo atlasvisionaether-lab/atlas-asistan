@@ -2411,6 +2411,9 @@
           cfOk: 'Cloudflare kuralı eklendi. Birkaç dakika içinde etkin olur; taramayı tekrarlayın.',
           cfZone: 'Bu belirteçle alan adınızın Cloudflare bölgesi bulunamadı.',
           cfErr: 'Cloudflare kuralı eklenemedi',
+          cfHelp: "Cloudflare > My Profile > API Tokens > Create Token > Custom Token ile oluşan NORMAL belirteci yapıştırın (sayfada gösterilen 'test' curl örneğini değil). Gerekli izinler: Zone › Zone › Read ve Zone › Transform Rules › Edit, bu alan adının bölgesi için. Belirteç bizde saklanmaz; yalnızca bu istekte kullanılır.",
+          cfMissing: 'Belirteçte eksik izin: {perm}. Cloudflare > API Tokens içinde belirteci düzenleyip bu izni bu alan adının bölgesi için ekleyin.',
+          cfTokenInvalid: 'Belirteç geçersiz. Gösterilen test curl satırını değil, oluşturulan belirtecin kendisini yapıştırın.',
           svcBtn: 'Biz düzeltelim',
           svcDiscount: '%{n} indirim',
           cartCount: '{n} bulgu seçildi',
@@ -2457,7 +2460,7 @@
             network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.',
             service_unavailable: 'Tarama servisi şu anda yapılandırılıyor. Kısa süre sonra tekrar deneyin.',
             quota_exceeded: "Ücretsiz tarama hakkınız doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
-            ownership_required: 'Bu test için alan adı sahipliğini doğrulamanız gerekiyor (TCK m.243/244). Doğrulama: cyberlionai.com/verify',
+            ownership_required: 'Bu alan adı giriş yaptığınız hesapta doğrulanmamış. cyberlionai.com/verify ile doğrulayın ya da alan adını doğrulamış hesapla giriş yapın (TCK m.243/244).',
             verify_to_continue: 'Doğrulanmamış bu alan adı bugün 3 kez tarandı. Devam etmek için alan adını doğrulayın: cyberlionai.com/verify'
           },
           note: {
@@ -2815,6 +2818,9 @@
           cfOk: 'Cloudflare rule added. It takes effect within a few minutes; run the scan again.',
           cfZone: 'Your domain\'s Cloudflare zone could not be found with this token.',
           cfErr: 'Could not add the Cloudflare rule',
+          cfHelp: "Paste the NORMAL token created under Cloudflare > My Profile > API Tokens > Create Token > Custom Token (not the 'test' curl example shown on that page). Required permissions: Zone › Zone › Read and Zone › Transform Rules › Edit, for this domain's zone. We do not store the token; it is used only for this request.",
+          cfMissing: 'The token is missing a permission: {perm}. Edit the token under Cloudflare > API Tokens and add it for this domain\'s zone.',
+          cfTokenInvalid: 'The token is invalid. Paste the token itself, not the test curl line.',
           svcBtn: 'We fix it',
           svcDiscount: '{n}% off',
           cartCount: '{n} findings selected',
@@ -2858,7 +2864,7 @@
             network: 'Could not reach the server. Check your connection.',
             service_unavailable: 'The scanning service is being configured. Please try again shortly.',
             quota_exceeded: 'You have used your free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
-            ownership_required: 'This test requires verified ownership of the domain (Turkish Penal Code arts. 243/244). Verify at cyberlionai.com/verify',
+            ownership_required: 'This domain is not verified for the account you are signed in with. Verify it at cyberlionai.com/verify or sign in with the account that verified it (Turkish Penal Code arts. 243/244).',
             verify_to_continue: 'This unverified domain has been scanned 3 times today. Verify the domain to continue: cyberlionai.com/verify'
           },
           note: {
@@ -4197,7 +4203,10 @@
       var msg = document.createElement('span');
       msg.className = 'fixhow__note';
       msg.setAttribute('role', 'status');
-      form.appendChild(input); form.appendChild(go); form.appendChild(msg);
+      var help = document.createElement('span');
+      help.className = 'fixhow__note';
+      help.textContent = t('scan.cfHelp');
+      form.appendChild(input); form.appendChild(go); form.appendChild(help); form.appendChild(msg);
       btn.addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) input.focus(); });
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -4215,8 +4224,11 @@
           go.disabled = false;
           input.value = '';
           var code = x.b && x.b.error && x.b.error.code;
+          var perm = x.b && x.b.error && x.b.error.missingPermission;
           msg.textContent = x.s === 200 ? t('scan.cfOk')
             : code === 'ownership_required' ? t('scan.err.ownership_required')
+            : perm === 'token_invalid' ? t('scan.cfTokenInvalid')
+            : perm ? t('scan.cfMissing', { perm: perm })
             : code === 'zone_not_found' ? t('scan.cfZone')
             : t('scan.cfErr') + (code ? ' (' + code + ')' : '');
         }, function () { go.disabled = false; msg.textContent = t('scan.cfErr'); });

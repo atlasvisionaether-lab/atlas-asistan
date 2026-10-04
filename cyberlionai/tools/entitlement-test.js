@@ -232,6 +232,14 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
   c = await cfUcu('autofix-cloudflare.js', true, POST, SUNUCU, true, 'pro');
   esit('autofix: Pro planı → 402 (Model A yalnız Enterprise)', [c.res.statusCode, ((c.res.body && c.res.body.error) || {}).code], [402, 'plan_required']);
   esit('autofix: Pro planında Cloudflare çağrılmıyor', c.cfCagri.length, 0);
+
+  /* Cloudflare hatasından eksik izin: aşamaya göre. */
+  const mp = tazeYukle('autofix-cloudflare.js').missingPermission;
+  esit('izin: bölge bulunamadı → Zone Read', mp('zone', 'zone_not_found', 200), 'Zone › Zone › Read');
+  esit('izin: bölgede 403 → Zone Read', mp('zone', 'cf_error_10000', 403), 'Zone › Zone › Read');
+  esit('izin: kural yazarken 403 → Transform Rules Edit', mp('rule', 'cf_error_10000', 403), 'Zone › Transform Rules › Edit');
+  esit('izin: geçersiz belirteç biçimi', mp('zone', 'cf_error_6003', 400), 'token_invalid');
+  esit('izin: başka hata → bilinmiyor', mp('rule', 'cf_error_1004', 400), null);
   c = await cfUcu('autofix-cloudflare.js', false, { method: 'DELETE', body: { zoneId: 'z', rulesetId: 'rs', ruleId: 'r' } }, SUNUCU);
   esit('autofix DELETE: oturumsuz 401', c.res.statusCode, 401);
   c = await cfUcu('autofix-cloudflare.js', true, { method: 'DELETE', body: { zoneId: 'z', rulesetId: 'rs', ruleId: 'r' } }, SUNUCU);
