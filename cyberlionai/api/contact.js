@@ -61,7 +61,11 @@ function govdeDogrula(govde) {
   }
   if (!message) return { ok: false, kod: 'message_required' };
 
-  return { ok: true, name: name, email: email, message: message };
+  /* Asistandaki "uzmanla görüş" formu aynı ucu kullanıyor; yalnızca
+     bildirimin başlığı değişiyor. Bilinmeyen değer olağan form sayılır. */
+  const source = govde && govde.source === 'assistant' ? 'assistant' : 'form';
+
+  return { ok: true, name: name, email: email, message: message, source: source };
 }
 
 async function handler(req, res) {
@@ -100,8 +104,9 @@ async function handler(req, res) {
 
   /* silent: false — bu bir iş fırsatı/talebi, sessiz gelen diğer bildirimler
      gibi (tarama, DNS) gözden kaçırılmamalı. */
+  const kur = dogrulama.source === 'assistant' ? tg.mesaj.insanDestegi : tg.mesaj.iletisimFormu;
   const sonuc = await tg.sendTelegram(
-    tg.mesaj.iletisimFormu(dogrulama.name, dogrulama.email, dogrulama.message),
+    kur(dogrulama.name, dogrulama.email, dogrulama.message),
     { type: 'contact', silent: false });
 
   if (!sonuc.ok) {

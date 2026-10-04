@@ -138,6 +138,20 @@ function maskEmail(eposta) {
   return s.charAt(0).toLowerCase() + '***@' + alanAdi;
 }
 
+/**
+ * Kullanıcının serbest yazdığı metni dışarı çıkacak hâle getirir: e-posta
+ * adresleri maskelenir, 7+ haneli sayı dizileri (telefon, kart, TC kimlik)
+ * gizlenir, satır sonları sadeleşir ve metin kırpılır.
+ */
+function serbestMetin(metin, enFazla) {
+  let s = String(metin === null || metin === undefined ? '' : metin);
+  s = s.replace(/[^\s@<>()"',;]+@[^\s@<>()"',;]+\.[a-z]{2,}/gi, function (e) { return maskEmail(e); });
+  s = s.replace(/(?:\d[\s.-]?){6,}\d/g, '***');
+  s = s.replace(/\s+/g, ' ').trim();
+  const sinir = enFazla || 300;
+  return s.length > sinir ? s.slice(0, sinir - 1) + '…' : s;
+}
+
 /** Kısa bir kod/sebep metni: boşluk ve denetim karakteri sadeleşir, kırpılır. */
 function kod(deger, yedek) {
   const s = String(deger === null || deger === undefined ? '' : deger)
@@ -241,6 +255,21 @@ const mesaj = {
     return ONEK + ' 📋 Bekleme listesi: ' + maskEmail(eposta)
       + ' - ' + kod(plan).toUpperCase()
       + ' - ' + (domain ? alan(domain) : '-');
+  },
+  /* Asistanın yanıtlayamadığı soru. Soru `serbestMetin`'den geçer. */
+  asistanCevapsiz: function (soru, dil) {
+    return ONEK + ' ❓ Asistan yanıtlayamadı (' + kod(dil, 'tr') + '): ' + serbestMetin(soru, 300);
+  },
+  asistanAcil: function (soru) {
+    return ONEK + ' 🚨 Asistan: olası aktif olay bildirildi: ' + serbestMetin(soru, 300);
+  },
+  /* Asistandaki "uzmanla görüş" formu. İletişim formu gibi e-posta TAM
+     gidiyor: müşteri kendi adresini cevap almak için yazdı (bkz. TEK İSTİSNA). */
+  insanDestegi: function (ad, eposta, mesajMetni) {
+    return ONEK + ' 📩 İnsan desteği istendi (asistan)\n'
+      + 'Ad: ' + ad + '\n'
+      + 'E-posta: ' + eposta + '\n'
+      + 'Son mesajlar: ' + mesajMetni;
   },
   test: function (metin) {
     return ONEK + ' 🦁 ' + (metin || 'test');
@@ -466,5 +495,5 @@ function bildirimIsaretle(res) {
 
 module.exports = {
   sendTelegram, isConfigured, kritik, ucuSar, bildirimIsaretle, mesaj, gizle,
-  maskEmail, tekSefer, HIZ_MAX, ONCELIK_MAX, MAX_UZUNLUK
+  maskEmail, serbestMetin, tekSefer, HIZ_MAX, ONCELIK_MAX, MAX_UZUNLUK
 };

@@ -1151,6 +1151,16 @@
                 border-color var(--transition-speed) var(--transition-ease);
   }
   .chip:hover { color: var(--gold-primary); border-color: var(--gold-primary); }
+  .assist-handoff { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+  .assist-handoff input {
+    flex: 1 1 140px; min-width: 0; padding: 8px 10px; font: inherit; font-size: 0.85rem;
+    color: var(--text-white); background: var(--surface-raised, rgba(255,255,255,.04));
+    border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  }
+  .assist-handoff input:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: 1px; }
+  .assist-handoff .bubble__meta { flex-basis: 100%; }
+  .assist-handoff__status { flex-basis: 100%; margin: 0; font-size: 0.85rem; color: var(--gold-light); }
+  .assist-handoff__status:empty { display: none; }
 
   .typing { display: inline-flex; gap: 4px; align-items: center; padding: 3px 0; }
   .typing span {
@@ -2274,7 +2284,8 @@
           scanNote: 'Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.',
           cta1: 'Hemen Tara', cta2: "Pro'ya Geç", cta3: 'Nasıl Çalışır?', cta4: 'Örnek Rapor (PDF)',
           stat1: 'Taranan Site (Canlı)',
-          stat3: 'Hızlı Tarama', stat3v: '7/24'
+          stat3: 'Hızlı Tarama', stat3v: '7/24',
+          consent: 'Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.'
         },
         scan: {
           step1: 'Hedef doğrulanıyor',
@@ -2416,72 +2427,19 @@
           inputLabel: 'Sorunuz', placeholder: 'Sorunuzu yazın…', send: 'Gönder',
           layerIdle: 'Hazır', layerLocal: 'Anlık yanıt', layerServer: 'Derin analiz', layerHuman: 'Uzman yönlendirmesi',
           greeting: 'Merhaba. Tarama, güvenlik başlıkları, fiyatlandırma ve raporlar hakkındaki sorularınızı yanıtlıyorum. Aşağıdakilerden birini seçebilir ya da doğrudan yazabilirsiniz.',
-          unknown: 'Bunu yanıtlayacak bir bilgim yok. Sorunuzu uzman ekibimize iletebilirim ya da şunlardan birini deneyebilirsiniz:',
+          unknown: 'Bu konuda net bilgi veremiyorum. İsterseniz aşağıdaki formla sorunuzu uzman ekibimize iletebilirim ya da şunlardan birini deneyebilirsiniz:',
+          smalltalk: 'Merhaba. Size nasıl yardımcı olabilirim? Aşağıdakilerden birini seçebilir ya da sorunuzu yazabilirsiniz.',
+          offline: 'Asistana şu anda ulaşılamıyor. Sorunuzu destek@cyberlionai.com adresine yazabilirsiniz; hafta içi 09:00–18:00 arasında dönüş yapıyoruz.',
+          handoffName: 'Adınız', handoffEmail: 'E-posta adresiniz', handoffSubmit: 'Uzmana ilet',
+          handoffNote: 'Ad ve e-posta yalnızca bu talebe dönüş yapmak için kullanılır.',
+          handoffInvalid: 'Lütfen adınızı ve geçerli bir e-posta adresi girin.',
+          handoffOk: 'Talebiniz ekibimize iletildi. Hafta içi 09:00–18:00 arasında e-postayla dönüş yapacağız.',
+          handoffErr: 'Talep iletilemedi. Lütfen destek@cyberlionai.com adresine yazın.',
           escalate: 'Bu konu uzman müdahalesi gerektiriyor gibi görünüyor. Talebinizi ekibimize iletmek için aşağıdaki düğmeyi kullanın; hafta içi 09:00–18:00 arasında dönüş yapıyoruz.',
-          escalateUrgent: 'Bu acil görünüyor. Aktif bir güvenlik olayı yaşıyorsanız önce etkilenen sistemi izole edin, ardından aşağıdaki düğmeyle doğrudan ekibimize ulaşın.',
+          escalateUrgent: 'Bu acil görünüyor. Aktif bir güvenlik olayı yaşıyorsanız önce etkilenen sistemi izole edin, ardından aşağıdaki formla ya da e-posta düğmesiyle doğrudan ekibimize ulaşın.',
           escalateBtn: 'Uzman ekibe yaz',
           more: 'Başka bir konu',
-          disclaimer: 'Bu asistan yerel bilgi tabanından yanıt verir; sitenizi taramaz ve hesabınıza erişmez.'
-        },
-        kb: {
-          scan: {
-            q: 'Nasıl tarama başlatırım?',
-            a: 'Sayfanın en üstündeki alana alan adınızı yazıp "Hemen Tara" düğmesine basın. Protokol veya "www" yazmanız gerekmez; ornek.com yeterlidir. Kayıt olmadan çalışır.|Şu an gösterilen sonuçlar örnek bir çıktıdır; tarama motoru devreye alındığında aynı arayüz gerçek bulguları listeleyecek.'
-          },
-          free: {
-            q: 'Ücretsiz mi, kayıt gerekiyor mu?',
-            a: "Ücretsiz plan kayıt gerektirmez ve 5 güvenlik testi ile temel SSL kontrolü sunar. Daha fazla tarama (Pro'da ayda 50, Enterprise'da sınırsız), detaylı rapor ve düzeltme önerileri için hesap açıp bir plana geçmeniz gerekir."
-          },
-          csp: {
-            q: 'Content-Security-Policy nasıl eklenir?',
-            a: 'CSP, tarayıcıya hangi kaynaklardan içerik yükleyebileceğini söyler ve XSS saldırılarının etkisini büyük ölçüde keser. Sıkı bir başlangıç noktası:',
-            code: "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
-            a2: 'Satır içi script kullanıyorsanız onları ayrı dosyalara taşıyın veya her bloğun sha256 özetini script-src listesine ekleyin. "unsafe-inline" kullanmak korumanın büyük kısmını iptal eder.'
-          },
-          hsts: {
-            q: 'HSTS başlığı nedir?',
-            a: 'Strict-Transport-Security, tarayıcıya siteye yalnızca HTTPS ile bağlanmasını söyler ve araya girme (SSL stripping) saldırılarını engeller:',
-            code: 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload',
-            a2: 'Dikkat: includeSubDomains eklemeden önce tüm alt alan adlarınızın HTTPS sunduğundan emin olun; aksi hâlde erişilemez hâle gelirler.'
-          },
-          xframe: {
-            q: 'Clickjacking / X-Frame-Options',
-            a: 'Sayfanızın başka bir sitenin iframe\'i içine gömülmesini engeller. Modern karşılığı CSP frame-ancestors direktifidir; ikisini birlikte kullanmak en güvenlisidir:',
-            code: "X-Frame-Options: DENY\nContent-Security-Policy: frame-ancestors 'none'"
-          },
-          tls: {
-            q: 'TLS 1.0 / 1.1 uyarısı aldım',
-            a: 'TLS 1.0 ve 1.1 artık güvenli kabul edilmiyor ve PCI DSS gibi standartlarca yasaklanmış durumda. Sunucunuzda yalnızca TLS 1.2 ve 1.3\'ü açık bırakın.|Nginx için: ssl_protocols TLSv1.2 TLSv1.3; Apache için: SSLProtocol -all +TLSv1.2 +TLSv1.3. Değişiklikten sonra sunucuyu yeniden yükleyin ve taramayı tekrarlayın.'
-          },
-          cookies: {
-            q: 'Çerez bayrakları (Secure / SameSite)',
-            a: 'Oturum çerezleri üç bayrağı da taşımalı: Secure (yalnızca HTTPS), HttpOnly (JavaScript okuyamaz), SameSite (CSRF koruması).',
-            code: 'Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax; Path=/'
-          },
-          authorization: {
-            q: 'Başkasının sitesini tarayabilir miyim?',
-            a: 'Hayır. Yalnızca sahibi olduğunuz veya sahibinden açık ve yazılı izin aldığınız sistemleri tarayabilirsiniz. İzinsiz tarama Türk Ceza Kanunu m.243 ve pek çok ülkenin mevzuatı kapsamında suç teşkil edebilir.|Ayrıntı için Kullanım Şartları\'nın üçüncü bölümüne bakın.'
-          },
-          pricing: {
-            q: 'Planlar ne kadar?',
-            a: 'Free ₺0, Pro ₺299/ay (ayda 50 OWASP Lite taraması, OWASP gruplu PDF rapor, panelde tarama geçmişi ve skor eğilimi), Enterprise ₺2.499/ay (sınırsız tarama, Cloudflare ile 1-Tık Düzeltme, haftalık otomatik tarama, öncelikli destek).|Tüm planlar KDV hariçtir.'
-          },
-          report: {
-            q: 'Rapor nasıl geliyor?',
-            a: 'Bulgular önem derecesine göre sıralanır (Kritik, Yüksek, Orta, Bilgi) ve her biri için kanıt ile uygulanabilir düzeltme adımı verilir. Ücretsiz planda basit PDF, Pro planda detaylı rapor ve düzeltme önerileri, Enterprise planda ayrıca yönetici özeti sunulur.'
-          },
-          privacy: {
-            q: 'Verilerimi ne kadar saklıyorsunuz?',
-            a: 'Tarama raporları 12 ay, teknik kayıtlar 12 ay, faturalandırma kayıtları mevzuat gereği 10 yıl saklanır. Hesabınızı silerseniz kişisel verileriniz en geç 30 gün içinde imha edilir.|Bu sitede izleme çerezi kullanılmıyor; dil ve tema tercihiniz yalnızca kendi tarayıcınızda tutuluyor.'
-          },
-          accuracy: {
-            q: 'Sonuçlar ne kadar güvenilir?',
-            a: 'Otomatik taramalar yanlış pozitif ve yanlış negatif üretebilir. Bu araç kapsamlı bir sızma testinin yerine geçmez; kritik sistemlerde otomatik taramayı düzenli uzman denetimiyle birlikte kullanın.'
-          },
-          contact: {
-            q: 'İnsan bir uzmanla konuşmak istiyorum',
-            a: 'Elbette. destek@cyberlionai.com adresine yazabilir ya da aşağıdaki düğmeyle talebinizi doğrudan iletebilirsiniz. Destek saatlerimiz hafta içi 09:00–18:00 (TSİ).'
-          }
+          disclaimer: 'Bu asistan Cyber Lion bilgi tabanından yanıt verir; sitenizi taramaz ve hesabınıza erişmez.'
         },
         services: {
           eyebrow: 'Yetenekler',
@@ -2693,7 +2651,8 @@
           scanNote: 'No sign-up required — 5 free tests, results in seconds.',
           cta1: 'Scan Now', cta2: 'Go Pro', cta3: 'How It Works', cta4: 'Sample Report (PDF)',
           stat1: 'Sites Scanned (Live)',
-          stat3: 'Fast Scanning', stat3v: '24/7'
+          stat3: 'Fast Scanning', stat3v: '24/7',
+          consent: 'I confirm that I own this domain or am authorised to scan it. With consent, the safe XSS/SQLi checks also run.'
         },
         scan: {
           step1: 'Validating target',
@@ -2826,72 +2785,19 @@
           inputLabel: 'Your question', placeholder: 'Type your question…', send: 'Send',
           layerIdle: 'Ready', layerLocal: 'Instant answer', layerServer: 'Deep analysis', layerHuman: 'Expert escalation',
           greeting: 'Hello. I answer questions about scanning, security headers, pricing and reports. Pick one below or just type.',
-          unknown: 'I do not have an answer for that. I can pass your question to our expert team, or you could try one of these:',
+          unknown: 'I cannot give a clear answer on that. I can pass your question to our expert team with the form below, or you could try one of these:',
+          smalltalk: 'Hello. How can I help? Pick one of the topics below or type your question.',
+          offline: 'The assistant cannot be reached right now. You can write to destek@cyberlionai.com; we reply on weekdays between 09:00 and 18:00.',
+          handoffName: 'Your name', handoffEmail: 'Your email address', handoffSubmit: 'Send to an expert',
+          handoffNote: 'Your name and email are used only to reply to this request.',
+          handoffInvalid: 'Please enter your name and a valid email address.',
+          handoffOk: 'Your request has been passed to our team. We will reply by email on weekdays between 09:00 and 18:00.',
+          handoffErr: 'The request could not be sent. Please write to destek@cyberlionai.com.',
           escalate: 'This looks like it needs a human. Use the button below to send it to our team; we reply on weekdays between 09:00 and 18:00.',
-          escalateUrgent: 'This looks urgent. If you have an active security incident, isolate the affected system first, then reach our team directly with the button below.',
+          escalateUrgent: 'This looks urgent. If you have an active security incident, isolate the affected system first, then reach our team directly with the form or the email button below.',
           escalateBtn: 'Message the expert team',
           more: 'Another topic',
-          disclaimer: 'This assistant answers from a local knowledge base; it does not scan your site or access your account.'
-        },
-        kb: {
-          scan: {
-            q: 'How do I start a scan?',
-            a: 'Type your domain into the field at the top of the page and press "Scan Now". You do not need the protocol or "www" — example.com is enough. It works without signing up.|The results shown today are a sample output; once the scanning engine goes live the same interface will list real findings.'
-          },
-          free: {
-            q: 'Is it free? Do I need an account?',
-            a: 'The free plan needs no registration and gives you 5 security tests plus a basic SSL check. For more scans (50 a month on Pro, unlimited on Enterprise), detailed reports and remediation guidance, create an account and choose a plan.'
-          },
-          csp: {
-            q: 'How do I add a Content-Security-Policy?',
-            a: 'CSP tells the browser which sources may load content and drastically limits the impact of XSS. A strict starting point:',
-            code: "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
-            a2: 'If you use inline scripts, move them into separate files or add each block\'s sha256 hash to script-src. Using "unsafe-inline" cancels most of the protection.'
-          },
-          hsts: {
-            q: 'What is the HSTS header?',
-            a: 'Strict-Transport-Security tells the browser to reach your site over HTTPS only, which blocks SSL stripping attacks:',
-            code: 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload',
-            a2: 'Careful: before adding includeSubDomains, make sure every subdomain serves HTTPS, or they become unreachable.'
-          },
-          xframe: {
-            q: 'Clickjacking / X-Frame-Options',
-            a: 'This stops your page from being embedded in another site\'s iframe. The modern equivalent is the CSP frame-ancestors directive; sending both is safest:',
-            code: "X-Frame-Options: DENY\nContent-Security-Policy: frame-ancestors 'none'"
-          },
-          tls: {
-            q: 'I got a TLS 1.0 / 1.1 warning',
-            a: 'TLS 1.0 and 1.1 are no longer considered secure and are prohibited by standards such as PCI DSS. Leave only TLS 1.2 and 1.3 enabled on your server.|Nginx: ssl_protocols TLSv1.2 TLSv1.3; Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3. Reload the server afterwards and scan again.'
-          },
-          cookies: {
-            q: 'Cookie flags (Secure / SameSite)',
-            a: 'Session cookies should carry all three flags: Secure (HTTPS only), HttpOnly (not readable from JavaScript) and SameSite (CSRF protection).',
-            code: 'Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax; Path=/'
-          },
-          authorization: {
-            q: 'Can I scan someone else\'s site?',
-            a: 'No. You may scan only systems you own or for which you hold explicit written permission. Unauthorised scanning can be a criminal offence under Turkish Criminal Code Art. 243 and comparable laws elsewhere.|See section three of the Terms of Use for details.'
-          },
-          pricing: {
-            q: 'What do the plans cost?',
-            a: 'Free ₺0, Pro ₺299/mo (50 OWASP Lite scans per month, PDF report grouped by OWASP, scan history and score trend in the panel), Enterprise ₺2,499/mo (unlimited scans, 1-Click Fix via Cloudflare, weekly automated scan, priority support).|All prices exclude VAT.'
-          },
-          report: {
-            q: 'What does the report look like?',
-            a: 'Findings are ranked by severity (Critical, High, Medium, Info), each with evidence and an actionable remediation step. The free plan gives a simple PDF, Pro adds detailed reporting and remediation guidance, Enterprise adds an executive summary.'
-          },
-          privacy: {
-            q: 'How long do you keep my data?',
-            a: 'Scan reports 12 months, technical logs 12 months, billing records 10 years as required by law. If you delete your account, your personal data is destroyed within 30 days.|This site uses no tracking cookies; your language and theme preference stay in your own browser.'
-          },
-          accuracy: {
-            q: 'How reliable are the results?',
-            a: 'Automated scans can produce false positives and false negatives. This tool does not replace a full penetration test; on critical systems, pair automated scanning with regular expert review.'
-          },
-          contact: {
-            q: 'I want to talk to a human',
-            a: 'Of course. Write to destek@cyberlionai.com, or use the button below to send your request directly. Support hours are weekdays 09:00–18:00 (GMT+3).'
-          }
+          disclaimer: 'This assistant answers from the Cyber Lion knowledge base; it does not scan your site or access your account.'
         },
         services: {
           eyebrow: 'Capabilities',
@@ -3869,16 +3775,6 @@
               return data;
             });
           }, function () { throw { code: 'network' }; });
-      },
-
-      /** POST /api/support — asistanın sunucu tarafı (2. kademe) analizi */
-      support: function (sessionId, message, context) {
-        if (CONFIG.useMockApi) {
-          return Promise.resolve({ sessionId: sessionId, layer: 'local', answer: null, confidence: 0 });
-        }
-        return API.request('/api/support', {
-          method: 'POST', body: { sessionId: sessionId, message: message, context: context || {} }
-        });
       },
 
       /** GET /api/managed/{scanId}/ticket — yönetilen hizmet ticket durumu */
@@ -5169,64 +5065,24 @@
       var timeEl = document.getElementById('assistTime');
       var layerEl = document.getElementById('assistLayer');
 
-      var sessionId = null;
       var busy = false;
       var greeted = false;
 
-      /* Konu anahtarları: bilgi tabanındaki kayıt -> eşleşecek kelimeler.
-         Türkçe ekler nedeniyle kökler kısa tutulur ("tara" → tarama, taramak…). */
-      var TOPICS = {
-        scan:          ['tara', 'tarama', 'scan', 'başlat', 'baslat', 'start', 'url', 'adres', 'domain', 'alan adı', 'alan adi'],
-        free:          ['ücretsiz', 'ucretsiz', 'bedava', 'free', 'kayıt', 'kayit', 'üye', 'uye', 'register', 'sign up', 'account', 'hesap aç', 'hesap ac'],
-        pricing:       ['fiyat', 'ücret', 'ucret', 'price', 'pricing', 'cost', 'plan', 'abonelik', 'subscription', 'ne kadar', 'how much'],
-        csp:           ['csp', 'content-security', 'content security', 'xss', 'inline script'],
-        hsts:          ['hsts', 'strict-transport', 'strict transport', 'ssl strip'],
-        xframe:        ['x-frame', 'xframe', 'clickjack', 'iframe', 'frame-ancestors', 'frame ancestors'],
-        tls:           ['tls', 'ssl', 'sertifika', 'certificate', 'şifreleme', 'sifreleme', 'encryption', 'https', 'protokol', 'protocol'],
-        cookies:       ['çerez', 'cerez', 'cookie', 'samesite', 'httponly', 'secure flag', 'bayrak'],
-        authorization: ['izin', 'yetki', 'permission', 'authoris', 'authoriz', 'yasal', 'legal', 'suç', 'suc', 'başkasının', 'baskasinin', 'someone else'],
-        report:        ['rapor', 'report', 'pdf', 'sonuç', 'sonuc', 'result', 'çıktı', 'cikti', 'output'],
-        privacy:       ['veri', 'data', 'gizlilik', 'privacy', 'kvkk', 'gdpr', 'saklama', 'retention', 'sil', 'delete'],
-        accuracy:      ['doğru', 'dogru', 'accura', 'güvenilir', 'guvenilir', 'reliable', 'yanlış pozitif', 'yanlis pozitif', 'false positive', 'hatalı', 'hatali'],
-        contact:       ['iletişim', 'iletisim', 'contact', 'insan', 'human', 'uzman', 'expert', 'destek', 'support', 'telefon', 'phone', 'mail', 'e-posta']
-      };
-
-      /* Aciliyet: aktif olay sinyalleri uzman kademesine yönlendirir. */
-      var CRITICAL = ['hack', 'saldırı', 'saldiri', 'attack', 'breach', 'sızıntı', 'sizinti', 'leak', 'çalındı', 'calindi', 'stolen',
-                      'fidye', 'ransom', 'şifrelendi', 'sifrelendi', 'site düştü', 'site dustu', 'down', 'erişemiyorum', 'erisemiyorum',
-                      'ele geçir', 'ele gecir', 'compromis', 'defac'];
-      var HIGH = ['acil', 'urgent', 'kritik', 'critical', 'hemen', 'immediately', 'çalışmıyor', 'calismiyor', 'not working', 'hata', 'error'];
-
-      /* Türkçe karakterleri sadeleştirip küçük harfe indirger. */
-      function normalize(text) {
-        return String(text).toLowerCase()
-          .replace(/ı/g, 'i').replace(/İ/g, 'i')
-          .replace(/ş/g, 's').replace(/ğ/g, 'g')
-          .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c');
+      /* Konuşma geçmişi: son 6 mesaj sunucuya gidiyor (bağlam için). Sunucu
+         yalnızca kullanıcı mesajlarını metin olarak kullanıyor. Cevaplar
+         bilgi tabanından geldiği için aynı soru her zaman aynı cevabı alır. */
+      var HISTORY_MAX = 6;
+      var history = [];
+      function remember(role, text) {
+        history.push({ role: role, text: String(text).slice(0, 500) });
+        if (history.length > HISTORY_MAX) history.shift();
+      }
+      function lastUserTexts(n) {
+        return history.filter(function (h) { return h.role === 'user'; })
+          .slice(-n).map(function (h) { return h.text; });
       }
 
-      /** Soruyu bilgi tabanındaki konularla eşleştirir; en yüksek puanlı konuyu döndürür. */
-      function match(question) {
-        var q = normalize(question);
-        var best = null, bestScore = 0;
-        for (var topic in TOPICS) {
-          if (!Object.prototype.hasOwnProperty.call(TOPICS, topic)) continue;
-          var score = 0;
-          for (var i = 0; i < TOPICS[topic].length; i++) {
-            if (q.indexOf(normalize(TOPICS[topic][i])) !== -1) score++;
-          }
-          if (score > bestScore) { bestScore = score; best = topic; }
-        }
-        return bestScore > 0 ? best : null;
-      }
-
-      /** 0–10 arası aciliyet puanı. 6 ve üzeri doğrudan uzman kademesine gider. */
-      function urgency(question) {
-        var q = normalize(question), score = 0;
-        for (var i = 0; i < CRITICAL.length; i++) if (q.indexOf(normalize(CRITICAL[i])) !== -1) score += 4;
-        for (var j = 0; j < HIGH.length; j++) if (q.indexOf(normalize(HIGH[j])) !== -1) score += 2;
-        return Math.min(score, 10);
-      }
+      function lang() { return document.documentElement.lang === 'en' ? 'en' : 'tr'; }
 
       /* ---- Arayüz yardımcıları (tümü textContent ile, innerHTML yok) ---- */
 
@@ -5263,33 +5119,101 @@
         bubble.appendChild(pre);
       }
 
-      /** Öneri düğmeleri; tıklanınca ilgili soruyu sorar. */
-      function chips(bubble, topics) {
+      /** Öneri düğmeleri: sunucunun verdiği { id, q } listesi. Tıklanınca niyet doğrudan sorulur. */
+      function chips(bubble, list) {
+        if (!list || !list.length) return;
         var wrap = document.createElement('div');
         wrap.className = 'chips';
-        topics.forEach(function (topic) {
+        list.forEach(function (s) {
           var btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'chip';
-          btn.textContent = t('kb.' + topic + '.q');
-          btn.addEventListener('click', function () { ask(t('kb.' + topic + '.q'), topic); });
+          btn.textContent = s.q;
+          btn.addEventListener('click', function () { ask(s.q, s.id); });
           wrap.appendChild(btn);
         });
         bubble.appendChild(wrap);
       }
 
-      /** Uzman ekibe yönlendirme düğmesi: konu ve soruyu e-postaya taşır. */
-      function escalationButton(bubble, question, level) {
+      /** Doğrudan e-posta düğmesi (asistan ya da iletişim ucu erişilemezse son çare). */
+      function mailButton(bubble, question, urgent) {
         var wrap = document.createElement('div');
         wrap.className = 'chips';
         var link = document.createElement('a');
         link.className = 'chip';
         link.textContent = t('assist.escalateBtn');
         link.href = 'mailto:destek@cyberlionai.com'
-          + '?subject=' + encodeURIComponent('[' + (level >= 6 ? 'ACİL' : 'Destek') + '] Cyber Lion AI')
-          + '&body=' + encodeURIComponent(question);
+          + '?subject=' + encodeURIComponent('[' + (urgent ? 'ACİL' : 'Destek') + '] Cyber Lion AI')
+          + '&body=' + encodeURIComponent(question || '');
         wrap.appendChild(link);
         bubble.appendChild(wrap);
+      }
+
+      /**
+       * İnsan desteği formu: ad + e-posta. /api/contact'a gider (source:
+       * 'assistant'); ekip Telegram'dan "İnsan desteği istendi" olarak görür.
+       * Talebe kullanıcının son üç mesajı eklenir.
+       */
+      function handoffForm(bubble) {
+        var f = document.createElement('form');
+        f.className = 'assist-handoff';
+        f.noValidate = true;
+
+        function field(type, key, auto) {
+          var inp = document.createElement('input');
+          inp.type = type;
+          inp.required = true;
+          inp.maxLength = type === 'email' ? 320 : 100;
+          inp.autocomplete = auto;
+          inp.placeholder = t(key);
+          inp.setAttribute('aria-label', t(key));
+          f.appendChild(inp);
+          return inp;
+        }
+        var nameIn = field('text', 'assist.handoffName', 'name');
+        var mailIn = field('email', 'assist.handoffEmail', 'email');
+        var btn = document.createElement('button');
+        btn.type = 'submit';
+        btn.className = 'chip';
+        btn.textContent = t('assist.handoffSubmit');
+        f.appendChild(btn);
+        var note = document.createElement('span');
+        note.className = 'bubble__meta';
+        note.textContent = t('assist.handoffNote');
+        f.appendChild(note);
+        var status = document.createElement('p');
+        status.className = 'assist-handoff__status';
+        status.setAttribute('role', 'status');
+        f.appendChild(status);
+
+        f.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var name = nameIn.value.trim();
+          var email = mailIn.value.trim();
+          if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            status.textContent = t('assist.handoffInvalid');
+            return;
+          }
+          btn.disabled = true;
+          var son = lastUserTexts(3);
+          fetch('/api/contact', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              name: name, email: email, source: 'assistant',
+              message: son.length ? son.join(' | ') : '-'
+            })
+          }).then(function (r) {
+            if (!r.ok) throw new Error('http_' + r.status);
+            status.textContent = t('assist.handoffOk');
+            nameIn.disabled = true; mailIn.disabled = true;
+          }).catch(function () {
+            status.textContent = t('assist.handoffErr');
+            btn.disabled = false;
+          });
+        });
+        bubble.appendChild(f);
       }
 
       function meta(bubble, seconds, layerKey) {
@@ -5310,74 +5234,89 @@
         return bubble.parentNode;
       }
 
-      /* ---- Yanıt akışı ---- */
+      /* ---- Sunucu ---- */
 
-      function answerFromKb(bubble, topic) {
-        paragraphs(bubble, t('kb.' + topic + '.a'));
-        var code = t('kb.' + topic + '.code');
-        if (code && code.indexOf('kb.') !== 0) codeBlock(bubble, code);
-        var extra = t('kb.' + topic + '.a2');
-        if (extra && extra.indexOf('kb.') !== 0) paragraphs(bubble, extra);
+      function callAssistant(payload) {
+        var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+        var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
+        return fetch('/api/assistant', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: ctrl ? ctrl.signal : undefined
+        }).then(function (r) {
+          if (timer) clearTimeout(timer);
+          if (!r.ok) throw new Error('http_' + r.status);
+          return r.json();
+        }, function (err) {
+          if (timer) clearTimeout(timer);
+          throw err;
+        });
       }
 
-      /** İlgili konuya göre iki alternatif öneri seçer. */
-      function related(topic) {
-        var all = Object.keys(TOPICS).filter(function (k) { return k !== topic; });
-        var map = {
-          csp: ['hsts', 'xframe'], hsts: ['csp', 'tls'], xframe: ['csp', 'cookies'],
-          tls: ['hsts', 'cookies'], cookies: ['csp', 'privacy'],
-          scan: ['free', 'report'], free: ['pricing', 'scan'], pricing: ['free', 'report'],
-          report: ['accuracy', 'pricing'],
-          privacy: ['authorization', 'contact'], accuracy: ['report', 'contact'],
-          authorization: ['privacy', 'contact'], contact: ['pricing', 'free']
-        };
-        return map[topic] || all.slice(0, 2);
+      /** Sunucu cevabını çizer. Aynı cevap → aynı çıktı. */
+      function render(bubble, res, question) {
+        if (res.type === 'answer' && res.answer) {
+          paragraphs(bubble, res.answer.a);
+          if (res.answer.code) codeBlock(bubble, res.answer.code);
+          if (res.answer.a2) paragraphs(bubble, res.answer.a2);
+          if (res.handoff) handoffForm(bubble);
+          chips(bubble, res.suggestions);
+          return 'assist.layerLocal';
+        }
+        if (res.type === 'urgent') {
+          paragraphs(bubble, t('assist.escalateUrgent'));
+          handoffForm(bubble);
+          mailButton(bubble, question, true);
+          return 'assist.layerHuman';
+        }
+        if (res.type === 'smalltalk') {
+          paragraphs(bubble, t('assist.smalltalk'));
+          chips(bubble, res.suggestions);
+          return 'assist.layerLocal';
+        }
+        paragraphs(bubble, t('assist.unknown'));
+        handoffForm(bubble);
+        chips(bubble, res.suggestions);
+        return 'assist.layerHuman';
       }
 
-      function ask(question, forcedTopic) {
+      function ask(question, intent) {
         if (busy) return;
         busy = true;
         if (sendBtn) sendBtn.disabled = true;
 
         paragraphs(row('user'), question);
+        var payload = { lang: lang(), history: history.slice() };
+        if (intent) payload.intent = intent; else payload.message = question;
+        remember('user', question);
+
         var started = performance.now();
         var indicator = typing();
 
-        // Yerel bilgi tabanı anında yanıt verir; kısa gecikme okunabilirlik içindir.
-        setTimeout(function () {
-          if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
-          var elapsed = (performance.now() - started) / 1000;
-          var level = urgency(question);
-          var topic = forcedTopic || match(question);
-          var bubble = row('bot');
-
-          if (level >= 6) {
-            // Aktif olay sinyali: konu eşleşse bile uzman kademesine yönlendir
-            paragraphs(bubble, t('assist.escalateUrgent'));
-            escalationButton(bubble, question, level);
-            meta(bubble, elapsed, 'assist.layerHuman');
-          } else if (topic) {
-            answerFromKb(bubble, topic);
-            chips(bubble, related(topic));
-            meta(bubble, elapsed, 'assist.layerLocal');
-          } else {
-            paragraphs(bubble, t('assist.unknown'));
-            chips(bubble, ['scan', 'pricing', 'free']);
-            escalationButton(bubble, question, level);
-            meta(bubble, elapsed, 'assist.layerHuman');
-          }
-
+        function done() {
           logEl.scrollTop = logEl.scrollHeight;
           busy = false;
           if (sendBtn) sendBtn.disabled = false;
+        }
 
-          // Backend bağlandığında aynı soru sunucu tarafında da işlenir (2. kademe).
-          if (!CONFIG.useMockApi) {
-            API.support(sessionId, question, { topic: topic, urgency: level })
-              .then(function (res) { log('support layer 2', res); })
-              .catch(function (err) { log('support error', err); });
-          }
-        }, 420);
+        callAssistant(payload).then(function (res) {
+          if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
+          var bubble = row('bot');
+          var layer = render(bubble, res, question);
+          meta(bubble, (performance.now() - started) / 1000, layer);
+          remember('bot', res.intent || res.type);
+          done();
+        }).catch(function (err) {
+          log('assistant error', err);
+          if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
+          var bubble = row('bot');
+          paragraphs(bubble, t('assist.offline'));
+          mailButton(bubble, question, false);
+          meta(bubble, (performance.now() - started) / 1000, 'assist.layerHuman');
+          done();
+        });
       }
 
       function greet() {
@@ -5385,16 +5324,19 @@
         greeted = true;
         var bubble = row('bot');
         paragraphs(bubble, t('assist.greeting'));
-        chips(bubble, ['scan', 'pricing', 'free', 'csp']);
         var note = document.createElement('span');
         note.className = 'bubble__meta';
         note.textContent = t('assist.disclaimer');
         bubble.appendChild(note);
+        /* Karşılama düğmeleri bilgi tabanından: soru metni tek kaynakta. */
+        fetch('/api/assistant?lang=' + lang(), { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) { if (d && d.suggestions) { chips(bubble, d.suggestions); bubble.appendChild(note); } })
+          .catch(function (err) { log('assistant greet error', err); });
       }
 
       function open() {
         if (!panel) return;
-        sessionId = sessionId || 'sess-' + Date.now().toString(36);
         panel.hidden = false;
         void panel.offsetWidth;
         panel.classList.add('is-open');
