@@ -92,6 +92,17 @@ GRANT SELECT ON public.knowledge_base TO authenticated;
 REVOKE ALL ON public.kb_documents FROM anon;
 REVOKE ALL ON public.knowledge_base FROM anon;
 
+-- Depolama yolu için: ilk klasör kurum kimliği. METİN olarak karşılaştırılır;
+-- uuid'e çevirmek, başka bir kovadaki uuid olmayan klasörde politikayı hataya
+-- düşürürdü (Postgres AND kısa devresini garanti etmez).
+CREATE OR REPLACE FUNCTION public.kb_is_member_path(p_name text)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.users u
+                 WHERE u.id = auth.uid() AND u.organization_id::text = split_part(p_name, '/', 1));
+$$;
+REVOKE ALL ON FUNCTION public.kb_is_member_path(text) FROM public;
+GRANT EXECUTE ON FUNCTION public.kb_is_member_path(text) TO authenticated;
+
 -- Onay / ret: yalnızca 'review' durumundaki belge, yalnızca kurum üyesi.
 CREATE OR REPLACE FUNCTION public.kb_set_status(p_document uuid, p_status text)
 RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -154,14 +165,14 @@ ON CONFLICT (id) DO UPDATE SET public = false, file_size_limit = EXCLUDED.file_s
 
 DROP POLICY IF EXISTS kb_uploads_insert ON storage.objects;
 CREATE POLICY kb_uploads_insert ON storage.objects FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'kb-uploads' AND public.kb_is_member(((storage.foldername(name))[1])::uuid));
+  WITH CHECK (bucket_id = 'kb-uploads' AND public.kb_is_member_path(name));
 
 DROP POLICY IF EXISTS kb_uploads_select ON storage.objects;
 CREATE POLICY kb_uploads_select ON storage.objects FOR SELECT TO authenticated
-  USING (bucket_id = 'kb-uploads' AND public.kb_is_member(((storage.foldername(name))[1])::uuid));
+  USING (bucket_id = 'kb-uploads' AND public.kb_is_member_path(name));
 
 DROP POLICY IF EXISTS kb_uploads_delete ON storage.objects;
 CREATE POLICY kb_uploads_delete ON storage.objects FOR DELETE TO authenticated
-  USING (bucket_id = 'kb-uploads' AND public.kb_is_member(((storage.foldername(name))[1])::uuid));
+  USING (bucket_id = 'kb-uploads' AND public.kb_is_member_path(name));
 
 COMMIT;

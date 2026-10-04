@@ -29,6 +29,7 @@ ALTER TABLE public.knowledge_base
 ALTER TABLE public.knowledge_base ALTER COLUMN organization_id DROP NOT NULL;
 
 DROP TABLE IF EXISTS public.kb_documents;
+DROP FUNCTION IF EXISTS public.kb_is_member_path(text);
 DROP FUNCTION IF EXISTS public.kb_is_member(uuid);
 
 COMMIT;
