@@ -7,7 +7,7 @@
  *   header   ₺499    basit güvenlik başlıkları (HSTS, X-Frame, nosniff, Referrer…)
  *   tls_dns  ₺999    TLS / sertifika / HTTPS, SPF / DMARC / DKIM / DNSSEC ve
  *                    siteye özgü değişiklik isteyenler (CSP, çerez, CORS, SRI, karışık içerik)
- *   full     ₺1.999  tam paket; OWASP (A01–A10) bulguları yalnızca bununla
+ *   full     ₺5.000  tam paket (sepet tavanı); OWASP (A01–A10) bulguları yalnızca bununla
  *
  * Sepet: kalemlerin toplamı, tam paket fiyatıyla sınırlı.
  * Pro ve Enterprise: %50 indirim (üst plan alt plandan pahalıya almasın).
@@ -16,7 +16,7 @@
 
 const { FIXES, fixFor } = require('./engines/fixes.js');
 
-const TIERS = { header: 499, tls_dns: 999, full: 1999 };
+const TIERS = { header: 499, tls_dns: 999, full: 5000 };
 const DISCOUNT_PERCENT = 50;
 const DISCOUNT_PLANS = ['pro', 'enterprise'];
 const ID_RE = /^[a-z0-9_]{2,40}$/;

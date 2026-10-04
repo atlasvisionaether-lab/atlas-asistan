@@ -4,6 +4,9 @@
   function $(id) { return document.getElementById(id); }
   var ST = { pending: 'Ödeme bekleniyor / Awaiting payment', paid: 'Ödendi, hizmet başladı / Paid, in progress',
     done: 'Tamamlandı / Done', cancelled: 'İptal / Cancelled' };
+  function tl(n) {
+    try { return '₺' + Number(n).toLocaleString('tr-TR'); } catch (e) { return '₺' + n; }
+  }
   function row(k, v) {
     var li = document.createElement('li');
     var a = document.createElement('span'); a.textContent = k;
@@ -24,7 +27,7 @@
         d.appendChild(row('Alan adı / Domain', o.domain));
         d.appendChild(row('Bulgular / Findings', (o.findingIds || []).join(', ')));
         d.appendChild(row('Paket / Package', o.type === 'full' ? 'Tam paket / Full package' : 'Seçili bulgular / Selected findings'));
-        d.appendChild(row('Tutar / Amount', '₺' + o.priceDiscounted + (o.price !== o.priceDiscounted ? ' (liste / list ₺' + o.price + ')' : '') + ' + KDV / VAT'));
+        d.appendChild(row('Tutar / Amount', tl(o.priceDiscounted) + (o.price !== o.priceDiscounted ? ' (liste / list ' + tl(o.price) + ')' : '') + ' + KDV / VAT'));
         d.appendChild(row('Durum / Status', ST[o.status] || o.status));
         d.hidden = false;
       }, function () { $('msg').textContent = 'Sipariş okunamadı. / Could not load the order.'; });

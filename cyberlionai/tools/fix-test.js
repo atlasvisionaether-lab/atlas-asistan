@@ -52,10 +52,18 @@ async function cagir(h, req) { const r = res(); await h(Object.assign({ headers:
   esit('TLS 999', pricing.quote(['tls_cert'], 'single', 'free').price, 999);
   esit('SPF 999', pricing.quote(['spf'], 'single', 'free').price, 999);
   esit('sepet toplamı', pricing.quote(['hsts', 'xframe'], 'single', 'free').price, 998);
-  esit('sepet tam paketle sınırlı', pricing.quote(['hsts', 'csp', 'tls_cert'], 'single', 'free').price, 1999);
-  esit('sınıra ulaşınca tür full', pricing.quote(['hsts', 'csp', 'tls_cert'], 'single', 'free').type, 'full');
-  esit('OWASP bulgusu tam paket', pricing.quote(['a03_xss_reflection'], 'single', 'free').price, 1999);
-  esit('Pro tam paket 1000', pricing.quote(['hsts'], 'full', 'pro').priceDiscounted, 1000);
+  esit('tavan altındaki sepet toplanır', pricing.quote(['hsts', 'csp', 'tls_cert'], 'single', 'free').price, 2497);
+  /* Kullanıcının örneği: 3×999 + 4×499 = 4993 (tavanın altında). */
+  const yedi = ['dnssec', 'dmarc', 'permissions', 'referrer', 'nosniff', 'xframe', 'tls_legacy'];
+  esit('7 bulgu: liste 4993', pricing.quote(yedi, 'single', 'free').price, 4993);
+  esit('7 bulgu: Pro 2497', pricing.quote(yedi, 'single', 'pro').priceDiscounted, 2497);
+  const cok = ['https', 'csp', 'tls_cert', 'tls_protocol', 'spf', 'dmarc'];
+  esit('sepet tam paket tavanıyla sınırlı (6×999 → 5000)', pricing.quote(cok, 'single', 'free').price, 5000);
+  esit('tavana ulaşınca tür full', pricing.quote(cok, 'single', 'free').type, 'full');
+  esit('tavanda Pro 2500', pricing.quote(cok, 'single', 'pro').priceDiscounted, 2500);
+  esit('tek TLS bulgusu Pro 500', pricing.quote(['csp'], 'single', 'pro').priceDiscounted, 500);
+  esit('OWASP bulgusu tam paket', pricing.quote(['a03_xss_reflection'], 'single', 'free').price, 5000);
+  esit('Pro tam paket 2500', pricing.quote(['hsts'], 'full', 'pro').priceDiscounted, 2500);
   esit('geçersiz kimlik atılır', pricing.quote(['<script>', 'hsts', 'hsts'], 'single', 'free').items.length, 1);
   esit('boş sepet', pricing.quote([], 'single', 'free').code, 'no_findings');
 
@@ -68,7 +76,7 @@ async function cagir(h, req) { const r = res(); await h(Object.assign({ headers:
   dogru('öneri: Cloudflare adımı', /Transform Rules/.test(r.body.fix.cloudflare));
   esit('öneri: fiyat + Pro indirimi', [r.body.price, r.body.priceDiscounted, r.body.isPro, r.body.severity], [499, 250, true, 'high']);
   r = await cagir(suggestion, { method: 'POST', body: { findingId: 'a01__env' } });
-  esit('öneri: OWASP → kod yok, tam paket', [r.body.fix, r.body.tier, r.body.price], [null, 'full', 1999]);
+  esit('öneri: OWASP → kod yok, tam paket', [r.body.fix, r.body.tier, r.body.price], [null, 'full', 5000]);
   r = await cagir(suggestion, { method: 'POST', body: { findingId: '../etc' } });
   esit('öneri: geçersiz kimlik 400', r.statusCode, 400);
 

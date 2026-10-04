@@ -61,6 +61,10 @@
   .badge{font-size:.78rem;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
   .badge--ok{color:var(--ok)} .badge--wait{color:var(--warn)}
   footer{color:var(--text-gray);font-size:.82rem;text-align:center;padding:30px 16px}
+  /* Dar ekranda uzun değerler (bulgu listesi, tutar) kesilmesin: satır kırılır. */
+  ul.list li{flex-wrap:wrap}
+  ul.list li span{min-width:0;overflow-wrap:anywhere;white-space:normal}
+  ul.list li span:last-child{text-align:right;flex:1 1 180px}
   </style>
 </head>
 <body>

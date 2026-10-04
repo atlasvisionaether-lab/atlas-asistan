@@ -1189,7 +1189,10 @@
     -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); font-size: 0.85rem;
   }
   .fixcart[hidden] { display: none; }
-  .fixcart__info { margin: 0 0 6px; font-weight: 600; }
+  .fixcart__info { margin: 0 0 6px; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+  @media (max-width: 560px) {
+    .fixcart { bottom: 8px; padding: 10px 12px; max-height: 70vh; overflow-y: auto; }
+  }
   .fixcart__info s { color: var(--text-gray); font-weight: 400; }
   .fixcart__consent { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 6px; font-size: 0.8rem; color: var(--text-gray); }
   .fixcart__consent a { color: var(--gold-primary); }
@@ -1958,7 +1961,7 @@
 
         </div>
 
-        <p class="pricing__foot reveal" data-i18n="pricing.fixNote">Tek seferlik düzeltme hizmeti ("Biz düzeltelim"): güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺1.999 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.</p>
+        <p class="pricing__foot reveal" data-i18n="pricing.fixNote">Tek seferlik düzeltme hizmeti ("Biz düzeltelim"): güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺5.000 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.</p>
         <div data-checkout-declaration></div>
         <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal fatura ve yıllık ödeme talepleri için destek@cyberlionai.com adresine yazın.</p>
         <p class="pricing__foot reveal"><a class="pricing__more" href="/pricing" data-i18n="pricing.more">Planları yan yana karşılaştır</a></p>
@@ -2578,7 +2581,7 @@
         pricing: {
           eyebrow: 'Planlar', title: 'SİZE UYGUN PLANI SEÇİN',
           subtitle: 'Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.',
-          fixNote: 'Tek seferlik düzeltme hizmeti ("Biz düzeltelim"): güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺1.999 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.',
+          fixNote: 'Tek seferlik düzeltme hizmeti ("Biz düzeltelim"): güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺5.000 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.',
           foot: 'Tüm planlar KDV hariçtir. Kurumsal fatura ve yıllık ödeme talepleri için destek@cyberlionai.com adresine yazın. | All prices exclude VAT.',
           free: {
             badge: 'Deneme', name: 'Free', tagline: 'Sitenizin güvenlik durumuna hızlı bir bakış.',
@@ -2982,7 +2985,7 @@
         pricing: {
           eyebrow: 'Plans', title: 'CHOOSE YOUR PLAN',
           subtitle: 'Start free. Upgrade when you are ready. No long-term commitment.',
-          fixNote: 'One-time fix service ("We fix it"): security header ₺499, TLS/DNS ₺999, full package ₺1,999 + VAT; 50% off for Pro and Enterprise subscribers. Free fix code with every scan.',
+          fixNote: 'One-time fix service ("We fix it"): security header ₺499, TLS/DNS ₺999, full package ₺5,000 + VAT; 50% off for Pro and Enterprise subscribers. Free fix code with every scan.',
           foot: 'All prices exclude VAT. For corporate invoicing or annual billing, write to destek@cyberlionai.com. | Tüm planlar KDV hariçtir.',
           free: {
             badge: 'Trial', name: 'Free', tagline: 'A fast look at your site security posture.',
