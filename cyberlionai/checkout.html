@@ -154,7 +154,7 @@
           <label for="wl-plan" data-t-tr="Plan" data-t-en="Plan">Plan</label>
           <select id="wl-plan" name="plan">
             <option value="pro" selected>Pro — ₺299/ay</option>
-            <option value="enterprise" data-t-tr="Enterprise — Özel Teklif" data-t-en="Enterprise — Custom Quote">Enterprise — Özel Teklif</option>
+            <option value="enterprise" data-t-tr="Enterprise — ₺2.499/ay" data-t-en="Enterprise — ₺2,499/mo">Enterprise — ₺2.499/ay</option>
           </select>
           <label for="wl-domain" data-t-tr="Taramak istediğiniz alan adı (opsiyonel)" data-t-en="Domain you want to scan (optional)">Taramak istediğiniz alan adı (opsiyonel)</label>
           <input id="wl-domain" name="domain" type="text" autocomplete="off" maxlength="253" placeholder="sirketiniz.com" />
@@ -235,6 +235,11 @@
     'use strict';
     var form = document.getElementById('wl-form');
     var msg = document.getElementById('wl-msg');
+    /* Fiyat sayfasından ?plan=enterprise ile gelindiyse o plan seçili gelsin. */
+    try {
+      var istenen = new URLSearchParams(location.search).get('plan');
+      if (istenen === 'pro' || istenen === 'enterprise') document.getElementById('wl-plan').value = istenen;
+    } catch (e) { /* eski tarayıcı: Pro seçili kalır */ }
     var tr = {
       ok: 'Kaydınız alındı. 24 saat içinde e-posta ile dönüş yapacağız.',
       invalid: 'Lütfen geçerli bir e-posta adresi girin.',
