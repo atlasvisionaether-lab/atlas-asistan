@@ -1319,7 +1319,16 @@
      Kaynak: /api/worldmap. Tarayıcı üçüncü tarafa çıkmaz.
      ========================================================== */
   .wmap { position: relative; }
-  .wmap__layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+  /* Harita tam genişlikte; kartlar ALTINDA ızgara. Yan sütunda dururken kart
+     yığını haritadan çok daha uzun kalıyor, haritanın altında büyük boş alan
+     açılıyordu. */
+  .wmap__layout { display: block; }
+  .wmap__panels {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px; align-items: start; margin-top: 20px;
+  }
+  .wmap__fail { position: absolute; inset: auto 0 0 0; margin: 0; padding: 10px 16px; text-align: center; color: var(--text-gray); font-size: 0.85rem; background: rgba(0, 0, 0, 0.55); }
+  .wmap__fail[hidden] { display: none; }
 
   .wmap__stage {
     position: relative; border-radius: var(--radius); overflow: hidden;
@@ -1362,7 +1371,6 @@
     border-radius: var(--radius-sm); padding: 16px;
     -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   }
-  .wmap__card + .wmap__card { margin-top: 16px; }
   .wmap__cardTitle { font-family: var(--font-heading); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-primary); margin: 0 0 10px; }
 
   .wmap__ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -1429,9 +1437,6 @@
   }
   .wmap__tip[hidden] { display: none; }
 
-  @media (max-width: 960px) {
-    .wmap__layout { grid-template-columns: minmax(0, 1fr); }
-  }
   @media (max-width: 560px) {
     .wmap__ctl { gap: 6px; }
     .wmap__ctl select, .wmap__seg button { font-size: 0.82rem; padding: 8px 10px; }
@@ -1777,9 +1782,10 @@
               <g id="wmOwn"></g>
             </svg>
             <div class="wmap__tip" id="wmTip" role="status" hidden></div>
+            <p class="wmap__fail" id="wmFail" role="status" hidden></p>
           </div>
 
-          <div>
+          <div class="wmap__panels">
             <div class="wmap__card reveal">
               <h3 class="wmap__cardTitle" id="wmDetailTitle" data-i18n="map.detailTitle">Ülke ayrıntısı</h3>
               <div id="wmDetail">
@@ -5559,16 +5565,36 @@
             unknown:'Konumu bilinmeyen kayıt', noGeo:'ülke bilgisi yok', failed:'ulaşılamadı',
             cached:'önbellekten', live:'Canlı', paused:'Duraklatıldı', pick:'Haritadan bir işaret seçin.',
             none:'Bu aralıkta gösterilecek kayıt yok.', err:'Harita verisi alınamadı.',
-            shared:'Aynı aileyi paylaşan ülkeler', total:'Toplam', nodes:'düğüm' },
+            shared:'Aynı aileyi paylaşan ülkeler', total:'Toplam', nodes:'düğüm',
+            rangeScope:'Zaman filtresi yalnızca zaman damgası taşıyan kaynakları kapsar.',
+            rangeIncluded:'Bu görünümde sayılan', rangeExcluded:'Sayılmayan (zaman damgası yok)',
+            rangeNone:'Hiçbir kaynak zaman damgası taşımıyor; bu görünümde gösterilecek kayıt yok.',
+            ownTitle:'Cyber Lion AI tarama etkinliği',
+            ownNote:'Müşterilerimizin taradığı hedeflerin barındırma ülkesi. Beslemelerden ayrı sayılır; iki sayı toplanmaz.',
+            ownRangeNote:'Zaman filtresi bu katmanı kapsamıyor; yalnızca “Tümü” görünümünde gösterilir.',
+            mapFail:'Harita çizilemedi; sayaçlar güncel.' },
       en: { srcTorexit:'Tor exit nodes', geoResolved:'country resolved from IP table',
             geoNative:'country from the feed’s own field', geoTable:'IP→country table',
             countriesWord:'countries', of:'/', hosts:'hosting records', online:'online', families:'Malware families',
             unknown:'Records without a known location', noGeo:'no country data', failed:'unreachable',
             cached:'from cache', live:'Live', paused:'Paused', pick:'Select a marker on the map.',
             none:'No records to show in this range.', err:'Could not load map data.',
-            shared:'Countries sharing this family', total:'Total', nodes:'nodes' }
+            shared:'Countries sharing this family', total:'Total', nodes:'nodes',
+            rangeScope:'The time filter covers only sources that carry timestamps.',
+            rangeIncluded:'Counted in this view', rangeExcluded:'Not counted (no timestamps)',
+            rangeNone:'No source carries timestamps, so there is nothing to show in this view.',
+            ownTitle:'Cyber Lion AI scan activity',
+            ownNote:'Hosting country of targets our customers scanned. Counted separately from the feeds; the two are not additive.',
+            ownRangeNote:'The time filter does not cover this layer; it is shown only in the “All” view.',
+            mapFail:'The map could not be drawn; the counters are up to date.' }
     };
-    function t(k) { return (T[document.documentElement.lang] || T.tr)[k]; }
+    /* Eksik anahtar ekrana "undefined" basmasın: önce Türkçe'ye, o da yoksa
+       boş metne düşer. */
+    function t(k) {
+      var v = (T[document.documentElement.lang] || T.tr)[k];
+      if (v === undefined) v = T.tr[k];
+      return v === undefined ? '' : v;
+    }
 
     /* Kaynak adları sunucudan Türkçe sabit geliyor. Kimliği bilinen kaynaklar
        burada çevriliyor; bilinmeyen bir kimlik gelirse sunucunun verdiği ad
@@ -6097,15 +6123,25 @@
       els.rangeNote.hidden = false;
     }
 
+    /* Her parça ayrı korunuyor: haritayı çizen kısım hata verirse sayaçlar ve
+       kaynaklar yine dolsun, harita yerinde kısa bir not görünsün. */
+    var failEl = document.getElementById('wmFail');
+    function guard(fn, onMap) {
+      try { fn(); return true; }
+      catch (err) {
+        if (window.console) console.error('worldmap:', fn.name, err);
+        if (onMap && failEl) { failEl.textContent = t('mapFail'); failEl.hidden = false; }
+        return false;
+      }
+    }
     function render() {
       if (!state.data) return;
-      drawDots();
-      drawTop();
-      drawCounters();
-      drawSources();
-      drawOwn();
-      drawRangeNote();
-      if (state.selected) select(state.selected);
+      if (guard(drawDots, true) && guard(drawOwn, true) && failEl) failEl.hidden = true;
+      guard(drawTop);
+      guard(drawCounters);
+      guard(drawSources);
+      guard(drawRangeNote);
+      if (state.selected) guard(function selected() { select(state.selected); });
     }
 
     /* ---------- veri ---------- */
