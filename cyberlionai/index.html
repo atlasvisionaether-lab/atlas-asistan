@@ -1155,6 +1155,17 @@
                 border-color var(--transition-speed) var(--transition-ease);
   }
   .chip:hover { color: var(--gold-primary); border-color: var(--gold-primary); }
+  .fixhow { margin-top: 8px; font-size: 0.8rem; }
+  .fixhow summary { cursor: pointer; color: var(--gold-primary); font-weight: 600; }
+  .fixhow summary:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: 2px; }
+  .fixhow__tabs { display: inline-flex; margin: 8px 0 6px; border: 1px solid var(--hairline); border-radius: var(--radius-sm); overflow: hidden; }
+  .fixhow__tabs button { padding: 5px 10px; font: inherit; color: var(--text-gray); background: transparent; border: 0; cursor: pointer; }
+  .fixhow__tabs button[aria-pressed="true"] { background: rgba(212, 175, 55, 0.18); color: var(--gold-light); }
+  .fixhow__code {
+    display: block; padding: 9px 11px; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere;
+    background: var(--primary-black); border: 1px solid var(--hairline); color: var(--gold-primary); font-size: 0.76rem;
+  }
+  .fixhow__note { display: block; margin-top: 6px; color: var(--text-gray); font-size: 0.74rem; }
   .assist-handoff { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
   .assist-handoff input {
     flex: 1 1 140px; min-width: 0; padding: 8px 10px; font: inherit; font-size: 0.85rem;
@@ -1912,7 +1923,7 @@
 
         </div>
 
-        <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur.</p>
+        <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal fatura ve yıllık ödeme talepleri için destek@cyberlionai.com adresine yazın.</p>
         <p class="pricing__foot reveal"><a class="pricing__more" href="/pricing" data-i18n="pricing.more">Planları yan yana karşılaştır</a></p>
       </div>
     </section>
@@ -2349,6 +2360,11 @@
           quotaUnlimited: 'Enterprise: sınırsız tarama',
           quotaOutMonthly: "Bu ayki {limit} tarama hakkınız doldu. Hakkınız yeni ayda yenilenir; sınırsız tarama için Enterprise'a geçebilirsiniz.",
           fixLabel: 'Düzeltme',
+          howTitle: 'Nasıl düzeltirim?',
+          howNote: 'Değişiklikten sonra sunucuyu yeniden yükleyin ve taramayı tekrarlayın. Apache için mod_headers modülü açık olmalıdır.',
+          howCf: 'Cloudflare panelinde: Rules › Transform Rules › Modify Response Header › Set static\nBaşlık: {name}\nDeğer: {value}',
+          howCfHttps: 'Cloudflare panelinde: SSL/TLS › Edge Certificates › Always Use HTTPS: Açık',
+          howCfTls: 'Cloudflare panelinde: SSL/TLS › Edge Certificates › Minimum TLS Version: TLS 1.2',
           downloadPdf: 'PDF Raporu İndir',
           warn: {
             error_response: 'Hedef {status} hata kodu döndürdü; ölçülen başlıklar normal sayfanınkinden farklı olabilir.',
@@ -2492,7 +2508,7 @@
         pricing: {
           eyebrow: 'Planlar', title: 'SİZE UYGUN PLANI SEÇİN',
           subtitle: 'Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.',
-          foot: 'Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur. | All prices exclude VAT.',
+          foot: 'Tüm planlar KDV hariçtir. Kurumsal fatura ve yıllık ödeme talepleri için destek@cyberlionai.com adresine yazın. | All prices exclude VAT.',
           free: {
             badge: 'Deneme', name: 'Free', tagline: 'Sitenizin güvenlik durumuna hızlı bir bakış.',
             price: '₺0', period: 'Süresiz ücretsiz',
@@ -2713,6 +2729,11 @@
           quotaUnlimited: 'Enterprise: unlimited scans',
           quotaOutMonthly: 'You have used this month\'s {limit} scans. Your allowance renews next month; upgrade to Enterprise for unlimited scans.',
           fixLabel: 'Fix',
+          howTitle: 'How do I fix it?',
+          howNote: 'Reload the server after the change and run the scan again. Apache needs mod_headers enabled.',
+          howCf: 'In the Cloudflare dashboard: Rules › Transform Rules › Modify Response Header › Set static\nHeader: {name}\nValue: {value}',
+          howCfHttps: 'In the Cloudflare dashboard: SSL/TLS › Edge Certificates › Always Use HTTPS: On',
+          howCfTls: 'In the Cloudflare dashboard: SSL/TLS › Edge Certificates › Minimum TLS Version: TLS 1.2',
           downloadPdf: 'Download PDF Report',
           warn: {
             error_response: 'The target returned status {status}; the headers measured may differ from the normal page.',
@@ -2853,7 +2874,7 @@
         pricing: {
           eyebrow: 'Plans', title: 'CHOOSE YOUR PLAN',
           subtitle: 'Start free. Upgrade when you are ready. No long-term commitment.',
-          foot: 'All prices exclude VAT. Corporate invoicing and annual billing are available. | Tüm planlar KDV hariçtir.',
+          foot: 'All prices exclude VAT. For corporate invoicing or annual billing, write to destek@cyberlionai.com. | Tüm planlar KDV hariçtir.',
           free: {
             badge: 'Trial', name: 'Free', tagline: 'A fast look at your site security posture.',
             price: '₺0', period: 'Free forever',
@@ -3250,7 +3271,9 @@
      * Sayaç `.reveal` gözlemcisinden bağımsız tetikleniyor: kutu açıldığında
      * gözlemci büyük olasılıkla o bölgeyi çoktan geçmiş olur.
      */
-    var STATS_MIN_TO_SHOW = 50;
+    /* Eşik 1: gerçek sayı ilk taramadan itibaren gösteriliyor (ürün kararı,
+       2026-10-04). Uydurma ya da yuvarlanmış sayı YOK; sıfırken kutu kapalı. */
+    var STATS_MIN_TO_SHOW = 1;
 
     function loadLiveStats() {
       var box = document.getElementById('heroScans');
@@ -3264,11 +3287,8 @@
         })
         .then(function (data) {
           if (!data || typeof data.totalScans !== 'number') throw new Error('stats_malformed');
-          /* Eşiğin ALTINDA kutu açılmıyor. Sayı doğru ama bir güvenlik
-             ürününün ana sayfasında "3+ taranan site" yazması ürünü
-             olduğundan zayıf gösteriyor; eşik dolana kadar hiç sayı
-             göstermemek, küçük bir sayı göstermekten de uydurma bir sayı
-             göstermekten de dürüst. Eşik tek yerde: aşağıdaki sabit. */
+          /* Eşiğin altında (hiç tarama yokken) kutu açılmıyor. Eşik tek
+             yerde: STATS_MIN_TO_SHOW. */
           if (data.totalScans < STATS_MIN_TO_SHOW) {
             log('canlı sayaç eşiğin altında, gizli:', data.totalScans, '<', STATS_MIN_TO_SHOW);
             return;
@@ -3923,6 +3943,87 @@
     };
 
     /** Tek bir kontrolü listeye ekler: ad, kanıt, önem etiketi ve düzeltme. */
+    /**
+     * Kalan kontrol için sunucuya göre düzeltme parçaları.
+     *
+     * Başlık kontrolleri için parça, kontrolün KENDİ düzeltme satırından
+     * ("Başlık: değer") türetiliyor: önerilen değer tek yerde duruyor ve
+     * Nginx/Apache/Cloudflare biçimi ondan ayrışamıyor. Başlık olmayan
+     * kontroller için (yönlendirme, TLS, sürüm gizleme, çerez) elle yazılmış
+     * karşılıklar var. Genel bir sunucu karşılığı olmayan kontrollerde (DNS
+     * kayıtları, CORS, SRI) null döner ve düğme gösterilmez.
+     */
+    var HOW_FIXED = {
+      https: {
+        nginx: 'server {\n  listen 80;\n  server_name _;\n  return 301 https://$host$request_uri;\n}',
+        apache: 'RewriteEngine On\nRewriteCond %{HTTPS} off\nRewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]',
+        cfKey: 'scan.howCfHttps'
+      },
+      tls_legacy: { nginx: 'ssl_protocols TLSv1.2 TLSv1.3;', apache: 'SSLProtocol -all +TLSv1.2 +TLSv1.3', cfKey: 'scan.howCfTls' },
+      tls_protocol: { nginx: 'ssl_protocols TLSv1.2 TLSv1.3;', apache: 'SSLProtocol -all +TLSv1.2 +TLSv1.3', cfKey: 'scan.howCfTls' },
+      disclosure: { nginx: 'server_tokens off;', apache: 'ServerTokens Prod\nServerSignature Off' },
+      cookies: {
+        nginx: '# nginx 1.19.3+ (ters vekil)\nproxy_cookie_flags ~ secure httponly samesite=lax;',
+        apache: 'Header always edit Set-Cookie ^(.*)$ "$1; Secure; HttpOnly; SameSite=Lax"'
+      }
+    };
+
+    function howToFix(item) {
+      var fixed = HOW_FIXED[item.id];
+      if (fixed) {
+        return { nginx: fixed.nginx, apache: fixed.apache, cloudflare: fixed.cfKey ? t(fixed.cfKey) : null };
+      }
+      var line = String(t('scan.checks.' + item.id + '.fix')).split('\n')[0]
+        .replace(/\s+\(.*\)\s*$/, '').trim();
+      var m = /^([A-Z][A-Za-z-]+):\s*(\S.*)$/.exec(line);
+      if (!m || m[1] === 'Set-Cookie') return null;
+      var name = m[1], value = m[2].replace(/"/g, '\\"');
+      return {
+        nginx: 'add_header ' + name + ' "' + value + '" always;',
+        apache: 'Header always set ' + name + ' "' + value + '"',
+        cloudflare: t('scan.howCf', { name: name, value: m[2] })
+      };
+    }
+
+    /** "Nasıl düzeltirim?" açılır bölmesi: sunucu sekmeleri + kod. */
+    function howToFixBlock(item) {
+      var parts = howToFix(item);
+      if (!parts) return null;
+      var box = document.createElement('details');
+      box.className = 'fixhow';
+      var sum = document.createElement('summary');
+      sum.textContent = t('scan.howTitle');
+      box.appendChild(sum);
+
+      var tabs = document.createElement('div');
+      tabs.className = 'fixhow__tabs';
+      tabs.setAttribute('role', 'group');
+      var code = document.createElement('code');
+      code.className = 'fixhow__code';
+
+      var keys = ['nginx', 'apache', 'cloudflare'].filter(function (k) { return parts[k]; });
+      var labels = { nginx: 'Nginx', apache: 'Apache', cloudflare: 'Cloudflare' };
+      keys.forEach(function (k, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = labels[k];
+        b.setAttribute('aria-pressed', String(i === 0));
+        b.addEventListener('click', function () {
+          Array.prototype.forEach.call(tabs.children, function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+          code.textContent = parts[k];
+        });
+        tabs.appendChild(b);
+      });
+      code.textContent = parts[keys[0]];
+      box.appendChild(tabs);
+      box.appendChild(code);
+      var note = document.createElement('span');
+      note.className = 'fixhow__note';
+      note.textContent = t('scan.howNote');
+      box.appendChild(note);
+      return box;
+    }
+
     function addCheckRow(item) {
       var li = document.createElement('li');
       li.style.alignItems = 'flex-start';
@@ -3972,6 +4073,8 @@
         fix.style.overflowWrap = 'anywhere';
         fix.textContent = t('scan.checks.' + item.id + '.fix');
         body.appendChild(fix);
+        var how = howToFixBlock(item);
+        if (how) body.appendChild(how);
       }
 
       var tag = document.createElement('span');
