@@ -74,6 +74,7 @@
       'footer.refund': 'Teslimat ve İade', 'footer.terms': 'Kullanım Şartları',
       /* JS'in ürettiği metinler */
       title: 'Panelim',
+      quotaMonth: 'Bu ay kalan tarama', quotaUnlimited: 'Sınırsız',
       sending: 'Gönderiliyor…', sent: 'Giriş bağlantısı gönderildi. E-postanızı kontrol edin.',
       badEmail: 'Geçerli bir e-posta adresi girin.', tooMany: 'Çok fazla deneme. Bir süre sonra tekrar deneyin.',
       failed: 'İşlem tamamlanamadı. Birazdan tekrar deneyin.', loading: 'Yükleniyor…',
@@ -159,6 +160,7 @@
       'footer.kvkk': 'KVKK Privacy Notice', 'footer.privacy': 'Privacy Policy', 'footer.distance': 'Distance Sales',
       'footer.refund': 'Delivery & Returns', 'footer.terms': 'Terms of Use',
       title: 'My Dashboard',
+      quotaMonth: 'Scans left this month', quotaUnlimited: 'Unlimited',
       sending: 'Sending…', sent: 'Sign-in link sent. Please check your email.',
       badEmail: 'Enter a valid email address.', tooMany: 'Too many attempts. Please try again later.',
       failed: 'Could not complete. Please try again shortly.', loading: 'Loading…',
@@ -361,13 +363,24 @@
     $('upgradeBtn').hidden = paid;
     $('manageBtn').hidden = !paid;
 
+    /* Kota sunucudan, plana göre (api/_lib/entitlement.js): free ömür boyu,
+       Pro aylık, Enterprise sınırsız. */
     var q = S.me && S.me.quota;
     $('quotaBox').hidden = !q;
     if (q) {
-      $('quotaText').textContent = q.remaining + '/' + q.limit;
-      $('quotaFill').style.width = Math.max(0, Math.min(100, (q.remaining / q.limit) * 100)) + '%';
-      $('quotaBar').setAttribute('aria-valuemax', String(q.limit));
-      $('quotaBar').setAttribute('aria-valuenow', String(q.remaining));
+      var label = $('quotaBox').querySelector('[data-i18n="profile.quota"]');
+      label.textContent = q.period === 'month' ? t('quotaMonth') : DICT[lang]['profile.quota'];
+      if (q.unlimited) {
+        $('quotaText').textContent = t('quotaUnlimited');
+        $('quotaFill').style.width = '100%';
+        $('quotaBar').hidden = true;
+      } else {
+        $('quotaBar').hidden = false;
+        $('quotaText').textContent = q.remaining + '/' + q.limit;
+        $('quotaFill').style.width = Math.max(0, Math.min(100, (q.remaining / q.limit) * 100)) + '%';
+        $('quotaBar').setAttribute('aria-valuemax', String(q.limit));
+        $('quotaBar').setAttribute('aria-valuenow', String(q.remaining));
+      }
     }
   }
 

@@ -28,9 +28,8 @@
 const { startQueuedScan, isAvailable } = require('./_lib/queuestart.js');
 const store = require('./_lib/store.js');
 const { resolveOwner, clientIp, ipKey } = require('./_lib/session.js');
-const {
-  RATE_WINDOW_SECONDS, RATE_MAX, FREE_SCAN_LIMIT, QUOTA_TTL_SECONDS
-} = require('./_lib/limits.js');
+const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
+const entitlement = require('./_lib/entitlement.js');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -83,12 +82,20 @@ module.exports = async function handler(req, res) {
   res.setHeader('X-RateLimit-Remaining', String(Math.max(0, RATE_MAX - rate.count)));
 
   const owner = await resolveOwner(req, res);
-  const quotaKey = store.quotaKey(owner);
+  /* Sınır plana göre: free/anonim ömür boyu, Pro aylık, Enterprise sınırsız
+     (bkz. _lib/entitlement.js). Eskiden herkese ücretsiz sınır uygulanıyordu. */
+  const policy = await entitlement.resolvePolicy(owner, store.quotaKey(owner));
+  const refundQuota = function () {
+    return policy.unlimited ? Promise.resolve() : store.refundQuota(policy.key);
+  };
 
   // Kota önce ayrılır: eşzamanlı iki istek son hakkı iki kez harcayamaz.
   let quota;
   try {
-    quota = await store.reserveQuota(quotaKey, FREE_SCAN_LIMIT, QUOTA_TTL_SECONDS);
+    /* Sınırsız planda sayaç tutulmuyor; IP hız sınırı yukarıda zaten uygulandı. */
+    quota = policy.unlimited
+      ? { ok: true, used: null }
+      : await store.reserveQuota(policy.key, policy.limit, policy.ttl);
   } catch (err) {
     if (console && console.error) console.error('quota store error:', err.message);
     return res.status(503).json({ error: { code: 'service_unavailable' } });
@@ -97,7 +104,8 @@ module.exports = async function handler(req, res) {
   if (!quota.ok) {
     return res.status(402).json({
       error: {
-        code: 'quota_exceeded', used: quota.used, limit: FREE_SCAN_LIMIT, remaining: 0
+        code: 'quota_exceeded', used: quota.used, limit: policy.limit, remaining: 0,
+        plan: policy.plan, period: policy.period
       }
     });
   }
@@ -107,7 +115,7 @@ module.exports = async function handler(req, res) {
     consent: consent,
     owner: owner,
     ip: clientIp(req),
-    refund: function () { return store.refundQuota(quotaKey); }
+    refund: refundQuota
   });
 
   if (!kuyruk.ok) {
@@ -123,11 +131,6 @@ module.exports = async function handler(req, res) {
     host: kuyruk.host,
     url: kuyruk.url,
     statusUrl: '/api/scan-status?id=' + encodeURIComponent(kuyruk.jobId),
-    quota: {
-      used: quota.used,
-      limit: FREE_SCAN_LIMIT,
-      remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used),
-      scope: owner.isAuthenticated ? 'account' : 'anonymous'
-    }
+    quota: entitlement.quotaView(policy, quota.used, owner.isAuthenticated ? 'account' : 'anonymous')
   });
 };

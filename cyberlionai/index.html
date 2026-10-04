@@ -2300,9 +2300,12 @@
           scoreLabel: 'Güvenlik skoru',
           summary: '{passed} geçti · {failed} kaldı · {skipped} puan dışı',
           quota: 'Kalan ücretsiz tarama: {n}/5',
-          quotaOut: "Ücretsiz tarama hakkınız doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
-          quotaOutAccount: "Hesabınızın ücretsiz tarama hakkı doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
+          quotaOut: "Ücretsiz tarama hakkınız doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
+          quotaOutAccount: "Hesabınızın ücretsiz tarama hakkı doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
           quotaAccount: 'Hesabınızda {n} ücretsiz tarama kaldı',
+          quotaMonthly: 'Bu ay kalan tarama: {n}/{limit}',
+          quotaUnlimited: 'Enterprise: sınırsız tarama',
+          quotaOutMonthly: "Bu ayki {limit} tarama hakkınız doldu. Hakkınız yeni ayda yenilenir; sınırsız tarama için Enterprise'a geçebilirsiniz.",
           fixLabel: 'Düzeltme',
           downloadPdf: 'PDF Raporu İndir',
           warn: {
@@ -2332,7 +2335,7 @@
             scan_failed: 'Tarama tamamlanamadı. Lütfen tekrar deneyin.',
             network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.',
             service_unavailable: 'Tarama servisi şu anda yapılandırılıyor. Kısa süre sonra tekrar deneyin.',
-            quota_exceeded: "Ücretsiz tarama hakkınız doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay)."
+            quota_exceeded: "Ücretsiz tarama hakkınız doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay)."
           },
           note: {
             unsafe_inline: "script-src 'unsafe-inline' içeriyor; koruma büyük ölçüde etkisiz",
@@ -2421,7 +2424,7 @@
           },
           free: {
             q: 'Ücretsiz mi, kayıt gerekiyor mu?',
-            a: 'Ücretsiz plan kayıt gerektirmez ve 5 güvenlik testi ile temel SSL kontrolü sunar. Hesap açmanız yalnızca sınırsız tarama, detaylı rapor ve düzeltme önerileri için gerekir.'
+            a: 'Ücretsiz plan kayıt gerektirmez ve 5 güvenlik testi ile temel SSL kontrolü sunar. Daha fazla tarama (Pro'da ayda 50, Enterprise'da sınırsız), detaylı rapor ve düzeltme önerileri için hesap açıp bir plana geçmeniz gerekir.'
           },
           csp: {
             q: 'Content-Security-Policy nasıl eklenir?',
@@ -2710,9 +2713,12 @@
           scoreLabel: 'Security score',
           summary: '{passed} passed · {failed} failed · {skipped} not scored',
           quota: 'Free scans left: {n}/5',
-          quotaOut: 'You have used your free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.',
-          quotaOutAccount: 'Your account has used its free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.',
+          quotaOut: 'You have used your free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
+          quotaOutAccount: 'Your account has used its free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
           quotaAccount: '{n} free scans left on your account',
+          quotaMonthly: 'Scans left this month: {n}/{limit}',
+          quotaUnlimited: 'Enterprise: unlimited scans',
+          quotaOutMonthly: 'You have used this month\'s {limit} scans. Your allowance renews next month; upgrade to Enterprise for unlimited scans.',
           fixLabel: 'Fix',
           downloadPdf: 'Download PDF Report',
           warn: {
@@ -2739,7 +2745,7 @@
             scan_failed: 'The scan could not be completed. Please try again.',
             network: 'Could not reach the server. Check your connection.',
             service_unavailable: 'The scanning service is being configured. Please try again shortly.',
-            quota_exceeded: 'You have used your free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.'
+            quota_exceeded: 'You have used your free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.'
           },
           note: {
             unsafe_inline: "script-src allows 'unsafe-inline'; most of the protection is lost",
@@ -2828,7 +2834,7 @@
           },
           free: {
             q: 'Is it free? Do I need an account?',
-            a: 'The free plan needs no registration and gives you 5 security tests plus a basic SSL check. An account is only required for unlimited scans, detailed reports and remediation guidance.'
+            a: 'The free plan needs no registration and gives you 5 security tests plus a basic SSL check. For more scans (50 a month on Pro, unlimited on Enterprise), detailed reports and remediation guidance, create an account and choose a plan.'
           },
           csp: {
             q: 'How do I add a Content-Security-Policy?',
@@ -3907,9 +3913,14 @@
        bağlı olarak kalıcı depoda tutulur. Buradaki değer yalnızca son sunucu
        yanıtının gösterimidir; tarayıcı verisi silinse bile sunucudaki sayaç
        ve IP hız sınırı yerinde kalır.                                        */
+    /* Sınır plana göre (sunucu bildirir): free 5 (ömür boyu), Pro aylık,
+       Enterprise sınırsız. Sunucu cevabı gelene dek free varsayılır. */
+    var quotaPlan = 'free';
+    var quotaLimit = CONFIG.freeScanLimit;
+
     function scansLeft() {
       var raw = parseInt(store.get(CONFIG.storageKeys.quota), 10);
-      return isNaN(raw) || raw < 0 ? CONFIG.freeScanLimit : Math.min(raw, CONFIG.freeScanLimit);
+      return isNaN(raw) || raw < 0 ? quotaLimit : Math.min(raw, quotaLimit);
     }
 
     /* Kotanın kime ait olduğu: 'anonymous' veya 'account'. Sunucu her tarama
@@ -3919,8 +3930,12 @@
 
     /** Sunucunun bildirdiği kalan hakkı gösterime yazar. */
     function setQuotaFromServer(quota) {
-      if (!quota || typeof quota.remaining !== 'number') return;
+      if (!quota) return;
       if (quota.scope) quotaScope = quota.scope;
+      if (quota.unlimited === true) { quotaPlan = 'enterprise'; renderQuota(); return; }
+      if (typeof quota.remaining !== 'number') return;
+      if (quota.plan) quotaPlan = quota.plan;
+      if (typeof quota.limit === 'number') quotaLimit = quota.limit;
       store.set(CONFIG.storageKeys.quota, String(quota.remaining));
       renderQuota();
     }
@@ -3928,6 +3943,8 @@
     function renderQuota() {
       var el = document.getElementById('scanQuota');
       if (!el) return;
+      if (quotaPlan === 'enterprise') { el.textContent = t('scan.quotaUnlimited'); return; }
+      if (quotaPlan === 'pro') { el.textContent = t('scan.quotaMonthly', { n: scansLeft(), limit: quotaLimit }); return; }
       var key = quotaScope === 'account' ? 'scan.quotaAccount' : 'scan.quota';
       el.textContent = t(key, { n: scansLeft() });
     }
@@ -4302,9 +4319,12 @@
 
       // Kota sunucuda bitti.
       if (code === 'quota_exceeded') {
-        setQuotaFromServer({ remaining: 0 });
+        setQuotaFromServer({ remaining: 0, plan: err.plan, limit: err.limit });
         scanOutput.classList.remove('is-active');
-        if (authManager.isSignedIn()) {
+        if (err.plan === 'pro') {
+          // Aylık Pro hakkı bitti: kayıt veya Pro önerisi anlamsız olurdu.
+          toast(t('scan.quotaOutMonthly', { limit: err.limit }), 'info', 8000);
+        } else if (authManager.isSignedIn()) {
           // Zaten kayıtlı: kayıt modalını açmak yanlış olurdu. Hakkı biten
           // hesap için doğru adım Premium'a geçmek.
           toast(t('scan.quotaOutAccount'), 'info', 7000);

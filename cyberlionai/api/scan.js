@@ -40,9 +40,8 @@ const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
 const tg = require('./_lib/telegram.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
-const {
-  RATE_WINDOW_SECONDS, RATE_MAX, FREE_SCAN_LIMIT, QUOTA_TTL_SECONDS
-} = require('./_lib/limits.js');
+const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
+const entitlement = require('./_lib/entitlement.js');
 
 /** Motorun fırlattığı teknik hataları istemcinin çevirebileceği kodlara eşler. */
 const ERROR_STATUS = {
@@ -93,7 +92,12 @@ async function handler(req, res) {
   // Sahiplik: giriş yapmışsa hesap, değilse anonim oturum. Kota da buna bağlı;
   // hesabın kotası çerez silinerek sıfırlanamaz.
   const owner = await resolveOwner(req, res);
-  const quotaKey = store.quotaKey(owner);
+  /* Sınır plana göre: free/anonim ömür boyu, Pro aylık, Enterprise sınırsız
+     (bkz. _lib/entitlement.js). Eskiden herkese ücretsiz sınır uygulanıyordu. */
+  const policy = await entitlement.resolvePolicy(owner, store.quotaKey(owner));
+  const refundQuota = function () {
+    return policy.unlimited ? Promise.resolve() : store.refundQuota(policy.key);
+  };
 
   let body = req.body;
   if (typeof body === 'string') {
@@ -113,7 +117,10 @@ async function handler(req, res) {
   // Kota önce ayrılır: eşzamanlı iki istek son hakkı iki kez harcayamaz.
   let quota;
   try {
-    quota = await store.reserveQuota(quotaKey, FREE_SCAN_LIMIT, QUOTA_TTL_SECONDS);
+    /* Sınırsız planda sayaç tutulmuyor; IP hız sınırı yukarıda zaten uygulandı. */
+    quota = policy.unlimited
+      ? { ok: true, used: null }
+      : await store.reserveQuota(policy.key, policy.limit, policy.ttl);
   } catch (err) {
     if (console && console.error) console.error('quota store error:', err.message);
     return res.status(503).json({ error: { code: 'service_unavailable' } });
@@ -124,8 +131,10 @@ async function handler(req, res) {
       error: {
         code: 'quota_exceeded',
         used: quota.used,
-        limit: FREE_SCAN_LIMIT,
-        remaining: 0
+        limit: policy.limit,
+        remaining: 0,
+        plan: policy.plan,
+        period: policy.period
       }
     });
   }
@@ -147,7 +156,7 @@ async function handler(req, res) {
       consent: consent,
       owner: owner,
       ip: clientIp(req),
-      refund: function () { return store.refundQuota(quotaKey); }
+      refund: refundQuota
     });
 
     if (!kuyruk.ok) {
@@ -165,12 +174,7 @@ async function handler(req, res) {
       host: kuyruk.host,
       url: kuyruk.url,
       statusUrl: '/api/scan-status?id=' + encodeURIComponent(kuyruk.jobId),
-      quota: {
-        used: quota.used,
-        limit: FREE_SCAN_LIMIT,
-        remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used),
-        scope: owner.isAuthenticated ? 'account' : 'anonymous'
-      },
+      quota: entitlement.quotaView(policy, quota.used, owner.isAuthenticated ? 'account' : 'anonymous'),
       versions: { scanner: SCANNER_VERSION, report: REPORT_VERSION }
     });
   }
@@ -178,12 +182,7 @@ async function handler(req, res) {
   /* ---- Eşzamanlı yol (varsayılan) ---- */
   try {
     const result = await scanSite(url, { consent: consent });
-    result.quota = {
-      used: quota.used,
-      limit: FREE_SCAN_LIMIT,
-      remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used),
-      scope: owner.isAuthenticated ? 'account' : 'anonymous'
-    };
+    result.quota = entitlement.quotaView(policy, quota.used, owner.isAuthenticated ? 'account' : 'anonymous');
 
     // Geçmişe kaydet. Kayıt başarısız olursa tarama sonucu yine döner:
     // geçmiş bir kolaylık, taramanın kendisi değil.
@@ -241,7 +240,7 @@ async function handler(req, res) {
 
     // Kullanıcının hatası olmayan başarısızlıklarda hak geri verilir.
     if (REFUNDABLE.indexOf(code) !== -1) {
-      try { await store.refundQuota(quotaKey); } catch (e) { /* iade edilemedi, sessiz geç */ }
+      try { await refundQuota(); } catch (e) { /* iade edilemedi, sessiz geç */ }
     }
 
     const status = ERROR_STATUS[code] || 500;

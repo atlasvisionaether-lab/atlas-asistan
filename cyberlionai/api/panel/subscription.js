@@ -27,6 +27,7 @@
 const db = require('../_lib/db.js');
 const auth = require('../_lib/auth.js');
 const { PLANS } = require('../_lib/plans.js');
+const { planFromSubscriptions } = require('../_lib/entitlement.js');
 
 module.exports = async function handler(req, res) {
   /* Kişiye özel veri: ara önbelleklerde ASLA durmamalı. */
@@ -60,11 +61,9 @@ module.exports = async function handler(req, res) {
   }
 
   const active = rows.filter(function (r) { return r.active === true; });
-  /* Birden çok etkin abonelik olabilir (iki alan adı). Plan, en kapsamlı
-     olanı: Enterprise varsa Enterprise. */
-  const planId = active.some(function (r) { return r.plan === 'enterprise'; })
-    ? 'enterprise'
-    : (active.length ? 'pro' : 'free');
+  /* Plan, tarama kotasını belirleyen kuralla AYNI fonksiyondan: panelde
+     "Pro" yazıp taramada free sınırı uygulamak mümkün olmasın. */
+  const planId = planFromSubscriptions(rows);
 
   return res.status(200).json({
     plan: planId,
