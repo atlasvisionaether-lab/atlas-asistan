@@ -602,6 +602,113 @@ async function kos() {
     y.geriAl();
   }
 
+  /* ---------- maskEmail: tam adres Telegram'a gitmez ---------- */
+  {
+    const y = tgYukle(TAM_ENV);
+    const m = y.tg.maskEmail;
+    esit('maskEmail olağan', m('Ali.Kotan@Gmail.com'), 'a***@gmail.com');
+    esit('maskEmail tek harf', m('a@b.co'), 'a***@b.co');
+    esit('maskEmail @ yok', m('ali'), '-');
+    esit('maskEmail boş', m(null), '-');
+    esit('maskEmail yerel kısım boş', m('@x.com'), '-');
+    esit('maskEmail alan boş', m('ali@'), '-');
+    dogru('maskEmail alandaki denetim/işaret atılıyor',
+      m('a@ev\nil.com<b>').indexOf('\n') === -1 && m('a@evil.com<b>').indexOf('<') === -1);
+
+    const EPOSTA = 'gizli.kisi@ornek.com';
+    const mesajlar = [
+      y.tg.mesaj.odemeBasladi('pro', EPOSTA, 299),
+      y.tg.mesaj.odemeBasarili(EPOSTA, 'pro', 'ref-1', 299),
+      y.tg.mesaj.odemeBeklemede(EPOSTA, 'pro', 'PENDING'),
+      y.tg.mesaj.odemeBasarisiz(EPOSTA, 'iyzico_error'),
+      y.tg.mesaj.autofixIstendi('ornek.com', EPOSTA, 'zone1', 'all'),
+      y.tg.mesaj.beklemeListesi(EPOSTA, 'pro', 'ornek.com')
+    ];
+    mesajlar.forEach(function (metin, i) {
+      dogru('yeni mesaj ' + i + ' tam e-posta taşımıyor', metin.indexOf(EPOSTA) === -1
+        && metin.indexOf('gizli.kisi') === -1);
+      dogru('yeni mesaj ' + i + ' maskeli e-posta taşıyor', metin.indexOf('g***@ornek.com') !== -1);
+    });
+    esit('ödeme başlatıldı biçimi', mesajlar[0],
+      '[CyberLion] 💳 Ödeme başlatıldı: plan=PRO, email=g***@ornek.com, tutar=299 TL');
+    esit('kuyruktan bitti biçimi', y.tg.mesaj.taramaBittiKuyruk('https://Ornek.com/a?b=c', 82, 3),
+      '[CyberLion] ✅ Tarama bitti (kuyruktan): ornek.com, skor=82, risk=3');
+    esit('autofix tamam biçimi', y.tg.mesaj.autofixTamam('ornek.com', 'all', 3),
+      '[CyberLion] ✅ Autofix tamamlandı: ornek.com, tür=all, eklenen başlık=3');
+    y.geriAl();
+  }
+
+  /* ---------- öncelikli hat ---------- */
+  {
+    const y = tgYukle(Object.assign({}, TAM_ENV, {
+      UPSTASH_REDIS_REST_URL: 'https://ornek.upstash.io',
+      UPSTASH_REDIS_REST_TOKEN: 'x'
+    }));
+    const anahtarlar = [];
+    const yol = sapla('_lib/store.js', {
+      isConfigured: function () { return true; },
+      hitRateLimit: async function (k) {
+        anahtarlar.push(k);
+        /* Olağan kova dolu, öncelikli kova boş. */
+        return { count: k === 'cl:rl:tg' ? 999 : 1, ttl: 60 };
+      }
+    });
+    const f = fetchSapla([{ status: 200, json: { ok: true } }]);
+    const log = logYakala();
+    const olagan = await y.tg.sendTelegram('tarama', { type: 'scan' });
+    const oncelik = await y.tg.sendTelegram('ödeme', { type: 'payment', priority: true });
+    log.geriAl(); f.geriAl();
+    esit('olağan kova doluyken olağan mesaj düşüyor', olagan.code, 'local_rate_limited');
+    esit('olağan kova doluyken öncelikli mesaj gidiyor', oncelik.ok, true);
+    dogru('öncelikli mesaj ayrı kovadan sayılıyor', anahtarlar.indexOf('cl:rl:tg:p') !== -1);
+    delete require.cache[yol];
+
+    /* Geçici hata (5xx): öncelikli mesaj bir kez tekrar deneniyor, olağan denenmiyor. */
+    const yol2 = sapla('_lib/store.js', {
+      isConfigured: function () { return true; },
+      hitRateLimit: async function () { return { count: 1, ttl: 60 }; }
+    });
+    const f2 = fetchSapla([{ status: 502 }, { status: 200, json: { ok: true } }]);
+    const log2 = logYakala();
+    const tekrar = await y.tg.sendTelegram('ödeme', { type: 'payment', priority: true });
+    log2.geriAl(); f2.geriAl();
+    esit('öncelikli mesaj 502 sonrası tekrar deneniyor', f2.cagrilar.length, 2);
+    esit('tekrar başarılı', tekrar.ok, true);
+
+    const f3 = fetchSapla([{ status: 502 }, { status: 200, json: { ok: true } }]);
+    const log3 = logYakala();
+    await y.tg.sendTelegram('tarama', { type: 'scan' });
+    log3.geriAl(); f3.geriAl();
+    esit('olağan mesaj 502 sonrası tekrar denenmiyor', f3.cagrilar.length, 1);
+    delete require.cache[yol2];
+    y.geriAl();
+  }
+
+  /* ---------- tekSefer: aynı olay için tek bildirim ---------- */
+  {
+    const y = tgYukle(Object.assign({}, TAM_ENV, {
+      UPSTASH_REDIS_REST_URL: 'https://ornek.upstash.io',
+      UPSTASH_REDIS_REST_TOKEN: 'x'
+    }));
+    const gorulen = {};
+    const yol = sapla('_lib/store.js', {
+      isConfigured: function () { return true; },
+      setOnce: async function (k) { if (gorulen[k]) return false; gorulen[k] = true; return true; }
+    });
+    esit('tekSefer ilk çağrı', await y.tg.tekSefer('done:j1'), true);
+    esit('tekSefer ikinci çağrı', await y.tg.tekSefer('done:j1'), false);
+    esit('tekSefer başka olay', await y.tg.tekSefer('done:j2'), true);
+    delete require.cache[yol];
+
+    const yol2 = sapla('_lib/store.js', {
+      isConfigured: function () { return true; },
+      setOnce: async function () { throw new Error('depo düştü'); }
+    });
+    esit('tekSefer depo düşerse gönder', await y.tg.tekSefer('done:j3'), true);
+    delete require.cache[yol2];
+    y.geriAl();
+  }
+
   if (hatalar.length) {
     console.error('\nTelegram sınaması: ' + hatalar.length + ' KALDI, '
       + gecti + ' geçti\n');

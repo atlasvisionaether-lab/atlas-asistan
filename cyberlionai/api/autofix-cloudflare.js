@@ -17,9 +17,13 @@
  * Eskiden token yoksa sunucudaki CLOUDFLARE_TEST_TOKEN kullanılıyordu ve uç
  * kimlik doğrulamasızdı; o değişken tanımlansa herkes bizim Cloudflare
  * hesabımızla kural ekleyip silebilirdi. Sunucu token'ına düşüş kaldırıldı.
+ *
+ * TELEGRAM: istek, başarı ve başarısızlık öncelikli hattan bildiriliyor
+ * (alan adı, maskeli e-posta, zone kimliği, hata KODU). Token hiçbir
+ * mesaja girmez; Cloudflare'in hata metni de değil, yalnız kodu.
  */
 
-const { cf, findZoneId, applyTransformRule, maskToken } = require('./_lib/cloudflare.js');
+const { cf, findZoneId, applyTransformRule, maskToken, FIX_HEADERS } = require('./_lib/cloudflare.js');
 
 /** Rollback: ruleset icinden kurali siler. Token yalnizca bellekte. */
 async function cfRuleDelete(zoneId, rulesetId, ruleId, token) {
@@ -27,6 +31,18 @@ async function cfRuleDelete(zoneId, rulesetId, ruleId, token) {
 }
 const db = require('./_lib/db.js');
 const { requireUser, validToken } = require('./_lib/cfaccess.js');
+const tg = require('./_lib/telegram.js');
+
+/** fixType'ın eklediği başlık sayısı ('all' hepsini ekler). */
+function headerCount(fixType) {
+  return fixType === 'all' ? Object.keys(FIX_HEADERS).length : 1;
+}
+
+async function bildirBasarisiz(res, domain, code) {
+  tg.bildirimIsaretle(res);
+  await tg.sendTelegram(tg.mesaj.autofixBasarisiz(domain, code),
+    { type: 'alert', priority: true });
+}
 
 const FIX_TYPES = ['hsts', 'csp', 'xframe', 'all'];
 
@@ -49,7 +65,7 @@ async function recordAppliedFix(domain, fixType, ruleId) {
   }
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST' && req.method !== 'DELETE') {
@@ -97,12 +113,16 @@ module.exports = async function handler(req, res) {
   }
   const useToken = token;
 
+  await tg.sendTelegram(tg.mesaj.autofixIstendi(domain, user.email, zoneId || 'auto', fixType),
+    { type: 'autofix', priority: true });
+
   /* Zone çözümü. */
   let zone = zoneId;
   if (!zone) {
     const found = await findZoneId(domain, useToken);
     if (!found.ok) {
       const status = found.code === 'zone_not_found' ? 404 : (found.code === 'cf_unreachable' ? 502 : 401);
+      await bildirBasarisiz(res, domain, found.code);
       return res.status(status).json({ error: { code: found.code } });
     }
     zone = found.zoneId;
@@ -112,11 +132,15 @@ module.exports = async function handler(req, res) {
   const applied = await applyTransformRule(zone, useToken, fixType);
   if (!applied.ok) {
     // Kullanıcı hatası: 400. DB'ye failed yazmıyoruz (token hatalı olabilir, iz bırakma).
+    await bildirBasarisiz(res, domain, applied.code);
     return res.status(400).json({ error: { code: applied.code } });
   }
 
   /* Başarı: scan_findings'e bilgi kaydı (token'sız). */
   const findingId = await recordAppliedFix(domain, fixType, applied.ruleId);
+
+  await tg.sendTelegram(tg.mesaj.autofixTamam(domain, fixType, headerCount(fixType)),
+    { type: 'autofix', priority: true });
 
   return res.status(200).json({
     ok: true,
@@ -130,4 +154,7 @@ module.exports = async function handler(req, res) {
     tokenMasked: maskToken(),
     rollback: 'Cloudflare Dashboard > Rules > Transform Rules > CyberLion kuralını silin'
   });
-};
+}
+
+/* 500/502/504 ya da fırlatan bir hata kritik uyarı üretir (bkz. telegram.js). */
+module.exports = tg.ucuSar(handler, '/api/autofix-cloudflare');

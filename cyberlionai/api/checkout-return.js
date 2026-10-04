@@ -23,11 +23,27 @@
  * NE LOGLANMIYOR
  *
  * Jeton, imza ve anahtarlar LOGLANMIYOR; yalnızca sebep kodu.
+ *
+ * TELEGRAM
+ *
+ * Başarılı / beklemede / başarısız sonuçların hepsi öncelikli hattan
+ * bildiriliyor (maskeli e-posta). Başarı ve beklemede mesajı abonelik
+ * referansı başına BİR kez gidiyor: müşteri dönüş sayfasını yenilerse
+ * kanala ikinci "ödeme başarılı" düşmesin.
  */
 
 const db = require('./_lib/db.js');
 const auth = require('./_lib/auth.js');
 const iyzico = require('./_lib/iyzico.js');
+const { plan: planDef } = require('./_lib/plans.js');
+const tg = require('./_lib/telegram.js');
+
+/** Başarısız ödeme: öncelikli uyarı. Sarmalayıcının genel uyarısı bastırılır. */
+async function bildirBasarisiz(res, user, sebep) {
+  tg.bildirimIsaretle(res);
+  await tg.sendTelegram(tg.mesaj.odemeBasarisiz(user && user.email, sebep),
+    { type: 'alert', priority: true });
+}
 
 const TOKEN_RE = /^[A-Za-z0-9-]{8,64}$/;
 
@@ -48,7 +64,7 @@ function backToPanel(res, state) {
   return res.status(303).end();
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST' && req.method !== 'GET') {
@@ -74,6 +90,7 @@ module.exports = async function handler(req, res) {
   const result = await iyzico.getCheckoutForm(token);
   if (!result.ok) {
     if (console && console.warn) console.warn('checkout-return: ' + result.reason);
+    await bildirBasarisiz(res, user, result.reason || 'checkout_form_failed');
     return backToPanel(res, 'failed');
   }
 
@@ -81,6 +98,7 @@ module.exports = async function handler(req, res) {
   const subscriptionRef = iyzico.subscriptionRefOf(data);
   if (!subscriptionRef) {
     if (console && console.warn) console.warn('checkout-return: subscription_ref_missing');
+    await bildirBasarisiz(res, user, 'subscription_ref_missing');
     return backToPanel(res, 'pending');
   }
 
@@ -89,6 +107,7 @@ module.exports = async function handler(req, res) {
   const planId = planOf(data);
   if (!planId) {
     if (console && console.warn) console.warn('checkout-return: plan_unresolved');
+    await bildirBasarisiz(res, user, 'plan_unresolved');
     return backToPanel(res, 'pending');
   }
 
@@ -112,11 +131,25 @@ module.exports = async function handler(req, res) {
     });
   } catch (err) {
     if (console && console.error) console.error('checkout-return: db write failed');
+    /* Ödeme alındı ama hesaba yazılamadı: elle müdahale gerekiyor. */
+    await bildirBasarisiz(res, user, 'db_write_failed ref=' + subscriptionRef);
     return backToPanel(res, 'pending');
   }
 
-  return backToPanel(res, iyzico.isActiveStatus(status) ? 'active' : 'pending');
-};
+  const aktif = iyzico.isActiveStatus(status);
+  if (await tg.tekSefer('pay:' + subscriptionRef + ':' + (aktif ? 'active' : 'pending'), 7 * 86400)) {
+    const tanim = planDef(planId);
+    await tg.sendTelegram(aktif
+      ? tg.mesaj.odemeBasarili(user.email, planId, subscriptionRef, tanim && tanim.priceTry)
+      : tg.mesaj.odemeBeklemede(user.email, planId, status || 'unknown'),
+      { type: 'payment', priority: true });
+  }
+
+  return backToPanel(res, aktif ? 'active' : 'pending');
+}
+
+/* 500/502/504 ya da fırlatan bir hata kritik uyarı üretir (bkz. telegram.js). */
+module.exports = tg.ucuSar(handler, '/api/checkout-return');
 
 /**
  * iyzico'nun cevabındaki fiyat planı referansını bizim plan kimliğimize

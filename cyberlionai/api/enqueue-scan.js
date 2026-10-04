@@ -30,6 +30,7 @@ const store = require('./_lib/store.js');
 const { resolveOwner, clientIp, ipKey } = require('./_lib/session.js');
 const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
 const entitlement = require('./_lib/entitlement.js');
+const tg = require('./_lib/telegram.js');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -121,6 +122,9 @@ module.exports = async function handler(req, res) {
   if (!kuyruk.ok) {
     return res.status(kuyruk.status).json({ error: { code: kuyruk.code } });
   }
+
+  /* Bitiş mesajı /api/scan-status'tan gidiyor (iş kimliği başına bir kez). */
+  await tg.sendTelegram(tg.mesaj.taramaKuyruga(kuyruk.host || url), { type: 'scan' });
 
   /* `scanId` ana sayfanın okuduğu alan; `jobId` eski sözleşmeyi kullanan
      istemciler için aynı değerle duruyor. */

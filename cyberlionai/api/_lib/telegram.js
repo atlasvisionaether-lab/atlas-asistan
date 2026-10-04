@@ -34,6 +34,10 @@
  * kendisi. Telegram DIŞ bir servis; buraya yalnız alan adı, sayı ve durum
  * kodu gidiyor. Mesaj kuranlar bu dosyada toplandı ki kural tek yerde dursun.
  *
+ * MASKELİ E-POSTA: ödeme, otomatik düzeltme ve bekleme listesi bildirimleri
+ * müşteriyi tanımak için e-posta taşıyor, ama yalnız `maskEmail()`'den
+ * geçmiş hâliyle (`a***@gmail.com`). Tam adres Telegram'a gitmez.
+ *
  * TEK İSTİSNA: `iletisimFormu`. Diğer mesajlardaki e-posta, müşterinin
  * SEÇMEDİĞİ bir taramanın hedefine ait (üçüncü taraf verisi) — bu yüzden
  * gitmiyor. İletişim formunda e-posta müşterinin KENDİ adresi, kendi
@@ -50,6 +54,16 @@ const TIMEOUT_MS = 2500;
    sunucusuz örneğin kendi belleği ayrı — bellekteki sayaç sınır değil süstür. */
 const HIZ_PENCERESI_SN = 60;
 const HIZ_MAX = 18;
+
+/* ÖNCELİKLİ HAT: ödeme ve otomatik düzeltme bildirimleri ayrı bir kovadan
+   sayılıyor. Tarama dalgası olağan kovayı doldurduğunda ödemenin haberi
+   düşmesin diye. Telegram'ın sınırı ~20/dk; iki kova birlikte bunu aşabilir,
+   o durumda aşağıdaki 429 tekrarı devreye giriyor. Ödeme sayısı tarama
+   sayısının yanında küçük olduğu için bu kova dar tutuluyor. */
+const ONCELIK_MAX = 10;
+/* Öncelikli mesajda 429 dışındaki geçici hatalarda (zaman aşımı, ulaşılamadı,
+   5xx) bir kez, bu kadar bekleyip tekrar deneniyor. */
+const ONCELIK_TEKRAR_MS = 1000;
 
 /* 429'da Telegram `retry_after` saniye veriyor. Kısa bir bekleme bir isteğin
    süresine eklenebilir; uzun olan beklenmiyor, mesaj düşüyor. Bildirim
@@ -110,6 +124,28 @@ function temizle(metin) {
 }
 
 /**
+ * E-postayı maskeler: ilk karakter + *** + @alan. Biçimsizse '-'.
+ *   ali.kotan@gmail.com → a***@gmail.com
+ * Alan kısmı küçük harfe çevrilir ve denetim karakterlerinden arındırılır;
+ * yerel kısımdan ilk karakter dışında hiçbir şey dışarı çıkmaz.
+ */
+function maskEmail(eposta) {
+  const s = String(eposta === null || eposta === undefined ? '' : eposta).trim();
+  const at = s.lastIndexOf('@');
+  if (at < 1 || at === s.length - 1) return '-';
+  const alanAdi = s.slice(at + 1).toLowerCase().replace(/[^a-z0-9.-]/g, '');
+  if (!alanAdi) return '-';
+  return s.charAt(0).toLowerCase() + '***@' + alanAdi;
+}
+
+/** Kısa bir kod/sebep metni: boşluk ve denetim karakteri sadeleşir, kırpılır. */
+function kod(deger, yedek) {
+  const s = String(deger === null || deger === undefined ? '' : deger)
+    .replace(/\s+/g, ' ').trim().slice(0, 120);
+  return s || yedek || '-';
+}
+
+/**
  * Bir hedefi mesaja girecek kadar sadeleştirir (boşsa '-').
  *
  * Çağıranlar bazen ham adres veriyor (tarama başlarken henüz çözümlenmiş bir
@@ -159,6 +195,53 @@ const mesaj = {
     if (kod) m += ' (' + kod + ')';
     return m.trim();
   },
+  taramaBittiKuyruk: function (domain, puan, riskSayisi) {
+    return ONEK + ' ✅ Tarama bitti (kuyruktan): ' + alan(domain)
+      + ', skor=' + (typeof puan === 'number' ? puan : '-')
+      + ', risk=' + Number(riskSayisi || 0);
+  },
+  taramaBasarisizKuyruk: function (domain, hata) {
+    return ONEK + ' ⚠️ Tarama başarısız (kuyruktan): ' + alan(domain)
+      + ' — ' + kod(hata, 'scan_failed');
+  },
+  odemeBasladi: function (plan, eposta, tutar) {
+    return ONEK + ' 💳 Ödeme başlatıldı: plan=' + kod(plan).toUpperCase()
+      + ', email=' + maskEmail(eposta)
+      + ', tutar=' + (typeof tutar === 'number' ? tutar + ' TL' : '-');
+  },
+  odemeBasarili: function (eposta, plan, ref, tutar) {
+    return ONEK + ' ✅ Ödeme başarılı: ' + maskEmail(eposta)
+      + ', plan=' + kod(plan).toUpperCase()
+      + ', iyzicoId=' + kod(ref)
+      + ', tutar=' + (typeof tutar === 'number' ? tutar + ' TL' : '-');
+  },
+  odemeBeklemede: function (eposta, plan, durum) {
+    return ONEK + ' 🕒 Ödeme beklemede: ' + maskEmail(eposta)
+      + ', plan=' + kod(plan).toUpperCase() + ', durum=' + kod(durum);
+  },
+  odemeBasarisiz: function (eposta, sebep) {
+    return ONEK + ' ❌ Ödeme başarısız: ' + maskEmail(eposta)
+      + ', sebep=' + kod(sebep, 'unknown');
+  },
+  autofixIstendi: function (domain, eposta, zone, fixType) {
+    return ONEK + ' 🛠 Autofix istendi: ' + alan(domain)
+      + ', user=' + maskEmail(eposta)
+      + ', cfZone=' + kod(zone)
+      + ', tür=' + kod(fixType);
+  },
+  autofixTamam: function (domain, fixType, sayi) {
+    return ONEK + ' ✅ Autofix tamamlandı: ' + alan(domain)
+      + ', tür=' + kod(fixType) + ', eklenen başlık=' + Number(sayi || 0);
+  },
+  autofixBasarisiz: function (domain, hata) {
+    return ONEK + ' ⚠️ Autofix başarısız: ' + alan(domain)
+      + ', hata=' + kod(hata, 'unknown');
+  },
+  beklemeListesi: function (eposta, plan, domain) {
+    return ONEK + ' 📋 Bekleme listesi: ' + maskEmail(eposta)
+      + ' - ' + kod(plan).toUpperCase()
+      + ' - ' + (domain ? alan(domain) : '-');
+  },
   test: function (metin) {
     return ONEK + ' 🦁 ' + (metin || 'test');
   },
@@ -172,7 +255,7 @@ const mesaj = {
 };
 
 /** Hız sayacı. Depo yoksa ya da düşerse bildirim GÖNDERİLİR (bkz. not). */
-async function hizSiniriAsildi() {
+async function hizSiniriAsildi(oncelikli) {
   let store;
   try {
     store = require('./store.js');
@@ -181,8 +264,9 @@ async function hizSiniriAsildi() {
   }
   if (!store.isConfigured()) return false;
   try {
-    const sayac = await store.hitRateLimit('cl:rl:tg', HIZ_PENCERESI_SN);
-    return sayac.count > HIZ_MAX;
+    const sayac = await store.hitRateLimit(
+      oncelikli ? 'cl:rl:tg:p' : 'cl:rl:tg', HIZ_PENCERESI_SN);
+    return sayac.count > (oncelikli ? ONCELIK_MAX : HIZ_MAX);
   } catch (err) {
     /* Sayaç okunamadı. Burada istek REDDEDİLMİYOR: bu bir güvenlik sınırı
        değil, Telegram'ın 429'una girmemek için bir nezaket. Kapalı devre
@@ -247,7 +331,9 @@ async function dene(cfg, chatId, metin, sessiz) {
  * bakmadığında da olan şey loga düşer.
  *
  * @param {string} metin  gönderilecek düz metin
- * @param {{type?: string, silent?: boolean}} [secenek]
+ * @param {{type?: string, silent?: boolean, priority?: boolean}} [secenek]
+ *   priority: ödeme/düzeltme gibi kaçmaması gereken bildirimler; ayrı hız
+ *   kovası ve geçici hatada 1 sn sonra bir tekrar.
  * @returns {Promise<{ok: boolean, code?: string, status?: number}>}
  */
 async function sendTelegram(metin, secenek) {
@@ -264,7 +350,8 @@ async function sendTelegram(metin, secenek) {
   const govde = temizle(metin);
   if (!govde.trim()) return { ok: false, code: 'empty' };
 
-  if (await hizSiniriAsildi()) {
+  const oncelikli = ayar.priority === true;
+  if (await hizSiniriAsildi(oncelikli)) {
     if (console && console.error) console.error('telegram skipped: local_rate_limited');
     return { ok: false, code: 'local_rate_limited' };
   }
@@ -280,6 +367,10 @@ async function sendTelegram(metin, secenek) {
       if (bekle > 0) await new Promise(function (r) { setTimeout(r, bekle); });
       sonuc = await dene(cfg, chatId, govde, sessiz);
     }
+  } else if (!sonuc.ok && oncelikli
+      && (sonuc.code === 'timeout' || sonuc.code === 'unreachable' || sonuc.status >= 500)) {
+    await new Promise(function (r) { setTimeout(r, ONCELIK_TEKRAR_MS); });
+    sonuc = await dene(cfg, chatId, govde, sessiz);
   }
 
   if (!sonuc.ok && console && console.error) {
@@ -348,6 +439,24 @@ function ucuSar(handler, ucAdi) {
 }
 
 /**
+ * Aynı olay için tek bildirim: anahtar ilk kez görülüyorsa true.
+ *
+ * Depo yoksa ya da düşerse true (gönder): çift mesaj, hiç mesaj olmamasından
+ * daha az zararlı. Anahtar olayın kimliğinden kuruluyor (iş kimliği,
+ * abonelik referansı); kişisel veri taşımıyor.
+ */
+async function tekSefer(anahtar, ttlSn) {
+  let store;
+  try { store = require('./store.js'); } catch (err) { return true; }
+  if (!store.isConfigured() || typeof store.setOnce !== 'function') return true;
+  try {
+    return await store.setOnce('cl:tg:once:' + anahtar, ttlSn || 86400);
+  } catch (err) {
+    return true;
+  }
+}
+
+/**
  * "Bu olay için bildirim gitti" işareti. `ucuSar` bunu görünce kendi genel
  * uyarısını göndermez.
  */
@@ -357,5 +466,5 @@ function bildirimIsaretle(res) {
 
 module.exports = {
   sendTelegram, isConfigured, kritik, ucuSar, bildirimIsaretle, mesaj, gizle,
-  HIZ_MAX, MAX_UZUNLUK
+  maskEmail, tekSefer, HIZ_MAX, ONCELIK_MAX, MAX_UZUNLUK
 };

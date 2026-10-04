@@ -36,6 +36,13 @@
  * Form adresi, form jetonu, anahtarlar ve imza LOGLANMIYOR; hata kayıtlarına
  * yalnızca sebep kodu ve plan adı giriyor.
  *
+ * TELEGRAM
+ *
+ * Başlatılan ödeme öncelikli hattan bildiriliyor (maskeli e-posta, plan,
+ * tutar). Ödemeyi açamayan her durum uyarı olarak gidiyor. Yapılandırma
+ * eksikliği gibi her tıklamada tekrar eden sebepler saatte bir kez gidiyor;
+ * yoksa her ziyaretçi kanala aynı mesajı yazardı.
+ *
  * BİLİNEN EKSİKLER
  *
  * 1. iyzico'nun müşteri kaydı ad, soyad, TC kimlik ve adres isteyebiliyor;
@@ -48,6 +55,10 @@
 const { isPaidPlan, plan: planOf, PLANS } = require('./_lib/plans.js');
 const iyzico = require('./_lib/iyzico.js');
 const auth = require('./_lib/auth.js');
+const tg = require('./_lib/telegram.js');
+
+/* Hesaba bağlı olmayan, her tıklamada tekrarlayan sebepler: saatte bir bildirim. */
+const TEKRARLI_SEBEPLER = ['iyzico_unconfigured', 'pricing_plan_ref_missing', 'auth_unavailable'];
 
 /* Plan başına fiyat planı referansı. iyzico panelinde (ya da
    createPricingPlan ile) bir kez oluşturulup env'e yazılıyor; kodda sabit
@@ -80,8 +91,16 @@ function callbackUrl(req) {
   return 'https://' + String(host) + '/api/checkout-return';
 }
 
-function unavailable(req, res, reason, planId) {
+async function unavailable(req, res, reason, planId, user) {
   if (console && console.warn) console.warn('checkout: ' + reason + ' (plan=' + planId + ')');
+  const bildir = TEKRARLI_SEBEPLER.indexOf(reason) === -1
+    || await tg.tekSefer('checkout:' + reason + ':' + planId, 3600);
+  if (bildir) {
+    tg.bildirimIsaretle(res);
+    await tg.sendTelegram(
+      tg.mesaj.odemeBasarisiz(user && user.email, reason + ' (plan=' + planId + ')'),
+      { type: 'alert', priority: true });
+  }
   if (wantsHtml(req)) {
     res.setHeader('Location', '/pricing?checkout=unavailable&plan=' + encodeURIComponent(planId));
     return res.status(303).end();
@@ -89,7 +108,7 @@ function unavailable(req, res, reason, planId) {
   return res.status(503).json({ error: { code: 'checkout_unconfigured' } });
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'GET') {
@@ -160,20 +179,26 @@ module.exports = async function handler(req, res) {
       }
     });
   } catch (err) {
-    return unavailable(req, res, 'iyzico_error', planId);
+    return unavailable(req, res, 'iyzico_error', planId, user);
   }
 
   if (!init.ok) {
-    return unavailable(req, res, init.reason, planId);
+    return unavailable(req, res, init.reason, planId, user);
   }
+
+  const fiyat = planOf(planId) && planOf(planId).priceTry;
+  await tg.sendTelegram(tg.mesaj.odemeBasladi(planId, user.email, fiyat),
+    { type: 'payment', priority: true });
 
   /* 303: tarayıcı GET ile izlesin; geri tuşu ödeme sayfasına değil fiyat
      sayfasına dönsün. Adresin host'u iyzico'nun kendi alan adı olduğu
      `formUrlOf` içinde zaten doğrulandı. */
   res.setHeader('Location', init.url);
   return res.status(303).end();
-};
+}
 
+/* 500/502/504 ya da fırlatan bir hata kritik uyarı üretir (bkz. telegram.js). */
+module.exports = tg.ucuSar(handler, '/api/checkout');
 module.exports.pricingPlanRef = pricingPlanRef;
 module.exports.wantsHtml = wantsHtml;
 module.exports.callbackUrl = callbackUrl;
