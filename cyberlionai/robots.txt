@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /404
 
-Sitemap: https://cyberlionai.com/sitemap.xml
+Sitemap: https://www.cyberlionai.com/sitemap.xml

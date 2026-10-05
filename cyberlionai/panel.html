@@ -252,6 +252,11 @@
           <p id="dash-auth-text"
              data-t-tr="Taramalarınızı görmek için giriş yapın. E-posta adresinizi yazın, tek kullanımlık bir giriş bağlantısı gönderelim."
              data-t-en="Sign in to see your scans. Enter your email and we will send a one-time sign-in link.">Taramalarınızı görmek için giriş yapın.</p>
+          <!-- /api/checkout oturumsuz isteği buraya ?checkout=<plan> ile
+               gönderiyor. Giriş sonrası kullanıcı /odeme'ye geri döner. -->
+          <p class="dash-note" id="dash-checkout-note" hidden
+             data-t-tr="Ödemeye devam etmek için giriş yapın. Giriş bağlantısına tıkladığınızda ödeme sayfasına geri dönersiniz."
+             data-t-en="Sign in to continue to payment. After you click the sign-in link you will return to the payment page.">Ödemeye devam etmek için giriş yapın.</p>
           <form id="dash-login" novalidate>
             <label for="dash-email" data-t-tr="E-posta" data-t-en="Email">E-posta</label>
             <input id="dash-email" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="ornek@sirket.com" />
@@ -771,10 +776,39 @@
       el('dash-more').addEventListener('click', function () { load(true); });
     }
 
+    /* ---- Ödemeye dönüş ----
+       /api/checkout oturumsuz isteği /panel?checkout=<plan> adresine
+       gönderiyor. Plan localStorage'a yazılıyor: giriş bağlantısı e-postadan
+       YENİ bir sekmede açılıyor ve sessionStorage oraya taşınmıyor. Ana sayfa
+       bağlantıyı doğruladıktan sonra aynı anahtarı okuyup /odeme'ye döner.
+       Doğrudan /api/checkout'a değil /odeme'ye: sözleşme onayları ödemeden
+       önce orada alınıyor. */
+    var CHECKOUT_KEY = 'cl_checkout_plan';
+    var CHECKOUT_TTL_MS = 60 * 60 * 1000;
+    var CHECKOUT_PLANS = ['pro', 'enterprise'];
+
+    function rememberCheckout() {
+      var plan = String(new URLSearchParams(location.search).get('checkout') || '').toLowerCase();
+      if (CHECKOUT_PLANS.indexOf(plan) === -1) return;
+      try { localStorage.setItem(CHECKOUT_KEY, JSON.stringify({ plan: plan, at: Date.now() })); } catch (e) {}
+      var note = el('dash-checkout-note');
+      if (note) note.hidden = false;
+    }
+
+    function pendingCheckout() {
+      try {
+        var v = JSON.parse(localStorage.getItem(CHECKOUT_KEY) || 'null');
+        if (v && CHECKOUT_PLANS.indexOf(v.plan) !== -1 && Date.now() - v.at < CHECKOUT_TTL_MS) return v.plan;
+        localStorage.removeItem(CHECKOUT_KEY);
+      } catch (e) {}
+      return null;
+    }
+
     /* ---- Açılış ---- */
     function start() {
       bindLogin();
       bindFilters();
+      rememberCheckout();
 
       fetch('/api/auth/me', { headers: { 'Accept': 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; })
@@ -786,6 +820,12 @@
             return;
           }
           if (!me.authenticated) { showLogin(); return; }
+          var plan = pendingCheckout();
+          if (plan) {
+            try { localStorage.removeItem(CHECKOUT_KEY); } catch (e) {}
+            location.replace('/odeme?plan=' + plan);
+            return;
+          }
           state.email = me.user && me.user.email;
           el('dash-main').hidden = false;
           el('dash-auth').hidden = true;

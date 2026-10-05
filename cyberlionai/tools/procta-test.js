@@ -42,8 +42,12 @@ function sina(ad, bulunan, beklenen) {
 sina('fiyat bölümünün çapası var', /<section class="section" id="pricing">/.test(html), true);
 const proCtalar = html.match(/data-pro-intent/g) || [];
 sina('en az üç yükseltme çağrısı var', proCtalar.length >= 3, true);
-sina('Pro satırı ödeme ucuna bakıyor',
-  /href="\/api\/checkout\?plan=pro"[^>]*data-pro-intent/.test(html), true);
+/* Pro satırı önce /odeme özet ve onay sayfasına gider; oradaki "Güvenli Öde"
+   düğmesi /api/checkout'a yönlendirir (odeme.js). */
+sina('Pro satırı ödeme sayfasına bakıyor',
+  /href="\/odeme\?plan=pro"[^>]*data-pro-intent/.test(html), true);
+sina('ödeme sayfası ödeme ucuna gidiyor',
+  /\/api\/checkout\?plan=/.test(fs.readFileSync(path.join(__dirname, '..', 'odeme.js'), 'utf8')), true);
 
 /* ---- 2. Tıklama yönlendirmesi ---- */
 
@@ -89,6 +93,27 @@ sina('istek oturum çerezini taşıyor',
   /credentials: 'same-origin'/.test(subsGovde), true);
 sina('uç cevap vermezse plan bilinmiyor sayılıyor',
   /if \(!res\.ok\) return null;/.test(subsGovde), true);
+
+/* ---- Girişten sonra ödemeye dönüş ----
+   /api/checkout oturumsuz isteği /panel?checkout=<plan>'a gönderiyor. Panel
+   planı localStorage'a yazıyor (giriş bağlantısı yeni sekmede açılır), ana
+   sayfa bağlantıyı doğrulayınca /odeme'ye dönüyor. Eskiden panel parametreyi
+   hiç okumuyordu ve ana sayfa ön kayıt formuna (/checkout) gidiyordu. */
+const panel = fs.readFileSync(path.join(__dirname, '..', 'panel.html'), 'utf8');
+sina('panel checkout parametresini okuyor',
+  /URLSearchParams\(location\.search\)\.get\('checkout'\)/.test(panel), true);
+sina('panel planı localStorage\'a yazıyor',
+  /localStorage\.setItem\(CHECKOUT_KEY/.test(panel), true);
+sina('oturumlu panel /odeme\'ye dönüyor',
+  /location\.replace\('\/odeme\?plan=' \+ plan\)/.test(panel), true);
+const devamGovde = (html.match(/function continueCheckout\(\)\s*\{[\s\S]*?\n      \}/) || [''])[0];
+sina('continueCheckout tanımlı', devamGovde.length > 0, true);
+sina('continueCheckout aynı anahtarı okuyor', /cl_checkout_plan/.test(devamGovde), true);
+sina('continueCheckout /odeme\'ye gidiyor', /'\/odeme\?plan=' \+ plan/.test(devamGovde), true);
+sina('e-posta bağlantısı doğrulanınca ödemeye dönülüyor',
+  /t\('auth\.toast\.verified'\), 'success'\);\s*\/\/[^\n]*\n\s*continueCheckout\(\);/.test(html), true);
+sina('ön kayıt formuna (/checkout) yönlendirme kalmadı',
+  /location\.href = '\/checkout'/.test(html), false);
 
 console.log(hata === 0 ? '\nTümü geçti.' : '\n' + hata + ' sınama BAŞARISIZ.');
 process.exit(hata === 0 ? 0 : 1);

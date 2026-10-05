@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0a0a0f" />
   <title>Fiyatlandırma | Cyber Lion AI</title>
-  <meta name="description" content="Cyber Lion AI planları: Free ₺0, Pro ₺299/ay, Enterprise ₺2.499/ay. Planların kapsamı yan yana." />
+  <meta name="description" content="Cyber Lion AI planları: Free ₺0, Pro ₺299/ay (KDV dahil ₺358,80), Enterprise ₺2.499/ay (KDV dahil ₺2.998,80). Planların kapsamı yan yana." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://www.cyberlionai.com/pricing" />
   <meta property="og:type" content="website" />
@@ -92,6 +92,7 @@
   .plan--featured .plan__name{color:var(--gold-primary)}
   .plan__tagline{font-size:.88rem;margin:0 0 18px;min-height:3.2em}
   .plan__price{font-family:var(--font-heading);font-size:1.75rem;font-weight:800;color:var(--text-white);line-height:1.1}
+  .plan__gross{display:block;font-size:.85rem;font-weight:600;color:var(--gold-primary);margin-top:6px}
   .plan__period{display:block;font-size:.78rem;color:var(--text-gray);margin:6px 0 20px}
   .plan__list{list-style:none;margin:0 0 24px;padding:0;flex:1 1 auto}
   .plan__list li{position:relative;padding-left:24px;margin-bottom:11px;font-size:.9rem;color:var(--text-gray)}
@@ -107,12 +108,20 @@
   .cta--muted{color:var(--text-white);border:1px solid var(--glass-border);background:rgba(255,255,255,.03)}
   .cta--muted:hover{border-color:var(--gold-primary);color:var(--gold-primary)}
   .foot-note{margin-top:34px;padding-top:24px;border-top:1px solid var(--hairline);font-size:.86rem}
-  footer{border-top:1px solid var(--glass-border);background:var(--secondary-black);padding:34px 0;
-    color:var(--text-gray);font-size:.84rem}
-  .fbar{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
-  .flinks{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
-  .flinks a:hover{color:var(--gold-primary)}
-  @media(min-width:640px){.fbar{flex-direction:row;justify-content:space-between;text-align:left}}
+  footer{border-top:1px solid var(--glass-border);background:var(--secondary-black);padding:40px 0 26px;
+    color:var(--text-gray);font-size:.86rem}
+  .fgrid{display:grid;gap:26px;grid-template-columns:1fr}
+  @media(min-width:640px){.fgrid{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:960px){.fgrid{grid-template-columns:1.3fr 1fr 1fr 1fr}}
+  .fgrid h3{font-family:var(--font-heading);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gold-primary);margin:0 0 12px}
+  .fgrid ul{list-style:none;margin:0;padding:0}
+  .fgrid li{margin-bottom:8px;overflow-wrap:anywhere}
+  .fgrid a:hover{color:var(--gold-primary)}
+  .iyz{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:10px;
+    border:1px solid var(--hairline);background:rgba(255,255,255,.04);font-size:.8rem}
+  .iyz__mark{font-weight:600;font-size:1.02rem;color:#1e64ff;background:#fff;padding:2px 10px;border-radius:6px}
+  .fcopy{margin-top:28px;padding-top:18px;border-top:1px solid var(--hairline);font-size:.78rem;text-align:center}
   @media(max-width:400px){.logo span{display:none}}
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:.001ms!important}}
 </style>
@@ -148,8 +157,8 @@
       <!-- Ödeme bağlantısı yapılandırılmamışsa /api/checkout buraya geri
            yönlendiriyor ve bu satır görünüyor. -->
       <p class="notice" id="notice" hidden
-         data-t-tr="Yakında! Ödeme altyapısı iyzico güvencesiyle aktif olacak. Şimdilik destek@cyberlionai.com üzerinden iletişime geçebilirsiniz."
-         data-t-en="Checkout is not open for this plan yet. Email destek@cyberlionai.com and we will start the subscription manually.">Ödeme altyapısı bu plan için henüz açılmadı.</p>
+         data-t-tr="Bu plan için çevrimiçi ödeme şu an başlatılamadı. destek@cyberlionai.com adresine yazın, aboneliğinizi elle başlatalım."
+         data-t-en="Online checkout could not be started for this plan right now. Email destek@cyberlionai.com and we will start the subscription manually.">Bu plan için çevrimiçi ödeme şu an başlatılamadı.</p>
 
       <div class="plans">
 
@@ -178,6 +187,7 @@
              data-t-tr="Üretim ortamını sürekli izleyen ekipler için."
              data-t-en="For teams monitoring production continuously.">Üretim ortamını sürekli izleyen ekipler için.</p>
           <div class="plan__price" data-t-tr="₺299/ay" data-t-en="₺299/mo">₺299/ay</div>
+          <span class="plan__gross" data-t-tr="KDV dahil ₺358,80/ay" data-t-en="incl. VAT ₺358.80/mo">KDV dahil ₺358,80/ay</span>
           <span class="plan__period" data-t-tr="Aylık, istediğiniz zaman iptal" data-t-en="Monthly, cancel anytime">Aylık, istediğiniz zaman iptal</span>
           <ul class="plan__list">
             <li data-t-tr="Ayda 50 Tarama" data-t-en="50 Scans per Month">Ayda 50 Tarama</li>
@@ -186,7 +196,7 @@
             <li data-t-tr="Panelde Tarama Geçmişi ve Skor Eğilimi" data-t-en="Scan History and Score Trend in the Panel">Panelde Tarama Geçmişi ve Skor Eğilimi</li>
             <li data-t-tr="E-posta Desteği (destek@cyberlionai.com)" data-t-en="Email Support via destek@cyberlionai.com">E-posta Desteği (destek@cyberlionai.com)</li>
           </ul>
-          <a class="cta cta--gold" href="/api/checkout?plan=pro" data-t-tr="Pro'ya Geç" data-t-en="Go Pro">Pro'ya Geç</a>
+          <a class="cta cta--gold" href="/odeme?plan=pro" data-t-tr="Pro'ya Geç" data-t-en="Go Pro">Pro'ya Geç</a>
         </article>
 
         <article class="plan">
@@ -196,6 +206,7 @@
              data-t-tr="Sürekli izleme ve düzeltme isteyen kurumlar için."
              data-t-en="For organizations that want continuous monitoring and remediation.">Sürekli izleme ve düzeltme isteyen kurumlar için.</p>
           <div class="plan__price" data-t-tr="₺2.499/ay" data-t-en="₺2,499/mo">₺2.499/ay</div>
+          <span class="plan__gross" data-t-tr="KDV dahil ₺2.998,80/ay" data-t-en="incl. VAT ₺2,998.80/mo">KDV dahil ₺2.998,80/ay</span>
           <span class="plan__period" data-t-tr="Aylık, istediğiniz zaman iptal" data-t-en="Monthly, cancel anytime">Aylık, istediğiniz zaman iptal</span>
           <ul class="plan__list">
             <li data-t-tr="Sınırsız Tarama" data-t-en="Unlimited Scans">Sınırsız Tarama</li>
@@ -206,29 +217,57 @@
             <li data-t-tr="Skor Eğilimi ve Alan Adı Karşılaştırması" data-t-en="Score Trend and Domain Comparison">Skor Eğilimi ve Alan Adı Karşılaştırması</li>
             <li data-t-tr="Öncelikli Destek ve Kurumsal Faturalandırma" data-t-en="Priority Support and Corporate Invoicing">Öncelikli Destek ve Kurumsal Faturalandırma</li>
           </ul>
-          <a class="cta cta--blue" href="/api/checkout?plan=enterprise" data-t-tr="Enterprise'a Geç" data-t-en="Go Enterprise">Enterprise'a Geç</a>
+          <a class="cta cta--blue" href="/odeme?plan=enterprise" data-t-tr="Enterprise'a Geç" data-t-en="Go Enterprise">Enterprise'a Geç</a>
         </article>
 
       </div>
 
       <p class="foot-note"
-         data-t-tr="Tüm fiyatlar KDV hariçtir. Ödeme iyzico üzerinden alınır; kart bilgileriniz bize hiç gelmez. Abonelik iptali, teslimat ve iade koşulları için Mesafeli Satış Sözleşmesi ile Teslimat ve İade Şartları sayfalarına bakın."
-         data-t-en="All prices exclude VAT. Payments are taken through iyzico; your card details never reach us. For cancellation, delivery and refund terms see the Distance Sales Agreement and the Delivery &amp; Returns pages.">Tüm fiyatlar KDV hariçtir.</p>
+         data-t-tr="Liste fiyatları KDV hariçtir; %20 KDV dahil toplam her planın altında yazar. Ödeme iyzico üzerinden alınır; kart bilgileriniz bize hiç gelmez. Abonelik iptali, teslimat ve iade koşulları için Mesafeli Satış Sözleşmesi ile Teslimat ve İade Şartları sayfalarına bakın."
+         data-t-en="List prices exclude VAT; the total including 20% VAT is shown under each plan. Payments are taken through iyzico; your card details never reach us. For cancellation, delivery and refund terms see the Distance Sales Agreement and the Delivery &amp; Returns pages.">Liste fiyatları KDV hariçtir; %20 KDV dahil toplam her planın altında yazar.</p>
     </div>
   </main>
 
   <footer>
-    <div class="container fbar">
-      <span data-t-tr="© 2026 Ali Kotan - Şahıs İşletmesi" data-t-en="© 2026 Ali Kotan - Sole Proprietorship">© 2026 Ali Kotan - Şahıs İşletmesi</span>
-      <nav class="flinks">
-        <a href="/pages/kvkk-aydinlatma-metni" data-t-tr="KVKK Aydınlatma Metni" data-t-en="KVKK Privacy Notice">KVKK Aydınlatma Metni</a>
-        <a href="/pages/gizlilik-politikasi" data-t-tr="Gizlilik Politikası" data-t-en="Privacy Policy">Gizlilik Politikası</a>
-        <a href="/pages/mesafeli-satis-sozlesmesi" data-t-tr="Mesafeli Satış" data-t-en="Distance Sales">Mesafeli Satış</a>
-        <a href="/pages/on-bilgilendirme-formu" data-t-tr="Ön Bilgilendirme Formu" data-t-en="Pre-Contractual Information Form">Ön Bilgilendirme Formu</a>
-        <a href="/pages/teslimat-ve-iade-sartlari" data-t-tr="Teslimat ve İade" data-t-en="Delivery &amp; Returns">Teslimat ve İade</a>
-        <a href="/pages/kullanim-sartlari" data-t-tr="Kullanım Şartları" data-t-en="Terms of Use">Kullanım Şartları</a>
-        <a href="/pages/cerez-politikasi" data-t-tr="Çerez Politikası" data-t-en="Cookie Policy">Çerez Politikası</a>
-      </nav>
+    <div class="container">
+      <div class="fgrid">
+        <div>
+          <h3 data-t-tr="Şirket Bilgileri" data-t-en="Company Information">Şirket Bilgileri</h3>
+          <ul>
+            <li>Ritim AVM, Cevizli Mah. Zuhal Cad. No:46/50 Maltepe/İstanbul</li>
+            <li><a href="tel:+905344682769">Tel: 0534 468 27 69</a></li>
+            <li><a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a> / <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></li>
+            <li>VKN: 5810910912</li>
+          </ul>
+        </div>
+        <nav aria-label="Yasal">
+          <h3 data-t-tr="Yasal" data-t-en="Legal">Yasal</h3>
+          <ul>
+            <li><a href="/mesafeli-satis-sozlesmesi" data-t-tr="Mesafeli Satış Sözleşmesi" data-t-en="Distance Sales Agreement">Mesafeli Satış Sözleşmesi</a></li>
+            <li><a href="/gizlilik-politikasi" data-t-tr="Gizlilik Politikası" data-t-en="Privacy Policy">Gizlilik Politikası</a></li>
+            <li><a href="/kvkk-aydinlatma-metni" data-t-tr="KVKK Aydınlatma Metni" data-t-en="KVKK Privacy Notice">KVKK Aydınlatma Metni</a></li>
+            <li><a href="/iade-iptal-politikasi" data-t-tr="İade ve İptal Politikası" data-t-en="Refund &amp; Cancellation Policy">İade ve İptal Politikası</a></li>
+            <li><a href="/kullanim-kosullari" data-t-tr="Kullanım Koşulları" data-t-en="Terms of Use">Kullanım Koşulları</a></li>
+            <li><a href="/teslimat-bilgisi" data-t-tr="Teslimat Bilgisi" data-t-en="Delivery Information">Teslimat Bilgisi</a></li>
+            <li><a href="/pages/on-bilgilendirme-formu" data-t-tr="Ön Bilgilendirme Formu" data-t-en="Pre-Contractual Information Form">Ön Bilgilendirme Formu</a></li>
+            <li><a href="/pages/cerez-politikasi" data-t-tr="Çerez Politikası" data-t-en="Cookie Policy">Çerez Politikası</a></li>
+          </ul>
+        </nav>
+        <div>
+          <h3 data-t-tr="Ürün" data-t-en="Product">Ürün</h3>
+          <ul>
+            <li><a href="/#ozellikler" data-t-tr="Özellikler" data-t-en="Features">Özellikler</a></li>
+            <li><a href="/#nasil-calisir" data-t-tr="Nasıl Çalışır" data-t-en="How It Works">Nasıl Çalışır</a></li>
+            <li><a href="/odeme?plan=pro" data-t-tr="Pro'ya Geç" data-t-en="Go Pro">Pro'ya Geç</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 data-t-tr="Güvenli Ödeme" data-t-en="Secure Payment">Güvenli Ödeme</h3>
+          <p data-t-tr="Ödemeler iyzico güvencesi ile alınmaktadır." data-t-en="Payments are processed securely by iyzico.">Ödemeler iyzico güvencesi ile alınmaktadır.</p>
+          <div class="iyz"><span class="iyz__mark">iyzico</span><span data-t-tr="ile Öde" data-t-en="checkout">ile Öde</span></div>
+        </div>
+      </div>
+      <p class="fcopy" data-t-tr="© 2026 Ali Kotan - Şahıs İşletmesi" data-t-en="© 2026 Ali Kotan - Sole Proprietorship">© 2026 Ali Kotan - Şahıs İşletmesi</p>
     </div>
   </footer>
 

@@ -757,6 +757,8 @@
   }
   @keyframes shimmer { to { background-position: 300% 0; } }
 
+  .plan__gross { display: block; font-size: 0.85rem; font-weight: 600; color: var(--gold-primary); margin-top: 6px; }
+
   .plan--enterprise {
     background: var(--glass-bg);
     backdrop-filter: blur(14px) saturate(140%);
@@ -817,7 +819,13 @@
   .footer__list a, .footer__list span { color: var(--text-gray); font-size: 0.9rem; transition: color var(--transition-speed) var(--transition-ease); }
   .footer__list a:hover { color: var(--gold-primary); }
 
-  .footer__copyright { font-size: 0.8rem; margin-top: 18px; }
+  .footer__copyright { font-size: 0.8rem; margin: 0; }
+  .footer__title--sub { margin-top: 26px; }
+  .footer__pay { color: var(--text-gray); font-size: 0.9rem; margin: 0 0 14px; }
+  .iyz-badge { display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 10px;
+    border: 1px solid var(--hairline); background: rgba(255,255,255,.04); color: var(--text-gray); font-size: 0.8rem; }
+  .iyz-badge__mark { font-weight: 600; font-size: 1.02rem; color: #1e64ff; background: #fff; padding: 2px 10px; border-radius: 6px; }
+  .footer__list li { overflow-wrap: anywhere; }
   .footer__list li i { color: var(--gold-primary); width: 1.1em; text-align: center; }
   .footer__bottom {
     margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--hairline);
@@ -1257,10 +1265,14 @@
     .logo__text { font-size: 0.95rem; letter-spacing: 0.13em; }
     .icon-btn { width: 38px; height: 38px; }
     .grid--2 { grid-template-columns: repeat(2, 1fr); }
-    .footer__grid { grid-template-columns: 1.6fr 1fr 1fr; }
+    .footer__grid { grid-template-columns: repeat(2, 1fr); }
     .modal__box { padding: 40px 36px 34px; }
     .toasts { left: auto; right: 20px; bottom: 20px; justify-items: end; }
   }
+  @media (min-width: 1024px) {
+    .footer__grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  }
+
 
   @media (min-width: 1024px) {
     :root { --nav-h: 84px; }
@@ -1419,6 +1431,15 @@
 
   .wmap__note { color: var(--text-gray); font-size: 0.82rem; line-height: 1.6; margin: 12px 0 0; }
   .wmap__empty { color: var(--text-gray); font-size: 0.9rem; padding: 8px 0; }
+  /* Veri gelene kadar metin değil iskelet: "Yükleniyor" yazısı yerine
+     satır biçiminde yer tutucu. */
+  .skel { display: grid; gap: 10px; padding: 6px 0; }
+  .skel span { display: block; height: 14px; border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255,255,255,.05) 25%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.05) 75%);
+    background-size: 300% 100%; animation: shimmer 1.6s linear infinite; }
+  .skel span:nth-child(2) { width: 82%; }
+  .skel span:nth-child(3) { width: 64%; }
+  @media (prefers-reduced-motion: reduce) { .skel span { animation: none; } }
 
   .wmap__tip {
     position: absolute; pointer-events: none; z-index: 3; transform: translate(-50%, -140%);
@@ -1571,7 +1592,7 @@
           </form>
           <p class="scan__note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            <span data-i18n="hero.scanNote">Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.</span>
+            <span data-i18n="hero.scanNote">Kayıt gerekmez — 5 ücretsiz tarama, saniyeler içinde sonuç.</span>
             <button type="button" id="historyOpen" style="margin-left:auto;background:none;border:none;
               color:var(--gold-primary);font:inherit;font-size:0.78rem;cursor:pointer;text-decoration:underline;
               text-underline-offset:3px;white-space:nowrap" data-i18n="history.open">Geçmiş</button>
@@ -1584,7 +1605,7 @@
             <ul class="scan__log" id="scanLog"></ul>
             <div class="scan__summary" id="scanSummary" hidden>
               <span class="scan__score" id="scanScore">--<span>/100</span></span>
-              <p data-i18n="scan.demoNote">Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.</p>
+              <p data-i18n="scan.demoNote">Bu, ücretsiz tarama özetidir. Tam rapor ve düzeltme adımları PRO planla açılır.</p>
               <a class="btn btn--gold btn--sm" id="scanReportBtn" hidden>
                 <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
                 <span data-i18n="scan.downloadPdf">PDF Raporu İndir</span>
@@ -1630,6 +1651,7 @@
     <!-- ==========================================================
          HİZMETLER
          ========================================================== -->
+    <div id="ozellikler" aria-hidden="true"></div>
     <section class="section" id="services">
       <div class="container">
         <div class="section__head reveal">
@@ -1669,6 +1691,7 @@
     <!-- ==========================================================
          NASIL ÇALIŞIR
          ========================================================== -->
+    <div id="nasil-calisir" aria-hidden="true"></div>
     <section class="section section--alt" id="how">
       <div class="container">
         <div class="section__head reveal">
@@ -1781,7 +1804,7 @@
             <div class="wmap__card reveal">
               <h3 class="wmap__cardTitle" id="wmDetailTitle" data-i18n="map.detailTitle">Ülke ayrıntısı</h3>
               <div id="wmDetail">
-                <p class="wmap__empty" data-i18n="map.pickCountry">Haritadan bir işaret seçin.</p>
+                <div class="skel" aria-hidden="true"><span></span><span></span></div>
               </div>
             </div>
 
@@ -1792,8 +1815,8 @@
 
             <div class="wmap__card reveal">
               <h3 class="wmap__cardTitle" data-i18n="map.countersTitle">Sayaçlar</h3>
-              <div id="wmCounters">
-                <p class="wmap__empty" data-i18n="map.loading">Yükleniyor…</p>
+              <div id="wmCounters" aria-busy="true">
+                <div class="skel" aria-hidden="true"><span></span><span></span><span></span></div>
               </div>
               <p class="wmap__note" data-i18n="map.countersNote">Bu beslemelerde ülke bilgisi yok; haritada işaret olarak değil, sayaç olarak gösterilirler.</p>
             </div>
@@ -1842,6 +1865,7 @@
             <h3 class="plan__name gold-text" data-i18n="pricing.pro.name">Pro</h3>
             <p class="plan__tagline" data-i18n="pricing.pro.tagline">Üretim ortamını sürekli izleyen ekipler için.</p>
             <div class="plan__price" data-i18n="pricing.pro.price">₺299/ay</div>
+            <span class="plan__gross" data-i18n="pricing.pro.gross">KDV dahil ₺358,80/ay</span>
             <span class="plan__period" data-i18n="pricing.pro.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f1">Ayda 50 Tarama</span></li>
@@ -1850,7 +1874,7 @@
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f4">Panelde Tarama Geçmişi ve Skor Eğilimi</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">E-posta Desteği (destek@cyberlionai.com)</span></li>
             </ul>
-            <a class="btn btn--gold btn--block" href="/api/checkout?plan=pro" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
+            <a class="btn btn--gold btn--block" href="/odeme?plan=pro" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
           </article>
 
           <!-- ENTERPRISE -->
@@ -1859,6 +1883,7 @@
             <h3 class="plan__name" data-i18n="pricing.ent.name">Enterprise</h3>
             <p class="plan__tagline" data-i18n="pricing.ent.tagline">Kendi altyapınıza uyarlanmış tarama ve raporlama.</p>
             <div class="plan__price" data-i18n="pricing.ent.price">₺2.499/ay</div>
+            <span class="plan__gross" data-i18n="pricing.ent.gross">KDV dahil ₺2.998,80/ay</span>
             <span class="plan__period" data-i18n="pricing.ent.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">Sınırsız Tarama</span></li>
@@ -1867,12 +1892,12 @@
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f4">Skor Eğilimi ve Alan Adı Karşılaştırması</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Öncelikli Destek ve Kurumsal Faturalandırma</span></li>
             </ul>
-            <a class="btn btn--blue btn--block" href="/api/checkout?plan=enterprise" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
+            <a class="btn btn--blue btn--block" href="/odeme?plan=enterprise" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
           </article>
 
         </div>
 
-        <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur.</p>
+        <p class="pricing__foot reveal" data-i18n="pricing.foot">Liste fiyatları KDV hariçtir; %20 KDV dahil toplam her planın altında yazar. Ödemeler iyzico güvencesiyle alınır.</p>
         <p class="pricing__foot reveal"><a class="pricing__more" href="/pricing" data-i18n="pricing.more">Planları yan yana karşılaştır</a></p>
       </div>
     </section>
@@ -1904,46 +1929,54 @@
                marka adından kalıp üretilerek yazılmıştı; hiçbiri doğrulanmamıştı
                ve en az biri başkasına ait bir hesaba gidiyordu. Doğrulanmamış
                bağlantı koymaktansa hiç koymamak doğru. -->
-          <!-- FOOTER_ISLETME_START (tools/render-legal-pages.js bu bloğu legal-data.js'ten yeniler) -->
-          <p class="footer__copyright" data-i18n="footer.rights">© 2026 Ali Kotan - Şahıs İşletmesi</p>
-          <!-- FOOTER_ISLETME_END -->
-        </div>
-
-        <div>
-          <h4 class="footer__title" data-i18n="footer.quick">Hızlı Linkler</h4>
-          <ul class="footer__list">
-            <li><a href="#hero" data-i18n="nav.home">Ana Sayfa</a></li>
-            <li><a href="#services" data-i18n="nav.services">Hizmetler</a></li>
-            <li><a href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
-            <li><a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 class="footer__title" data-i18n="footer.contact">İletişim</h4>
-          <!-- FOOTER_ILETISIM_START (tools/render-legal-pages.js bu bloğu legal-data.js'ten yeniler) -->
+          <h4 class="footer__title footer__title--sub" data-i18n="footer.company">Şirket Bilgileri</h4>
+          <!-- FOOTER_ILETISIM_START (değerler legal-data.js ile aynı olmalı) -->
           <ul class="footer__list">
             <li><a href="https://www.google.com/maps/search/?api=1&query=Ritim+AVM+Cevizli+Mahallesi+Zuhal+Caddesi+No+46+Maltepe+Istanbul" target="_blank" rel="noopener"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Ritim AVM, Cevizli Mah. Zuhal Cad. No:46/50 Maltepe/İstanbul</a></li>
-            <li><a href="tel:+905344682769"><i class="fa-solid fa-phone" aria-hidden="true"></i> 0534 468 27 69</a></li>
-            <li><a href="mailto:info@cyberlionai.com"><i class="fa-solid fa-envelope" aria-hidden="true"></i> info@cyberlionai.com</a></li>
-            <li><a href="mailto:destek@cyberlionai.com"><i class="fa-solid fa-headset" aria-hidden="true"></i> destek@cyberlionai.com</a></li>
+            <li><a href="tel:+905344682769"><i class="fa-solid fa-phone" aria-hidden="true"></i> <span data-i18n="footer.tel">Tel</span>: 0534 468 27 69</a></li>
+            <li><i class="fa-solid fa-envelope" aria-hidden="true"></i> <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a> / <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></li>
             <li><i class="fa-solid fa-id-card" aria-hidden="true"></i> <span data-i18n="footer.vkn">VKN: 5810910912</span></li>
-            <li><span data-i18n="footer.hours">Çalışma Saatleri: Hafta içi 09:00 – 18:00 (TSİ)</span></li>
           </ul>
           <!-- FOOTER_ILETISIM_END -->
+        </div>
+
+        <div>
+          <h4 class="footer__title" data-i18n="footer.legal">Yasal</h4>
+          <ul class="footer__list">
+            <li><a href="/mesafeli-satis-sozlesmesi" data-i18n="footer.dist">Mesafeli Satış Sözleşmesi</a></li>
+            <li><a href="/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a></li>
+            <li><a href="/kvkk-aydinlatma-metni" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a></li>
+            <li><a href="/iade-iptal-politikasi" data-i18n="footer.refund">İade ve İptal Politikası</a></li>
+            <li><a href="/kullanim-kosullari" data-i18n="footer.terms">Kullanım Koşulları</a></li>
+            <li><a href="/teslimat-bilgisi" data-i18n="footer.delivery">Teslimat Bilgisi</a></li>
+            <li><a href="/pages/on-bilgilendirme-formu" data-i18n="footer.predisclosure">Ön Bilgilendirme Formu</a></li>
+            <li><a href="/pages/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer__title" data-i18n="footer.product">Ürün</h4>
+          <ul class="footer__list">
+            <li><a href="/#ozellikler" data-i18n="footer.features">Özellikler</a></li>
+            <li><a href="/#nasil-calisir" data-i18n="nav.how">Nasıl Çalışır</a></li>
+            <li><a href="/#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
+            <li><a href="/odeme?plan=pro" data-i18n="nav.upgrade">Pro'ya Geç</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer__title" data-i18n="footer.payTitle">Güvenli Ödeme</h4>
+          <p class="footer__pay" data-i18n="footer.payText">Ödemeler iyzico güvencesi ile alınmaktadır.</p>
+          <!-- iyzico logo alanı: resmî logo iyzico marka kitinden alınıp
+               /images/iyzico/ altına konunca bu kutu <img> ile değişir. -->
+          <div class="iyz-badge" aria-label="iyzico ile öde"><span class="iyz-badge__mark">iyzico</span><span data-i18n="footer.payWith">ile Öde</span></div>
         </div>
       </div>
 
       <div class="footer__bottom">
-        <nav class="footer__legal" aria-label="Yasal">
-          <a href="/pages/kvkk-aydinlatma-metni" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a>
-          <a href="/pages/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a>
-          <a href="/pages/mesafeli-satis-sozlesmesi" data-i18n="footer.dist">Mesafeli Satış Sözleşmesi</a>
-          <a href="/pages/on-bilgilendirme-formu" data-i18n="footer.predisclosure">Ön Bilgilendirme Formu</a>
-          <a href="/pages/teslimat-ve-iade-sartlari" data-i18n="footer.refund">Teslimat ve İade</a>
-          <a href="/pages/kullanim-sartlari" data-i18n="footer.terms">Kullanım Şartları</a>
-          <a href="/pages/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a>
-        </nav>
+        <!-- FOOTER_ISLETME_START (değerler legal-data.js ile aynı olmalı) -->
+        <p class="footer__copyright" data-i18n="footer.rights">© 2026 Ali Kotan - Şahıs İşletmesi</p>
+        <!-- FOOTER_ISLETME_END -->
       </div>
     </div>
   </footer>
@@ -2241,7 +2274,6 @@
           detailTitle: 'Ülke ayrıntısı',
           pickCountry: 'Haritadan bir işaret seçin.',
           countersTitle: 'Sayaçlar',
-          loading: 'Yükleniyor…',
           countersNote: 'Bu beslemelerde ülke bilgisi yok; haritada işaret olarak değil, sayaç olarak gösterilirler.',
           sourcesTitle: 'Kaynaklar',
           r1h: '1s', r24h: '24s', r7d: '7g', rAll: 'Tümü',
@@ -2263,7 +2295,8 @@
           desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin.',
           scanLabel: 'Taranacak adres',
           scanPlaceholder: 'ornek.com',
-          scanNote: 'Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.',
+          scanNote: 'Kayıt gerekmez — 5 ücretsiz tarama, saniyeler içinde sonuç.',
+          consent: 'Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.',
           cta1: 'Hemen Tara', cta2: "Pro'ya Geç", cta3: 'Nasıl Çalışır?', cta4: 'Örnek Rapor (PDF)',
           stat1: 'Taranan Site (Canlı)',
           stat3: 'Hızlı Tarama', stat3v: '7/24'
@@ -2286,7 +2319,7 @@
              satırlar hiç görünmez; bayrak kapalıyken akış değişmiyor. */
           queued: 'Tarama kuyruğa alındı, sıra bekleniyor',
           running: 'Tarama sunucuda sürüyor',
-          demoNote: 'Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.',
+          demoNote: 'Bu, ücretsiz tarama özetidir. Tam rapor ve düzeltme adımları PRO planla açılır.',
           fullReport: 'Tam Raporu Al',
           sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
           /* "Ölçülemedi" üç FARKLI durumu tek kelimede topluyordu: çerez
@@ -2359,7 +2392,7 @@
             not_a_domain: 'hedef bir alan adı değil (IP adresi)',
             query_failed: 'DNS sorgusu yanıt vermedi',
             expired: 'sertifika süresi dolmuş',
-            expiring_soon: 'sertifikanın süresi yakında doluyor',
+            expiring_soon: 'sertifikanın süresi dolmak üzere',
             untrusted: 'sertifika doğrulanamadı'
           },
           checks: {
@@ -2419,7 +2452,7 @@
           },
           free: {
             q: 'Ücretsiz mi, kayıt gerekiyor mu?',
-            a: 'Ücretsiz plan kayıt gerektirmez ve 5 güvenlik testi ile temel SSL kontrolü sunar. Hesap açmanız yalnızca sınırsız tarama, detaylı rapor ve düzeltme önerileri için gerekir.'
+            a: 'Ücretsiz plan kayıt gerektirmez ve 5 güvenlik taraması ile temel SSL kontrolü sunar. Hesap açmanız yalnızca sınırsız tarama, detaylı rapor ve düzeltme önerileri için gerekir.'
           },
           csp: {
             q: 'Content-Security-Policy nasıl eklenir?',
@@ -2498,7 +2531,7 @@
         pricing: {
           eyebrow: 'Planlar', title: 'SİZE UYGUN PLANI SEÇİN',
           subtitle: 'Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.',
-          foot: 'Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur. | All prices exclude VAT.',
+          foot: 'Liste fiyatları KDV hariçtir; %20 KDV dahil toplam her planın altında yazar. Ödemeler iyzico güvencesiyle alınır.',
           free: {
             badge: 'Deneme', name: 'Free', tagline: 'Sitenizin güvenlik durumuna hızlı bir bakış.',
             price: '₺0', period: 'Süresiz ücretsiz',
@@ -2509,7 +2542,7 @@
           },
           pro: {
             badge: 'Popüler', name: 'Pro', tagline: 'Üretim ortamını sürekli izleyen ekipler için.',
-            price: '₺299/ay', period: 'Aylık, istediğiniz zaman iptal',
+            price: '₺299/ay', gross: 'KDV dahil ₺358,80/ay', period: 'Aylık, istediğiniz zaman iptal',
             f1: 'Ayda 50 Tarama', f2: 'OWASP Lite Taraması (A01–A10)',
             f3: 'OWASP Gruplu PDF Rapor (düzeltme kodu ile)', f4: 'Panelde Tarama Geçmişi ve Skor Eğilimi',
             f5: 'E-posta Desteği (destek@cyberlionai.com)',
@@ -2517,7 +2550,7 @@
           },
           ent: {
             badge: 'Kurumsal', name: 'Enterprise', tagline: 'Sürekli izleme ve düzeltme isteyen kurumlar için.',
-            price: '₺2.499/ay', period: 'Aylık, istediğiniz zaman iptal',
+            price: '₺2.499/ay', gross: 'KDV dahil ₺2.998,80/ay', period: 'Aylık, istediğiniz zaman iptal',
             f1: 'Sınırsız Tarama', f2: "Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)",
             f3: 'Haftalık Otomatik Tarama', f4: 'Skor Eğilimi ve Alan Adı Karşılaştırması',
             f5: 'Öncelikli Destek ve Kurumsal Faturalandırma',
@@ -2528,12 +2561,15 @@
         footer: {
           about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması.',
           quick: 'Hızlı Linkler', contact: 'İletişim',
+          company: 'Şirket Bilgileri', legal: 'Yasal', product: 'Ürün', features: 'Özellikler', tel: 'Tel',
+          payTitle: 'Güvenli Ödeme', payText: 'Ödemeler iyzico güvencesi ile alınmaktadır.', payWith: 'ile Öde',
+          delivery: 'Teslimat Bilgisi',
           kvkk: 'KVKK Aydınlatma Metni', dist: 'Mesafeli Satış Sözleşmesi',
-          predisclosure: 'Ön Bilgilendirme Formu', refund: 'Teslimat ve İade',
+          predisclosure: 'Ön Bilgilendirme Formu', refund: 'İade ve İptal Politikası',
           vkn: 'VKN: 5810910912',
           hours: 'Çalışma Saatleri: Hafta içi 09:00 – 18:00 (TSİ)',
           rights: '© 2026 Ali Kotan - Şahıs İşletmesi',
-          privacy: 'Gizlilik Politikası', terms: 'Kullanım Şartları', cookies: 'Çerez Politikası'
+          privacy: 'Gizlilik Politikası', terms: 'Kullanım Koşulları', cookies: 'Çerez Politikası'
         },
         auth: {
           signIn: 'Giriş Yap', signUp: 'Hesap Oluştur', signOut: 'Çıkış Yap',
@@ -2656,7 +2692,6 @@
           detailTitle: 'Country detail',
           pickCountry: 'Select a marker on the map.',
           countersTitle: 'Counters',
-          loading: 'Loading…',
           countersNote: 'These feeds carry no country data, so they appear as counters rather than map markers.',
           sourcesTitle: 'Sources',
           r1h: '1h', r24h: '24h', r7d: '7d', rAll: 'All',
@@ -2678,7 +2713,8 @@
           desc: "Check your site's SSL and security headers in seconds.",
           scanLabel: 'Address to scan',
           scanPlaceholder: 'example.com',
-          scanNote: 'No sign-up required — 5 free tests, results in seconds.',
+          scanNote: 'No sign-up required — 5 free scans, results in seconds.',
+          consent: 'I confirm that I own this domain or am authorized to scan it. With consent, safe XSS/SQLi checks also run.',
           cta1: 'Scan Now', cta2: 'Go Pro', cta3: 'How It Works', cta4: 'Sample Report (PDF)',
           stat1: 'Sites Scanned (Live)',
           stat3: 'Fast Scanning', stat3v: '24/7'
@@ -2699,7 +2735,7 @@
           done: 'Scan complete',
           queued: 'Scan queued, waiting for a worker',
           running: 'Scan is running on the server',
-          demoNote: 'This is a demo output. Full reports and remediation steps unlock with PRO.',
+          demoNote: 'This is the free scan summary. Full reports and remediation steps unlock with PRO.',
           fullReport: 'Get Full Report',
           sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
           state: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured',
@@ -2825,7 +2861,7 @@
           },
           free: {
             q: 'Is it free? Do I need an account?',
-            a: 'The free plan needs no registration and gives you 5 security tests plus a basic SSL check. An account is only required for unlimited scans, detailed reports and remediation guidance.'
+            a: 'The free plan needs no registration and gives you 5 security scans plus a basic SSL check. An account is only required for unlimited scans, detailed reports and remediation guidance.'
           },
           csp: {
             q: 'How do I add a Content-Security-Policy?',
@@ -2904,7 +2940,7 @@
         pricing: {
           eyebrow: 'Plans', title: 'CHOOSE YOUR PLAN',
           subtitle: 'Start free. Upgrade when you are ready. No long-term commitment.',
-          foot: 'All prices exclude VAT. Corporate invoicing and annual billing are available. | Tüm planlar KDV hariçtir.',
+          foot: 'List prices exclude VAT; the total including 20% VAT is shown under each plan. Payments are processed securely by iyzico.',
           free: {
             badge: 'Trial', name: 'Free', tagline: 'A fast look at your site security posture.',
             price: '₺0', period: 'Free forever',
@@ -2915,7 +2951,7 @@
           },
           pro: {
             badge: 'Popular', name: 'Pro', tagline: 'For teams monitoring production continuously.',
-            price: '₺299/mo', period: 'Monthly, cancel anytime',
+            price: '₺299/mo', gross: 'incl. VAT ₺358.80/mo', period: 'Monthly, cancel anytime',
             f1: '50 Scans per Month', f2: 'OWASP Lite Scan (A01–A10)',
             f3: 'PDF Report Grouped by OWASP (with fix code)', f4: 'Scan History and Score Trend in the Panel',
             f5: 'Email Support via destek@cyberlionai.com',
@@ -2923,7 +2959,7 @@
           },
           ent: {
             badge: 'Enterprise', name: 'Enterprise', tagline: 'For organizations that want continuous monitoring and remediation.',
-            price: '₺2,499/mo', period: 'Monthly, cancel anytime',
+            price: '₺2,499/mo', gross: 'incl. VAT ₺2,998.80/mo', period: 'Monthly, cancel anytime',
             f1: 'Unlimited Scans', f2: '1-Click Fix via Cloudflare (with your own token)',
             f3: 'Weekly Automated Scan', f4: 'Score Trend and Domain Comparison',
             f5: 'Priority Support and Corporate Invoicing',
@@ -2934,8 +2970,11 @@
         footer: {
           about: 'Fast security scanning that analyzes your SSL and security headers in seconds.',
           quick: 'Quick Links', contact: 'Contact',
+          company: 'Company Information', legal: 'Legal', product: 'Product', features: 'Features', tel: 'Phone',
+          payTitle: 'Secure Payment', payText: 'Payments are processed securely by iyzico.', payWith: 'checkout',
+          delivery: 'Delivery Information',
           kvkk: 'KVKK Privacy Notice', dist: 'Distance Sales Agreement',
-          predisclosure: 'Pre-Contractual Information Form', refund: 'Delivery & Returns',
+          predisclosure: 'Pre-Contractual Information Form', refund: 'Refund & Cancellation Policy',
           vkn: 'Tax ID (VKN): 5810910912',
           hours: 'Business Hours: Weekdays 09:00 – 18:00 (GMT+3)',
           rights: '© 2026 Ali Kotan - Sole Proprietorship',
@@ -4690,8 +4729,8 @@
             toast(data.claimed > 0
               ? t('auth.toast.signedInClaimed', { count: data.claimed })
               : t('auth.toast.signedIn'), 'success');
-            // "Pro'ya Geç" ile gelen kullanıcı ödeme/ön kayıt akışına yönlenir.
-            try { if (sessionStorage.getItem('cl_pro_intent') === '1') window.location.href = '/checkout'; } catch (e) {}
+            // "Pro'ya Geç" ile gelen kullanıcı ödeme sayfasına yönlenir.
+            continueCheckout();
           }, function (err) {
             busy(form, false);
             showMsg(errText(err), 'error');
@@ -4728,8 +4767,8 @@
             toast(data.claimed > 0
               ? t('auth.toast.signedUpClaimed', { count: data.claimed })
               : t('auth.toast.signedUp'), 'success');
-            // "Pro'ya Geç" ile gelen kullanıcı ödeme/ön kayıt akışına yönlenir.
-            try { if (sessionStorage.getItem('cl_pro_intent') === '1') window.location.href = '/checkout'; } catch (e) {}
+            // "Pro'ya Geç" ile gelen kullanıcı ödeme sayfasına yönlenir.
+            continueCheckout();
           }, function (err) {
             busy(form, false);
             showMsg(errText(err), 'error');
@@ -4807,6 +4846,31 @@
       }
 
       /**
+       * Girişten sonra ödemeye dönüş.
+       *
+       * İki kaynak: /panel?checkout=<plan> (oturumsuz /api/checkout isteği
+       * oraya düşüyor) localStorage'a `cl_checkout_plan` yazar — giriş
+       * bağlantısı e-postadan yeni sekmede açıldığı için sessionStorage
+       * yetmiyor. "Pro'ya Geç" düğmeleri sessionStorage'a `cl_pro_intent`
+       * yazar. İkisi de /odeme'ye götürür; sözleşme onayları orada alınıyor.
+       * Eskiden hedef /checkout (ön kayıt formu) idi.
+       */
+      function continueCheckout() {
+        var plan = null;
+        try {
+          var v = JSON.parse(localStorage.getItem('cl_checkout_plan') || 'null');
+          if (v && (v.plan === 'pro' || v.plan === 'enterprise') && Date.now() - v.at < 3600000) plan = v.plan;
+          localStorage.removeItem('cl_checkout_plan');
+        } catch (e) {}
+        try {
+          if (!plan && sessionStorage.getItem('cl_pro_intent') === '1') plan = 'pro';
+          sessionStorage.removeItem('cl_pro_intent');
+        } catch (e) {}
+        if (plan) window.location.href = '/odeme?plan=' + plan;
+        return !!plan;
+      }
+
+      /**
        * E-posta bağlantısıyla dönüş.
        *
        * Supabase'in `token_hash` akışı kullanılıyor: adres çubuğunda gerçek
@@ -4858,6 +4922,8 @@
           toast(data.claimed > 0
             ? t('auth.toast.verifiedClaimed', { count: data.claimed })
             : t('auth.toast.verified'), 'success');
+          // Ödeme için girişe gönderilmişse (/panel?checkout=…) oraya dönülür.
+          continueCheckout();
           return true;
         }, function (err) {
           openModal(); setView('login');
@@ -5585,7 +5651,7 @@
        (12.408 kayıt, 24 saatte 352). Varsayılan '24s' olsaydı ziyaretçi
        haritanın büyük kısmını hiç görmezdi ve bunun bir filtre yüzünden
        olduğunu anlamazdı. */
-    var state = { data: null, live: true, range: 'all', country: '', threat: '', selected: null, timer: null };
+    var state = { data: null, live: true, range: 'all', country: '', threat: '', selected: 'TR', timer: null };
 
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var REFRESH_MS = 60000;   // sunucu önbelleği 5 dk; bundan sık sormanın anlamı yok
@@ -5794,7 +5860,15 @@
     function select(code) {
       state.selected = code;
       var m = markers().find(function (x) { return x.country === code; });
-      if (!m) { els.detail.innerHTML = '<p class="wmap__empty">' + esc(t('pick')) + '</p>'; return; }
+      if (!m) {
+        /* Varsayılan seçim Türkiye; o aralıkta Türkiye kaydı yoksa bunu
+           açıkça yazar, boş bir "seçin" kutusu bırakmaz. */
+        els.detail.innerHTML = code
+          ? '<div class="wmap__row"><span>' + esc(countryName(code)) + '</span><span>0</span></div>'
+            + '<p class="wmap__empty">' + esc(t('none')) + '</p>'
+          : '<p class="wmap__empty">' + esc(t('pick')) + '</p>';
+        return;
+      }
 
       var partners = drawArcs(code);
       var html = '<div class="wmap__row"><span>' + esc(countryName(code)) + '</span><span>' + pencereSayisi(m) + '</span></div>';
@@ -5867,6 +5941,7 @@
     function drawCounters() {
       var d = state.data;
       if (!d) return;
+      els.counters.removeAttribute('aria-busy');
       var html = '';
 
       /* BURASI BİR REGRESYONUN KAYNAĞIYDI. Döngü `s.geo` olan her kaynağı
@@ -6096,6 +6171,8 @@
         render();
       } catch (err) {
         els.counters.innerHTML = '<p class="wmap__empty">' + esc(t('err')) + '</p>';
+        els.counters.removeAttribute('aria-busy');
+        if (!state.data) els.detail.innerHTML = '<p class="wmap__empty">' + esc(t('err')) + '</p>';
         if (window.console) console.warn('worldmap:', err.message);
       }
     }

@@ -80,5 +80,36 @@ sina('/pricing ödemenin iyzico ile alındığını yazıyor', /iyzico/.test(pri
 sina('/pricing artık Stripe demiyor', /Stripe/.test(pricing), false);
 sina('ana sayfa Stripe demiyor', /Stripe/.test(index), false);
 
+/* ---- 5. KDV dahil tutarlar ve /odeme ----
+   KDV dahil tutar plans.js'te elle yazılı; burada priceTry × (1 + VAT_RATE)
+   ile aynı olduğu ve sayfalarda geçtiği sınanıyor. /odeme tutarı tarayıcıda
+   odeme.js hesaplıyor; oradaki net fiyat ve oran da aynı olmalı. */
+const { VAT_RATE } = require('../api/_lib/plans.js');
+const odemeJs = fs.readFileSync(path.join(ROOT, 'odeme.js'), 'utf8');
+['pro', 'enterprise'].forEach(function (planId) {
+  const p = PLANS[planId];
+  const brut = Math.round(p.priceTry * (1 + VAT_RATE) * 100) / 100;
+  const trBeklenen = '₺' + brut.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+  sina(planId + ' KDV dahil tutar oranla tutarlı', p.tr.gross, trBeklenen);
+  sina(planId + ' KDV dahil tutar ana sayfada (tr)', index.indexOf(p.tr.gross) !== -1, true);
+  sina(planId + ' KDV dahil tutar ana sayfada (en)', index.indexOf(p.en.gross) !== -1, true);
+  sina(planId + ' KDV dahil tutar /pricing sayfasında', pricing.indexOf(p.tr.gross) !== -1, true);
+  sina(planId + ' net fiyat odeme.js ile aynı',
+    new RegExp('\\b' + planId + ': ' + p.priceTry + '\\b').test(odemeJs), true);
+  sina(planId + ' butonu /odeme sayfasına gidiyor (ana sayfa)',
+    index.indexOf('href="/odeme?plan=' + planId + '"') !== -1, true);
+  sina(planId + ' butonu /odeme sayfasına gidiyor (/pricing)',
+    pricing.indexOf('href="/odeme?plan=' + planId + '"') !== -1, true);
+});
+sina('odeme.js KDV oranı plans.js ile aynı',
+  new RegExp('VAT_RATE = ' + String(VAT_RATE).replace('.', '\\.') + '0?;').test(odemeJs), true);
+
+/* ---- 6. /api/checkout ad soyad bölme ---- */
+const { customerName } = require('../api/checkout.js');
+sina('ad soyad bölünüyor', customerName('Ali Atlas Kotan', 'a@b.co'), { name: 'Ali Atlas', surname: 'Kotan' });
+sina('tek kelime yer tutucuya düşüyor', customerName('Ali', 'ali@b.co'), { name: 'ali', surname: '-' });
+sina('harf dışı karakter reddediliyor', customerName('<script> x', 'a@b.co'), { name: 'a', surname: '-' });
+sina('ad yoksa yer tutucu', customerName(undefined, 'z@b.co'), { name: 'z', surname: '-' });
+
 console.log(hata === 0 ? '\nTümü geçti.' : '\n' + hata + ' sınama BAŞARISIZ.');
 process.exit(hata === 0 ? 0 : 1);

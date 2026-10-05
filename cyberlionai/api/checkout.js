@@ -64,6 +64,22 @@ function pricingPlanRef(planId) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+/**
+ * /odeme formundaki "Ad Soyad"ı iyzico'nun ad/soyad alanlarına böler: son
+ * kelime soyad, öncesi ad. Geçersizse (boş, tek kelime, aşırı uzun, harf
+ * dışı karakter) e-postadan türetilen eski yer tutucuya döner.
+ */
+function customerName(raw, email) {
+  const fallback = { name: String(email || '').split('@')[0] || 'Musteri', surname: '-' };
+  if (typeof raw !== 'string') return fallback;
+  const clean = raw.trim().replace(/\s+/g, ' ');
+  if (clean.length < 3 || clean.length > 100) return fallback;
+  if (!/^[\p{L}][\p{L}' .-]*$/u.test(clean)) return fallback;
+  const parts = clean.split(' ');
+  if (parts.length < 2) return fallback;
+  return { name: parts.slice(0, -1).join(' '), surname: parts[parts.length - 1] };
+}
+
 /** İsteği bir tarayıcı gezinmesi mi yapıyor: cevap HTML mi JSON mu olacak. */
 function wantsHtml(req) {
   const accept = (req.headers && req.headers.accept) || '';
@@ -151,13 +167,13 @@ module.exports = async function handler(req, res) {
     init = await iyzico.initializeCheckoutForm({
       callbackUrl: callbackUrl(req),
       pricingPlanRef: planRef,
-      customer: {
-        /* Elimizdeki tek kimlik e-posta. iyzico daha fazlasını isterse
-           `errorCode` ile reddediyor; uydurma ad/TC kimlik gönderilmiyor. */
-        email: user.email || '',
-        name: (user.email || '').split('@')[0] || 'Musteri',
-        surname: '-'
-      }
+      customer: Object.assign(
+        /* /odeme formundan gelen ad soyad varsa o; yoksa e-postadan türetilen
+           yer tutucu. iyzico daha fazlasını isterse `errorCode` ile
+           reddediyor; uydurma TC kimlik gönderilmiyor. */
+        { email: user.email || '' },
+        customerName(req.query && req.query.ad, user.email)
+      )
     });
   } catch (err) {
     return unavailable(req, res, 'iyzico_error', planId);
@@ -176,6 +192,7 @@ module.exports = async function handler(req, res) {
 
 module.exports.pricingPlanRef = pricingPlanRef;
 module.exports.wantsHtml = wantsHtml;
+module.exports.customerName = customerName;
 module.exports.callbackUrl = callbackUrl;
 module.exports.PLAN_REF_ENV = PLAN_REF_ENV;
 module.exports.PLANS = PLANS;
