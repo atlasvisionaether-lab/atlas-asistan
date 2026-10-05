@@ -23,7 +23,7 @@
  * mesaja girmez; Cloudflare'in hata metni de değil, yalnız kodu.
  */
 
-const { cf, findZoneId, applyTransformRule, maskToken, FIX_HEADERS } = require('./_lib/cloudflare.js');
+const { cf, findZoneId, applyTransformRule, presentHeaders, fixesFor, maskToken, FIX_HEADERS } = require('./_lib/cloudflare.js');
 
 /** Rollback: ruleset icinden kurali siler. Token yalnizca bellekte. */
 async function cfRuleDelete(zoneId, rulesetId, ruleId, token) {
@@ -61,10 +61,6 @@ function modificationLog(req, user, domain, verified) {
   });
 }
 
-/** fixType'ın eklediği başlık sayısı ('all' hepsini ekler). */
-function headerCount(fixType) {
-  return fixType === 'all' ? Object.keys(FIX_HEADERS).length : 1;
-}
 
 async function bildirBasarisiz(res, domain, code, perm) {
   tg.bildirimIsaretle(res);
@@ -91,7 +87,10 @@ function missingPermission(stage, code, status) {
   return null;
 }
 
-const FIX_TYPES = ['hsts', 'csp', 'xframe', 'all'];
+/* 'csp' bilinçli olarak YOK — bkz. _lib/cloudflare.js FIX_HEADERS. Eski
+   arayüzlerden gelen 'csp' isteği ayrı bir kodla reddediliyor ki müşteri
+   neden uygulanmadığını ve ne yapacağını görsün. */
+const FIX_TYPES = ['hsts', 'xframe', 'all'];
 
 /**
  * Supabase: autofix için bağımsız bir job kaydı + info bulgusu.
@@ -158,6 +157,9 @@ async function handler(req, res) {
   if (!domain || !/^[a-z0-9.-]{1,253}\.[a-z]{2,}$/.test(domain)) {
     return res.status(400).json({ error: { code: 'invalid_domain' } });
   }
+  if (fixType === 'csp') {
+    return res.status(400).json({ error: { code: 'csp_manual_only' } });
+  }
   if (!FIX_TYPES.includes(fixType)) {
     return res.status(400).json({ error: { code: 'invalid_fix_type' } });
   }
@@ -210,8 +212,23 @@ async function handler(req, res) {
     zone = found.zoneId;
   }
 
+  /* Sitede zaten olan başlık EZİLMEZ. Site okunamazsa kural yazılmaz:
+     neyi değiştireceğimizi bilmeden müşterinin sitesine dokunmayız. */
+  const present = await presentHeaders(domain);
+  if (!present) {
+    await bildirBasarisiz(res, domain, 'precheck_failed');
+    return res.status(502).json({ error: { code: 'precheck_failed' } });
+  }
+  const fixes = fixesFor(fixType).filter(function (f) {
+    return present.indexOf(FIX_HEADERS[f].header.toLowerCase()) === -1;
+  });
+  const skipped = fixesFor(fixType).filter(function (f) { return fixes.indexOf(f) === -1; });
+  if (!fixes.length) {
+    return res.status(409).json({ error: { code: 'already_present', skipped: skipped } });
+  }
+
   /* Transform Rule uygula. */
-  const applied = await applyTransformRule(zone, useToken, fixType);
+  const applied = await applyTransformRule(zone, useToken, fixes);
   if (!applied.ok) {
     // Kullanıcı hatası: 400. DB'ye failed yazmıyoruz (token hatalı olabilir, iz bırakma).
     const perm = missingPermission('rule', applied.code, applied.status);
@@ -222,13 +239,15 @@ async function handler(req, res) {
   /* Başarı: scan_findings'e bilgi kaydı (token'sız). */
   const findingId = await recordAppliedFix(domain, fixType, applied.ruleId);
 
-  await tg.sendTelegram(tg.mesaj.autofixTamam(domain, fixType, headerCount(fixType)),
+  await tg.sendTelegram(tg.mesaj.autofixTamam(domain, fixType, fixes.length),
     { type: 'autofix', priority: true });
 
   return res.status(200).json({
     ok: true,
     mocked: false,
     fixType: fixType,
+    applied: fixes,
+    skipped: skipped,
     domain: domain,
     zoneId: zone,
     rulesetId: applied.rulesetId,

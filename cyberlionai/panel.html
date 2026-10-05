@@ -192,10 +192,9 @@
             <input id="cf-token" type="password" placeholder="Boş bırakılırsa Preview env token kullanılır — bizde saklanmaz" autocomplete="off" />
             <label for="cf-fix" data-t-tr="Düzeltme Türü" data-t-en="Fix Type">Düzeltme Türü</label>
             <select id="cf-fix">
-              <option value="hsts" selected>HSTS — max-age=31536000; includeSubDomains; preload</option>
-              <option value="csp">CSP — default-src 'self'</option>
+              <option value="hsts" selected>HSTS — max-age=31536000</option>
               <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
-              <option value="all">Tümü (HSTS + CSP + X-Frame)</option>
+              <option value="all">Tümü (HSTS + X-Frame)</option>
             </select>
             <button type="submit" id="cf-btn" data-t-tr="1 Tıkla Ekle (Gerçek)" data-t-en="Apply 1-Click Fix (Live)">1 Tıkla Ekle (Gerçek)</button>
             <p class="cf-result" id="cf-result" role="status" aria-live="polite"></p>
@@ -221,10 +220,9 @@
             <input id="cf-token" type="password" placeholder="Leave empty to use the Preview env token — never stored" autocomplete="off" />
             <label for="cf-fix">Fix Type</label>
             <select id="cf-fix">
-              <option value="hsts" selected>HSTS — max-age=31536000; includeSubDomains; preload</option>
-              <option value="csp">CSP — default-src 'self'</option>
+              <option value="hsts" selected>HSTS — max-age=31536000</option>
               <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
-              <option value="all">All (HSTS + CSP + X-Frame)</option>
+              <option value="all">All (HSTS + X-Frame)</option>
             </select>
             <button type="submit" id="cf-btn">Apply 1-Click Fix (Live)</button>
             <p class="cf-result" id="cf-result" role="status" aria-live="polite"></p>

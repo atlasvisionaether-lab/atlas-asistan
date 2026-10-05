@@ -2453,6 +2453,8 @@
           cfOk: 'Cloudflare kuralı eklendi. Birkaç dakika içinde etkin olur; taramayı tekrarlayın.',
           cfZone: 'Bu belirteçle alan adınızın Cloudflare bölgesi bulunamadı.',
           cfErr: 'Cloudflare kuralı eklenemedi',
+          cfAlready: 'Siteniz bu başlığı zaten gönderiyor; mevcut ayarınızı ezmemek için kural eklenmedi.',
+          cfPrecheck: 'Siteniz şu an okunamadı. Neyi değiştireceğimizi doğrulayamadığımız için kural eklenmedi; biraz sonra tekrar deneyin.',
           cfHelp: "Cloudflare > My Profile > API Tokens > Create Token > Custom Token ile oluşan NORMAL belirteci yapıştırın (sayfada gösterilen 'test' curl örneğini değil). Gerekli izinler: Zone › Zone › Read ve Zone › Transform Rules › Edit, bu alan adının bölgesi için. Belirteç bizde saklanmaz; yalnızca bu istekte kullanılır.",
           cfMissing: 'Belirteçte eksik izin: {perm}. Cloudflare > API Tokens içinde belirteci düzenleyip bu izni bu alan adının bölgesi için ekleyin.',
           cfTokenInvalid: 'Belirteç geçersiz. Gösterilen test curl satırını değil, oluşturulan belirtecin kendisini yapıştırın.',
@@ -2867,6 +2869,8 @@
           cfOk: 'Cloudflare rule added. It takes effect within a few minutes; run the scan again.',
           cfZone: 'Your domain\'s Cloudflare zone could not be found with this token.',
           cfErr: 'Could not add the Cloudflare rule',
+          cfAlready: 'Your site already sends this header; no rule was added so your existing setting is not overwritten.',
+          cfPrecheck: 'Your site could not be read right now. No rule was added because we could not verify what would change; try again shortly.',
           cfHelp: "Paste the NORMAL token created under Cloudflare > My Profile > API Tokens > Create Token > Custom Token (not the 'test' curl example shown on that page). Required permissions: Zone › Zone › Read and Zone › Transform Rules › Edit, for this domain's zone. We do not store the token; it is used only for this request.",
           cfMissing: 'The token is missing a permission: {perm}. Edit the token under Cloudflare > API Tokens and add it for this domain\'s zone.',
           cfTokenInvalid: 'The token is invalid. Paste the token itself, not the test curl line.',
@@ -4234,7 +4238,8 @@
     /* Model A: Cloudflare 1-Tık — yalnızca Enterprise + doğrulanmış alan adı,
        yalnızca Cloudflare kuralıyla düzeltilebilen başlıklar. Token istemcide
        tutulmaz, sunucuda saklanmaz. */
-    var CF_FIXABLE = { hsts: 'hsts', csp: 'csp', xframe: 'xframe' };
+    /* CSP 1-Tık ile uygulanmaz: siteye özel yazılmalı (bkz. api/_lib/cloudflare.js). */
+    var CF_FIXABLE = { hsts: 'hsts', xframe: 'xframe' };
 
     function cloudflareBlock(item) {
       if (!CF_FIXABLE[item.id] || fixState.plan !== 'enterprise' || !fixState.verified) return null;
@@ -4286,6 +4291,8 @@
             : perm === 'token_invalid' ? t('scan.cfTokenInvalid')
             : perm ? t('scan.cfMissing', { perm: perm })
             : code === 'zone_not_found' ? t('scan.cfZone')
+            : code === 'already_present' ? t('scan.cfAlready')
+            : code === 'precheck_failed' ? t('scan.cfPrecheck')
             : t('scan.cfErr') + (code ? ' (' + code + ')' : '');
         }, function () { go.disabled = false; msg.textContent = t('scan.cfErr'); });
       });
