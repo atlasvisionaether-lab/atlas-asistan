@@ -71,7 +71,7 @@ Alan adı bağlandığında yapılacaklar:
 2. `localStorage.preferredLang` (kullanıcının önceki tercihi)
 3. `/tr/` veya `/en/` klasör yolu
 4. Tarayıcı dili (`navigator.language`)
-5. **Geo-IP** (`ipapi.co`) — yalnızca 1–3 yoksa, sayfa yüklendikten sonra asenkron çalışır;
+5. **Ülke** (`/api/geo`, Vercel'in `x-vercel-ip-country` başlığı; IP üçüncü tarafa gitmez) — yalnızca 1–3 yoksa, sayfa yüklendikten sonra asenkron çalışır;
    ülke `TR` ise Türkçeye geçer. İstek 2 saniyede zaman aşımına uğrar ve başarısız olursa
    tarayıcı dili geçerli kalır (sayfa hiçbir durumda beklemez).
 

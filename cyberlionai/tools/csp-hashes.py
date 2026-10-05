@@ -42,7 +42,7 @@ def build_csp(hashes):
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
         "script-src 'self' " + ' '.join(hashes),
-        "connect-src 'self' https://ipapi.co",
+        "connect-src 'self'",
         'upgrade-insecure-requests',
     ])
 

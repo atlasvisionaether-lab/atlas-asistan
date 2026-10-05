@@ -56,6 +56,32 @@ const CSP_WARN = {
        'violations in the browser console, then switch to Content-Security-Policy.']
 };
 
+/* Riskli olabilecek diğer öneriler için kısa uyarılar (kodun üstünde yorum). */
+const HEADER_WARN = {
+  hsts: { tr: ['includeSubDomains: TÜM alt alan adlarınız HTTPS sunmuyorsa bu kısmı çıkarın;',
+               'aksi halde HTTPS\'siz alt alan adları tarayıcıda açılmaz.'],
+          en: ['includeSubDomains: drop it unless ALL your subdomains serve HTTPS;',
+               'otherwise subdomains without HTTPS will not open in browsers.'] },
+  coep: { tr: ['Dikkat: require-corp, CORP/CORS başlığı olmayan dış resim, video ve gömülü',
+               'içerikleri engeller. Önce test ortamında deneyin.'],
+          en: ['Caution: require-corp blocks external images, video and embeds without',
+               'CORP/CORS headers. Try it on staging first.'] }
+};
+
+function warnedHeaderFix(id, tier) {
+  return function (lang) {
+    const base = headerFix(id, tier)(lang);
+    const comment = HEADER_WARN[id][lang].map(function (l) { return '# ' + l; }).join('\n');
+    return {
+      tier: base.tier,
+      nginx: comment + '\n' + base.nginx,
+      apache: comment + '\n' + base.apache,
+      cloudflare: HEADER_WARN[id][lang].join(' ') + '\n\n' + base.cloudflare,
+      dns: null
+    };
+  };
+}
+
 /** CSP: headerFix ile aynı kod, önünde test uyarısı. */
 function cspFix(lang) {
   const base = headerFix('csp', 'tls_dns')(lang);
@@ -76,13 +102,13 @@ function fixed(tier, nginx, apache, cf, dns) {
 }
 
 const FIXES = {
-  hsts: headerFix('hsts', 'header'),
+  hsts: warnedHeaderFix('hsts', 'header'),
   xframe: headerFix('xframe', 'header'),
   nosniff: headerFix('nosniff', 'header'),
   referrer: headerFix('referrer', 'header'),
   permissions: headerFix('permissions', 'header'),
   coop: headerFix('coop', 'header'),
-  coep: headerFix('coep', 'header'),
+  coep: warnedHeaderFix('coep', 'header'),
   corp: headerFix('corp', 'header'),
   disclosure: fixed('header', 'server_tokens off;', 'ServerTokens Prod\nServerSignature Off', null, null),
   /* CSP sitenin kendi betiklerinin incelenmesini gerektirir: başlık tek satır

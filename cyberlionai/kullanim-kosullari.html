@@ -38,6 +38,8 @@
         <li>Varsayılan tarama pasif analizdir. Aktif kontroller (güvenli XSS/SQLi yoklaması) yalnızca alan adı sahipliği doğrulandığında ve onay verildiğinde çalışır. Tarama motoru agresif saldırı (DDoS, brute-force) içermez.</li>
         <li>Free plan 3 tarama ile sınırlıdır, kötüye kullanımda hesap askıya alınabilir.</li>
         <li>Raporlardaki öneriler bilgilendirme amaçlıdır, %100 güvenlik garantisi vermez.</li>
+        <li>Raporlarda ve &quot;Nasıl düzeltirim?&quot; bölümünde verilen yapılandırma kodları örnektir. Bazı başlıklar (özellikle Content-Security-Policy) her siteye göre ayrıca uyarlanmalıdır; kodu canlı siteye uygulamadan önce test ortamında denemeniz önerilir. Riskli önerilerin yanında bu uyarı ayrıca gösterilir.</li>
+        <li>Cloudflare 1-Tık Düzeltme yalnızca sahipliği doğrulanmış alan adında, sizin talebinizle ve sizin verdiğiniz Cloudflare API belirteciyle uygulanır. Belirteç saklanmaz. Bu özellik yalnızca HSTS ve X-Frame-Options başlıklarını ekler; sitenizin zaten gönderdiği başlıkları değiştirmez, Content-Security-Policy uygulamaz ve siteniz o an okunamıyorsa hiçbir değişiklik yapmaz. Eklenen kural Cloudflare panelinizde (Rules › Transform Rules) &quot;CyberLion AI 1-click fix&quot; adıyla görünür; dilediğiniz an silerek geri alabilirsiniz.</li>
         <li>Abonelik paylaşılamaz.</li>
         <li>18 yaşından küçükler kullanamaz.</li>
         <li>Hizmet 7/24 hedefiyle sunulur ancak kesintisiz garanti verilmez.</li>
