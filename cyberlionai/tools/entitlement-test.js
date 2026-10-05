@@ -8,7 +8,7 @@
  * NE SINANIYOR
  *
  * 1. `_lib/entitlement.js` saf fonksiyonları (plan çözümü, politika, TSİ ayı).
- * 2. `/api/scan`: free 5 (ömür boyu), Pro aylık 50 ayrı anahtarda, Enterprise
+ * 2. `/api/scan`: free 3 (ömür boyu), Pro aylık 50 ayrı anahtarda, Enterprise
  *    sayaçsız. Eskiden herkese 5 uygulanıyordu: Pro müşteri 6. taramada 402
  *    alıyordu.
  * 3. `/api/auth/me`: gösterilen kota, uygulanan kotayla aynı politika.
@@ -93,8 +93,8 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
   const pe = E.policyFor('enterprise', owner, 'x');
   esit('enterprise sınırsız', [pe.unlimited, pe.limit, pe.key], [true, null, null]);
 
-  esit('quotaView free', E.quotaView(pf, 3, 'account'),
-    { used: 3, limit: 5, remaining: 2, scope: 'account', plan: 'free', period: 'lifetime', unlimited: false });
+  esit('quotaView free', E.quotaView(pf, 1, 'account'),
+    { used: 1, limit: 3, remaining: 2, scope: 'account', plan: 'free', period: 'lifetime', unlimited: false });
   esit('quotaView sınırsız', E.quotaView(pe, null, 'account'),
     { used: null, limit: null, remaining: null, scope: 'account', plan: 'enterprise', period: null, unlimited: true });
   esit('anonim → free (db sorulmadan)', await E.planFor({ sessionId: 's' }), 'free');
@@ -156,7 +156,7 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
 
   r = await taramaUcu('free', true);
   esit('Free: 6. tarama 402', r.res.statusCode, 402);
-  esit('Free: ömür boyu anahtar + 5', r.kayit.reserve, [['cl:quota:u:u-9', FREE_SCAN_LIMIT]]);
+  esit('Free: ömür boyu anahtar + 3', r.kayit.reserve, [['cl:quota:u:u-9', FREE_SCAN_LIMIT]]);
 
   /* ================= 3. /api/auth/me ================= */
   async function meUcu(plan, used) {
@@ -180,8 +180,8 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
   esit('me Pro: tarama ucuyla AYNI anahtar', m.okunan, ['cl:quota:m:AY:u:u-7']);
   m = await meUcu('enterprise', 999);
   esit('me Enterprise: sınırsız, sayaç okunmuyor', [m.q.unlimited, m.okunan.length], [true, 0]);
-  m = await meUcu('free', 3);
-  esit('me Free: 2/5', [m.q.remaining, m.q.limit, m.q.period], [2, 5, 'lifetime']);
+  m = await meUcu('free', 1);
+  esit('me Free: 2/3', [m.q.remaining, m.q.limit, m.q.period], [2, 3, 'lifetime']);
 
   /* ================= 4. Cloudflare erişim kapısı ================= */
   async function cfUcu(rel, girisli, req, envToken, dogrulanmis, plan) {

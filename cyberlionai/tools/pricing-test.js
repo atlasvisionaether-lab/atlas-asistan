@@ -104,6 +104,20 @@ const odemeJs = fs.readFileSync(path.join(ROOT, 'odeme.js'), 'utf8');
 sina('odeme.js KDV oranı plans.js ile aynı',
   new RegExp('VAT_RATE = ' + String(VAT_RATE).replace('.', '\\.') + '0?;').test(odemeJs), true);
 
+/* ---- 5b. Ücretsiz hak sayısı = FREE_SCAN_LIMIT ----
+   Sayfadaki "N ücretsiz tarama" bir taahhüt; sunucudaki kota ile aynı olmalı.
+   Başka bir sayı (eski "5") hiçbir yerde kalmamalı. */
+const { FREE_SCAN_LIMIT } = require('../api/_lib/limits.js');
+const knowledge = fs.readFileSync(path.join(ROOT, 'data', 'knowledge.json'), 'utf8');
+const N = String(FREE_SCAN_LIMIT);
+[['ana sayfa', index], ['/pricing', pricing], ['asistan bilgi tabanı', knowledge]].forEach(function (pair) {
+  const sayilar = (pair[1].match(/(\d+) (?:ücretsiz tarama|free scans|Güvenlik Taraması|Security Scans|güvenlik taraması|security scans)|ilk (\d+) tarama|first (\d+) scans|Free ₺0 \((\d+) (?:tarama|scans)/g) || [])
+    .map(function (m) { return (m.match(/\d+/) || [''])[0]; })
+    .filter(function (x) { return x !== '0'; });
+  sina(pair[0] + ': ücretsiz hak sayısı her yerde ' + N, sayilar.length > 0 && sayilar.every(function (x) { return x === N; }), true);
+});
+sina('ana sayfa yapılandırması freeScanLimit = FREE_SCAN_LIMIT', index.indexOf('freeScanLimit: ' + N + ',') !== -1, true);
+
 /* ---- 6. /api/checkout ad soyad bölme ---- */
 const { customerName } = require('../api/checkout.js');
 sina('ad soyad bölünüyor', customerName('Ali Atlas Kotan', 'a@b.co'), { name: 'Ali Atlas', surname: 'Kotan' });

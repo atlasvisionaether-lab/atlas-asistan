@@ -221,8 +221,8 @@ anonim geçmişe ve kota sayacına döner.
 
 | Durum | Anahtar | Sınır |
 |---|---|---|
-| Anonim | `cl:quota:<oturum kimliği>` | 5 tarama |
-| Giriş yapmış | `cl:quota:u:<kullanıcı kimliği>` | 5 tarama |
+| Anonim | `cl:quota:<oturum kimliği>` | 3 tarama |
+| Giriş yapmış | `cl:quota:u:<kullanıcı kimliği>` | 3 tarama |
 
 Devralınan taramalar hesabın kotasına eklenir (üst sınırı aşmadan). Aksi hâlde
 çıkış yapıp yeniden kaydolarak sınırsız hak üretmek mümkün olurdu.

@@ -324,7 +324,7 @@ sayacı olur ve istemci farklı örneklere düşerek sınırı kolayca aşar.
 | Sınır | Anahtar | Değer |
 |---|---|---|
 | IP hız sınırı | IP'nin SHA-256 özeti | 10 dakikada 12 tarama |
-| Ücretsiz kota | Sunucunun verdiği oturum kimliği | 5 tarama |
+| Ücretsiz kota | Sunucunun verdiği oturum kimliği | 3 tarama |
 
 **Atomiklik:** kontrol ve artırma tek bir Lua script'inde yapılır. Ayrı GET +
 INCR çağrıları yarış koşuluna açıktır; eşzamanlı iki istek son hakkı iki kez

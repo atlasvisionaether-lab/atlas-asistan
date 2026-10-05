@@ -267,7 +267,7 @@ istekler 9 saniyede zaman aşımına uğrar, en fazla 4 yönlendirme izlenir.
 | Sınır | Anahtar | Değer | Aşılınca |
 |---|---|---|---|
 | IP hız sınırı | `cl:rl:<sha256(ip)[:32]>` | 10 dk / 12 tarama | `429 rate_limited` + `Retry-After` |
-| Ücretsiz kota | `cl:quota:<oturum kimliği>` | 5 tarama | `402 quota_exceeded` |
+| Ücretsiz kota | `cl:quota:<oturum kimliği>` | 3 tarama | `402 quota_exceeded` |
 
 Depo: Upstash Redis REST. Gerekli ortam değişkenleri
 `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.

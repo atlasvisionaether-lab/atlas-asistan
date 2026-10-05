@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a0a0f" />
 
   <title>Cyber Lion AI - Yapay Zeka ile Güvenlik Taraması</title>
-  <meta name="description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez." />
+  <meta name="description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 3 ücretsiz tarama, kayıt gerekmez." />
   <meta name="keywords" content="güvenlik, siber güvenlik, AI, tarama, SSL, TLS, güvenlik başlıkları, CSP, HSTS" />
   <meta name="author" content="Cyber Lion AI" />
   <meta name="robots" content="index, follow" />
@@ -15,7 +15,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Cyber Lion AI" />
   <meta property="og:title" content="Cyber Lion AI - Yapay Zeka Destekli Güvenlik Tarama Platformu" />
-  <meta property="og:description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez." />
+  <meta property="og:description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 3 ücretsiz tarama, kayıt gerekmez." />
   <meta property="og:url" content="https://cyberlionai.com/" />
   <meta property="og:locale" content="tr_TR" />
   <meta property="og:locale:alternate" content="en_US" />
@@ -1658,7 +1658,7 @@
           </form>
           <p class="scan__note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            <span data-i18n="hero.scanNote">Kayıt gerekmez — 5 ücretsiz tarama, saniyeler içinde sonuç.</span>
+            <span data-i18n="hero.scanNote">Kayıt gerekmez — 3 ücretsiz tarama, saniyeler içinde sonuç.</span>
             <button type="button" id="historyOpen" style="margin-left:auto;background:none;border:none;
               color:var(--gold-primary);font:inherit;font-size:0.78rem;cursor:pointer;text-decoration:underline;
               text-underline-offset:3px;white-space:nowrap" data-i18n="history.open">Geçmiş</button>
@@ -1936,12 +1936,12 @@
             <div class="plan__price" data-i18n="pricing.free.price">₺0</div>
             <span class="plan__period" data-i18n="pricing.free.period">Süresiz ücretsiz</span>
             <ul class="plan__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f1">5 Güvenlik Taraması</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f1">3 Güvenlik Taraması</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f2">Temel SSL/TLS Kontrolü</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f3">Güvenlik Başlıkları Kontrolü (CSP, HSTS, X-Frame)</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f4">Basit PDF Raporu</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f6">E-posta Güvenlik Skoru (SPF, DMARC, DKIM, DNSSEC)</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f5">Kayıt Gerekmez (ilk 5 tarama)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f5">Kayıt Gerekmez (ilk 3 tarama)</span></li>
             </ul>
             <button type="button" class="btn btn--muted btn--block" id="trialBtn" data-i18n="pricing.free.cta">Ücretsiz Tara</button>
           </article>
@@ -2318,7 +2318,7 @@
       apiBaseUrl: '',               // backend hazır olduğunda: 'https://api.cyberlionai.com'
       useMockApi: true,             // kayıt/destek/düzeltme uçları için; backend gelince false
       liveScan: true,               // /api/scan gerçek: sunucusuz fonksiyon yayında
-      freeScanLimit: 5,             // kayıt gerektirmeyen ücretsiz tarama hakkı
+      freeScanLimit: 3,             // kayıt gerektirmeyen ücretsiz tarama hakkı
       geoLookupUrl: 'https://ipapi.co/country_code/',
       storageKeys: {
         lang: 'preferredLang',
@@ -2347,7 +2347,7 @@
       tr: {
         meta: {
           title: 'Cyber Lion AI - Yapay Zeka ile Güvenlik Taraması',
-          desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez.'
+          desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 3 ücretsiz tarama, kayıt gerekmez.'
         },
         a11y: { skip: 'İçeriğe geç', theme: 'Temayı değiştir', menu: 'Menüyü aç/kapat', toTop: 'Sayfanın başına dön' },
         nav: {
@@ -2392,7 +2392,7 @@
           desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin.',
           scanLabel: 'Taranacak adres',
           scanPlaceholder: 'ornek.com',
-          scanNote: 'Kayıt gerekmez — 5 ücretsiz tarama, saniyeler içinde sonuç.',
+          scanNote: 'Kayıt gerekmez — 3 ücretsiz tarama, saniyeler içinde sonuç.',
           consent: 'Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.',
           cta1: 'Hemen Tara', cta2: "Pro'ya Geç", cta3: 'Nasıl Çalışır?', cta4: 'Örnek Rapor (PDF)',
           stat1: 'Taranan Site (Canlı)',
@@ -2625,9 +2625,9 @@
           free: {
             badge: 'Deneme', name: 'Free', tagline: 'Sitenizin güvenlik durumuna hızlı bir bakış.',
             price: '₺0', period: 'Süresiz ücretsiz',
-            f1: '5 Güvenlik Taraması', f2: 'Temel SSL/TLS Kontrolü',
+            f1: '3 Güvenlik Taraması', f2: 'Temel SSL/TLS Kontrolü',
             f3: 'Güvenlik Başlıkları Kontrolü (CSP, HSTS, X-Frame)', f4: 'Basit PDF Raporu',
-            f5: 'Kayıt Gerekmez (ilk 5 tarama)',
+            f5: 'Kayıt Gerekmez (ilk 3 tarama)',
             f6: 'E-posta Güvenlik Skoru (SPF, DMARC, DKIM, DNSSEC)',
             cta: 'Ücretsiz Tara'
           },
@@ -2767,7 +2767,7 @@
       en: {
         meta: {
           title: 'Cyber Lion AI - AI-Powered Security Scanning',
-          desc: 'Analyze your SSL and security headers in seconds. 5 free scans, no sign-up required.'
+          desc: 'Analyze your SSL and security headers in seconds. 3 free scans, no sign-up required.'
         },
         a11y: { skip: 'Skip to content', theme: 'Toggle theme', menu: 'Toggle menu', toTop: 'Back to top' },
         nav: {
@@ -2812,7 +2812,7 @@
           desc: "Check your site's SSL and security headers in seconds.",
           scanLabel: 'Address to scan',
           scanPlaceholder: 'example.com',
-          scanNote: 'No sign-up required — 5 free scans, results in seconds.',
+          scanNote: 'No sign-up required — 3 free scans, results in seconds.',
           consent: 'I confirm that I own this domain or am authorized to scan it. With consent, safe XSS/SQLi checks also run.',
           cta1: 'Scan Now', cta2: 'Go Pro', cta3: 'How It Works', cta4: 'Sample Report (PDF)',
           stat1: 'Sites Scanned (Live)',
@@ -3036,9 +3036,9 @@
           free: {
             badge: 'Trial', name: 'Free', tagline: 'A fast look at your site security posture.',
             price: '₺0', period: 'Free forever',
-            f1: '5 Security Scans', f2: 'Basic SSL/TLS Check',
+            f1: '3 Security Scans', f2: 'Basic SSL/TLS Check',
             f3: 'Security Headers Check (CSP, HSTS, X-Frame)', f4: 'Basic PDF Report',
-            f5: 'No Sign-Up Needed (first 5 scans)',
+            f5: 'No Sign-Up Needed (first 3 scans)',
             f6: 'Email Security Score (SPF, DMARC, DKIM, DNSSEC)',
             cta: 'Scan for Free'
           },
@@ -4040,7 +4040,7 @@
        bağlı olarak kalıcı depoda tutulur. Buradaki değer yalnızca son sunucu
        yanıtının gösterimidir; tarayıcı verisi silinse bile sunucudaki sayaç
        ve IP hız sınırı yerinde kalır.                                        */
-    /* Sınır plana göre (sunucu bildirir): free 5 (ömür boyu), Pro aylık,
+    /* Sınır plana göre (sunucu bildirir): free 3 (ömür boyu), Pro aylık,
        Enterprise sınırsız. Sunucu cevabı gelene dek free varsayılır. */
     var quotaPlan = 'free';
     var quotaLimit = CONFIG.freeScanLimit;

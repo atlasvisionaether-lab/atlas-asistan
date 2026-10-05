@@ -9,7 +9,7 @@
  */
 module.exports = {
   /** Hesap veya anonim oturum başına ücretsiz tarama (ömür boyu). */
-  FREE_SCAN_LIMIT: 5,
+  FREE_SCAN_LIMIT: 3,
 
   /** Pro: takvim ayı (TSİ) başına tarama. Fiyat sayfasındaki "Ayda 50 Tarama"
       taahhüdüyle aynı olmak zorunda; tools/pricing-test.js sınıyor.

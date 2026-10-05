@@ -334,9 +334,9 @@
       A08: 'Software and Data Integrity Failures', A09: 'Security Logging and Monitoring Failures', A10: 'Server-Side Request Forgery' }
   };
 
-  /* Plan başına tablo satırı. FREE'nin kotası zaten 5 tarama; fazlası olursa
+  /* Plan başına tablo satırı. FREE'nin kotası zaten 3 tarama; fazlası olursa
      bulanık gösterilir. ENTERPRISE sayfalı ve süzgeçli. */
-  var ROW_LIMIT = { free: 5, pro: 50, enterprise: Infinity, unknown: 5 };
+  var ROW_LIMIT = { free: 3, pro: 50, enterprise: Infinity, unknown: 3 };
   var FIRST_PAGE = 50; /* sunucunun panel üst sınırı (PANEL_MAX_LIMIT) */
   var AUTO_DETAIL = 8; /* OWASP sütunu için kendiliğinden açılan ayrıntı sayısı */
 
@@ -365,7 +365,7 @@
         { severity: 'medium', title: 'X-Frame-Options yok', description: 'Sayfa başka sitelerde çerçevelenebilir.' }] }
     ] };
     return {
-      me: { authenticated: true, available: true, user: { email: 'ornek@sirket.com' }, quota: { used: 3, limit: 5, remaining: 2 } },
+      me: { authenticated: true, available: true, user: { email: 'ornek@sirket.com' }, quota: { used: 1, limit: 3, remaining: 2 } },
       sub: { plan: 'pro', priceTry: 299, subscriptions: [{ domain: 'ornek-magaza.com', plan: 'pro', status: 'ACTIVE', testMode: true, createdAt: new Date(now - 40 * day).toISOString() }] },
       items: items, trend: trend, detail: detail
     };
@@ -577,7 +577,7 @@
     var body = $('scanBody'), msg = $('scanMsg');
     body.textContent = '';
     var rows = visibleItems();
-    var limit = ROW_LIMIT[S.plan] || 5;
+    var limit = ROW_LIMIT[S.plan] || 3;
     var locked = S.plan === 'free' || S.plan === 'unknown' ? Math.max(0, rows.length - limit) : 0;
     var shown = S.plan === 'pro' ? rows.slice(0, limit) : rows;
 

@@ -6,7 +6,7 @@
  * NEDEN VAR
  *
  * Tarama uçları (`/api/scan`, `/api/enqueue-scan`) ve kota gösterimi
- * (`/api/auth/me`) plana hiç bakmıyordu: herkese FREE_SCAN_LIMIT (5)
+ * (`/api/auth/me`) plana hiç bakmıyordu: herkese FREE_SCAN_LIMIT (3)
  * uygulanıyordu. Pro müşteri ödeme yaptığı halde 5. taramada `quota_exceeded`
  * alıyordu. Fiyat sayfasında yazan şey bir taahhüttür (bkz. plans.js); kod
  * ondan farklı bir sınır uygulayamaz.
@@ -76,7 +76,7 @@ function policyFor(plan, owner, baseKey, now) {
     return {
       plan: plan, unlimited: false, limit: PRO_MONTHLY_SCAN_LIMIT,
       /* Ücretsiz ömür boyu sayaçtan AYRI anahtar: Pro'ya geçen müşterinin
-         eski 5 hakkı aylık hakkından düşülmez. */
+         eski 3 hakkı aylık hakkından düşülmez. */
       key: 'cl:quota:m:' + monthKey(now) + ':u:' + owner.userId,
       ttl: MONTHLY_TTL_SECONDS, period: 'month'
     };
