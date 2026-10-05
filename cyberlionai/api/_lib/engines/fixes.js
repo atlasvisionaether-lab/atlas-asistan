@@ -44,6 +44,31 @@ function headerFix(id, tier) {
   };
 }
 
+const CSP_WARN = {
+  tr: ['ÖNCE TEST ORTAMINDA DENEYİN. Bu politika olduğu gibi canlıya alınırsa satır içi',
+       'script/stil, yazı tipi (Google Fonts), analitik ve CDN kaynaklarını engelleyip',
+       'sitenizi bozabilir. Önce başlığı Content-Security-Policy-Report-Only adıyla ekleyin,',
+       'tarayıcı konsolundaki ihlallere göre politikayı sitenize uyarlayın, sonra',
+       'Content-Security-Policy adına geçin.'],
+  en: ['TRY IT ON STAGING FIRST. Deployed as-is, this policy can block inline scripts/styles,',
+       'fonts (Google Fonts), analytics and CDN resources and break your site. First add the',
+       'header as Content-Security-Policy-Report-Only, adapt the policy to your site using the',
+       'violations in the browser console, then switch to Content-Security-Policy.']
+};
+
+/** CSP: headerFix ile aynı kod, önünde test uyarısı. */
+function cspFix(lang) {
+  const base = headerFix('csp', 'tls_dns')(lang);
+  const comment = CSP_WARN[lang].map(function (l) { return '# ' + l; }).join('\n');
+  return {
+    tier: base.tier,
+    nginx: comment + '\n' + base.nginx,
+    apache: comment + '\n' + base.apache,
+    cloudflare: CSP_WARN[lang].join(' ') + '\n\n' + base.cloudflare,
+    dns: null
+  };
+}
+
 function fixed(tier, nginx, apache, cf, dns) {
   return function (lang) {
     return { tier: tier, nginx: nginx, apache: apache, cloudflare: cf ? cf[lang] : null, dns: dns ? dns[lang] : null };
@@ -61,8 +86,11 @@ const FIXES = {
   corp: headerFix('corp', 'header'),
   disclosure: fixed('header', 'server_tokens off;', 'ServerTokens Prod\nServerSignature Off', null, null),
   /* CSP sitenin kendi betiklerinin incelenmesini gerektirir: başlık tek satır
-     ama doğru politika siteye özgü. Bu yüzden 'tls_dns' kademesinde. */
-  csp: headerFix('csp', 'tls_dns'),
+     ama doğru politika siteye özgü. Bu yüzden 'tls_dns' kademesinde.
+     Kodun yanında uyarı var: bu değer olduğu gibi canlıya alınırsa satır içi
+     script/stil, yazı tipi ve analitiği engeller (1-Tık düzeltme aynı değerle
+     atlasasistan.com'u bozdu). Önce Report-Only ile denenmesi öneriliyor. */
+  csp: cspFix,
   https: fixed('tls_dns',
     'server {\n  listen 80;\n  server_name _;\n  return 301 https://$host$request_uri;\n}',
     'RewriteEngine On\nRewriteCond %{HTTPS} off\nRewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]',

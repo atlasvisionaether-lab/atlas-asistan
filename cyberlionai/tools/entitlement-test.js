@@ -184,7 +184,7 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
   esit('me Free: 2/3', [m.q.remaining, m.q.limit, m.q.period], [2, 3, 'lifetime']);
 
   /* ================= 4. Cloudflare erişim kapısı ================= */
-  async function cfUcu(rel, girisli, req, envToken, dogrulanmis, plan) {
+  async function cfUcu(rel, girisli, req, envToken, dogrulanmis, plan, mevcut) {
     temizle();
     const cfCagri = [];
     if (envToken) process.env.CLOUDFLARE_TEST_TOKEN = envToken; else delete process.env.CLOUDFLARE_TEST_TOKEN;
@@ -201,17 +201,23 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
       isVerified: async function () { return dogrulanmis !== false; },
       logScan: async function () { return true; }
     });
+    const gercekCf = require(path.join(API, '_lib', 'cloudflare.js'));
+    const uygulanan = [];
     sapla('_lib/cloudflare.js', {
       cf: async function (p, method, token) { cfCagri.push(token); return { ok: true, data: { result: [] } }; },
       findZoneId: async function (d, token) { cfCagri.push(token); return { ok: true, zoneId: 'z' }; },
-      applyTransformRule: async function (z, token) { cfCagri.push(token); return { ok: true, rulesetId: 'rs', ruleId: 'r' }; },
+      applyTransformRule: async function (z, token, fixes) { cfCagri.push(token); uygulanan.push(fixes); return { ok: true, rulesetId: 'rs', ruleId: 'r' }; },
+      /* Sitenin şu anki başlıkları; null = site okunamadı. Varsayılan: hiçbiri. */
+      presentHeaders: async function () { return mevcut === undefined ? [] : mevcut; },
+      fixesFor: gercekCf.fixesFor,
+      FIX_HEADERS: gercekCf.FIX_HEADERS,
       maskToken: function () { return '***'; }
     });
     const handler = tazeYukle(rel);
     const res = sahteRes();
     await handler(Object.assign({ headers: {}, query: {} }, req), res);
     delete process.env.CLOUDFLARE_TEST_TOKEN;
-    return { res: res, cfCagri: cfCagri };
+    return { res: res, cfCagri: cfCagri, uygulanan: uygulanan };
   }
   const MUSTERI = 'musteri-token-0123456789abcdef';
   const SUNUCU = 'sunucu-token-0123456789abcdef';
@@ -232,6 +238,54 @@ const { FREE_SCAN_LIMIT, PRO_MONTHLY_SCAN_LIMIT } = require(path.join(API, '_lib
   c = await cfUcu('autofix-cloudflare.js', true, POST, SUNUCU, true, 'pro');
   esit('autofix: Pro planı → 402 (Model A yalnız Enterprise)', [c.res.statusCode, ((c.res.body && c.res.body.error) || {}).code], [402, 'plan_required']);
   esit('autofix: Pro planında Cloudflare çağrılmıyor', c.cfCagri.length, 0);
+
+  /* Güvenli varsayılanlar: 1-Tık müşteri sitesini bozmamalı. atlasasistan.com'a
+     `default-src 'self'` CSP'si basılıp site stilsiz kaldıktan sonra eklendi. */
+  temizle(); /* sahte cloudflare.js önbellekten çıksın; gerçeği sınanıyor */
+  const gercek = require(path.join(API, '_lib', 'cloudflare.js'));
+  esit('güvenli: 1-Tık düzeltmelerinde CSP yok', gercek.AUTO_FIXES.indexOf('csp'), -1);
+  esit('güvenli: "Tümü" CSP içermiyor', gercek.fixesFor('all'), ['hsts', 'xframe']);
+  esit('güvenli: HSTS includeSubDomains/preload içermiyor', gercek.FIX_HEADERS.hsts.value, 'max-age=31536000');
+  const gov = function (x) { return [x.res.statusCode, ((x.res.body && x.res.body.error) || {}).code]; };
+  c = await cfUcu('autofix-cloudflare.js', true, { method: 'POST', body: { domain: 'ornek.com', fixType: 'csp', token: MUSTERI } }, null);
+  esit('güvenli: CSP isteği → 400 csp_manual_only', gov(c), [400, 'csp_manual_only']);
+  esit('güvenli: CSP isteğinde Cloudflare çağrılmıyor', c.cfCagri.length, 0);
+  c = await cfUcu('autofix-cloudflare.js', true, POST, null, true, 'enterprise', ['strict-transport-security', 'content-type']);
+  esit('güvenli: sitede HSTS zaten var → 409, ezilmiyor', gov(c), [409, 'already_present']);
+  esit('güvenli: başlık zaten varken kural yazılmıyor', c.uygulanan.length, 0);
+  c = await cfUcu('autofix-cloudflare.js', true, { method: 'POST', body: { domain: 'ornek.com', fixType: 'all', token: MUSTERI } }, null, true, 'enterprise', ['strict-transport-security']);
+  esit('güvenli: "Tümü" yalnız eksik başlığı yazar', c.uygulanan, [['xframe']]);
+  esit('güvenli: yanıt atlananı bildirir', [c.res.statusCode, c.res.body.applied, c.res.body.skipped], [200, ['xframe'], ['hsts']]);
+  c = await cfUcu('autofix-cloudflare.js', true, POST, null, true, 'enterprise', null);
+  esit('güvenli: site okunamazsa → 502, kural yazılmıyor', [gov(c)[0], gov(c)[1], c.uygulanan.length], [502, 'precheck_failed', 0]);
+
+  /* Ön okuma yönlendirmeyi izler: apex → www yanıtında başlık yok, gerçek
+     sayfada var. Yalnız ilk yanıta bakmak sayfadaki başlığı ezerdi. */
+  async function onOku(zincir, engelli) {
+    temizle();
+    sapla('_lib/guard.js', { assertPublicHost: async function (h) { if (engelli && engelli.indexOf(h) !== -1) throw new Error('blocked_target'); return ['203.0.113.1']; } });
+    const asilFetch = global.fetch;
+    const istenen = [];
+    global.fetch = async function (u) {
+      const url = String(u); istenen.push(url);
+      const y = zincir[url] || { status: 404, headers: {} };
+      return { status: y.status, headers: new Headers(y.headers), body: null };
+    };
+    try { return { sonuc: await tazeYukle('_lib/cloudflare.js').presentHeaders('ornek.com'), istenen: istenen }; }
+    finally { global.fetch = asilFetch; }
+  }
+  let o = await onOku({
+    'https://ornek.com/': { status: 301, headers: { location: 'https://www.ornek.com/' } },
+    'https://www.ornek.com/': { status: 200, headers: { 'strict-transport-security': 'max-age=63072000', 'x-frame-options': 'DENY' } }
+  });
+  dogru('ön okuma: yönlendirme izlenip son sayfanın başlıkları okunuyor', o.sonuc && o.sonuc.indexOf('x-frame-options') !== -1 && o.sonuc.indexOf('strict-transport-security') !== -1);
+  o = await onOku({ 'https://ornek.com/': { status: 302, headers: { location: 'https://ic.ornek.com/' } } }, ['ic.ornek.com']);
+  esit('ön okuma: iç ağa yönlendirme → null (kural yazılmaz)', o.sonuc, null);
+  o = await onOku({ 'https://ornek.com/': { status: 302, headers: { location: 'http://ornek.com/' } } });
+  esit('ön okuma: http\'ye düşürme izlenmiyor → null', [o.sonuc, o.istenen.length], [null, 1]);
+  const dongu = {}; dongu['https://ornek.com/'] = { status: 302, headers: { location: 'https://ornek.com/' } };
+  o = await onOku(dongu);
+  esit('ön okuma: yönlendirme döngüsü sınırlı → null', [o.sonuc, o.istenen.length], [null, 5]);
 
   /* Cloudflare hatasından eksik izin: aşamaya göre. */
   const mp = tazeYukle('autofix-cloudflare.js').missingPermission;

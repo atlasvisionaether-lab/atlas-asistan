@@ -15,6 +15,8 @@
  * içerir.
  */
 
+const guard = require('./guard.js');
+
 const CF_API = 'https://api.cloudflare.com/client/v4';
 const TIMEOUT_MS = 8000;
 
@@ -63,28 +65,93 @@ async function findZoneId(domain, token) {
   return { ok: true, zoneId: zones[0].id, zoneName: zones[0].name };
 }
 
-/** Transform Rule header değerleri. */
+/**
+ * Transform Rule header değerleri — YALNIZCA her sitede güvenle
+ * uygulanabilenler.
+ *
+ * CSP BURADA YOK, bilinçli olarak. Doğru bir CSP sitenin kullandığı her
+ * kaynağa (satır içi script/stil, yazı tipi, analitik, CDN) göre yazılır.
+ * Tek tip bir değer (eskiden `default-src 'self'`) bunların hepsini engeller:
+ * 1-Tık bu değeri atlasasistan.com'a bastı ve site stilsiz, script'siz kaldı.
+ * CSP için müşteriye "Nasıl düzeltirim?" kodu ya da elle, test edilerek
+ * yapılan "Biz düzeltelim" hizmeti sunulur.
+ *
+ * HSTS'de `includeSubDomains` ve `preload` YOK: HTTPS sunmayan bir alt alan
+ * adını erişilemez yapar; preload listesine girilirse aylarca geri alınamaz.
+ * Bunlar sitenin sahibinin bilerek vereceği kararlar, bizim varsayılanımız değil.
+ */
 const FIX_HEADERS = {
-  hsts: { header: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
-  csp: { header: 'Content-Security-Policy', value: "default-src 'self'" },
+  hsts: { header: 'Strict-Transport-Security', value: 'max-age=31536000' },
   xframe: { header: 'X-Frame-Options', value: 'SAMEORIGIN' }
 };
+
+/** 1-Tık ile uygulanabilen düzeltmeler; 'all' bunların hepsi. */
+const AUTO_FIXES = Object.keys(FIX_HEADERS);
+
+function fixesFor(fixType) {
+  if (fixType === 'all') return AUTO_FIXES.slice();
+  return FIX_HEADERS[fixType] ? [fixType] : [];
+}
+
+const PRECHECK_TIMEOUT_MS = 8000;
+const PRECHECK_MAX_REDIRECTS = 4;
+
+/**
+ * Sitenin ŞU AN gönderdiği başlık adlarını (küçük harf) okur. Sitede zaten
+ * olan bir başlık 1-Tık ile EZİLMEZ: sahibinin bilerek koyduğu değer (ör.
+ * daha uzun bir HSTS süresi) bizimkinden doğru olabilir.
+ *
+ * Yönlendirmeler İZLENİR ve son sayfanın başlıkları döner: apex → www gibi
+ * bir yönlendirme yanıtı genelde güvenlik başlığı taşımaz; yalnız ona bakmak
+ * gerçek sayfadaki başlığı "yok" sanıp bölge geneli kuralla ezerdi.
+ * Her adımın hedefi SSRF kapısından ayrıca geçer (yönlendirme iç ağa
+ * çevirebilir); yalnız https izlenir.
+ *
+ * Okunamazsa null döner ve çağıran kural YAZMAZ: neyi ezeceğini bilmeden
+ * değişiklik yapılmaz.
+ */
+async function presentHeaders(domain) {
+  const controller = new AbortController();
+  const timer = setTimeout(function () { controller.abort(); }, PRECHECK_TIMEOUT_MS);
+  try {
+    let url = new URL('https://' + domain + '/');
+    for (let hop = 0; hop <= PRECHECK_MAX_REDIRECTS; hop++) {
+      if (url.protocol !== 'https:') return null;
+      await guard.assertPublicHost(url.hostname);
+      const r = await fetch(url, { method: 'GET', redirect: 'manual', signal: controller.signal });
+      if (r.body && typeof r.body.cancel === 'function') r.body.cancel().catch(function () {});
+      const location = r.headers.get('location');
+      if (r.status >= 300 && r.status < 400 && location) {
+        url = new URL(location, url);
+        continue;
+      }
+      const names = [];
+      r.headers.forEach(function (v, k) { names.push(String(k).toLowerCase()); });
+      return names;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * http_response_headers_transform fazına set-header kuralı ekler.
  * Cloudflare rulesets API: her fazda tek ruleset olur; varsa kural eklenir,
  * yoksa fazın ruleset'i oluşturulur.
  */
-async function applyTransformRule(zoneId, token, fixType) {
+async function applyTransformRule(zoneId, token, fixes) {
+  if (typeof fixes === 'string') fixes = fixesFor(fixes);
   const rule = {
     expression: 'true',
-    description: 'CyberLion AI 1-click fix: ' + fixType,
+    description: 'CyberLion AI 1-click fix: ' + fixes.join('+'),
     action: 'rewrite',
     action_parameters: {
       headers: {}
     }
   };
-  const fixes = fixType === 'all' ? ['hsts', 'csp', 'xframe'] : [fixType];
   fixes.forEach(function (f) {
     const spec = FIX_HEADERS[f];
     if (spec) {
@@ -120,4 +187,4 @@ async function applyTransformRule(zoneId, token, fixType) {
   };
 }
 
-module.exports = { cf, findZoneId, applyTransformRule, FIX_HEADERS, maskToken };
+module.exports = { cf, findZoneId, applyTransformRule, presentHeaders, fixesFor, FIX_HEADERS, AUTO_FIXES, maskToken };

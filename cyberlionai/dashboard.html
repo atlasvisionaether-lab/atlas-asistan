@@ -575,15 +575,14 @@
                 <input class="input" id="cfToken" type="password" autocomplete="off" spellcheck="false" />
                 <label class="field" for="cfFix" data-i18n="tools.cfFix">Düzeltme türü</label>
                 <select class="input" id="cfFix">
-                  <option value="hsts" selected>HSTS — max-age=31536000; includeSubDomains; preload</option>
-                  <option value="csp">CSP — default-src 'self'</option>
+                  <option value="hsts" selected>HSTS — max-age=31536000</option>
                   <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
-                  <option value="all" data-i18n="tools.cfAll">Tümü (HSTS + CSP + X-Frame)</option>
+                  <option value="all" data-i18n="tools.cfAll">Tümü (HSTS + X-Frame)</option>
                 </select>
                 <button class="btn btn--gold" type="submit" id="cfBtn" style="margin-top:14px"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span data-i18n="tools.cfApply">1 Tıkla Uygula</span></button>
                 <p class="msg" id="cfMsg" role="status" aria-live="polite"></p>
               </form>
-              <p class="note" data-i18n="tools.cfWarn">Token'ınız bizde saklanmaz; yalnızca bu istek için kullanılır. Geri almak için Cloudflare Dashboard &gt; Rules &gt; Transform Rules'dan CyberLion kuralını silin. CSP seçeneği sitenizin dış kaynaklarını (yazı tipi, analitik vb.) engelleyebilir; önce test ortamında deneyin.</p>
+              <p class="note" data-i18n="tools.cfWarn">Token'ınız bizde saklanmaz; yalnızca bu istek için kullanılır. Sitenizin zaten gönderdiği başlıklar değiştirilmez. Geri almak için Cloudflare Dashboard &gt; Rules &gt; Transform Rules'dan CyberLion kuralını silin. CSP siteye özel yazılması gerektiğinden 1-Tık ile uygulanmaz.</p>
             </div>
           </div>
         </section>
