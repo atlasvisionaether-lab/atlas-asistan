@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   function $(id) { return document.getElementById(id); }
-  var ST = { pending: 'Ödeme bekleniyor / Awaiting payment', paid: 'Ödendi, hizmet başladı / Paid, in progress',
+  var ST = { pending: 'Ödeme bekleniyor / Awaiting payment', paid: 'Ödendi, hizmet başladı — en geç 3 iş günü / Paid, in progress — within 3 business days',
     done: 'Tamamlandı / Done', cancelled: 'İptal / Cancelled' };
   function tl(n) {
     try { return '₺' + Number(n).toLocaleString('tr-TR'); } catch (e) { return '₺' + n; }
