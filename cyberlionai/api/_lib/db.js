@@ -799,7 +799,7 @@ async function updateSubscriptionStatusByRef(subscriptionRef, patch) {
 
 module.exports = {
 
-  isConfigured, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
+  isConfigured, request, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans, scanStats,
   listJobs, jobScoreTrend, getJob, getJobWithFindings, SEVERITY_ORDER,
   enterpriseScanTargets,

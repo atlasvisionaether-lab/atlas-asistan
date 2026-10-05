@@ -15,6 +15,7 @@
  */
 
 const tg = require('./_lib/telegram.js');
+const kb = require('./_lib/kb.js');
 const store = require('./_lib/store.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
 
@@ -24,6 +25,9 @@ const RATE_MAX = 5;
 const MAX_NAME = 100;
 const MAX_EMAIL = 320;
 const MAX_MESSAGE = 2000;
+const MAX_LAST = 3;            // taslak için bakılan son kullanıcı mesajı sayısı
+const MAX_LAST_LEN = 500;
+const ONERI_ONIZLEME = 800;    // Telegram'daki önerilen cevap önizlemesi
 
 const EMAIL_BICIMI = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -61,7 +65,49 @@ function govdeDogrula(govde) {
   }
   if (!message) return { ok: false, kod: 'message_required' };
 
-  return { ok: true, name: name, email: email, message: message };
+  /* Asistandaki "uzmanla görüş" formu aynı ucu kullanıyor; yalnızca
+     bildirimin başlığı değişiyor. Bilinmeyen değer olağan form sayılır. */
+  const source = govde && govde.source === 'assistant' ? 'assistant' : 'form';
+  const lang = govde && govde.lang === 'en' ? 'en' : 'tr';
+
+  /* Taslak için son mesajlar: asistan diziyi ayrı gönderiyor; olağan formda
+     mesajın kendisi tek eleman. Yalnızca metin, sayı ve uzunluk sınırlı. */
+  let last = govde && Array.isArray(govde.lastMessages)
+    ? govde.lastMessages.filter(function (m) { return typeof m === 'string'; })
+        .slice(-MAX_LAST).map(function (m) { return temizle(m, MAX_LAST_LEN); })
+        .filter(Boolean)
+    : [];
+  if (!last.length) last = [message];
+
+  return { ok: true, name: name, email: email, message: message, source: source,
+    lang: lang, last: last };
+}
+
+/**
+ * Ekibe önerilen cevap taslağı. Konu, son mesajlardaki en son GERÇEK konu
+ * (uzman isteme mesajı atlanır; bkz. kb.lastTopic). Konu yoksa genel
+ * "talebinizi aldık" cevabı. Taslak ekibin Gmail'inde AÇILIR, kendiliğinden
+ * gönderilmez: ekip okuyup düzenleyip gönderiyor.
+ */
+function cevapTaslagi(d) {
+  const tr = d.lang !== 'en';
+  const konu = kb.lastTopic(d.last);
+  const oneri = konu ? kb.answerText(konu, d.lang) : null;
+  const genel = tr
+    ? 'Talebinizi aldık; en kısa sürede ayrıntılı dönüş yapacağız.'
+    : 'We have received your request and will get back to you with details shortly.';
+  const govde = (tr ? 'Merhaba ' : 'Hello ') + d.name + ',\n\n'
+    + (oneri || genel) + '\n\n---\n'
+    + (tr
+      ? 'Bu e-posta Cyber Lion AI destek talebiniz üzerine gönderilmiştir.\n\nİyi çalışmalar,\nCyber Lion AI Destek Ekibi\ndestek@cyberlionai.com'
+      : 'This email is a reply to your Cyber Lion AI support request.\n\nBest regards,\nCyber Lion AI Support Team\ndestek@cyberlionai.com');
+  const baslik = konu ? kb.KB.intents[konu][d.lang].q : (tr ? 'Destek talebiniz' : 'Your support request');
+  return {
+    konu: konu,
+    oneri: oneri || genel,
+    konuBasligi: 'Re: Cyber Lion AI - ' + baslik,
+    govde: govde
+  };
 }
 
 async function handler(req, res) {
@@ -100,9 +146,17 @@ async function handler(req, res) {
 
   /* silent: false — bu bir iş fırsatı/talebi, sessiz gelen diğer bildirimler
      gibi (tarama, DNS) gözden kaçırılmamalı. */
-  const sonuc = await tg.sendTelegram(
-    tg.mesaj.iletisimFormu(dogrulama.name, dogrulama.email, dogrulama.message),
-    { type: 'contact', silent: false });
+  const kur = dogrulama.source === 'assistant' ? tg.mesaj.insanDestegi : tg.mesaj.iletisimFormu;
+  const taslak = cevapTaslagi(dogrulama);
+  let oneri = taslak.oneri;
+  if (oneri.length > ONERI_ONIZLEME) oneri = oneri.slice(0, ONERI_ONIZLEME - 1) + '…';
+  const metin = kur(dogrulama.name, dogrulama.email, dogrulama.message)
+    + '\n\n💡 Önerilen cevap' + (taslak.konu ? ' (' + taslak.konu + ')' : '') + ':\n' + oneri;
+
+  const sonuc = await tg.sendTelegram(metin, {
+    type: 'contact', silent: false,
+    replyMarkup: tg.buildSupportKeyboard(dogrulama.email, taslak.konuBasligi, taslak.govde)
+  });
 
   if (!sonuc.ok) {
     tg.bildirimIsaretle(res);
@@ -113,3 +167,4 @@ async function handler(req, res) {
 }
 
 module.exports = tg.ucuSar(handler, '/api/contact');
+module.exports.cevapTaslagi = cevapTaslagi;

@@ -85,7 +85,7 @@ dogru('kuyruğa bırakılamayan iş failed yazılıyor',
   /db\.markJobFailed\(jobId, kod\)/.test(startSrc));
 dogru('başarılı kuyruklama 202 dönüyor', /return res\.status\(202\)\.json\(/.test(scanSrc));
 dogru('202 yanıtı jobId taşıyor', /jobId: kuyruk\.jobId/.test(scanSrc));
-dogru('202 yanıtı kotayı bildiriyor', /quota: \{/.test(scanSrc));
+dogru('202 yanıtı kotayı bildiriyor', /quota: (\{|entitlement\.quotaView\()/.test(scanSrc));
 dogru('hedef kuyruğa bırakılmadan önce doğrulanıyor',
   startSrc.indexOf('normalizeTarget(input.url)') !== -1
   && startSrc.indexOf('normalizeTarget(input.url)') < startSrc.indexOf('createPendingJob'));

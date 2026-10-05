@@ -83,6 +83,18 @@ async function handler(req, res) {
   const sonuc = row.result || {};
   const bitti = row.status === 'completed';
 
+  /* Kuyruktan biten taramanın bildirimi. Taramayı Lambda bitiriyor ve
+     Vercel'e haber vermiyor; sonucu ilk gören yer bu yoklama. İş kimliği
+     başına BİR kez (istemci bitişten sonra da yoklayabilir). */
+  if ((bitti || row.status === 'failed') && await tg.tekSefer('done:' + row.id, 7 * 86400)) {
+    await tg.sendTelegram(bitti
+      ? tg.mesaj.taramaBittiKuyruk(row.domain,
+          typeof row.score === 'number' ? row.score : null,
+          (sonuc.summary && sonuc.summary.failed) || 0)
+      : tg.mesaj.taramaBasarisizKuyruk(row.domain, row.error_code),
+      { type: 'scan' });
+  }
+
   return res.status(200).json({
     jobId: row.id,
     status: row.status,

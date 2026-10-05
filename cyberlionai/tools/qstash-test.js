@@ -94,6 +94,20 @@ sina('gövde özeti uyuşmazsa reddediliyor',
 sina('doğru gövdeyle aynı imza geçiyor',
   qstash.verify(jwt(claims({ body: qstash.bodyHash('{"a":1}') }), CURRENT), '{"a":1}').ok, true);
 
+/* QStash'in GERÇEK biçimi: claim dolgulu base64url ('=' ile biter). Önceki
+   sınama kendi dolgusuz özetimizle claim kurduğu için bunu hiç görmedi ve
+   üretimde her imzalı istek reddedildi. */
+const dolgulu = require('node:crypto').createHash('sha256').update('', 'utf8').digest('base64')
+  .replace(/\+/g, '-').replace(/\//g, '_');
+sina('dolgulu claim biçimi gerçekten "=" ile bitiyor', /=$/.test(dolgulu), true);
+sina('dolgulu (gerçek QStash) gövde özeti kabul',
+  qstash.verify(jwt(claims({ body: dolgulu }), CURRENT), '').ok, true);
+const dolguluMetin = require('node:crypto').createHash('sha256').update('cyberlion-monitor-tick', 'utf8').digest('base64');
+sina('standart base64 + dolgulu claim kabul (tick gövdesi)',
+  qstash.verify(jwt(claims({ body: dolguluMetin }), CURRENT), 'cyberlion-monitor-tick').ok, true);
+sina('dolgulu ama farklı gövde yine reddediliyor',
+  qstash.verify(jwt(claims({ body: dolgulu }), CURRENT), 'baska').reason, 'body_mismatch');
+
 /* 6 */
 sina('başka imzacı reddediliyor',
   qstash.verify(jwt(claims({ iss: 'Kotu' }), CURRENT), '').reason, 'issuer_mismatch');

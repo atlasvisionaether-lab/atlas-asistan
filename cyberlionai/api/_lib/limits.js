@@ -8,8 +8,13 @@
  * sessizce eski değerde kalması demekti.
  */
 module.exports = {
-  /** Hesap veya anonim oturum başına ücretsiz tarama. */
+  /** Hesap veya anonim oturum başına ücretsiz tarama (ömür boyu). */
   FREE_SCAN_LIMIT: 5,
+
+  /** Pro: takvim ayı (TSİ) başına tarama. Fiyat sayfasındaki "Ayda 50 Tarama"
+      taahhüdüyle aynı olmak zorunda; tools/pricing-test.js sınıyor.
+      Enterprise sınırsız: sayaç tutulmaz (bkz. entitlement.js). */
+  PRO_MONTHLY_SCAN_LIMIT: 50,
 
   /** Kota sayacının yaşam süresi. */
   QUOTA_TTL_SECONDS: 60 * 60 * 24 * 365,

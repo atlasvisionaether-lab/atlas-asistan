@@ -7,10 +7,13 @@
  *
  * Token güvenliği (bkz. _lib/cloudflare.js):
  *   - Token loglanmaz, DB'ye yazılmaz, yanıta açık girmez.
- *   - Token Authorization başlığından (Bearer) ya da ?token= sorgusundan alınır.
+ *   - Token gövdeden ya da Authorization başlığından (Bearer) alınır. URL'de
+ *     (?token=) KABUL EDİLMEZ: sorgu dizgesi erişim loglarına yazılır.
+ *   - Oturum zorunlu, sunucu token'ına düşüş yok (bkz. _lib/cfaccess.js).
  */
 
 const { cf, maskToken } = require('./_lib/cloudflare.js');
+const { requireUser, validToken } = require('./_lib/cfaccess.js');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -20,6 +23,8 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: { code: 'method_not_allowed' } });
   }
 
+  const user = await requireUser(req, res);
+  if (!user) return;
 
   let body = req.body;
   if (typeof body === 'string') {
@@ -28,13 +33,12 @@ module.exports = async function handler(req, res) {
 
   const auth = req.headers && req.headers.authorization || '';
   const headerToken = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  const queryToken = (req.query && typeof req.query.token === 'string') ? req.query.token : null;
   const bodyToken = body && typeof body.token === 'string' ? body.token : null;
-  /* Body token env'yi override eder; token asla loglanmaz / yazilmaz. */
-  const token = bodyToken || headerToken || queryToken || process.env.CLOUDFLARE_TEST_TOKEN;
+  /* Token asla loglanmaz / yazılmaz; sunucu token'ına düşüş yok. */
+  const token = bodyToken || headerToken;
 
-  if (!token || token.length < 20) {
-    return res.status(401).json({ error: { code: 'token_required' } });
+  if (!validToken(token)) {
+    return res.status(400).json({ error: { code: 'token_required' } });
   }
 
   const qDomain = (req.query && typeof req.query.domain === 'string') ? req.query.domain.trim().toLowerCase() : '';

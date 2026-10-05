@@ -1,0 +1,504 @@
+{
+  "_note": "Cyber Lion Asistan bilgi tabanı. Her niyet için TEK kanonik cevap; aynı soru hep aynı cevabı alır. Anahtar kelimeler küçük harf ve Türkçe karakterleri sadeleştirilmiş (ı→i, ş→s, ğ→g, ü→u, ö→o, ç→c) yazılır. Ağırlıklar: strong 0.7, weak 0.35; puan = 1 - Π(1 - w). Eşik altı soru uzman ekibe yönlendirilir.",
+  "version": 1,
+  "threshold": 0.6,
+  "weights": {
+    "strong": 0.7,
+    "weak": 0.35
+  },
+  "greeting": [
+    "pricing",
+    "free",
+    "scan",
+    "contact"
+  ],
+  "fallbackSuggestions": [
+    "scan",
+    "pricing",
+    "free"
+  ],
+  "urgent": {
+    "keywords": [
+      "hack",
+      "saldiri",
+      "attack",
+      "breach",
+      "sizinti",
+      "leak",
+      "calindi",
+      "stolen",
+      "fidye",
+      "ransom",
+      "sifrelendi",
+      "site dustu",
+      "ele gecir",
+      "compromis",
+      "defac",
+      "virus bulasti",
+      "malware bulasti"
+    ]
+  },
+  "intents": {
+    "scan": {
+      "keywords": {
+        "strong": [
+          "tarama baslat",
+          "tarama yap",
+          "taramayi",
+          "nasil tara",
+          "hemen tara",
+          "scan my",
+          "start a scan",
+          "run a scan",
+          "how do i scan"
+        ],
+        "weak": [
+          "tara",
+          "scan",
+          "baslat",
+          "start",
+          "url",
+          "adres",
+          "domain",
+          "alan adi"
+        ]
+      },
+      "related": [
+        "free",
+        "report"
+      ],
+      "tr": {
+        "q": "Nasıl tarama başlatırım?",
+        "a": "Sayfanın en üstündeki alana alan adınızı yazıp \"Hemen Tara\" düğmesine basın. Protokol veya \"www\" yazmanız gerekmez; ornek.com yeterlidir. Kayıt olmadan çalışır.|Yalnızca sahibi olduğunuz veya tarama izniniz olan alan adlarını tarayın."
+      },
+      "en": {
+        "q": "How do I start a scan?",
+        "a": "Type your domain into the field at the top of the page and press \"Scan Now\". You do not need the protocol or \"www\"; example.com is enough. It works without signing up.|Only scan domains you own or have permission to test."
+      }
+    },
+    "free": {
+      "keywords": {
+        "strong": [
+          "ucretsiz",
+          "bedava",
+          "free",
+          "kayit gerek",
+          "uye olmadan",
+          "without sign",
+          "need an account",
+          "kayit olm",
+          "uye olm",
+          "kayit sart",
+          "sign up required",
+          "do i need to register"
+        ],
+        "weak": [
+          "kayit",
+          "uye",
+          "register",
+          "sign up",
+          "account",
+          "hesap"
+        ]
+      },
+      "related": [
+        "pricing",
+        "scan"
+      ],
+      "tr": {
+        "q": "Ücretsiz mi, kayıt gerekiyor mu?",
+        "a": "Ücretsiz plan kayıt gerektirmez ve 5 güvenlik testi ile temel SSL kontrolü sunar. Daha fazla tarama (Pro'da ayda 50, Enterprise'da sınırsız), detaylı rapor ve düzeltme önerileri için hesap açıp bir plana geçmeniz gerekir."
+      },
+      "en": {
+        "q": "Is it free? Do I need an account?",
+        "a": "The free plan needs no registration and gives you 5 security tests plus a basic SSL check. For more scans (50 a month on Pro, unlimited on Enterprise), detailed reports and remediation guidance, create an account and choose a plan."
+      }
+    },
+    "pricing": {
+      "keywords": {
+        "strong": [
+          "fiyat",
+          "ucret",
+          "price",
+          "pricing",
+          "how much",
+          "kac tl",
+          "kac lira",
+          "abonelik",
+          "subscription",
+          "planlar",
+          "cost",
+          "enterprise",
+          "ne kadar tutuyor",
+          "aylik ucret",
+          "paket"
+        ],
+        "weak": [
+          "plan",
+          "pro",
+          "kdv",
+          "vat",
+          "odeme",
+          "payment",
+          "ne kadar"
+        ]
+      },
+      "related": [
+        "free",
+        "report"
+      ],
+      "tr": {
+        "q": "Planlar ne kadar?",
+        "a": "Free ₺0 (5 tarama, temel SSL ve güvenlik başlığı kontrolü, e-posta güvenlik skoru), Pro ₺299/ay (ayda 50 OWASP Lite taraması, OWASP gruplu PDF rapor, panelde tarama geçmişi ve skor eğilimi, günlük izleme: skor düşüşü, SSL / alan adı bitişi ve kara liste uyarıları, canlı güven rozeti), Enterprise ₺2.499/ay (sınırsız tarama, Cloudflare ile 1-Tık Düzeltme, günlük izleme + 5 dakikada bir erişilebilirlik kontrolü, Güven Damgası ön kontrolü ve KVKK çerez analizi, öncelikli destek).|Tek seferlik düzeltme hizmeti (\"Biz düzeltelim\"): güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺5.000; Pro ve Enterprise abonelerine %50 indirim.|Tüm fiyatlar KDV hariçtir."
+      },
+      "en": {
+        "q": "What do the plans cost?",
+        "a": "Free ₺0 (5 scans, basic SSL and security header checks, email security score), Pro ₺299/mo (50 OWASP Lite scans per month, PDF report grouped by OWASP, scan history and score trend in the panel, daily monitoring: score drop, SSL / domain expiry and blacklist alerts, live trust badge), Enterprise ₺2,499/mo (unlimited scans, 1-Click Fix via Cloudflare, daily monitoring + availability check every 5 minutes, Trust Stamp pre-check and KVKK cookie analysis, priority support).|One-time fix service (\"We fix it\"): security header ₺499, TLS/DNS ₺999, full package ₺5,000; 50% off for Pro and Enterprise subscribers.|All prices exclude VAT."
+      }
+    },
+    "csp": {
+      "keywords": {
+        "strong": [
+          "csp",
+          "content-security",
+          "content security"
+        ],
+        "weak": [
+          "xss",
+          "inline script",
+          "unsafe-inline"
+        ]
+      },
+      "related": [
+        "hsts",
+        "xframe"
+      ],
+      "tr": {
+        "q": "Content-Security-Policy nasıl eklenir?",
+        "a": "CSP, tarayıcıya hangi kaynaklardan içerik yükleyebileceğini söyler ve XSS saldırılarının etkisini büyük ölçüde keser. Sıkı bir başlangıç noktası:",
+        "code": "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+        "a2": "Satır içi script kullanıyorsanız onları ayrı dosyalara taşıyın veya her bloğun sha256 özetini script-src listesine ekleyin. \"unsafe-inline\" kullanmak korumanın büyük kısmını iptal eder."
+      },
+      "en": {
+        "q": "How do I add a Content-Security-Policy?",
+        "a": "CSP tells the browser which sources may load content and drastically limits the impact of XSS. A strict starting point:",
+        "code": "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+        "a2": "If you use inline scripts, move them into separate files or add each block's sha256 hash to script-src. Using \"unsafe-inline\" cancels most of the protection."
+      }
+    },
+    "hsts": {
+      "keywords": {
+        "strong": [
+          "hsts",
+          "strict-transport",
+          "strict transport",
+          "ssl strip"
+        ],
+        "weak": [
+          "https zorunlu",
+          "force https"
+        ]
+      },
+      "related": [
+        "csp",
+        "tls"
+      ],
+      "tr": {
+        "q": "HSTS başlığı nedir?",
+        "a": "Strict-Transport-Security, tarayıcıya siteye yalnızca HTTPS ile bağlanmasını söyler ve araya girme (SSL stripping) saldırılarını engeller:",
+        "code": "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload",
+        "a2": "Dikkat: includeSubDomains eklemeden önce tüm alt alan adlarınızın HTTPS sunduğundan emin olun; aksi hâlde erişilemez hâle gelirler."
+      },
+      "en": {
+        "q": "What is the HSTS header?",
+        "a": "Strict-Transport-Security tells the browser to reach your site over HTTPS only, which blocks SSL stripping attacks:",
+        "code": "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload",
+        "a2": "Careful: before adding includeSubDomains, make sure every subdomain serves HTTPS, or they become unreachable."
+      }
+    },
+    "xframe": {
+      "keywords": {
+        "strong": [
+          "x-frame",
+          "xframe",
+          "clickjack",
+          "frame-ancestors",
+          "frame ancestors",
+          "iframe"
+        ],
+        "weak": [
+          "frame"
+        ]
+      },
+      "related": [
+        "csp",
+        "cookies"
+      ],
+      "tr": {
+        "q": "Clickjacking / X-Frame-Options",
+        "a": "Sayfanızın başka bir sitenin iframe'i içine gömülmesini engeller. Modern karşılığı CSP frame-ancestors direktifidir; ikisini birlikte kullanmak en güvenlisidir:",
+        "code": "X-Frame-Options: DENY\nContent-Security-Policy: frame-ancestors 'none'"
+      },
+      "en": {
+        "q": "Clickjacking / X-Frame-Options",
+        "a": "This stops your page from being embedded in another site's iframe. The modern equivalent is the CSP frame-ancestors directive; sending both is safest:",
+        "code": "X-Frame-Options: DENY\nContent-Security-Policy: frame-ancestors 'none'"
+      }
+    },
+    "tls": {
+      "keywords": {
+        "strong": [
+          "tls",
+          "ssl",
+          "sertifika",
+          "certificate"
+        ],
+        "weak": [
+          "sifreleme",
+          "encryption",
+          "https",
+          "protokol",
+          "protocol"
+        ]
+      },
+      "related": [
+        "hsts",
+        "cookies"
+      ],
+      "tr": {
+        "q": "TLS 1.0 / 1.1 uyarısı aldım",
+        "a": "TLS 1.0 ve 1.1 artık güvenli kabul edilmiyor ve PCI DSS gibi standartlarca yasaklanmış durumda. Sunucunuzda yalnızca TLS 1.2 ve 1.3'ü açık bırakın.|Nginx için: ssl_protocols TLSv1.2 TLSv1.3; Apache için: SSLProtocol -all +TLSv1.2 +TLSv1.3. Değişiklikten sonra sunucuyu yeniden yükleyin ve taramayı tekrarlayın."
+      },
+      "en": {
+        "q": "I got a TLS 1.0 / 1.1 warning",
+        "a": "TLS 1.0 and 1.1 are no longer considered secure and are prohibited by standards such as PCI DSS. Leave only TLS 1.2 and 1.3 enabled on your server.|Nginx: ssl_protocols TLSv1.2 TLSv1.3; Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3. Reload the server afterwards and scan again."
+      }
+    },
+    "cookies": {
+      "keywords": {
+        "strong": [
+          "cerez bayrak",
+          "cookie flag",
+          "samesite",
+          "httponly",
+          "secure flag",
+          "set-cookie"
+        ],
+        "weak": [
+          "cerez",
+          "cookie",
+          "bayrak"
+        ]
+      },
+      "related": [
+        "csp",
+        "privacy"
+      ],
+      "tr": {
+        "q": "Çerez bayrakları (Secure / SameSite)",
+        "a": "Oturum çerezleri üç bayrağı da taşımalı: Secure (yalnızca HTTPS), HttpOnly (JavaScript okuyamaz), SameSite (CSRF koruması).",
+        "code": "Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax; Path=/"
+      },
+      "en": {
+        "q": "Cookie flags (Secure / SameSite)",
+        "a": "Session cookies should carry all three flags: Secure (HTTPS only), HttpOnly (not readable from JavaScript) and SameSite (CSRF protection).",
+        "code": "Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax; Path=/"
+      }
+    },
+    "authorization": {
+      "keywords": {
+        "strong": [
+          "baskasinin",
+          "someone else",
+          "izinsiz",
+          "without permission",
+          "tck",
+          "243",
+          "rakip",
+          "rakib",
+          "sitesini",
+          "baska site",
+          "baskasina ait",
+          "competitor",
+          "another site",
+          "not mine"
+        ],
+        "weak": [
+          "izin",
+          "yetki",
+          "permission",
+          "authoris",
+          "authoriz",
+          "yasal",
+          "legal",
+          "suc"
+        ]
+      },
+      "related": [
+        "privacy",
+        "contact"
+      ],
+      "tr": {
+        "q": "Başkasının sitesini tarayabilir miyim?",
+        "a": "Hayır. Yalnızca sahibi olduğunuz veya sahibinden açık ve yazılı izin aldığınız sistemleri tarayabilirsiniz. İzinsiz tarama Türk Ceza Kanunu m.243 ve pek çok ülkenin mevzuatı kapsamında suç teşkil edebilir.|Ayrıntı için Kullanım Şartları'nın üçüncü bölümüne bakın."
+      },
+      "en": {
+        "q": "Can I scan someone else's site?",
+        "a": "No. You may scan only systems you own or for which you hold explicit written permission. Unauthorised scanning can be a criminal offence under Turkish Criminal Code Art. 243 and comparable laws elsewhere.|See section three of the Terms of Use for details."
+      }
+    },
+    "report": {
+      "keywords": {
+        "strong": [
+          "rapor",
+          "report",
+          "pdf"
+        ],
+        "weak": [
+          "sonuc",
+          "result",
+          "cikti",
+          "output",
+          "bulgu",
+          "finding"
+        ]
+      },
+      "related": [
+        "accuracy",
+        "pricing"
+      ],
+      "tr": {
+        "q": "Rapor nasıl geliyor?",
+        "a": "Bulgular önem derecesine göre sıralanır (Kritik, Yüksek, Orta, Bilgi) ve her biri için kanıt ile uygulanabilir düzeltme adımı verilir. Ücretsiz planda basit PDF, Pro planda detaylı rapor ve düzeltme önerileri, Enterprise planda ayrıca yönetici özeti sunulur."
+      },
+      "en": {
+        "q": "What does the report look like?",
+        "a": "Findings are ranked by severity (Critical, High, Medium, Info), each with evidence and an actionable remediation step. The free plan gives a simple PDF, Pro adds detailed reporting and remediation guidance, Enterprise adds an executive summary."
+      }
+    },
+    "privacy": {
+      "keywords": {
+        "strong": [
+          "kvkk",
+          "gdpr",
+          "gizlilik",
+          "privacy",
+          "saklama",
+          "retention",
+          "verilerim",
+          "my data"
+        ],
+        "weak": [
+          "veri",
+          "data",
+          "sil",
+          "delete"
+        ]
+      },
+      "related": [
+        "authorization",
+        "contact"
+      ],
+      "tr": {
+        "q": "Verilerimi ne kadar saklıyorsunuz?",
+        "a": "Tarama raporları 12 ay, teknik kayıtlar 12 ay, faturalandırma kayıtları mevzuat gereği 10 yıl saklanır. Hesabınızı silerseniz kişisel verileriniz en geç 30 gün içinde imha edilir.|Bu sitede izleme çerezi kullanılmıyor; dil ve tema tercihiniz yalnızca kendi tarayıcınızda tutuluyor."
+      },
+      "en": {
+        "q": "How long do you keep my data?",
+        "a": "Scan reports 12 months, technical logs 12 months, billing records 10 years as required by law. If you delete your account, your personal data is destroyed within 30 days.|This site uses no tracking cookies; your language and theme preference stay in your own browser."
+      }
+    },
+    "accuracy": {
+      "keywords": {
+        "strong": [
+          "yanlis pozitif",
+          "false positive",
+          "guvenilir",
+          "reliable",
+          "accura"
+        ],
+        "weak": [
+          "dogru",
+          "hatali",
+          "emin"
+        ]
+      },
+      "related": [
+        "report",
+        "contact"
+      ],
+      "tr": {
+        "q": "Sonuçlar ne kadar güvenilir?",
+        "a": "Otomatik taramalar yanlış pozitif ve yanlış negatif üretebilir. Bu araç kapsamlı bir sızma testinin yerine geçmez; kritik sistemlerde otomatik taramayı düzenli uzman denetimiyle birlikte kullanın."
+      },
+      "en": {
+        "q": "How reliable are the results?",
+        "a": "Automated scans can produce false positives and false negatives. This tool does not replace a full penetration test; on critical systems, pair automated scanning with regular expert review."
+      }
+    },
+    "contact": {
+      "keywords": {
+        "strong": [
+          "insan",
+          "human",
+          "uzman",
+          "expert",
+          "canli destek",
+          "live support",
+          "temsilci",
+          "representative",
+          "biriyle konus",
+          "talk to",
+          "destek",
+          "telefon",
+          "iletisim",
+          "contact",
+          "ulasirim",
+          "ulasabilirim",
+          "support team",
+          "destek ekib"
+        ],
+        "weak": [
+          "support",
+          "phone",
+          "mail",
+          "e-posta",
+          "email",
+          "ulas",
+          "reach"
+        ]
+      },
+      "related": [
+        "pricing",
+        "free"
+      ],
+      "tr": {
+        "q": "İnsan bir uzmanla konuşmak istiyorum",
+        "a": "Elbette. destek@cyberlionai.com adresine yazabilir ya da aşağıdaki formla talep oluşturabilirsiniz; talebiniz doğrudan ekibimize iletilir.|Destek saatlerimiz hafta içi 09:00–18:00 (TSİ)."
+      },
+      "en": {
+        "q": "I want to talk to a human",
+        "a": "Of course. Write to destek@cyberlionai.com, or use the form below to open a request; it goes straight to our team.|Support hours are weekdays 09:00–18:00 (GMT+3)."
+      },
+      "handoff": true
+    }
+  },
+  "smalltalk": {
+    "keywords": [
+      "merhaba",
+      "selam",
+      "gunaydin",
+      "iyi gunler",
+      "iyi aksamlar",
+      "hello",
+      "hi",
+      "hey",
+      "good morning",
+      "tesekkur",
+      "sagol",
+      "eyvallah",
+      "thanks",
+      "thank you"
+    ]
+  }
+}

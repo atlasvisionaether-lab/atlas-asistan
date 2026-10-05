@@ -170,12 +170,17 @@
               <span>Kart bilgilerinizi bir sonraki adımda <strong>iyzico'nun güvenli ödeme formuna</strong> girersiniz. Kart numaranız Cyber Lion AI sunucularına hiçbir zaman gelmez ve saklanmaz.</span>
             </div>
 
+            <label class="check"><input type="checkbox" id="onayYetki" required />
+              <span>Taranacak alan adlarının sahibi olduğumu veya tarama için yetkili olduğumu beyan ediyorum (<a href="/pages/tarama-yetkisi" target="_blank" rel="noopener">Tarama Yetkisi ve Seviyeleri</a>).</span></label>
             <label class="check"><input type="checkbox" id="onayOnBilgi" required />
               <span><a href="/pages/on-bilgilendirme-formu" target="_blank" rel="noopener">Ön Bilgilendirme Formu</a>'nu okudum, onaylıyorum.</span></label>
             <label class="check"><input type="checkbox" id="onaySozlesme" required />
-              <span><a href="/mesafeli-satis-sozlesmesi" target="_blank" rel="noopener">Mesafeli Satış Sözleşmesi</a> ve <a href="/gizlilik-politikasi" target="_blank" rel="noopener">Gizlilik Politikası</a>'nı okudum, onaylıyorum.</span></label>
+              <span><a href="/mesafeli-satis-sozlesmesi" target="_blank" rel="noopener">Mesafeli Satış Sözleşmesi</a> ve <a href="/gizlilik-politikasi" target="_blank" rel="noopener">Gizlilik Politikası</a>'nı ve <a href="/iade-iptal-politikasi" target="_blank" rel="noopener">İade ve İptal</a> koşullarını okudum, onaylıyorum.</span></label>
 
             <p class="err" id="formErr" role="alert" hidden></p>
+            <!-- Ödeme kapalıysa (/api/checkout?mode=1) düğme iyzico'ya gitmez;
+                 bu satır ne yapılacağını söyler. -->
+            <p class="info" id="payClosed" role="status" hidden>Bu plan için çevrimiçi ödeme şu an başlatılamıyor. <a href="/checkout" id="payClosedLink" style="text-decoration:underline">Ön kayıt bırakın</a>, ödeme açılınca size ilk biz dönelim; ya da destek@cyberlionai.com adresine yazın.</p>
 
             <button type="submit" class="pay" id="payBtn">Güvenli Öde - iyzico ile</button>
           </form>

@@ -28,9 +28,10 @@
 const { startQueuedScan, isAvailable } = require('./_lib/queuestart.js');
 const store = require('./_lib/store.js');
 const { resolveOwner, clientIp, ipKey } = require('./_lib/session.js');
-const {
-  RATE_WINDOW_SECONDS, RATE_MAX, FREE_SCAN_LIMIT, QUOTA_TTL_SECONDS
-} = require('./_lib/limits.js');
+const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
+const entitlement = require('./_lib/entitlement.js');
+const scanGate = require('./_lib/scan-gate.js');
+const tg = require('./_lib/telegram.js');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -57,10 +58,10 @@ module.exports = async function handler(req, res) {
   const url = body && body.url;
   if (!url) return res.status(400).json({ error: { code: 'empty' } });
 
-  /* Aktif kontroller yalnızca sahiplik onayı ile. Etiket isteğe bağlı;
-     yoksa onay verilmiş sayılır ve tarama pasif modda yapılır. */
-  const consent = body && body.consent === true;
-  if (consent && !(body && typeof body.domainOwnership === 'boolean' ? body.domainOwnership : true)) {
+  /* Onay kutusu bir BEYAN; aktif kontroller ancak beyan + doğrulanmış
+     sahiplik varken (scan-gate.js). Kuyruğa giden `consent` kapının kararı. */
+  const declared = body && body.consent === true;
+  if (declared && !(body && typeof body.domainOwnership === 'boolean' ? body.domainOwnership : true)) {
     return res.status(400).json({ error: { code: 'consent_required' } });
   }
 
@@ -83,12 +84,27 @@ module.exports = async function handler(req, res) {
   res.setHeader('X-RateLimit-Remaining', String(Math.max(0, RATE_MAX - rate.count)));
 
   const owner = await resolveOwner(req, res);
-  const quotaKey = store.quotaKey(owner);
+  const gate = await scanGate.checkScan(req, {
+    url: url, owner: owner, consent: declared,
+    level: (body && body.level) || (req.query && req.query.level),
+    lang: body && body.lang
+  });
+  if (!gate.ok) return scanGate.reject(res, gate);
+  const consent = gate.activeConsent;
+  /* Sınır plana göre: free/anonim ömür boyu, Pro aylık, Enterprise sınırsız
+     (bkz. _lib/entitlement.js). Eskiden herkese ücretsiz sınır uygulanıyordu. */
+  const policy = await entitlement.resolvePolicy(owner, store.quotaKey(owner));
+  const refundQuota = function () {
+    return policy.unlimited ? Promise.resolve() : store.refundQuota(policy.key);
+  };
 
   // Kota önce ayrılır: eşzamanlı iki istek son hakkı iki kez harcayamaz.
   let quota;
   try {
-    quota = await store.reserveQuota(quotaKey, FREE_SCAN_LIMIT, QUOTA_TTL_SECONDS);
+    /* Sınırsız planda sayaç tutulmuyor; IP hız sınırı yukarıda zaten uygulandı. */
+    quota = policy.unlimited
+      ? { ok: true, used: null }
+      : await store.reserveQuota(policy.key, policy.limit, policy.ttl);
   } catch (err) {
     if (console && console.error) console.error('quota store error:', err.message);
     return res.status(503).json({ error: { code: 'service_unavailable' } });
@@ -97,7 +113,8 @@ module.exports = async function handler(req, res) {
   if (!quota.ok) {
     return res.status(402).json({
       error: {
-        code: 'quota_exceeded', used: quota.used, limit: FREE_SCAN_LIMIT, remaining: 0
+        code: 'quota_exceeded', used: quota.used, limit: policy.limit, remaining: 0,
+        plan: policy.plan, period: policy.period
       }
     });
   }
@@ -107,12 +124,15 @@ module.exports = async function handler(req, res) {
     consent: consent,
     owner: owner,
     ip: clientIp(req),
-    refund: function () { return store.refundQuota(quotaKey); }
+    refund: refundQuota
   });
 
   if (!kuyruk.ok) {
     return res.status(kuyruk.status).json({ error: { code: kuyruk.code } });
   }
+
+  /* Bitiş mesajı /api/scan-status'tan gidiyor (iş kimliği başına bir kez). */
+  await tg.sendTelegram(tg.mesaj.taramaKuyruga(kuyruk.host || url), { type: 'scan' });
 
   /* `scanId` ana sayfanın okuduğu alan; `jobId` eski sözleşmeyi kullanan
      istemciler için aynı değerle duruyor. */
@@ -123,11 +143,7 @@ module.exports = async function handler(req, res) {
     host: kuyruk.host,
     url: kuyruk.url,
     statusUrl: '/api/scan-status?id=' + encodeURIComponent(kuyruk.jobId),
-    quota: {
-      used: quota.used,
-      limit: FREE_SCAN_LIMIT,
-      remaining: Math.max(0, FREE_SCAN_LIMIT - quota.used),
-      scope: owner.isAuthenticated ? 'account' : 'anonymous'
-    }
+    ownership: gate.ownership,
+    quota: entitlement.quotaView(policy, quota.used, owner.isAuthenticated ? 'account' : 'anonymous')
   });
 };

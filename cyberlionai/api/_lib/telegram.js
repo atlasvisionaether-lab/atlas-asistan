@@ -34,6 +34,10 @@
  * kendisi. Telegram DIŞ bir servis; buraya yalnız alan adı, sayı ve durum
  * kodu gidiyor. Mesaj kuranlar bu dosyada toplandı ki kural tek yerde dursun.
  *
+ * MASKELİ E-POSTA: ödeme, otomatik düzeltme ve bekleme listesi bildirimleri
+ * müşteriyi tanımak için e-posta taşıyor, ama yalnız `maskEmail()`'den
+ * geçmiş hâliyle (`a***@gmail.com`). Tam adres Telegram'a gitmez.
+ *
  * TEK İSTİSNA: `iletisimFormu`. Diğer mesajlardaki e-posta, müşterinin
  * SEÇMEDİĞİ bir taramanın hedefine ait (üçüncü taraf verisi) — bu yüzden
  * gitmiyor. İletişim formunda e-posta müşterinin KENDİ adresi, kendi
@@ -50,6 +54,16 @@ const TIMEOUT_MS = 2500;
    sunucusuz örneğin kendi belleği ayrı — bellekteki sayaç sınır değil süstür. */
 const HIZ_PENCERESI_SN = 60;
 const HIZ_MAX = 18;
+
+/* ÖNCELİKLİ HAT: ödeme ve otomatik düzeltme bildirimleri ayrı bir kovadan
+   sayılıyor. Tarama dalgası olağan kovayı doldurduğunda ödemenin haberi
+   düşmesin diye. Telegram'ın sınırı ~20/dk; iki kova birlikte bunu aşabilir,
+   o durumda aşağıdaki 429 tekrarı devreye giriyor. Ödeme sayısı tarama
+   sayısının yanında küçük olduğu için bu kova dar tutuluyor. */
+const ONCELIK_MAX = 10;
+/* Öncelikli mesajda 429 dışındaki geçici hatalarda (zaman aşımı, ulaşılamadı,
+   5xx) bir kez, bu kadar bekleyip tekrar deneniyor. */
+const ONCELIK_TEKRAR_MS = 1000;
 
 /* 429'da Telegram `retry_after` saniye veriyor. Kısa bir bekleme bir isteğin
    süresine eklenebilir; uzun olan beklenmiyor, mesaj düşüyor. Bildirim
@@ -110,6 +124,86 @@ function temizle(metin) {
 }
 
 /**
+ * E-postayı maskeler: ilk karakter + *** + @alan. Biçimsizse '-'.
+ *   ali.kotan@gmail.com → a***@gmail.com
+ * Alan kısmı küçük harfe çevrilir ve denetim karakterlerinden arındırılır;
+ * yerel kısımdan ilk karakter dışında hiçbir şey dışarı çıkmaz.
+ */
+function maskEmail(eposta) {
+  const s = String(eposta === null || eposta === undefined ? '' : eposta).trim();
+  const at = s.lastIndexOf('@');
+  if (at < 1 || at === s.length - 1) return '-';
+  const alanAdi = s.slice(at + 1).toLowerCase().replace(/[^a-z0-9.-]/g, '');
+  if (!alanAdi) return '-';
+  return s.charAt(0).toLowerCase() + '***@' + alanAdi;
+}
+
+/**
+ * Kullanıcının serbest yazdığı metni dışarı çıkacak hâle getirir: e-posta
+ * adresleri maskelenir, 7+ haneli sayı dizileri (telefon, kart, TC kimlik)
+ * gizlenir, satır sonları sadeleşir ve metin kırpılır.
+ */
+function serbestMetin(metin, enFazla) {
+  let s = String(metin === null || metin === undefined ? '' : metin);
+  s = s.replace(/[^\s@<>()"',;]+@[^\s@<>()"',;]+\.[a-z]{2,}/gi, function (e) { return maskEmail(e); });
+  s = s.replace(/(?:\d[\s.-]?){6,}\d/g, '***');
+  s = s.replace(/\s+/g, ' ').trim();
+  const sinir = enFazla || 300;
+  return s.length > sinir ? s.slice(0, sinir - 1) + '…' : s;
+}
+
+/* ---------- Gmail ile cevapla düğmesi ---------- */
+
+/* Telegram satır içi düğme adresini sınırlıyor (belgelenmiş sabit yok; uzun
+   adres BUTTON_URL_INVALID ile mesajın TAMAMINI düşürüyor). Güvenli pay. */
+const DUGME_URL_MAX = 2000;
+
+/** Gmail'in "yeni ileti" penceresini alıcı, konu ve gövdeyle açan adres. */
+function gmailComposeUrl(to, subject, body) {
+  const p = new URLSearchParams({ view: 'cm', fs: '1', to: to, su: subject, body: body });
+  return 'https://mail.google.com/mail/?' + p.toString();
+}
+
+/**
+ * "Gmail'de Cevapla" düğmesi. Adres sınırı aşarsa GÖVDE kısaltılıyor (alıcı
+ * ve konu korunuyor); düğmesiz mesaj göndermektense kısa taslak daha iyi,
+ * taslak zaten Gmail'de düzenleniyor.
+ */
+function buildSupportKeyboard(to, subject, body) {
+  let govde = String(body || '');
+  let url = gmailComposeUrl(to, subject, govde);
+  while (url.length > DUGME_URL_MAX && govde.length > 0) {
+    govde = govde.slice(0, Math.floor(govde.length * 0.85)).replace(/\s+\S*$/, '') + '…';
+    if (govde === '…') govde = '';
+    url = gmailComposeUrl(to, subject, govde);
+  }
+  return { inline_keyboard: [[{ text: "📧 Gmail'de Cevapla", url: url }]] };
+}
+
+/**
+ * replyMarkup yalnızca satır içi URL düğmesi olabilir ve adresi https olmak
+ * zorunda. Başka biçim (callback_data, sınırsız klavye) bu katmanın işi değil;
+ * yanlış biçim mesajın tamamını 400'e düşürmesin diye gönderilmeden atılıyor.
+ */
+function gecerliDugmeler(m) {
+  if (!m || !Array.isArray(m.inline_keyboard)) return null;
+  const ok = m.inline_keyboard.every(function (satir) {
+    return Array.isArray(satir) && satir.every(function (d) {
+      return d && typeof d.text === 'string' && typeof d.url === 'string'
+        && /^https:\/\//.test(d.url) && d.url.length <= DUGME_URL_MAX;
+    });
+  });
+  return ok ? { inline_keyboard: m.inline_keyboard } : null;
+}
+
+/** Kısa bir kod/sebep metni: boşluk ve denetim karakteri sadeleşir, kırpılır. */
+function kod(deger, yedek) {
+  const s = String(deger === null || deger === undefined ? '' : deger)
+    .replace(/\s+/g, ' ').trim().slice(0, 120);
+  return s || yedek || '-';
+}
+
+/**
  * Bir hedefi mesaja girecek kadar sadeleştirir (boşsa '-').
  *
  * Çağıranlar bazen ham adres veriyor (tarama başlarken henüz çözümlenmiş bir
@@ -159,6 +253,113 @@ const mesaj = {
     if (kod) m += ' (' + kod + ')';
     return m.trim();
   },
+  taramaBittiKuyruk: function (domain, puan, riskSayisi) {
+    return ONEK + ' ✅ Tarama bitti (kuyruktan): ' + alan(domain)
+      + ', skor=' + (typeof puan === 'number' ? puan : '-')
+      + ', risk=' + Number(riskSayisi || 0);
+  },
+  taramaBasarisizKuyruk: function (domain, hata) {
+    return ONEK + ' ⚠️ Tarama başarısız (kuyruktan): ' + alan(domain)
+      + ' — ' + kod(hata, 'scan_failed');
+  },
+  odemeBasladi: function (plan, eposta, tutar) {
+    return ONEK + ' 💳 Ödeme başlatıldı: plan=' + kod(plan).toUpperCase()
+      + ', email=' + maskEmail(eposta)
+      + ', tutar=' + (typeof tutar === 'number' ? tutar + ' TL' : '-');
+  },
+  odemeBasarili: function (eposta, plan, ref, tutar) {
+    return ONEK + ' ✅ Ödeme başarılı: ' + maskEmail(eposta)
+      + ', plan=' + kod(plan).toUpperCase()
+      + ', iyzicoId=' + kod(ref)
+      + ', tutar=' + (typeof tutar === 'number' ? tutar + ' TL' : '-');
+  },
+  odemeBeklemede: function (eposta, plan, durum) {
+    return ONEK + ' 🕒 Ödeme beklemede: ' + maskEmail(eposta)
+      + ', plan=' + kod(plan).toUpperCase() + ', durum=' + kod(durum);
+  },
+  odemeBasarisiz: function (eposta, sebep) {
+    return ONEK + ' ❌ Ödeme başarısız: ' + maskEmail(eposta)
+      + ', sebep=' + kod(sebep, 'unknown');
+  },
+  autofixIstendi: function (domain, eposta, zone, fixType) {
+    return ONEK + ' 🛠 Autofix istendi: ' + alan(domain)
+      + ', user=' + maskEmail(eposta)
+      + ', cfZone=' + kod(zone)
+      + ', tür=' + kod(fixType);
+  },
+  autofixTamam: function (domain, fixType, sayi) {
+    return ONEK + ' ✅ Autofix tamamlandı: ' + alan(domain)
+      + ', tür=' + kod(fixType) + ', eklenen başlık=' + Number(sayi || 0);
+  },
+  autofixBasarisiz: function (domain, hata) {
+    return ONEK + ' ⚠️ Autofix başarısız: ' + alan(domain)
+      + ', hata=' + kod(hata, 'unknown');
+  },
+  beklemeListesi: function (eposta, plan, domain) {
+    return ONEK + ' 📋 Bekleme listesi: ' + maskEmail(eposta)
+      + ' - ' + kod(plan).toUpperCase()
+      + ' - ' + (domain ? alan(domain) : '-');
+  },
+  /* Asistanın yanıtlayamadığı soru. Soru `serbestMetin`'den geçer. */
+  asistanCevapsiz: function (soru, dil) {
+    return ONEK + ' ❓ Asistan yanıtlayamadı (' + kod(dil, 'tr') + '): ' + serbestMetin(soru, 300);
+  },
+  asistanAcil: function (soru) {
+    return ONEK + ' 🚨 Asistan: olası aktif olay bildirildi: ' + serbestMetin(soru, 300);
+  },
+  /* Asistandaki "uzmanla görüş" formu. İletişim formu gibi e-posta TAM
+     gidiyor: müşteri kendi adresini cevap almak için yazdı (bkz. TEK İSTİSNA). */
+  insanDestegi: function (ad, eposta, mesajMetni) {
+    return ONEK + ' 📩 İnsan desteği istendi (asistan)\n'
+      + 'Ad: ' + ad + '\n'
+      + 'E-posta: ' + eposta + '\n'
+      + 'Son mesajlar: ' + mesajMetni;
+  },
+  /* "Biz düzeltelim" tek seferlik hizmet. E-posta maskeli; bulgu kimlikleri
+     kısa koddur (kişisel veri değil). Tutar KDV hariç TL. */
+  fixSiparis: function (orderId, domain, ids, price, priceDiscounted, eposta) {
+    return ONEK + ' 🛠️ Fix siparişi: ' + alan(domain)
+      + '\nSipariş: ' + kod(orderId)
+      + '\nBulgular: ' + (ids || []).map(function (i) { return kod(i); }).join(', ')
+      + '\nTutar: ' + Number(priceDiscounted) + ' TL' + (price !== priceDiscounted ? ' (liste ' + Number(price) + ' TL)' : '') + ' + KDV'
+      + '\nKullanıcı: ' + maskEmail(eposta)
+      + '\nSonraki adım: iyzico ödeme bağlantısı gönderin, ödeme gelince panelden "ödendi" işaretleyin.';
+  },
+  fixOdendi: function (orderId, domain) {
+    return ONEK + ' ✅ Fix ödemesi alındı: ' + kod(orderId) + ' — ' + alan(domain);
+  },
+  fixTamamlandi: function (domain, ids) {
+    return ONEK + ' ✅ Fix tamamlandı: ' + alan(domain) + ' — ' + (ids || []).map(function (i) { return kod(i); }).join(', ');
+  },
+  /* İzleme uyarısı (monitor.js). `data` yalnızca sayı ve kısa kod taşır. */
+  izlemeUyarisi: function (tur, domain, data) {
+    const d = data || {};
+    const a = alan(domain);
+    if (tur === 'score_drop') return ONEK + ' 📉 Skor düştü: ' + a + ' ' + Number(d.from) + ' → ' + Number(d.to);
+    if (tur === 'ssl_expiry') return ONEK + ' 🔒 SSL bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
+    if (tur === 'domain_expiry') return ONEK + ' 📅 Alan adı kaydı bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
+    if (tur === 'blacklist') return ONEK + ' ☣️ Kara listede: ' + a + ' (' + kod(d.source) + ': ' + kod(d.match) + ')';
+    if (tur === 'downtime') return ONEK + ' 🔴 Erişilemiyor: ' + a + ' (' + kod(d.reason) + ')';
+    if (tur === 'recovered') return ONEK + ' 🟢 Yeniden erişilebilir: ' + a
+      + (typeof d.downMinutes === 'number' ? ' (' + d.downMinutes + ' dk kesinti)' : '');
+    return ONEK + ' ℹ️ İzleme: ' + a + ' ' + kod(tur);
+  },
+  skorDustu: function (domain, onceki, simdi) {
+    return ONEK + ' 📉 Haftalık tarama: skor düştü: ' + alan(domain)
+      + ' ' + Number(onceki) + ' → ' + Number(simdi) + ' (' + (Number(simdi) - Number(onceki)) + ')';
+  },
+  alanDogrulandi: function (domain, yontem, eposta) {
+    return ONEK + ' 🔐 Alan adı doğrulandı: ' + alan(domain)
+      + ', yöntem=' + kod(yontem) + ', user=' + maskEmail(eposta);
+  },
+  /* Kötüye kullanım bildirimi: bildiren üçüncü kişinin e-postası maskeli,
+     gerekçe serbestMetin'den geçer. */
+  kotuyeKullanim: function (domain, gerekce, eposta, sonTaramaSayisi) {
+    return ONEK + ' 🚩 Kötüye kullanım bildirimi: ' + alan(domain)
+      + '\nBildiren: ' + (eposta ? maskEmail(eposta) : '-')
+      + '\nSon 30 günde bu alan adına tarama: ' + Number(sonTaramaSayisi || 0)
+      + '\nGerekçe: ' + serbestMetin(gerekce, 600);
+  },
   test: function (metin) {
     return ONEK + ' 🦁 ' + (metin || 'test');
   },
@@ -172,7 +373,7 @@ const mesaj = {
 };
 
 /** Hız sayacı. Depo yoksa ya da düşerse bildirim GÖNDERİLİR (bkz. not). */
-async function hizSiniriAsildi() {
+async function hizSiniriAsildi(oncelikli) {
   let store;
   try {
     store = require('./store.js');
@@ -181,8 +382,9 @@ async function hizSiniriAsildi() {
   }
   if (!store.isConfigured()) return false;
   try {
-    const sayac = await store.hitRateLimit('cl:rl:tg', HIZ_PENCERESI_SN);
-    return sayac.count > HIZ_MAX;
+    const sayac = await store.hitRateLimit(
+      oncelikli ? 'cl:rl:tg:p' : 'cl:rl:tg', HIZ_PENCERESI_SN);
+    return sayac.count > (oncelikli ? ONCELIK_MAX : HIZ_MAX);
   } catch (err) {
     /* Sayaç okunamadı. Burada istek REDDEDİLMİYOR: bu bir güvenlik sınırı
        değil, Telegram'ın 429'una girmemek için bir nezaket. Kapalı devre
@@ -192,7 +394,7 @@ async function hizSiniriAsildi() {
 }
 
 /** Tek gönderim denemesi. Adres loglanmaz: belirteç içinde. */
-async function dene(cfg, chatId, metin, sessiz) {
+async function dene(cfg, chatId, metin, sessiz, dugmeler) {
   const controller = new AbortController();
   const timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
 
@@ -207,7 +409,8 @@ async function dene(cfg, chatId, metin, sessiz) {
         chat_id: chatId,
         text: metin,
         disable_notification: sessiz === true,
-        disable_web_page_preview: true
+        disable_web_page_preview: true,
+        reply_markup: dugmeler || undefined
       })
     });
   } catch (err) {
@@ -247,7 +450,11 @@ async function dene(cfg, chatId, metin, sessiz) {
  * bakmadığında da olan şey loga düşer.
  *
  * @param {string} metin  gönderilecek düz metin
- * @param {{type?: string, silent?: boolean}} [secenek]
+ * @param {{type?: string, silent?: boolean, priority?: boolean}} [secenek]
+ *   priority: ödeme/düzeltme gibi kaçmaması gereken bildirimler; ayrı hız
+ *   kovası ve geçici hatada 1 sn sonra bir tekrar.
+ *   replyMarkup: { inline_keyboard } — yalnızca https URL düğmeleri
+ *   (bkz. buildSupportKeyboard). Geçersizse düğmesiz gönderilir.
  * @returns {Promise<{ok: boolean, code?: string, status?: number}>}
  */
 async function sendTelegram(metin, secenek) {
@@ -264,12 +471,14 @@ async function sendTelegram(metin, secenek) {
   const govde = temizle(metin);
   if (!govde.trim()) return { ok: false, code: 'empty' };
 
-  if (await hizSiniriAsildi()) {
+  const oncelikli = ayar.priority === true;
+  const dugmeler = gecerliDugmeler(ayar.replyMarkup);
+  if (await hizSiniriAsildi(oncelikli)) {
     if (console && console.error) console.error('telegram skipped: local_rate_limited');
     return { ok: false, code: 'local_rate_limited' };
   }
 
-  let sonuc = await dene(cfg, chatId, govde, sessiz);
+  let sonuc = await dene(cfg, chatId, govde, sessiz, dugmeler);
 
   /* Yalnızca 429'da tekrar: diğer hatalarda ikinci deneme çoğunlukla aynı
      cevabı alır ve isteğin süresine boşuna eklenir. */
@@ -278,8 +487,12 @@ async function sendTelegram(metin, secenek) {
       ? sonuc.retryAfterMs : RETRY_MAX_BEKLEME_MS;
     if (bekle <= RETRY_MAX_BEKLEME_MS) {
       if (bekle > 0) await new Promise(function (r) { setTimeout(r, bekle); });
-      sonuc = await dene(cfg, chatId, govde, sessiz);
+      sonuc = await dene(cfg, chatId, govde, sessiz, dugmeler);
     }
+  } else if (!sonuc.ok && oncelikli
+      && (sonuc.code === 'timeout' || sonuc.code === 'unreachable' || sonuc.status >= 500)) {
+    await new Promise(function (r) { setTimeout(r, ONCELIK_TEKRAR_MS); });
+    sonuc = await dene(cfg, chatId, govde, sessiz, dugmeler);
   }
 
   if (!sonuc.ok && console && console.error) {
@@ -348,6 +561,24 @@ function ucuSar(handler, ucAdi) {
 }
 
 /**
+ * Aynı olay için tek bildirim: anahtar ilk kez görülüyorsa true.
+ *
+ * Depo yoksa ya da düşerse true (gönder): çift mesaj, hiç mesaj olmamasından
+ * daha az zararlı. Anahtar olayın kimliğinden kuruluyor (iş kimliği,
+ * abonelik referansı); kişisel veri taşımıyor.
+ */
+async function tekSefer(anahtar, ttlSn) {
+  let store;
+  try { store = require('./store.js'); } catch (err) { return true; }
+  if (!store.isConfigured() || typeof store.setOnce !== 'function') return true;
+  try {
+    return await store.setOnce('cl:tg:once:' + anahtar, ttlSn || 86400);
+  } catch (err) {
+    return true;
+  }
+}
+
+/**
  * "Bu olay için bildirim gitti" işareti. `ucuSar` bunu görünce kendi genel
  * uyarısını göndermez.
  */
@@ -357,5 +588,5 @@ function bildirimIsaretle(res) {
 
 module.exports = {
   sendTelegram, isConfigured, kritik, ucuSar, bildirimIsaretle, mesaj, gizle,
-  HIZ_MAX, MAX_UZUNLUK
+  maskEmail, serbestMetin, tekSefer, gmailComposeUrl, buildSupportKeyboard, DUGME_URL_MAX, HIZ_MAX, ONCELIK_MAX, MAX_UZUNLUK
 };

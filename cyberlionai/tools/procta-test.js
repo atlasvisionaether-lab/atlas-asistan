@@ -46,6 +46,8 @@ sina('en az üç yükseltme çağrısı var', proCtalar.length >= 3, true);
    düğmesi /api/checkout'a yönlendirir (odeme.js). */
 sina('Pro satırı ödeme sayfasına bakıyor',
   /href="\/odeme\?plan=pro"[^>]*data-pro-intent/.test(html), true);
+sina('ödeme sayfası beyan ve sözleşme onayını gönderiyor',
+  /&declaration=1&agreements=1/.test(fs.readFileSync(path.join(__dirname, '..', 'odeme.js'), 'utf8')), true);
 sina('ödeme sayfası ödeme ucuna gidiyor',
   /\/api\/checkout\?plan=/.test(fs.readFileSync(path.join(__dirname, '..', 'odeme.js'), 'utf8')), true);
 

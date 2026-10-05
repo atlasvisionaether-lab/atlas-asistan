@@ -23,6 +23,12 @@ const { isletme } = require('../legal-data.js');
 
 const GUNCELLEME_TARIHI = '03.10.2026';
 
+/** İçeriği sonradan değişen sayfaların kendi tarihi (yalnız o sayfa güncellenmiş görünsün).
+    teslimat-ve-iade: tek seferlik düzeltme hizmetine 3 iş günü ifa süresi eklendi. */
+const SAYFA_TARIHI = {
+  'teslimat-ve-iade-sartlari.html': '05.10.2026'
+};
+
 const ROOT = path.join(__dirname, '..');
 const PAGES_DIR = path.join(ROOT, 'pages');
 
@@ -97,9 +103,10 @@ function blokEkle(html, baslikArama, blok, kapanisSirasi) {
   return html.slice(0, index + 1) + blok + html.slice(index + 1);
 }
 
-function tarihleriGuncelle(html) {
-  html = html.replace(/Son güncelleme: \d{2}\.\d{2}\.\d{4}/g, 'Son güncelleme: ' + GUNCELLEME_TARIHI);
-  html = html.replace(/Last updated: \d{2}\.\d{2}\.\d{4}/g, 'Last updated: ' + GUNCELLEME_TARIHI);
+function tarihleriGuncelle(html, dosyaAdi) {
+  const tarih = SAYFA_TARIHI[dosyaAdi] || GUNCELLEME_TARIHI;
+  html = html.replace(/Son güncelleme: \d{2}\.\d{2}\.\d{4}/g, 'Son güncelleme: ' + tarih);
+  html = html.replace(/Last updated: \d{2}\.\d{2}\.\d{4}/g, 'Last updated: ' + tarih);
   return html;
 }
 
@@ -119,8 +126,8 @@ function footerYenile(html) {
   return html;
 }
 
-function tamIsle(html) {
-  html = tarihleriGuncelle(html);
+function tamIsle(html, dosyaAdi) {
+  html = tarihleriGuncelle(html, dosyaAdi);
   html = footerYenile(html);
   html = blokEkle(html, '<h2>Satıcı Bilgileri</h2>', satinBilgileriTr(), 1);
   html = blokEkle(html, '<h2>Seller Information</h2>', sellerInfoEn(), 2);
@@ -137,7 +144,7 @@ function dosyayiIsle(dosyaAdi) {
   const tamYol = path.join(PAGES_DIR, dosyaAdi);
   if (!fs.existsSync(tamYol)) return null;
   const once = fs.readFileSync(tamYol, 'utf8');
-  const html = tamIsle(once);
+  const html = tamIsle(once, dosyaAdi);
   if (html !== once) fs.writeFileSync(tamYol, html, 'utf8');
   return html !== once;
 }
@@ -151,7 +158,7 @@ function main() {
       const tamYol = path.join(PAGES_DIR, dosya);
       if (!fs.existsSync(tamYol)) continue;
       const once = fs.readFileSync(tamYol, 'utf8');
-      const sonraki = tamIsle(once);
+      const sonraki = tamIsle(once, dosya);
       if (sonraki !== once) {
         console.error('Bayat: ' + dosya);
         degisti = true;

@@ -7,6 +7,9 @@
  * tools/pricing-test.js bu dosyadaki NET_TRY değerlerini oradaki priceTry ile
  * karşılaştırıyor. KDV oranı da orada (VAT_RATE).
  *
+ * /api/checkout üç onay olmadan ödemeyi başlatmaz: tarama yetkisi beyanı
+ * (declaration=1) ve sözleşme onayları (agreements=1). Üçü de burada alınır.
+ *
  * Kart bilgisi bu sayfada ALINMAZ. "Güvenli Öde" /api/checkout'a gider; o uç
  * oturumu doğrular ve tarayıcıyı iyzico'nun barındırılan ödeme formuna
  * yönlendirir. Oturum yoksa /panel'e (giriş) gönderir.
@@ -69,6 +72,22 @@
       .catch(function () {});
   }
 
+  /* Ödeme açık mı: kapalıysa düğme iyzico'ya gitmez (gitse sunucu tarayıcıyı
+     /pricing'e geri yollar ve kullanıcı "hiçbir şey olmadı" sanır). Bilinmiyorsa
+     (istek düştü) karar sunucuya bırakılır. */
+  var payMode = null;
+  if (typeof fetch === 'function') {
+    fetch('/api/checkout?mode=1', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) { if (m && typeof m.enabled === 'boolean') payMode = m; })
+      .catch(function () {});
+  }
+  function payOpen() {
+    if (!payMode) return true;
+    return payMode.enabled === true && (payMode.plans || []).indexOf(planId) !== -1;
+  }
+  $('payClosedLink').setAttribute('href', '/checkout?plan=' + encodeURIComponent(planId));
+
   var form = $('payForm');
   var err = $('formErr');
 
@@ -87,14 +106,22 @@
 
     if (ad.length < 3 || ad.indexOf(' ') === -1) return fail('Lütfen adınızı ve soyadınızı yazın.', $('adSoyad'));
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eposta)) return fail('Lütfen geçerli bir e-posta adresi yazın.', $('eposta'));
+    if (!$('onayYetki').checked) return fail('Devam etmek için tarama yetkisi beyanını onaylayın.', $('onayYetki'));
     if (!$('onayOnBilgi').checked) return fail('Devam etmek için Ön Bilgilendirme Formu\'nu onaylayın.', $('onayOnBilgi'));
     if (!$('onaySozlesme').checked) return fail('Devam etmek için Mesafeli Satış Sözleşmesi ve Gizlilik Politikası\'nı onaylayın.', $('onaySozlesme'));
+
+    if (!payOpen()) {
+      $('payClosed').hidden = false;
+      $('payClosed').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
+    }
 
     var btn = $('payBtn');
     btn.disabled = true;
     btn.textContent = 'iyzico\'ya yönlendiriliyorsunuz…';
 
     window.location.href = '/api/checkout?plan=' + encodeURIComponent(planId)
+      + '&declaration=1&agreements=1'
       + '&ad=' + encodeURIComponent(ad);
   });
 

@@ -68,6 +68,7 @@
  */
 
 const mail = require('./_lib/mail.js');
+const dnssec = require('./_lib/dnssec.js');
 const store = require('./_lib/store.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
 const tg = require('./_lib/telegram.js');
@@ -281,6 +282,13 @@ async function handler(req, res) {
   }
 
   const govdeYanit = yanitGovdesi(kayitlar);
+
+  /* DNSSEC (kayıtlı alan adının DS kaydı; taramadaki ve izlemedeki kontrolün
+     aynısı, bkz. _lib/dnssec.js). Ölçülemezse "kapalı" DENMEZ: measured=false. */
+  const ds = await dnssec.dnssecDurumu(alan);
+  govdeYanit.dnssec = ds.ok
+    ? { measured: true, enabled: ds.enabled === true, zone: ds.zone }
+    : { measured: false, enabled: null, zone: null };
 
   try {
     await store.cacheSet(onbellekAnahtari, govdeYanit, CACHE_TTL_SECONDS);

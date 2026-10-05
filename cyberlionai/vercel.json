@@ -19,6 +19,10 @@
       "maxDuration": 60,
       "memory": 512
     },
+    "api/cron/tick.js": {
+      "maxDuration": 60,
+      "memory": 512
+    },
     "api/report.js": {
       "maxDuration": 30,
       "memory": 1024
@@ -30,7 +34,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; script-src 'self' 'sha256-TBN8Q6psxPFqMOdGUWIBFIa9Btk+pnLR0R+6W1rTuNo=' 'sha256-XFpZWZkFF6aM74UA6wSrgvarZKAi01ihFiXGFgX8j+8=' 'sha256-Wg60lGscb2izJm7hsOBwGjLWMGqPqbixWmsDSzub2AI=' 'sha256-XUI/nygWhjt/SoedYMujzy8BjKAeeuvujyWZKid8Yps=' 'sha256-4sWMLFXmWeHXV7MwQC9R2kIr3FT37iZGR0tCZaFRtUs=' 'sha256-3r+JarKUDjIQCNRex5upJytL3yv6bLqgtLEVtOFgpSk=' 'sha256-2a3asYwzJ5pElwEg0p/9jx/8jFLILtxKG37x7W6w4lU=' 'sha256-OHD4m1vrGqXjIAIY/NFv8JlyPJSPh4YvMwUzFlUTAGw=' 'sha256-Vr3O0j0IijYR4yGJq/y/epPWVsFr+waN6Xmk4m75akw=' 'sha256-bbJNHos/F0a9fz/jIB0MkIfkH2Hg+IwDY9rjjO4Twls=' 'sha256-xUoNGpJxoJZSBIgot43cUrYNf+NN+Z4gbxGTjdcff30=' 'sha256-nUp3KjL7iS2hq0OLHkMrRSZd3Gbn9SgiwnQJ69qyBlE=' 'sha256-TZL7o6yIbDbbRtZPLNZSjj423GhopJrTDWfKk2F9r+w=' 'sha256-hlQC1w/Y1pvTM85N4MglOtvX6acRYRgSJrsU4jLh4x4=' 'sha256-kKQjffethgWQEkt+syPxj8ZsF92rKx3S1gGE86riSvI=' 'sha256-4UdRyW+L305MbGfb/pZBhSNWvqU81ihNrV6cP8jOXoQ=' 'sha256-RSuPtYSn5J+6MkHMgr7TangXlYV/J8dFi7cGE+IrmA4=' 'sha256-jq+OoRVY/VnTG5STRotMQQZR36vL9pa6NdkyiB2cFz0=' 'sha256-1+ff7XWjSJpnuL5BjQnlg91ZsI9LbnHCemLPHgfuEf8=' 'sha256-PAY08nkJQm53+KR0GfLaPRrf1Y2QT9TnbPeMQLccAFA=' 'sha256-o+of3JxRCNuITO22+k6jz4FFFJfPmDceWQCVnzU/lfE=' 'sha256-o3fXLRjysbcdiKWo58HwQjXARPGjXrIHkrCVe3NAz60='; connect-src 'self' https://ipapi.co; upgrade-insecure-requests"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; script-src 'self' 'sha256-TBN8Q6psxPFqMOdGUWIBFIa9Btk+pnLR0R+6W1rTuNo=' 'sha256-XFpZWZkFF6aM74UA6wSrgvarZKAi01ihFiXGFgX8j+8=' 'sha256-Wg60lGscb2izJm7hsOBwGjLWMGqPqbixWmsDSzub2AI=' 'sha256-BstmcbLtkVLwSTYcEJJi5vYnI+4m1xL6YwKWErA2xS4=' 'sha256-3r+JarKUDjIQCNRex5upJytL3yv6bLqgtLEVtOFgpSk=' 'sha256-2a3asYwzJ5pElwEg0p/9jx/8jFLILtxKG37x7W6w4lU=' 'sha256-hO2FRTqzKp8snqHAAh8ZL8Ba6/st/dQDMW8tfTFdOvM=' 'sha256-GFvscsDQBEiNy5mvXDV2DAgjoobj7I1w64iVqtkH1cY=' 'sha256-bbJNHos/F0a9fz/jIB0MkIfkH2Hg+IwDY9rjjO4Twls=' 'sha256-xUoNGpJxoJZSBIgot43cUrYNf+NN+Z4gbxGTjdcff30=' 'sha256-nUp3KjL7iS2hq0OLHkMrRSZd3Gbn9SgiwnQJ69qyBlE=' 'sha256-TZL7o6yIbDbbRtZPLNZSjj423GhopJrTDWfKk2F9r+w=' 'sha256-hlQC1w/Y1pvTM85N4MglOtvX6acRYRgSJrsU4jLh4x4=' 'sha256-kKQjffethgWQEkt+syPxj8ZsF92rKx3S1gGE86riSvI=' 'sha256-4UdRyW+L305MbGfb/pZBhSNWvqU81ihNrV6cP8jOXoQ=' 'sha256-gWnRNFSw++ep/i28ydIjPHZU9j3HBojqBruW6p2GHeI=' 'sha256-jq+OoRVY/VnTG5STRotMQQZR36vL9pa6NdkyiB2cFz0=' 'sha256-1+ff7XWjSJpnuL5BjQnlg91ZsI9LbnHCemLPHgfuEf8=' 'sha256-PAY08nkJQm53+KR0GfLaPRrf1Y2QT9TnbPeMQLccAFA=' 'sha256-o+of3JxRCNuITO22+k6jz4FFFJfPmDceWQCVnzU/lfE=' 'sha256-o3fXLRjysbcdiKWo58HwQjXARPGjXrIHkrCVe3NAz60='; connect-src 'self' https://ipapi.co; upgrade-insecure-requests"
         },
         {
           "key": "Strict-Transport-Security",
@@ -63,7 +67,7 @@
       ]
     },
     {
-      "source": "/(.*).(png|jpg|jpeg|svg|webp|ico|woff2)",
+      "source": "/((?!badge/).*).(png|jpg|jpeg|svg|webp|ico|woff2)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -72,7 +76,33 @@
       ]
     }
   ],
+  "rewrites": [
+    {
+      "source": "/badge/:domain.svg",
+      "destination": "/api/badge?domain=:domain"
+    }
+  ],
   "redirects": [
+    {
+      "source": "/panel",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/guven-damgasi",
+      "destination": "/guven-damgasi-kontrol",
+      "permanent": true
+    },
+    {
+      "source": "/legal/authorization",
+      "destination": "/pages/tarama-yetkisi",
+      "permanent": true
+    },
+    {
+      "source": "/tarama-yetkisi",
+      "destination": "/pages/tarama-yetkisi",
+      "permanent": true
+    },
     {
       "source": "/kvkk",
       "destination": "/pages/kvkk-aydinlatma-metni",
@@ -184,14 +214,24 @@
       "permanent": true
     },
     {
-      "source": "/mesafeli-satis-sozlesmesi",
-      "destination": "/pages/mesafeli-satis-sozlesmesi",
-      "permanent": false
+      "source": "/on-bilgilendirme",
+      "destination": "/pages/on-bilgilendirme-formu",
+      "permanent": true
     },
     {
       "source": "/kvkk-aydinlatma-metni",
       "destination": "/pages/kvkk-aydinlatma-metni",
-      "permanent": false
+      "permanent": true
+    },
+    {
+      "source": "/mesafeli-satis-sozlesmesi",
+      "destination": "/pages/mesafeli-satis-sozlesmesi",
+      "permanent": true
+    },
+    {
+      "source": "/teslimat-ve-iade-sartlari",
+      "destination": "/pages/teslimat-ve-iade-sartlari",
+      "permanent": true
     },
     {
       "source": "/iade-iptal-politikasi",
@@ -212,7 +252,7 @@
   "crons": [
     {
       "path": "/api/cron/weekly-scan",
-      "schedule": "0 9 * * 1"
+      "schedule": "0 6 * * *"
     }
   ]
 }

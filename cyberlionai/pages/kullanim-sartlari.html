@@ -131,6 +131,10 @@
         <h2>3. Yetkilendirme Şartı</h2>
         <div class="callout"><p><strong>Önemli:</strong> Yalnızca sahibi olduğunuz ya da tarama yapmak için sahibinden <strong>açık ve yazılı izin aldığınız</strong> sistemleri tarayabilirsiniz. İzinsiz tarama, 5237 sayılı Türk Ceza Kanunu m.243 vd. hükümleri ve pek çok ülkenin mevzuatı kapsamında suç teşkil edebilir.</p></div>
         <p>Kullanıcı, taradığı her hedef için gerekli yetkiye sahip olduğunu beyan ve taahhüt eder. Bu beyanın gerçeğe aykırı olmasından doğacak her türlü hukuki ve cezai sorumluluk münhasıran Kullanıcı'ya aittir. Yetkisiz tarama tespit edildiğinde hesap bildirimsiz olarak askıya alınır.</p>
+        <p><strong>3.1 Tarama seviyeleri.</strong> Doğrulanmamış alan adlarında yalnızca <strong>pasif tarama</strong> yapılır: herhangi bir ziyaretçinin tarayıcısının da gördüğü bilgiler okunur (TLS yapılandırması, yanıt başlıkları, çerez bayrakları, DNS'teki e-posta kayıtları). XSS/SQLi yoklaması ve hassas dosya yolu kontrolü gibi <strong>aktif testler</strong> ile Cloudflare üzerinden <strong>otomatik düzeltme</strong>, yalnızca Kullanıcı'nın DNS kaydı, dosya ya da meta etiketiyle sahipliğini doğruladığı alan adlarında çalışır. Ayrıntılar: <a class="inline" href="/pages/tarama-yetkisi">Tarama Yetkisi ve Seviyeleri</a>.</p>
+        <p><strong>3.2 Kayıt.</strong> Her tarama; taranan alan adı, tarama seviyesi, doğrulama durumu, IP adresi, tarayıcı bilgisi ve zamanla birlikte kaydedilir ve 12 ay saklanır. Yetkisiz tarama şüphesinde bu kayıtlar incelenir; yasal zorunluluk hâlinde yetkili mercilerle paylaşılabilir.</p>
+        <p><strong>3.3 Zarar vermeme taahhüdü.</strong> Cyber Lion AI, taranan sistemlerde veri silen, değiştiren ya da hizmeti aksatmaya yönelik istek göndermez. Pasif taramada yalnızca okuma yapılır; aktif testlerde gönderilen istekler zararsız, veri değiştirmeye yönelik olmayan test istekleridir. Otomatik düzeltme yalnızca Kullanıcı'nın kendi Cloudflare belirteciyle ve onun açık isteğiyle yapılır.</p>
+        <p><strong>3.4 Bildirim.</strong> Sisteminizin izniniz olmadan tarandığını düşünüyorsanız <a class="inline" href="/pages/tarama-yetkisi#bildir">Tarama Yetkisi</a> sayfasındaki formla ya da destek@cyberlionai.com adresiyle bize bildirin.</p>
         <h2>4. Yasak Kullanımlar</h2>
         <ul>
           <li>Yetkiniz olmayan sistemleri taramak veya tarama sonuçlarını saldırı amacıyla kullanmak.</li>
@@ -164,10 +168,10 @@
           <strong>İşletme Türü:</strong> Şahıs İşletmesi<br />
           <strong>Yetkili:</strong> Ali Kotan<br />
           <strong>Adres:</strong> Ritim AVM, Cevizli Mahallesi, Zuhal Caddesi No: 46, İç Kapı No: 50, Maltepe / İstanbul<br />
-          <strong>Telefon:</strong> <a class="inline" href="tel:+90534 468 27 69</a><br />
+          <strong>Telefon:</strong> <a class="inline" href="tel:+905344682769">0534 468 27 69</a><br />
           <strong>Vergi Kimlik No:</strong> 5810910912<br />
           <strong>Vergi Dairesi:</strong> Kartal Vergi Dairesi<br />
-          <strong>E-posta:</strong> <a class="inline" href="mailto:info@cyberlionai.com"><a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a><br />
+          <strong>E-posta:</strong> <a class="inline" href="mailto:info@cyberlionai.com">info@cyberlionai.com</a><br />
           <strong>Web:</strong> www.cyberlionai.com
         </p>
       </article>
@@ -185,6 +189,10 @@
         <h2>3. Authorisation Requirement</h2>
         <div class="callout"><p><strong>Important:</strong> You may scan only systems you own or for which you hold <strong>explicit written permission</strong> from the owner. Unauthorised scanning may constitute a criminal offence under Turkish Criminal Code Art. 243 et seq. and comparable legislation in most jurisdictions.</p></div>
         <p>The User represents and warrants that they hold the necessary authorisation for every target they scan. All legal and criminal liability arising from a false representation rests solely with the User. Accounts found performing unauthorised scans are suspended without notice.</p>
+        <p><strong>3.1 Scan levels.</strong> Unverified domains receive <strong>passive scanning</strong> only: we read what any visitor's browser also sees (TLS configuration, response headers, cookie flags, e-mail records in DNS). <strong>Active tests</strong> such as XSS/SQLi probes and sensitive file path checks, and <strong>automatic fixes</strong> via Cloudflare, run only on domains whose ownership the User has verified by DNS record, file or meta tag. Details: <a class="inline" href="/pages/tarama-yetkisi">Scan Authorisation and Levels</a>.</p>
+        <p><strong>3.2 Logging.</strong> Every scan is recorded with the scanned domain, scan level, verification status, IP address, browser information and time, and kept for 12 months. These records are reviewed when unauthorised scanning is suspected and may be shared with competent authorities where required by law.</p>
+        <p><strong>3.3 No-harm commitment.</strong> Cyber Lion AI does not send requests that delete or modify data or aim to disrupt the scanned service. Passive scanning only reads; active tests send harmless test requests that do not attempt to modify data. Automatic fixes are made only with the User's own Cloudflare token and at their explicit request.</p>
+        <p><strong>3.4 Reporting.</strong> If you believe your system was scanned without your permission, tell us via the form on the <a class="inline" href="/pages/tarama-yetkisi#bildir">Scan Authorisation</a> page or at destek@cyberlionai.com.</p>
         <h2>4. Prohibited Use</h2>
         <ul>
           <li>Scanning systems you are not authorised to scan, or using scan results to conduct an attack.</li>
@@ -221,7 +229,7 @@
           <strong>Phone:</strong> <a class="inline" href="tel:+905344682769">+90 534 468 27 69</a><br />
           <strong>Tax ID (VKN):</strong> 5810910912<br />
           <strong>Tax Office:</strong> Kartal Vergi Dairesi<br />
-          <strong>Email:</strong> <a class="inline" href="mailto:info@cyberlionai.com"><a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a><br />
+          <strong>Email:</strong> <a class="inline" href="mailto:info@cyberlionai.com">info@cyberlionai.com</a><br />
           <strong>Website:</strong> www.cyberlionai.com
         </p>
       </article>
@@ -284,6 +292,6 @@
     }
   })();
   </script>
- <script src="/mail-links.js" defer></script>
+  <script src="/mail-links.js" defer></script>
 </body>
 </html>
