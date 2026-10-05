@@ -2138,7 +2138,7 @@
         <button type="submit" class="btn btn--gold btn--block" data-i18n="auth.signUp">Hesap Oluştur</button>
         <p class="modal__foot">
           <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
-          <a href="/pages/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
+          <a href="/kullanim-kosullari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
         </p>
       </form>
 
@@ -4373,9 +4373,9 @@
         return l;
       }
       var c1 = consent('fixAgree', [t('scan.cartAgree1'),
-        [t('scan.cartAgreeLink'), '/pages/mesafeli-satis-sozlesmesi'], t('scan.cartAgreeSep1'),
+        [t('scan.cartAgreeLink'), '/mesafeli-satis-sozlesmesi'], t('scan.cartAgreeSep1'),
         [t('scan.cartAgreeLink2'), '/pages/on-bilgilendirme-formu'], t('scan.cartAgreeSep2'),
-        [t('scan.cartAgreeLink3'), '/pages/teslimat-ve-iade-sartlari'], t('scan.cartAgree2')]);
+        [t('scan.cartAgreeLink3'), '/iade-iptal-politikasi'], t('scan.cartAgree2')]);
       var c2 = consent('fixStart', [t('scan.cartStart')]);
       var go = document.createElement('button');
       go.type = 'button';

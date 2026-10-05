@@ -1,5 +1,12 @@
 User-agent: *
 Allow: /
+Allow: /odeme
+Allow: /mesafeli-satis-sozlesmesi
+Allow: /gizlilik-politikasi
+Allow: /kvkk-aydinlatma-metni
+Allow: /iade-iptal-politikasi
+Allow: /kullanim-kosullari
+Allow: /teslimat-bilgisi
 Disallow: /404
 
 Sitemap: https://www.cyberlionai.com/sitemap.xml
