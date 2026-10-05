@@ -317,7 +317,7 @@
   .nav__links { display: none; align-items: center; gap: 30px; margin-left: auto; }
   .nav__link {
     position: relative; color: var(--text-gray);
-    font-size: 0.9rem; font-weight: 500; padding: 6px 0;
+    font-size: 0.9rem; font-weight: 500; padding: 6px 0; white-space: nowrap;
     transition: color var(--transition-speed) var(--transition-ease);
   }
   .nav__link::after {
@@ -1324,11 +1324,7 @@
 
   @media (min-width: 1024px) {
     :root { --nav-h: 84px; }
-    .nav__links { display: flex; }
-    .nav__links + .nav__actions { margin-left: 24px; }
     .nav__cta { display: inline-flex; }
-    .nav__toggle { display: none; }
-    .nav__drawer { display: none; }
     .grid--3 { grid-template-columns: repeat(3, 1fr); }
     .modes { grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .mode--featured { transform: scale(1.04); z-index: 2; }
@@ -1343,6 +1339,14 @@
                      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent); }
     .step { flex-direction: column; align-items: center; text-align: center; gap: 22px; }
     .step__body { padding-top: 0; }
+  }
+
+  /* Tam menü TR etiketleriyle ~1190px ister; daha darda çekmece menü kalır */
+  @media (min-width: 1280px) {
+    .nav__links { display: flex; gap: 22px; }
+    .nav__links + .nav__actions { margin-left: 24px; }
+    .nav__toggle { display: none; }
+    .nav__drawer { display: none; }
   }
 
   @media (min-width: 1440px) {
