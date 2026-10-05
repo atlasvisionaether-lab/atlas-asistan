@@ -2435,7 +2435,7 @@
                    skippedNa: 'Uygulanabilir değil', skippedNi: 'Uygulanmamış' },
           scoreLabel: 'Güvenlik skoru',
           summary: '{passed} geçti · {failed} kaldı · {skipped} puan dışı',
-          quota: 'Kalan ücretsiz tarama: {n}/5',
+          quota: 'Kalan ücretsiz tarama: {n}/{limit}',
           quotaOut: "Ücretsiz tarama hakkınız doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
           quotaOutAccount: "Hesabınızın ücretsiz tarama hakkı doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
           quotaAccount: 'Hesabınızda {n} ücretsiz tarama kaldı',
@@ -2849,7 +2849,7 @@
                    skippedNa: 'Not applicable', skippedNi: 'Not implemented' },
           scoreLabel: 'Security score',
           summary: '{passed} passed · {failed} failed · {skipped} not scored',
-          quota: 'Free scans left: {n}/5',
+          quota: 'Free scans left: {n}/{limit}',
           quotaOut: 'You have used your free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
           quotaOutAccount: 'Your account has used its free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
           quotaAccount: '{n} free scans left on your account',
@@ -4077,7 +4077,7 @@
       if (quotaPlan === 'enterprise') { el.textContent = t('scan.quotaUnlimited'); return; }
       if (quotaPlan === 'pro') { el.textContent = t('scan.quotaMonthly', { n: scansLeft(), limit: quotaLimit }); return; }
       var key = quotaScope === 'account' ? 'scan.quotaAccount' : 'scan.quota';
-      el.textContent = t(key, { n: scansLeft() });
+      el.textContent = t(key, { n: scansLeft(), limit: quotaLimit });
     }
 
     function setStatus(text, iconClass) {
