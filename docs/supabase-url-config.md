@@ -20,6 +20,11 @@ Dashboard › Authentication › URL Configuration:
     korumalı olduğunda kayıt onayı / şifre sıfırlama bağlantıları ölü kalır — "süresi dolmuş"
     şikâyetinin Atlas Asistan tarafındaki sebebi bu.
   - Panele özel alan adı (ör. `panel.atlasasistan.com`) eklenirse Site URL o olmalı.
+  - **Vercel Authentication notu:** Panel `*.vercel.app` Vercel Authentication arkasındaysa müşteriler
+    mail linkinden Vercel login ekranına düşer. Çözüm: Vercel Dashboard › atlas-asistan-panel-preview ›
+    Settings › Deployment Protection › Vercel Authentication = **Only Preview Deployments**. Production
+    açık, preview korumalı kalır. Özel alan adı `panel.atlasasistan.com` sonra eklenebilir.
+    *(2026-10-05: bu ayar yapıldı — production adresi açık, önizlemeler korumalı.)*
 - **Redirect URLs:**
   ```
   https://atlas-asistan-panel-preview.vercel.app/**
