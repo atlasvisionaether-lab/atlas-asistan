@@ -94,30 +94,42 @@ function fixesFor(fixType) {
 }
 
 const PRECHECK_TIMEOUT_MS = 8000;
+const PRECHECK_MAX_REDIRECTS = 4;
 
 /**
  * Sitenin ŞU AN gönderdiği başlık adlarını (küçük harf) okur. Sitede zaten
  * olan bir başlık 1-Tık ile EZİLMEZ: sahibinin bilerek koyduğu değer (ör.
  * daha uzun bir HSTS süresi) bizimkinden doğru olabilir.
  *
- * Hedef önce SSRF kapısından geçer (alan adı doğrulanmış olsa da DNS'i iç
- * ağa çevrilmiş olabilir). Okunamazsa null döner ve çağıran kural YAZMAZ:
- * neyi ezeceğini bilmeden değişiklik yapılmaz.
+ * Yönlendirmeler İZLENİR ve son sayfanın başlıkları döner: apex → www gibi
+ * bir yönlendirme yanıtı genelde güvenlik başlığı taşımaz; yalnız ona bakmak
+ * gerçek sayfadaki başlığı "yok" sanıp bölge geneli kuralla ezerdi.
+ * Her adımın hedefi SSRF kapısından ayrıca geçer (yönlendirme iç ağa
+ * çevirebilir); yalnız https izlenir.
+ *
+ * Okunamazsa null döner ve çağıran kural YAZMAZ: neyi ezeceğini bilmeden
+ * değişiklik yapılmaz.
  */
 async function presentHeaders(domain) {
-  try {
-    await guard.assertPublicHost(domain);
-  } catch (e) {
-    return null;
-  }
   const controller = new AbortController();
   const timer = setTimeout(function () { controller.abort(); }, PRECHECK_TIMEOUT_MS);
   try {
-    const r = await fetch('https://' + domain + '/', { method: 'GET', redirect: 'manual', signal: controller.signal });
-    const names = [];
-    r.headers.forEach(function (v, k) { names.push(String(k).toLowerCase()); });
-    if (r.body && typeof r.body.cancel === 'function') r.body.cancel().catch(function () {});
-    return names;
+    let url = new URL('https://' + domain + '/');
+    for (let hop = 0; hop <= PRECHECK_MAX_REDIRECTS; hop++) {
+      if (url.protocol !== 'https:') return null;
+      await guard.assertPublicHost(url.hostname);
+      const r = await fetch(url, { method: 'GET', redirect: 'manual', signal: controller.signal });
+      if (r.body && typeof r.body.cancel === 'function') r.body.cancel().catch(function () {});
+      const location = r.headers.get('location');
+      if (r.status >= 300 && r.status < 400 && location) {
+        url = new URL(location, url);
+        continue;
+      }
+      const names = [];
+      r.headers.forEach(function (v, k) { names.push(String(k).toLowerCase()); });
+      return names;
+    }
+    return null;
   } catch (e) {
     return null;
   } finally {
