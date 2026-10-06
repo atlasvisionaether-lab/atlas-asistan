@@ -37,6 +37,7 @@ const auth = require('./_lib/auth.js');
 const iyzico = require('./_lib/iyzico.js');
 const { plan: planDef } = require('./_lib/plans.js');
 const tg = require('./_lib/telegram.js');
+const n8n = require('./_lib/n8n.js');
 
 /** Başarısız ödeme: öncelikli uyarı. Sarmalayıcının genel uyarısı bastırılır. */
 async function bildirBasarisiz(res, user, sebep) {
@@ -137,6 +138,12 @@ async function handler(req, res) {
   }
 
   const aktif = iyzico.isActiveStatus(status);
+  n8n.notify('cyberlion-payment', {
+    email: user.email || '',
+    plan: planId,
+    status: aktif ? 'success' : 'pending',
+    subscriptionRef: subscriptionRef,
+  });
   if (await tg.tekSefer('pay:' + subscriptionRef + ':' + (aktif ? 'active' : 'pending'), 7 * 86400)) {
     const tanim = planDef(planId);
     await tg.sendTelegram(aktif

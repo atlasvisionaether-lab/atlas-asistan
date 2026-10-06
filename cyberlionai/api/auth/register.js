@@ -12,6 +12,7 @@ const auth = require('../_lib/auth.js');
 const { guard } = require('../_lib/authguard.js');
 const { resolveSession } = require('../_lib/session.js');
 const { claimForUser } = require('../_lib/claim.js');
+const n8n = require('../_lib/n8n.js');
 
 module.exports = async function handler(req, res) {
   const g = await guard(req, res, { bucket: 'register', max: 5, windowSeconds: 60 * 60 });
@@ -58,6 +59,7 @@ module.exports = async function handler(req, res) {
     auth.setSessionCookies(res, r.body);
     const user = r.body.user || {};
     const claim = await claimForUser(anon.id, user.id);
+    n8n.notify('cyberlion-new-user', { email: user.email || email, plan: 'free' });
     return res.status(200).json({
       ok: true,
       needsConfirmation: false,
@@ -67,5 +69,6 @@ module.exports = async function handler(req, res) {
   }
 
   // Onay bekleniyor. Devir, kullanıcı onaydan sonra giriş yaptığında yapılır.
+  n8n.notify('cyberlion-new-user', { email: email, plan: 'free' });
   return res.status(200).json({ ok: true, needsConfirmation: true, email: email });
 };

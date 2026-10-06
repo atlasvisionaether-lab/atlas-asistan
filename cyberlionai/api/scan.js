@@ -39,6 +39,7 @@ const { startQueuedScan } = require('./_lib/queuestart.js');
 const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
 const tg = require('./_lib/telegram.js');
+const n8n = require('./_lib/n8n.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
 const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
 const entitlement = require('./_lib/entitlement.js');
@@ -243,6 +244,13 @@ async function handler(req, res) {
       tg.mesaj.taramaBitti(result.host || url,
         (result.summary && result.summary.failed) || 0, result.score),
       { type: 'scan' });
+
+    n8n.notify('cyberlion-scan-complete', {
+      domain: result.host || url,
+      score: result.score,
+      scanId: result.scanId,
+      userId: owner.userId || null,
+    });
 
     return res.status(200).json(result);
   } catch (err) {
