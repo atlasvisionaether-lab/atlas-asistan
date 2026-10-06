@@ -240,7 +240,7 @@ dogru('fiyat bölümü id değişmedi',
 [['vercel.json', vercel], ['_headers', headers]].forEach(function (c) {
   const m = c[1].match(/connect-src ([^;\\"]+)/);
   esit(c[0] + ' connect-src gevşetilmedi',
-    m && m[1].trim(), "'self' https://ipapi.co");
+    m && m[1].trim(), "'self'");
   dogru(c[0] + ' içinde amazonaws hedefi yok', c[1].indexOf('amazonaws.com') === -1);
   dogru(c[0] + ' içinde wss hedefi yok', c[1].indexOf('wss://') === -1);
 });

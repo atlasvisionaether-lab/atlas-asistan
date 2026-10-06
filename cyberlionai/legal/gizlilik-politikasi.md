@@ -27,7 +27,7 @@ Cyber Lion AI olarak gizliliğinize önem veriyoruz.
 **Üçüncü Taraflar:**
 - Ödeme: iyzico (iyzi Ödeme ve Elektronik Para Hizmetleri A.Ş.)
 - Altyapı: Vercel (barındırma), Cloudflare (ağ), Supabase (veritabanı ve kimlik doğrulama)
-- Dil/ülke tespiti: ipapi.co (IP adresiniz bu amaçla iletilir)
+- Dil/ülke tespiti: Barındırma sağlayıcımız Vercel'in her isteğe eklediği ülke bilgisi kullanılır; IP adresiniz bu amaçla başka bir üçüncü tarafa iletilmez
 - İç bildirimler: Telegram (e-posta adresi maskelenmiş olarak)
 - Verileriniz satılmaz. Altyapı sağlayıcılarımızın sunucuları yurt dışında bulunabilir; bu nedenle verileriniz yurt dışındaki sunucularda işlenebilir. Ayrıntı için KVKK Aydınlatma Metni'ne bakınız.
 

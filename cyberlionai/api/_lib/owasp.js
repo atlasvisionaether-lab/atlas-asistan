@@ -153,9 +153,13 @@ async function a01ExposedFiles(origin, consent) {
    Zayıf TLS tarayıcının ana turunda ölçülür (tls_protocol check).
    Burada yalnızca HSTS preload hazırlığı kontrol edilir.
    ------------------------------------------------------------ */
+/* Önem 'info' (skora girmez). Preload isteğe bağlı bir sağlamlaştırma ve
+   listeden çıkmak aylar sürüyor; eksikliğini 'high' saymak müşteriyi, bütün
+   alt alan adları HTTPS'e hazır olmadan includeSubDomains + preload eklemeye
+   itiyordu. HSTS'in kendisi ayrı 'hsts' kontrolünde 'high' olarak ölçülüyor. */
 function a02HstsPreload(hstsValue) {
   if (!hstsValue) {
-    return owaspCheck('a02_hsts_preload', 'A02', 'high', 'fail', 'HSTS yok',
+    return owaspCheck('a02_hsts_preload', 'A02', 'info', 'fail', 'HSTS yok',
       { note: 'hsts_missing' });
   }
   const hasInclude = /includeSubDomains/i.test(hstsValue);
@@ -163,7 +167,7 @@ function a02HstsPreload(hstsValue) {
   const m = /max-age\s*=\s*"?(\d+)"?/i.exec(hstsValue);
   const maxAge = m ? Number(m[1]) : 0;
   const ready = hasInclude && hasPreload && maxAge >= 31536000;
-  return owaspCheck('a02_hsts_preload', 'A02', 'high', ready ? 'pass' : 'fail',
+  return owaspCheck('a02_hsts_preload', 'A02', 'info', ready ? 'pass' : 'fail',
     'max-age=' + maxAge + (hasInclude ? ' +includeSubDomains' : '') + (hasPreload ? ' +preload' : ''),
     { note: ready ? 'preload_ready' : 'preload_not_ready' });
 }
