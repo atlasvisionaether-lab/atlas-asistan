@@ -65,6 +65,7 @@
   ul.list li{flex-wrap:wrap}
   ul.list li span{min-width:0;overflow-wrap:anywhere;white-space:normal}
   ul.list li span:last-child{text-align:right;flex:1 1 180px}
+  .h1__sub{font-size:.7em;color:var(--text-gray)}
   </style>
 </head>
 <body>
@@ -74,7 +75,7 @@
     </div>
   </header>
   <main class="container">
-    <h1>Düzeltme Siparişi <span style="font-size:.7em;color:var(--text-gray)">/ Fix Order</span></h1>
+    <h1>Düzeltme Siparişi <span class="h1__sub">/ Fix Order</span></h1>
     <section class="card" id="card">
       <p id="msg" class="msg" role="status" aria-live="polite">Yükleniyor… / Loading…</p>
       <ul class="list" id="details" hidden></ul>

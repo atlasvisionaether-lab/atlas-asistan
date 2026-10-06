@@ -61,6 +61,9 @@
   .badge{font-size:.78rem;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
   .badge--ok{color:var(--ok)} .badge--wait{color:var(--warn)}
   footer{color:var(--text-gray);font-size:.82rem;text-align:center;padding:30px 16px}
+  .container--wide{max-width:1000px}
+  .row--mb14{margin-bottom:14px}
+  .input--fixed{flex:0 0 auto}
   </style>
 </head>
 <body>
@@ -69,10 +72,10 @@
       <a class="brand" href="/">CYBER LION AI</a>
     </div>
   </header>
-  <main class="container" style="max-width:1000px">
+  <main class="container container--wide">
     <h1>Düzeltme Siparişleri</h1>
-    <div class="row" style="margin-bottom:14px">
-      <select class="input" id="status" style="flex:0 0 auto">
+    <div class="row row--mb14">
+      <select class="input input--fixed" id="status">
         <option value="">Tümü</option><option value="pending" selected>Bekleyen</option>
         <option value="paid">Ödendi</option><option value="done">Tamamlandı</option><option value="cancelled">İptal</option>
       </select>
