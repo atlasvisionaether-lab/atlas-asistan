@@ -1532,6 +1532,40 @@
     .wmap__arc { transition: none; }
   }
 
+  /* Reveal animasyon gecikme sınıfları (unsafe-inline olmadan --reveal-delay) */
+  .reveal--100 { --reveal-delay: 100ms }
+  .reveal--120 { --reveal-delay: 120ms }
+  .reveal--140 { --reveal-delay: 140ms }
+  .reveal--200 { --reveal-delay: 200ms }
+  .reveal--240 { --reveal-delay: 240ms }
+  .reveal--280 { --reveal-delay: 280ms }
+  .reveal--300 { --reveal-delay: 300ms }
+  .reveal--360 { --reveal-delay: 360ms }
+
+  /* Hero alan tarama formu */
+  .scan__consent-label { display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;font-size:.72rem;line-height:1.5;color:var(--text-muted,#a0a0b0);cursor:pointer }
+  .scan__consent-check { margin-top:2px;accent-color:#d4af37 }
+  .scan__history-btn { margin-left:auto;background:none;border:none;color:var(--gold-primary);font:inherit;font-size:.78rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap }
+  .scan__quota { color:var(--gold-primary);white-space:nowrap }
+
+  /* Geçmiş modal */
+  .modal__box--history { max-width:620px }
+  .modal__title--mb4 { margin-bottom:4px }
+  .modal__subtitle--flush { margin:0 }
+
+  /* Altın rengi bağlantı */
+  .link--gold { color:var(--gold-primary) }
+
+  /* Dünya haritası — not margin sınıfları */
+  .wmap__note--t6  { margin:6px 0 0 }
+  .wmap__note--t10 { margin:10px 0 0 }
+  .wmap__note--t10b4 { margin:10px 0 4px }
+  .wmap__note--n2b8 { margin:-2px 0 8px }
+  .wmap__note--n4b8i { margin:-4px 0 8px 16px }
+  .wmap__note--b6  { margin:0 0 6px }
+  .wmap__note--t2b8 { margin:2px 0 8px }
+  .wmap__note--t8  { margin:8px 0 0 }
+
   </style>
 </head>
 
@@ -1654,19 +1688,16 @@
               <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
               <span data-i18n="hero.cta1">Hemen Tara</span>
             </button>
-                    <label class="scan__consent" for="scanConsent" style="display:flex;gap:8px;align-items:flex-start;
-              margin:10px 0 0;font-size:0.72rem;line-height:1.5;color:var(--text-muted,#a0a0b0);cursor:pointer">
-              <input type="checkbox" id="scanConsent" style="margin-top:2px;accent-color:#d4af37" />
+                    <label class="scan__consent scan__consent-label" for="scanConsent">
+              <input type="checkbox" id="scanConsent" class="scan__consent-check" />
               <span data-i18n="hero.consent">Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.</span>
             </label>
           </form>
           <p class="scan__note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
             <span data-i18n="hero.scanNote">Kayıt gerekmez — 3 ücretsiz tarama, saniyeler içinde sonuç.</span>
-            <button type="button" id="historyOpen" style="margin-left:auto;background:none;border:none;
-              color:var(--gold-primary);font:inherit;font-size:0.78rem;cursor:pointer;text-decoration:underline;
-              text-underline-offset:3px;white-space:nowrap" data-i18n="history.open">Geçmiş</button>
-            <span id="scanQuota" style="color:var(--gold-primary);white-space:nowrap"></span>
+            <button type="button" id="historyOpen" class="scan__history-btn" data-i18n="history.open">Geçmiş</button>
+            <span id="scanQuota" class="scan__quota"></span>
           </p>
 
           <div class="scan__output" id="scanOutput" aria-live="polite">
@@ -1713,22 +1744,22 @@
           </div>
           <!-- Özellik kartları sayaçtan BAĞIMSIZ: sayaç eşiğin altındayken
                (STATS_MIN_TO_SHOW) satır tek karta düşüp boş görünüyordu. -->
-          <div class="stat reveal" style="--reveal-delay:120ms">
+          <div class="stat reveal reveal--120">
             <i class="stat__icon fa-solid fa-clock" aria-hidden="true"></i>
             <span class="stat__value" data-i18n="hero.stat3v">7/24</span>
             <span class="stat__label" data-i18n="hero.stat3">Hızlı Tarama</span>
           </div>
-          <div class="stat reveal" style="--reveal-delay:200ms">
+          <div class="stat reveal reveal--200">
             <i class="stat__icon fa-solid fa-robot" aria-hidden="true"></i>
             <span class="stat__value stat__value--text" data-i18n="hero.f2v">Yapay Zeka</span>
             <span class="stat__label" data-i18n="hero.f2">Güçlendirilmiş Analiz</span>
           </div>
-          <div class="stat reveal" style="--reveal-delay:280ms">
+          <div class="stat reveal reveal--280">
             <i class="stat__icon fa-solid fa-file-shield" aria-hidden="true"></i>
             <span class="stat__value stat__value--text" data-i18n="hero.f3v">Anlık Rapor</span>
             <span class="stat__label" data-i18n="hero.f3">PDF + Düzeltme Önerisi</span>
           </div>
-          <div class="stat reveal" style="--reveal-delay:360ms">
+          <div class="stat reveal reveal--360">
             <i class="stat__icon fa-solid fa-lock" aria-hidden="true"></i>
             <span class="stat__value stat__value--text" data-i18n="hero.f4v">KVKK Uyumlu</span>
             <span class="stat__label" data-i18n="hero.f4">İzleme Çerezi Yok</span>
@@ -1756,19 +1787,19 @@
             <p class="feature__desc" data-i18n="services.s1d">Ölçülen kontrollerden dinamik bir güvenlik skoru üretir; ölçülemeyen kontrol puana girmez.</p>
           </article>
 
-          <article class="feature reveal" style="--reveal-delay:100ms">
+          <article class="feature reveal reveal--100">
             <div class="feature__icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></div>
             <h3 class="feature__title" data-i18n="services.s2t">SSL/TLS Analizi</h3>
             <p class="feature__desc" data-i18n="services.s2d">Sertifika geçerliliği, şifreleme gücü ve protokol uyumluluğunu kontrol eder.</p>
           </article>
 
-          <article class="feature reveal" style="--reveal-delay:200ms">
+          <article class="feature reveal reveal--200">
             <div class="feature__icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
             <h3 class="feature__title" data-i18n="services.s3t">Güvenlik Başlıkları</h3>
             <p class="feature__desc" data-i18n="services.s3d">CSP, HSTS, X-Frame-Options gibi kritik güvenlik başlıklarını analiz eder.</p>
           </article>
 
-          <article class="feature reveal" style="--reveal-delay:300ms">
+          <article class="feature reveal reveal--300">
             <div class="feature__icon"><i class="fa-solid fa-brain" aria-hidden="true"></i></div>
             <h3 class="feature__title" data-i18n="services.s4t">AI Düzeltme Kılavuzu</h3>
             <p class="feature__desc" data-i18n="services.s4d">Tespit edilen eksikler için kod örnekli düzeltme önerileri sunar.</p>
@@ -1799,7 +1830,7 @@
             </div>
           </div>
 
-          <div class="step reveal" style="--reveal-delay:140ms">
+          <div class="step reveal reveal--140">
             <div class="step__num">02</div>
             <div class="step__body">
               <h3 class="step__title"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i><span data-i18n="how.s2t">AI Taramayı Başlatsın</span></h3>
@@ -1807,7 +1838,7 @@
             </div>
           </div>
 
-          <div class="step reveal" style="--reveal-delay:280ms">
+          <div class="step reveal reveal--280">
             <div class="step__num">03</div>
             <div class="step__body">
               <h3 class="step__title"><i class="fa-solid fa-file-shield" aria-hidden="true"></i><span data-i18n="how.s3t">Detaylı Raporu Alın</span></h3>
@@ -1951,7 +1982,7 @@
           </article>
 
           <!-- PRO (öne çıkan) -->
-          <article class="plan plan--featured reveal" style="--reveal-delay:120ms">
+          <article class="plan plan--featured reveal reveal--120">
             <span class="plan__badge" data-i18n="pricing.pro.badge">Popüler</span>
             <h3 class="plan__name gold-text" data-i18n="pricing.pro.name">Pro</h3>
             <p class="plan__tagline" data-i18n="pricing.pro.tagline">Üretim ortamını sürekli izleyen ekipler için.</p>
@@ -1972,7 +2003,7 @@
           </article>
 
           <!-- ENTERPRISE -->
-          <article class="plan plan--enterprise reveal" style="--reveal-delay:240ms">
+          <article class="plan plan--enterprise reveal reveal--240">
             <span class="plan__badge" data-i18n="pricing.ent.badge">Kurumsal</span>
             <h3 class="plan__name" data-i18n="pricing.ent.name">Enterprise</h3>
             <p class="plan__tagline" data-i18n="pricing.ent.tagline">Kendi altyapınıza uyarlanmış tarama ve raporlama.</p>
@@ -2142,7 +2173,7 @@
         <button type="submit" class="btn btn--gold btn--block" data-i18n="auth.signUp">Hesap Oluştur</button>
         <p class="modal__foot">
           <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
-          <a href="/kullanim-kosullari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
+          <a href="/kullanim-kosullari" class="link--gold" data-i18n="modal.termsLink">Şartları oku</a>
         </p>
       </form>
 
@@ -2181,15 +2212,15 @@
        TARAMA GEÇMİŞİ
        ========================================================== -->
   <div class="modal" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyTitle" hidden>
-    <div class="modal__box" role="document" style="max-width:620px">
+    <div class="modal__box modal__box--history" role="document">
       <button type="button" class="modal__close" data-close-modal aria-label="Kapat" data-i18n-aria="modal.close">
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
 
       <div class="history__head">
         <div>
-          <h2 class="modal__title" id="historyTitle" style="margin-bottom:4px" data-i18n="history.title">Tarama Geçmişi</h2>
-          <p class="modal__subtitle" style="margin:0" data-i18n="history.subtitle">Bu tarayıcıdan yaptığınız taramalar.</p>
+          <h2 class="modal__title modal__title--mb4" id="historyTitle" data-i18n="history.title">Tarama Geçmişi</h2>
+          <p class="modal__subtitle modal__subtitle--flush" data-i18n="history.subtitle">Bu tarayıcıdan yaptığınız taramalar.</p>
         </div>
       </div>
 
@@ -6472,7 +6503,7 @@
         html += '<div class="wmap__row"><span>' + esc(srcLabel(s)) + '</span><span>' +
                 esc(deger) + '</span></div>';
         if (s.malware && s.malware.length) {
-          html += '<p class="wmap__srcNote" style="margin:6px 0 0">' + esc(t('families')) + '</p><ul class="wmap__list">';
+          html += '<p class="wmap__srcNote wmap__note--t6">' + esc(t('families')) + '</p><ul class="wmap__list">';
           s.malware.forEach(function (w) {
             html += '<li><span>' + esc(w.name) + '</span><b>' + w.count + '</b></li>';
           });
@@ -6481,7 +6512,7 @@
       });
 
       if (partners.length) {
-        html += '<p class="wmap__srcNote" style="margin:10px 0 0">' + esc(t('shared')) + ': ' +
+        html += '<p class="wmap__srcNote wmap__note--t10">' + esc(t('shared')) + ': ' +
                 esc(partners.map(function (p) { return countryName(p.country); }).join(', ')) + '</p>';
       }
       els.detail.innerHTML = html;
@@ -6510,9 +6541,12 @@
         return '<li>' +
           '<span>' + esc(countryName(m.country)) + '</span>' +
           '<b>' + sayi + '</b>' +
-          '<span class="bar"><i style="width:' + oran + '%"></i></span>' +
+          '<span class="bar"><i data-w="' + oran + '"></i></span>' +
           '</li>';
       }).join('');
+      els.top.querySelectorAll('.bar i[data-w]').forEach(function (el) {
+        el.style.width = el.dataset.w + '%';
+      });
     }
 
     function drawCounters() {
@@ -6542,7 +6576,7 @@
         html += '<div class="wmap__row"><span>' + esc(srcLabel(s)) + '</span><span>' +
                 (deger === null || deger === undefined ? '—' : deger) + '</span></div>';
         if (deger === null) {
-          html += '<p class="wmap__srcNote" style="margin:-2px 0 8px">' +
+          html += '<p class="wmap__srcNote wmap__note--n2b8">' +
                   esc(t('rangeExcluded')) + '</p>';
         }
       });
@@ -6555,17 +6589,17 @@
          Başlık ve not, ikisinin ayrı şeyler olduğunu açıkça söylüyor. */
       var oa = d.ownActivity;
       if (oa && oa.available && Array.isArray(oa.countries) && oa.countries.length) {
-        html += '<p class="wmap__srcNote" style="margin:10px 0 4px"><b>' +
+        html += '<p class="wmap__srcNote wmap__note--t10b4"><b>' +
                 esc(t('ownTitle')) + '</b></p>';
         if (state.range !== 'all') {
-          html += '<p class="wmap__srcNote" style="margin:0 0 6px">' +
+          html += '<p class="wmap__srcNote wmap__note--b6">' +
                   esc(t('ownRangeNote')) + '</p>';
         }
         oa.countries.slice(0, 5).forEach(function (c) {
           html += '<div class="wmap__row"><span>' + esc(countryName(c.country)) +
                   '</span><span>' + c.count + '</span></div>';
         });
-        html += '<p class="wmap__srcNote" style="margin:2px 0 8px">' +
+        html += '<p class="wmap__srcNote wmap__note--t2b8">' +
                 esc(t('ownNote')) + '</p>';
       }
 
@@ -6577,7 +6611,7 @@
         html += '<div class="wmap__row"><span>' + esc(t('unknown')) + '</span><span>' + unknown + '</span></div>';
       }
       if (d.geoTable && d.geoTable.ready) {
-        html += '<p class="wmap__srcNote" style="margin:8px 0 0">' +
+        html += '<p class="wmap__srcNote wmap__note--t8">' +
                 esc(t('geoTable')) + ': ' + d.geoTable.countries + ' ' + esc(t('countriesWord')) +
                 ' · ' + d.geoTable.generatedAt + '</p>';
       }
@@ -6625,7 +6659,7 @@
                 '<span>' + esc(srcLabel(s)) + '</span>' +
                 (note ? '<span class="wmap__srcNote">' + esc(note) + '</span>' : '') +
                 '</div>' +
-                '<p class="wmap__srcNote" style="margin:-4px 0 8px 16px">' + esc(s.attribution) +
+                '<p class="wmap__srcNote wmap__note--n4b8i">' + esc(s.attribution) +
                 (s.geoSource === 'resolved' ? ' — ' + esc(t('geoResolved'))
                  : s.geoSource === 'native' ? ' — ' + esc(t('geoNative')) : '') + '</p>';
       });

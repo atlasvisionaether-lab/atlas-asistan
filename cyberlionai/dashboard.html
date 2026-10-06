@@ -247,6 +247,17 @@
   .flinks a:hover{color:var(--gold-primary)}
   @media(min-width:760px){.fbar{flex-direction:row;justify-content:space-between;text-align:left}}
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:.001ms!important}}
+  .form-row--mt14{margin-top:14px}
+  .muted--sm{font-size:.8rem}
+  .stat__value--lg{font-size:1.15rem}
+  .card--mt16{margin-top:16px}
+  .card--mt12{margin-top:12px}
+  .filter-group{display:flex;gap:8px;flex-wrap:wrap}
+  .lock-msg{margin:0;font-weight:600}
+  .pill--ok{color:var(--ok);border-color:rgba(95,217,138,.4)}
+  .muted--desc{font-size:.9rem;margin:0 0 12px}
+  .btn--mt14{margin-top:14px}
+  .link--underline{text-decoration:underline}
   </style>
 </head>
 <body>
@@ -283,7 +294,7 @@
           <form id="loginForm" novalidate>
             <label class="field" for="loginEmail" data-i18n="gate.email">E-posta</label>
             <input class="input" id="loginEmail" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="ornek@sirket.com" />
-            <div class="form-row" style="margin-top:14px">
+            <div class="form-row form-row--mt14">
               <button class="btn btn--gold" type="submit" id="loginBtn"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span data-i18n="gate.send">Giriş bağlantısı gönder</span></button>
               <a class="btn btn--ghost" href="/"><span data-i18n="gate.password">Şifreyle giriş</span></a>
             </div>
@@ -312,7 +323,7 @@
               </div>
             </div>
             <div class="quota" id="quotaBox" hidden>
-              <span class="muted" style="font-size:.8rem"><span data-i18n="profile.quota">Kalan tarama hakkı</span>: <strong id="quotaText">—</strong></span>
+              <span class="muted muted--sm"><span data-i18n="profile.quota">Kalan tarama hakkı</span>: <strong id="quotaText">—</strong></span>
               <div class="quota__bar" role="progressbar" aria-valuemin="0" id="quotaBar"><div class="quota__fill" id="quotaFill"></div></div>
             </div>
             <div class="profile__acts">
@@ -356,11 +367,11 @@
             </div>
             <div class="card">
               <p class="stat__label"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span data-i18n="overview.last">Son Tarama</span></p>
-              <p class="stat__value" style="font-size:1.15rem"><span id="statLast">—</span></p>
+              <p class="stat__value stat__value--lg"><span id="statLast">—</span></p>
               <a class="btn btn--gold btn--sm" href="/#hero"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span data-i18n="overview.quick">Hızlı Tara</span></a>
             </div>
           </div>
-          <div class="card" id="trendCard" style="margin-top:16px" hidden>
+          <div class="card card--mt16" id="trendCard" hidden>
             <p class="card__title"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span data-i18n="overview.trend">Skor Eğilimi</span></p>
             <!-- Satır içi SVG: grafik kütüphanesi için script-src gevşetilmez. -->
             <div class="chart" id="trendChart"></div>
@@ -372,7 +383,7 @@
         <section class="section" id="scans" aria-labelledby="scansTitle">
           <h2 id="scansTitle" data-i18n="scans.title">Son Taramalar</h2>
           <div class="toolbar" id="scanToolbar" hidden>
-            <div role="group" aria-label="Durum" data-i18n-aria="scans.filter" style="display:flex;gap:8px;flex-wrap:wrap">
+            <div role="group" aria-label="Durum" data-i18n-aria="scans.filter" class="filter-group">
               <button type="button" class="chip" data-filter="" aria-pressed="true" data-i18n="scans.all">Tümü</button>
               <button type="button" class="chip" data-filter="completed" aria-pressed="false" data-i18n="scans.completed">Tamamlandı</button>
               <button type="button" class="chip" data-filter="failed" aria-pressed="false" data-i18n="scans.failed">Başarısız</button>
@@ -396,7 +407,7 @@
               <tbody id="scanBody"></tbody>
             </table>
             <div class="lock-over" id="lockOver" hidden>
-              <p style="margin:0;font-weight:600" id="lockText"></p>
+              <p class="lock-msg" id="lockText"></p>
               <a class="btn btn--gold" href="/pricing"><i class="fa-solid fa-crown" aria-hidden="true"></i><span data-i18n="profile.upgrade">PRO'ya Geç</span></a>
             </div>
           </div>
@@ -417,7 +428,7 @@
               </dl>
               <ul class="sub-list" id="subList" hidden></ul>
               <p class="note" id="billNote"></p>
-              <div class="form-row" style="margin-top:14px">
+              <div class="form-row form-row--mt14">
                 <a class="btn btn--gold" href="/pricing" id="billUpgrade"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i><span data-i18n="billing.change">Planı Yükselt</span></a>
                 <a class="btn btn--ghost" id="billCancel" href="mailto:destek@cyberlionai.com?subject=Abonelik%20degisikligi%20/%20iptal" hidden><i class="fa-solid fa-envelope" aria-hidden="true"></i><span data-i18n="billing.cancel">Düşür / İptal Talebi</span></a>
               </div>
@@ -455,7 +466,7 @@
                 <input class="input" id="pwNew" type="password" autocomplete="new-password" minlength="10" />
                 <label class="field" for="pwRepeat" data-i18n="security.repeat">Yeni şifre (tekrar)</label>
                 <input class="input" id="pwRepeat" type="password" autocomplete="new-password" minlength="10" />
-                <button class="btn btn--gold" type="submit" id="pwBtn" style="margin-top:14px"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span data-i18n="security.save">Şifreyi Güncelle</span></button>
+                <button class="btn btn--gold btn--mt14" type="submit" id="pwBtn"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span data-i18n="security.save">Şifreyi Güncelle</span></button>
                 <p class="msg" id="pwMsg" role="status" aria-live="polite"></p>
                 <p class="note" data-i18n="security.pwNote">En az 10 karakter. Giriş bağlantısıyla girdiyseniz buradan ilk şifrenizi de belirleyebilirsiniz.</p>
               </form>
@@ -464,7 +475,7 @@
               <p class="card__title"><i class="fa-solid fa-user-shield" aria-hidden="true"></i><span data-i18n="security.access">Erişim</span></p>
               <div class="soon-row">
                 <span class="soon-row__t"><i class="fa-solid fa-laptop" aria-hidden="true"></i><span><span data-i18n="security.thisDevice">Bu cihaz</span>: <strong id="thisDevice">—</strong></span></span>
-                <span class="pill" style="color:var(--ok);border-color:rgba(95,217,138,.4)" data-i18n="security.active">Aktif</span>
+                <span class="pill pill--ok" data-i18n="security.active">Aktif</span>
               </div>
               <div class="soon-row">
                 <span class="soon-row__t"><i class="fa-solid fa-display" aria-hidden="true"></i><span data-i18n="security.sessions">Diğer oturumlar</span></span>
@@ -491,7 +502,7 @@
               <span class="soon-row__t"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i><span><span data-i18n="notif.weekly">Haftalık otomatik tarama</span><br /><small class="muted" id="weeklyNote"></small></span></span>
               <span class="switch" role="switch" id="weeklySwitch" aria-checked="false" aria-disabled="true" aria-labelledby="notifTitle"></span>
             </div>
-          <form class="form-row" id="monForm" novalidate hidden style="margin-top:12px">
+          <form class="form-row card--mt12" id="monForm" novalidate hidden>
             <div class="grow">
               <label class="sr-only" for="monDomain" data-i18n="mon.domain">İzlenecek alan adı</label>
               <input class="input" id="monDomain" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="ornek.com" />
@@ -504,7 +515,7 @@
               <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
             </div>
           </div>
-          <div class="card" id="alertsCard" style="margin-top:16px">
+          <div class="card card--mt16" id="alertsCard">
             <p class="card__title"><i class="fa-solid fa-bell" aria-hidden="true"></i><span data-i18n="alerts.title">İzleme uyarıları</span></p>
             <ul class="alerts" id="alertsList"></ul>
             <button class="btn btn--ghost" id="alertsRead" type="button" hidden><span data-i18n="alerts.markRead">Tümünü okundu işaretle</span></button>
@@ -517,13 +528,13 @@
           <div class="grid grid--2">
             <div class="card" id="badgeCard">
               <p class="card__title"><i class="fa-solid fa-certificate" aria-hidden="true"></i><span data-i18n="badge.title">Canlı Güven Rozeti</span></p>
-              <p class="muted" style="font-size:.9rem;margin:0 0 12px" data-i18n="badge.desc">Doğrulanmış alan adınızın son tarama skorunu ve tarihini gösteren rozet. Skor 80'in altındaysa gri görünür. Pro ve Enterprise planlarına dahildir.</p>
+              <p class="muted muted--desc" data-i18n="badge.desc">Doğrulanmış alan adınızın son tarama skorunu ve tarihini gösteren rozet. Skor 80'in altındaysa gri görünür. Pro ve Enterprise planlarına dahildir.</p>
               <div id="badgeList"></div>
               <p class="msg" id="badgeMsg" role="status" aria-live="polite"></p>
             </div>
             <div class="card">
               <p class="card__title"><i class="fa-solid fa-envelope-circle-check" aria-hidden="true"></i><span data-i18n="tools.dnsTitle">SPF ve DMARC Doğrulama</span></p>
-              <p class="muted" style="font-size:.9rem;margin:0 0 12px" data-i18n="tools.dnsDesc">Alan adınızın e-posta sahteciliğine karşı SPF ve DMARC kayıtlarını kontrol edin. Sorgu sunucu tarafında gerçek DNS üzerinden yapılır.</p>
+              <p class="muted muted--desc" data-i18n="tools.dnsDesc">Alan adınızın e-posta sahteciliğine karşı SPF ve DMARC kayıtlarını kontrol edin. Sorgu sunucu tarafında gerçek DNS üzerinden yapılır.</p>
               <form class="form-row" id="dnsForm" novalidate>
                 <div class="grow">
                   <label class="sr-only" for="dnsDomain" data-i18n="tools.domain">Alan adı</label>
@@ -579,7 +590,7 @@
                   <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
                   <option value="all" data-i18n="tools.cfAll">Tümü (HSTS + X-Frame)</option>
                 </select>
-                <button class="btn btn--gold" type="submit" id="cfBtn" style="margin-top:14px"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span data-i18n="tools.cfApply">1 Tıkla Uygula</span></button>
+                <button class="btn btn--gold btn--mt14" type="submit" id="cfBtn"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span data-i18n="tools.cfApply">1 Tıkla Uygula</span></button>
                 <p class="msg" id="cfMsg" role="status" aria-live="polite"></p>
               </form>
               <p class="note" data-i18n="tools.cfWarn">Token'ınız bizde saklanmaz; yalnızca bu istek için kullanılır. Sitenizin zaten gönderdiği başlıklar değiştirilmez. Geri almak için Cloudflare Dashboard &gt; Rules &gt; Transform Rules'dan CyberLion kuralını silin. CSP siteye özel yazılması gerektiğinden 1-Tık ile uygulanmaz.</p>

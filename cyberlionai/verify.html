@@ -61,6 +61,8 @@
   .badge{font-size:.78rem;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
   .badge--ok{color:var(--ok)} .badge--wait{color:var(--warn)}
   footer{color:var(--text-gray);font-size:.82rem;text-align:center;padding:30px 16px}
+  .row--mt14{margin-top:14px}
+  .note--mb24{margin-bottom:24px}
   </style>
 </head>
 <body>
@@ -125,7 +127,7 @@
         <p class="note" data-t="metaNote">Yalnızca bu alan adını kapsar. Etiket sunucunun döndürdüğü HTML'de olmalı (JavaScript ile eklenen etiket görülmez).</p>
       </div>
 
-      <div class="row" style="margin-top:14px">
+      <div class="row row--mt14">
         <button class="btn" id="checkBtn" type="button" data-t="verify">Doğrula</button>
       </div>
       <p class="msg" id="checkMsg" role="status" aria-live="polite"></p>
@@ -136,7 +138,7 @@
       <ul class="list" id="list"></ul>
     </section>
 
-    <p class="note" style="margin-bottom:24px">
+    <p class="note note--mb24">
       <span data-t="legal">Doğrulamanın neden gerektiğini ve hangi testin ne yaptığını</span>
       <a href="/pages/tarama-yetkisi" data-t="legalLink">Tarama Yetkisi ve Seviyeleri</a>
       <span data-t="legal2">sayfasında açıklıyoruz.</span>
