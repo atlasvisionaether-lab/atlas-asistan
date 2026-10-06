@@ -40,7 +40,7 @@ def build_csp(hashes):
         "form-action 'self'",
         "img-src 'self' data:",
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-        "style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
         "script-src 'self' " + ' '.join(hashes),
         "connect-src 'self'",
         'upgrade-insecure-requests',
