@@ -1,0 +1,24 @@
+# atlasasistan-static (atlasasistan.com) yalnız sitenin dosyalarını yayınlar.
+# İzin listesi: burada açıkça açılmayan her şey (.claude, .github, supabase,
+# cyberlionai, panel, worker, docs, CLAUDE.md...) internete çıkmaz.
+# cyberlionai ve panel projelerinin kök dizini kendi klasörleri; bu dosya
+# onları etkilemez. Siteye yeni üst düzey dosya/klasör eklenirse buraya da ekle.
+/*
+!/index.html
+!/checkout.html
+!/demo.html
+!/iletisim.html
+!/script.js
+!/style.css
+!/premium.js
+!/premium.css
+!/robots.txt
+!/sitemap.xml
+!/vercel.json
+!/blog
+!/sehir
+!/pages
+!/live
+!/public
+!/zayif-hedef
+/live/README.md
