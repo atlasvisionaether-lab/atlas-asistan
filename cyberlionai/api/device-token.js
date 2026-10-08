@@ -55,7 +55,11 @@ async function handler(req, res) {
   const jeton = fcm.jetonGecerliMi(body.token);
   if (!jeton) return res.status(400).json({ error: { code: 'bad_token' } });
 
-  const user = await auth.resolveUser(req);
+  /* YERLI UYGULAMA YOLU: cerez yoksa `Authorization: Bearer <supabase
+     access_token>` kabul ediliyor. Mobilde cerez kavrami yok; belirtec yine
+     GoTrue'ya sorulup dogrulaniyor, yani kimlik denetimi cerez yolundakinin
+     AYNISI. Bayrak yalnizca BU ucta aciliyor (bkz. _lib/auth.js readTokens). */
+  const user = await auth.resolveUser(req, res, { bearerKabul: true });
   if (!user) return res.status(401).json({ error: { code: 'unauthorized' } });
 
   if (store.isConfigured()) {

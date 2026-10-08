@@ -181,6 +181,14 @@ jobs:
       - name: Bildirim katmanı (FCM, cihaz jetonu sızmıyor)
         run: node cyberlionai/tools/notify-test.js
 
+      # Mobil istemci ile /api/device-token ayni sozlesmeyi konusuyor mu, ve
+      # Bearer yolu bir atlatma mi? Dart kodu bu kapta derlenemiyor (SDK yok),
+      # ama istek sozlesmesi derlemeye bagli degil: adres/baslik/govde Dart
+      # kaynagindan okunup GERCEK handler'a geciriliyor. _lib/auth.js burada
+      # SAPLANMIYOR, sahte bir GoTrue'ya karsi kosuyor.
+      - name: Mobil cihaz jetonu (Bearer yolu, sözleşme)
+        run: node cyberlionai/tools/devicetoken-mobile-test.js
+
       # --------------------------------------------------------------------
       # Asagidaki on sinama dosyasi depoda vardi ama HICBIR CI adiminda
       # kosmuyordu (2026-10-08 denetiminde bulundu): yazilmis ama kimsenin
