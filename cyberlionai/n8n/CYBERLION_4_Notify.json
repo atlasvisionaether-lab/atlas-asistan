@@ -1,0 +1,254 @@
+{
+  "name": "CYBERLION_4_Notify",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cl-notify",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-cl-notify",
+      "name": "Webhook: notify",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "cl-notify",
+      "notes": "Govde: { jobId, userId? }. WORKFLOW 2 ya da 3 cagiriyor.\nTUM HTTP DUGUMLERI ETKIN. Adres ve sirlar $env ile okunuyor; dugum govdesinde sir YOK. Gerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, N8N_WEBHOOK_BASE (bkz. docker-compose.yml)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst g = $input.first().json.body || $input.first().json;\nconst jobId = String(g.jobId || '');\nif (!UUID.test(jobId)) throw new Error('gecersiz jobId');\nreturn [{ json: { jobId, userId: g.userId ? String(g.userId) : null } }];"
+      },
+      "id": "c-Girdiyi doğr",
+      "name": "Girdiyi doğrula",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "notes": ""
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/scan_jobs?id=eq.{{ $json.jobId }}&select=id,user_id,url",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            }
+          ]
+        }
+      },
+      "id": "h-İş sahibini ",
+      "name": "İş sahibini oku",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Sahibi GOVDEDEN degil VERITABANINDAN okuyor: webhook govdesi dis girdi."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/users?id=eq.{{ $json[0].user_id }}&select=fcm_token",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            }
+          ]
+        }
+      },
+      "id": "h-FCM jetonunu",
+      "name": "FCM jetonunu oku",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Anonim taramanin user_id'si null; o durumda asagidaki dugum duruyor."
+    },
+    {
+      "parameters": {
+        "jsCode": "/* Jeton yoksa bildirim YOK ve bu bir hata DEGIL: anonim taramalarin\n   sahibi yok, giris yapmis her kullanicinin da mobil uygulamasi yok.\n   Akisi burada bitirmek, FCM'e bos jetonla gidip 400 almaktan iyi. */\nconst satir = $input.first().json;\nconst jeton = Array.isArray(satir) ? (satir[0] || {}).fcm_token : satir.fcm_token;\nif (!jeton || String(jeton).length < 20) return [];\nreturn [{ json: { jeton: String(jeton), jobId: $('Girdiyi doğrula').first().json.jobId } }];"
+      },
+      "id": "c-Jeton var mı",
+      "name": "Jeton var mı",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "notes": ""
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fcm.googleapis.com/v1/projects/{{ $env.FCM_PROJECT_ID }}/messages:send",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.FCM_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: { token: $json.jeton, notification: { title: 'CyberLion', body: 'Guvenlik raporunuz hazir.' }, data: { jobId: $json.jobId } } }) }}"
+      },
+      "id": "h-FCM push",
+      "name": "FCM push",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "notes": "FCM_ACCESS_TOKEN kisa omurlu bir OAuth2 jetonu; servis hesabi JSON'undan uretilir ve n8n ortamina konur. ICERIK ICINDE ALAN ADI YOK: bildirim kilit ekraninda gorunuyor, musterinin hangi siteyi taradigi orada yazmasin."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_API_BASE }}/api/n8n/report-ready",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.CL_CRON_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ jobId: $json.jobId }) }}"
+      },
+      "id": "h-Callback",
+      "name": "Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "notes": "BU UC HENUZ YOK. Depoda /api/n8n/* yok; eklenirse cronauth ile korunmali. Uc yokken bu dugum 404 doner ve akis burada biter — bildirim ZATEN gitmis olur."
+    }
+  ],
+  "connections": {
+    "Webhook: notify": {
+      "main": [
+        [
+          {
+            "node": "Girdiyi doğrula",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Girdiyi doğrula": {
+      "main": [
+        [
+          {
+            "node": "İş sahibini oku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "İş sahibini oku": {
+      "main": [
+        [
+          {
+            "node": "FCM jetonunu oku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FCM jetonunu oku": {
+      "main": [
+        [
+          {
+            "node": "Jeton var mı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jeton var mı": {
+      "main": [
+        [
+          {
+            "node": "FCM push",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FCM push": {
+      "main": [
+        [
+          {
+            "node": "Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    {
+      "name": "cyberlion"
+    }
+  ]
+}
