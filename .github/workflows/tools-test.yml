@@ -173,6 +173,14 @@ jobs:
       - name: AI rapor PDF'i ve Storage yüklemesi
         run: node cyberlionai/tools/aireportpdf-test.js
 
+      # WORKFLOW 4: FCM bildirimi, cihaz jetonu kaydi ve iki cron ucu.
+      # Burada kilitli olanlar: hicbir yanit CIHAZ JETONU tasimiyor, jetonun
+      # sahibi OTURUMDAN geliyor (govdeden degil), anonim taramada (user_id
+      # null) hic jeton donmuyor, cron uclari sirsiz acilmiyor ve bildirim
+      # metninde alan adi yok (kilit ekraninda gorunur).
+      - name: Bildirim katmanı (FCM, cihaz jetonu sızmıyor)
+        run: node cyberlionai/tools/notify-test.js
+
       # --------------------------------------------------------------------
       # Asagidaki on sinama dosyasi depoda vardi ama HICBIR CI adiminda
       # kosmuyordu (2026-10-08 denetiminde bulundu): yazilmis ama kimsenin

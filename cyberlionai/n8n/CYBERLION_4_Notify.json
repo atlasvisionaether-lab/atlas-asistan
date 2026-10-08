@@ -17,13 +17,13 @@
         0
       ],
       "webhookId": "cl-notify",
-      "notes": "Govde: { jobId, userId? }. WORKFLOW 2 ya da 3 cagiriyor.\nTUM HTTP DUGUMLERI ETKIN. Adres ve sirlar $env ile okunuyor; dugum govdesinde sir YOK. Gerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, N8N_WEBHOOK_BASE (bkz. docker-compose.yml)."
+      "notes": "Govde: { jobId }. WORKFLOW 2 ya da 3 cagiriyor.\nGerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET. BASKA HICBIR SIR YOK.\n\nESKI HALI SUPABASE_SERVICE_KEY ve FCM_ACCESS_TOKEN tasiyordu. Servis rolu anahtari RLS'i tamamen atlar: n8n'i ele geciren biri tum musteri verisini okuyabilirdi. Ikisi de kaldirildi."
     },
     {
       "parameters": {
-        "jsCode": "const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst g = $input.first().json.body || $input.first().json;\nconst jobId = String(g.jobId || '');\nif (!UUID.test(jobId)) throw new Error('gecersiz jobId');\nreturn [{ json: { jobId, userId: g.userId ? String(g.userId) : null } }];"
+        "jsCode": "const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst g = $input.first().json.body || $input.first().json;\nconst jobId = String(g.jobId || '');\nif (!UUID.test(jobId)) throw new Error('gecersiz jobId');\nreturn [{ json: { jobId } }];"
       },
-      "id": "c-Girdiyi doğr",
+      "id": "c-Girdiyi doğrula",
       "name": "Girdiyi doğrula",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -31,124 +31,20 @@
         0,
         0
       ],
-      "notes": ""
-    },
-    {
-      "parameters": {
-        "method": "GET",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/scan_jobs?id=eq.{{ $json.jobId }}&select=id,user_id,url",
-        "options": {
-          "timeout": 30000
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
-            }
-          ]
-        }
-      },
-      "id": "h-İş sahibini ",
-      "name": "İş sahibini oku",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        220,
-        0
-      ],
-      "notes": "Sahibi GOVDEDEN degil VERITABANINDAN okuyor: webhook govdesi dis girdi."
-    },
-    {
-      "parameters": {
-        "method": "GET",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/users?id=eq.{{ $json[0].user_id }}&select=fcm_token",
-        "options": {
-          "timeout": 30000
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
-            }
-          ]
-        }
-      },
-      "id": "h-FCM jetonunu",
-      "name": "FCM jetonunu oku",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        440,
-        0
-      ],
-      "notes": "Anonim taramanin user_id'si null; o durumda asagidaki dugum duruyor."
-    },
-    {
-      "parameters": {
-        "jsCode": "/* Jeton yoksa bildirim YOK ve bu bir hata DEGIL: anonim taramalarin\n   sahibi yok, giris yapmis her kullanicinin da mobil uygulamasi yok.\n   Akisi burada bitirmek, FCM'e bos jetonla gidip 400 almaktan iyi. */\nconst satir = $input.first().json;\nconst jeton = Array.isArray(satir) ? (satir[0] || {}).fcm_token : satir.fcm_token;\nif (!jeton || String(jeton).length < 20) return [];\nreturn [{ json: { jeton: String(jeton), jobId: $('Girdiyi doğrula').first().json.jobId } }];"
-      },
-      "id": "c-Jeton var mı",
-      "name": "Jeton var mı",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        660,
-        0
-      ],
-      "notes": ""
+      "notes": "jobId GOVDEDEN geliyor ama kime bildirim gidecegini BELIRLEMIYOR: sahip, isin kendi satirindan okunuyor. Govdeye userId koymanin bir anlami yok ve uc zaten kabul etmiyor."
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://fcm.googleapis.com/v1/projects/{{ $env.FCM_PROJECT_ID }}/messages:send",
+        "url": "={{ $env.N8N_API_BASE }}/api/cron/notify?jobId={{ $json.jobId }}",
         "options": {
-          "timeout": 30000
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.FCM_ACCESS_TOKEN }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
             }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ message: { token: $json.jeton, notification: { title: 'CyberLion', body: 'Guvenlik raporunuz hazir.' }, data: { jobId: $json.jobId } } }) }}"
-      },
-      "id": "h-FCM push",
-      "name": "FCM push",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        880,
-        0
-      ],
-      "notes": "FCM_ACCESS_TOKEN kisa omurlu bir OAuth2 jetonu; servis hesabi JSON'undan uretilir ve n8n ortamina konur. ICERIK ICINDE ALAN ADI YOK: bildirim kilit ekraninda gorunuyor, musterinin hangi siteyi taradigi orada yazmasin."
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $env.N8N_API_BASE }}/api/n8n/report-ready",
-        "options": {
-          "timeout": 30000
+          }
         },
         "sendHeaders": true,
         "headerParameters": {
@@ -158,20 +54,31 @@
               "value": "=Bearer {{ $env.CL_CRON_SECRET }}"
             }
           ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ jobId: $json.jobId }) }}"
+        }
       },
-      "id": "h-Callback",
-      "name": "Callback",
+      "id": "h-Bildirimi gonder",
+      "name": "Bildirimi gönder",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1100,
+        220,
         0
       ],
-      "notes": "BU UC HENUZ YOK. Depoda /api/n8n/* yok; eklenirse cronauth ile korunmali. Uc yokken bu dugum 404 doner ve akis burada biter — bildirim ZATEN gitmis olur."
+      "notes": "UC HEM JETONLARI OKUYOR HEM FCM'E GONDERIYOR.\n\nNEDEN n8n JETONLARI ALMIYOR: bir FCM kayit jetonu, o cihaza bildirim gonderme YETKISIDIR. Servis rolu anahtarini n8n'den cikarip yerine musterilerin cihaz jetonlarini koymak ayni yuzeyi geri acardi -- ustelik bu n8n bir dizustunde localhost:5678'de calisiyor. Jetonlar veritabani ile Vercel arasinda kaliyor.\n\nYanit musteri verisi TASIMIYOR: { ok, via, sent, failed, dropped }.\n\nAnonim taramada (user_id null) sent=0, reason='no_devices' doner ve bu bir hata DEGILDIR."
+    },
+    {
+      "parameters": {
+        "jsCode": "const y = $input.first().json || {};\nconst durum = y.statusCode || 0;\nconst govde = y.body || {};\nconst jobId = $('Girdiyi doğrula').first().json.jobId;\nif (durum === 200) {\n  return [{ json: { ok: true, jobId, sent: govde.sent, failed: govde.failed, dropped: govde.dropped, reason: govde.reason || null } }];\n}\nconst kod = (govde.error && govde.error.code) || 'bilinmiyor';\nif (durum === 404 && kod === 'no_job') {\n  return [{ json: { ok: false, jobId, beklemede: true, kod } }];\n}\nthrow new Error('bildirim gonderilemedi: ' + durum + ' ' + kod);"
+      },
+      "id": "c-Sonuç",
+      "name": "Sonuç",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Cihazi olmayan kullanici hata degil: sent=0 ile basariyla biter. Gercek hatalar firlatiliyor.\n\nWEB PANOSU ICIN REALTIME EKLENMEDI: tarayicidan wss://*.supabase.co acmak CSP'de connect-src'i dis kokene acar, ayrica anonim taramalarda user_id null oldugu icin RLS o satirlar icin hicbir olay yayinlamaz. Pano mevcut ayni koken yoklamasini surduruyor."
     }
   ],
   "connections": {
@@ -190,51 +97,18 @@
       "main": [
         [
           {
-            "node": "İş sahibini oku",
+            "node": "Bildirimi gönder",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "İş sahibini oku": {
+    "Bildirimi gönder": {
       "main": [
         [
           {
-            "node": "FCM jetonunu oku",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "FCM jetonunu oku": {
-      "main": [
-        [
-          {
-            "node": "Jeton var mı",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Jeton var mı": {
-      "main": [
-        [
-          {
-            "node": "FCM push",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "FCM push": {
-      "main": [
-        [
-          {
-            "node": "Callback",
+            "node": "Sonuç",
             "type": "main",
             "index": 0
           }
