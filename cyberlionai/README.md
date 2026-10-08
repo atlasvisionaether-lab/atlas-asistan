@@ -398,6 +398,17 @@ satırdan üretilir; istemciden gelen skora güvenilmez. Dosya adı
 
 Ayrıntılı uç sözleşmeleri: `docs/api.md`.
 
+## Mobil bildirim
+
+Tarama bitip rapor üretildiğinde işin sahibinin cihazlarına FCM bildirimi
+gidiyor. Mobil uygulama açılışta `POST /api/device-token`, çıkışta `DELETE`
+çağırıyor; oturum çerezle ya da `Authorization: Bearer <supabase
+access_token>` ile taşınıyor. İstemci parçası (bir uygulama değil, kopyalanacak
+iki dosya) `mobile/flutter/` altında.
+
+Akış, Dart ve curl örnekleri, Bearer yolunun sınırları ve üretim doğrulaması:
+**[docs/notifications.md](docs/notifications.md)**.
+
 ### Supabase yoksa
 
 Tarama çalışmaya devam eder, yalnızca geçmiş kaydı yapılmaz (`scanId: null`)
