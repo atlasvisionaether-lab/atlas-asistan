@@ -278,8 +278,16 @@ dogru('cl_scans yazımı taramayı geçersiz KILMIYOR (try/catch içinde)',
   /try \{\s*await supabase\.insertScanRow\(/.test(lambdaSrc));
 dogru('cl_scans yazımı completed yazımından ÖNCE',
   lambdaSrc.indexOf('insertScanRow(') < lambdaSrc.indexOf("status: 'completed'"));
-dogru('tekrar teslimde çift kayıt engelli',
-  oku('aws/lambda-scanner/lib/supabase.js').indexOf('resolution=ignore-duplicates') !== -1);
+/* İKİ parça birlikte: başlık tek başına dedup KURMUYOR. `on_conflict`
+   verilmezse PostgREST çatışmayı birincil anahtarda arıyor, `cl_scans.id`
+   her satırda yeni uuid olduğu için çatışma görülmüyor ve ikinci teslim
+   23505 ile düşüyor. Vercel inceleme botu bunu yakaladı; doğrulama o zaman
+   yalnızca başlığa bakıyordu. */
+const supabaseSrc = oku('aws/lambda-scanner/lib/supabase.js');
+dogru('tekrar teslimde çift kayıt engelli (başlık)',
+  supabaseSrc.indexOf('resolution=ignore-duplicates') !== -1);
+dogru('çatışma hedefi adıyla veriliyor (on_conflict=job_id)',
+  /request\('cl_scans\?on_conflict=job_id'/.test(supabaseSrc));
 dogru('göç tekil indeks kuruyor', /CREATE UNIQUE INDEX IF NOT EXISTS/.test(gocIndeksSrc));
 /* Tekil indeks TAM olmak zorunda: PostgREST'in ignore-duplicates yolu kısmi
    indeksi kullanamıyor (42P10). Panelin kısmi indeksi ayrı dosyada ve tekil

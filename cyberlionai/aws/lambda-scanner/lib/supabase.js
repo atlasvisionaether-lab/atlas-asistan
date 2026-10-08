@@ -92,12 +92,18 @@ async function replaceFindings(jobId, findings) {
  * ikinci yazımı sessizce düşürüyor, böylece harita aynı taramayı iki kez
  * saymıyor. İndeks TAM olmalı (kısmi değil), yoksa PostgREST 42P10 döner.
  *
+ * `on_conflict=job_id` ZORUNLU, süs değil. Yokken PostgREST çatışmayı BİRİNCİL
+ * ANAHTARDA arıyor; `cl_scans.id` her satırda yeni üretilen bir uuid olduğu
+ * için çatışma hiç görülmüyor, yazım sade bir INSERT'e dönüyor ve ikinci
+ * teslimde `cl_scans_job_id_key` 23505 fırlatıyor. Yani başlık tek başına
+ * dedup kurmuyor; çatışma hedefi adıyla verilmek zorunda.
+ *
  * Satır yazılamazsa (göç henüz uygulanmadıysa `job_id` sütunu yoktur)
  * HATA FIRLATILIYOR ve çağıran bunu taramanın sonucundan ayırıyor: harita
  * kaydı, elde olan tarama sonucunu çöpe atmayı haklı çıkarmaz.
  */
 async function insertScanRow(row) {
-  const rows = await request('cl_scans', {
+  const rows = await request('cl_scans?on_conflict=job_id', {
     method: 'POST',
     body: row,
     headers: { 'Prefer': 'return=representation,resolution=ignore-duplicates' }
