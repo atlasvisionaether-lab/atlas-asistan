@@ -125,6 +125,58 @@ sorgulanmıyor").
 
 Akışlar `cyberlionai/n8n/` altında.
 
+## WORKFLOW 3 — raporun PDF'i ve Storage
+
+```
+POST /api/cron/ai-report-pdf?jobId=<uuid>
+Authorization: Bearer <CRON_SECRET>
+→ 200 { ok, via, bucket: "reports", key: "ai/<jobId>.pdf", bytes }
+```
+
+Uç `ai_reports` satırını okuyor, PDF'i üretiyor (`api/_lib/report-ai.js`) ve
+gizli `reports` kovasına koyuyor (`api/_lib/storage.js`, `x-upsert` ile:
+yeniden üretim kovada ikinci bir kopya biriktirmiyor).
+
+**Neden ayrı bir uç:** WORKFLOW 3'ün eski hâli `/api/report`'u çağırıyordu ve
+o uç **oturum** istediği için akış 401 ile düşüyordu. Doğru düzeltme
+`/api/report`'a bir makine yolu açmak değildi — bir üstteki bölümde
+`/api/ai-report` için yazılan gerekçenin aynısı geçerli. Onun yerine aynı
+`_lib/cronauth.js` ile yetkilenen yeni bir uç eklendi.
+
+**Yan fayda:** PDF'i uç ürettiği ve kendisi yüklediği için `n8n` artık
+Supabase servis rolü anahtarını taşımıyor; anahtar yalnızca Vercel'de.
+
+Bu uç da müşteri verisi döndürmüyor: gövdede alan adı, özet, bulgu ya da puan
+yok. Kova yolu **istemciden alınmıyor**, `jobId`'den türetiliyor
+(`aiReportStorageKey`); bir yol gezinmesi kovanın başka yerine yazabilirdi.
+`storage.guvenliYol()` ayrıca `..`, baştaki `/`, çift `/` ve boşluklu yolu
+reddediyor. `tools/aireportpdf-test.js` bunların hepsini kilitliyor (109
+doğrulama, 10 mutasyonun 10'u yakalandı).
+
+### PDF'in içeriği
+
+Risk bandı (`risk_level`, rengi `report-owasp.js`'in önem derecesi
+renkleriyle aynı aileden), **motorun puanı** (`scanner_score`), Türkçe özet
+(`summary_tr`) ve **en çok üç** öncelikli aksiyon — artı varsa en çok beş öne
+çıkan bulgu. Modelin kendi puanı (`score`) kâğıda **girmiyor**: müşterinin
+elindeki belgede iki farklı sayı olması, hangisinin ölçüm olduğunu
+belirsizleştirirdi.
+
+İkinci bir PDF kütüphanesi girmedi: `api/_lib/pdf.js` paylaşılıyor. Gömülü
+TrueType yazı tipi (Identity-H) gerekiyor, çünkü temel 14 yazı tipinde
+`ı İ ş ğ` yok ve sessizce boş kutuya düşerler.
+
+Model metni kâğıda basılırken güvenilmez veri sayılıyor: kontrol karakterleri
+atılıyor, uzunluk kırpılıyor, IP'ler maskeleniyor (`maskIps`).
+
+`404 no_ai_report` bir hata değil, sıra meselesi: WORKFLOW 2 raporu henüz
+üretmemiş. WORKFLOW 3 bu durumu "beklemede" diye bitiriyor, kırmızıya
+dönmüyor.
+
+**`reports` kovası GİZLİ kalmalı.** `storage.js`'de bilerek bir `publicUrl()`
+yardımcısı yok: kovanın bir gün yanlışlıkla public yapılması hâlinde böyle
+bir yardımcı sızıntıyı normalleştirirdi.
+
 ## Doğrulanmayanlar
 
 `integrate.api.nvidia.com` bu oturumun ağ ilkesiyle **engelli**: canlı çağrı

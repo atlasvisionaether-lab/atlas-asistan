@@ -857,20 +857,34 @@ async function jobsMissingAiReport(limit) {
   return list.filter(function (j) { return !var_.has(j.id); }).slice(0, n);
 }
 
-/** Bir işin EN YENİ AI raporu. Sahiplik işin kendisinden geliyor. */
-async function latestAiReport(userId, jobId) {
-  const job = await getJob(userId, jobId);
-  if (!job) return null;
+/**
+ * Bir işin EN YENİ AI raporu, SAHİPLİK FİLTRESİ OLMADAN.
+ *
+ * Yalnızca zamanlanmış üretim için (api/cron/ai-reports.js,
+ * api/cron/ai-report-pdf.js) — `jobsMissingAiReport` ile aynı gerekçe: cron
+ * kimliği `_lib/cronauth.js` ile doğrulanıyor ve o uçların yanıtı müşteri
+ * verisi taşımıyor. BİR KULLANICI İSTEĞİNDEN ÇAĞRILMAZ; kullanıcı yolu
+ * `latestAiReport(userId, jobId)`.
+ */
+async function aiReportOf(jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
   const rows = await request('ai_reports'
-    + '?job_id=eq.' + encodeURIComponent(job.id)
-    + '&select=id,domain,risk_level,score,scanner_score,summary_tr,findings,recommendations,model,created_at'
+    + '?job_id=eq.' + encodeURIComponent(jobId)
+    + '&select=id,job_id,domain,risk_level,score,scanner_score,summary_tr,findings,recommendations,model,created_at'
     + '&order=created_at.desc&limit=1');
   return rows && rows[0] ? rows[0] : null;
 }
 
+/** Bir işin EN YENİ AI raporu. Sahiplik işin kendisinden geliyor. */
+async function latestAiReport(userId, jobId) {
+  const job = await getJob(userId, jobId);
+  if (!job) return null;
+  return aiReportOf(job.id);
+}
+
 module.exports = {
 
-  saveAiReport, latestAiReport, jobsMissingAiReport,
+  saveAiReport, latestAiReport, aiReportOf, jobsMissingAiReport,
   isConfigured, request, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans, scanStats,
   listJobs, jobScoreTrend, getJob, getJobWithFindings, SEVERITY_ORDER,

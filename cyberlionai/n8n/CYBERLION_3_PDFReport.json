@@ -17,7 +17,7 @@
         0
       ],
       "webhookId": "cl-report-pdf",
-      "notes": "Govde: { jobId }. WORKFLOW 2 cagiriyor.\nTUM HTTP DUGUMLERI ETKIN. Adres ve sirlar $env ile okunuyor; dugum govdesinde sir YOK. Gerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, N8N_WEBHOOK_BASE (bkz. docker-compose.yml)."
+      "notes": "Govde: { jobId }. WORKFLOW 2 cagiriyor.\nGerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET. SUPABASE_SERVICE_KEY ARTIK BU AKISTA GEREKMIYOR (bkz. 'PDF uret ve yukle' notu)."
     },
     {
       "parameters": {
@@ -31,17 +31,18 @@
         0,
         0
       ],
-      "notes": ""
+      "notes": "Ucun kendi dogrulamasi var (400 bad_job_id); bu dugum akisi erken kesiyor, tek savunma degil."
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "={{ $env.N8N_API_BASE }}/api/report?jobId={{ $json.jobId }}&lang=tr",
+        "method": "POST",
+        "url": "={{ $env.N8N_API_BASE }}/api/cron/ai-report-pdf?jobId={{ $json.jobId }}",
         "options": {
           "timeout": 30000,
           "response": {
             "response": {
-              "responseFormat": "file"
+              "neverError": true,
+              "fullResponse": true
             }
           }
         },
@@ -55,64 +56,29 @@
           ]
         }
       },
-      "id": "h-PDF'i indir",
-      "name": "PDF'i indir",
+      "id": "h-PDF uret ve yukle",
+      "name": "PDF üret ve yükle",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         220,
         0
       ],
-      "notes": "PDF'i KENDIMIZ URETMIYORUZ: /api/report zaten OWASP raporunu uretiyor (api/_lib/report-owasp.js) ve bir ikinci uretici iki farkli rapor demek olurdu.\n\nDIKKAT: /api/report GIRIS ISTIYOR, cron sirri KABUL ETMIYOR. Bu dugum bugun 401 doner. Secenekler: (a) bu akisi panodan tetiklenen bir indirmeyle degistirin, (b) /api/report'a cron yolu eklemek icin bir istek acin. Sessizce bir kimlik dogrulama atlatma basligi EKLENMEDI."
+      "notes": "ESKI HALI /api/report'u cagiriyordu ve o uc GIRIS ISTEDIGI icin akis 401 ile dusuyordu. Dogru duzeltme /api/report'a bir makine yolu acmak DEGILDI (bu bir kimlik dogrulama atlatmasi olurdu): deponun cron kimligiyle (_lib/cronauth.js) yetkilenen ayri bir uc eklendi.\n\nUC HEM URETIYOR HEM YUKLUYOR: PDF'i (api/_lib/report-ai.js) uretip gizli `reports` kovasina ai/<jobId>.pdf olarak koyuyor. Bu yuzden SUPABASE_SERVICE_KEY artik n8n'de DURMUYOR -- servis rolu anahtari yalnizca Vercel'de.\n\nYanit musteri verisi TASIMIYOR: { ok, via, bucket, key, bytes }.\n\n404 no_ai_report = WORKFLOW 2 raporu henuz uretmemis; bu bir hata degil, sira meselesi. 'Sonuc' dugumu bu durumu ayri raporluyor, akis kirmiziya donmuyor."
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/storage/v1/object/reports/{{ $json.jobId }}.pdf",
-        "options": {
-          "timeout": 30000
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/pdf"
-            },
-            {
-              "name": "x-upsert",
-              "value": "true"
-            }
-          ]
-        }
-      },
-      "id": "h-Storage'a yü",
-      "name": "Storage'a yükle",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        440,
-        0
-      ],
-      "notes": "`reports` kovasi PRIVATE olmali. Public yapilirsa is kimligini bilen herkes raporu indirir; kimlikler tahmin edilemez ama paylasilan bir baglanti sizar."
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{ json: {\n  ok: true,\n  jobId: $('jobId doğrula').first().json.jobId,\n  path: 'reports/' + $('jobId doğrula').first().json.jobId + '.pdf'\n} }];"
+        "jsCode": "const y = $input.first().json || {};\nconst durum = y.statusCode || 0;\nconst govde = y.body || {};\nconst jobId = $('jobId doğrula').first().json.jobId;\nif (durum === 200) {\n  return [{ json: { ok: true, jobId, bucket: govde.bucket, key: govde.key, bytes: govde.bytes } }];\n}\nconst kod = (govde.error && govde.error.code) || 'bilinmiyor';\nif (durum === 404 && kod === 'no_ai_report') {\n  return [{ json: { ok: false, jobId, beklemede: true, kod } }];\n}\nthrow new Error('PDF uretilemedi: ' + durum + ' ' + kod);"
       },
       "id": "c-Sonuç",
       "name": "Sonuç",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        660,
+        440,
         0
       ],
-      "notes": ""
+      "notes": "Rapor henuz yoksa akis beklemede isaretiyle bitiyor; gercek hatalar firlatiliyor."
     }
   ],
   "connections": {
@@ -131,25 +97,14 @@
       "main": [
         [
           {
-            "node": "PDF'i indir",
+            "node": "PDF üret ve yükle",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "PDF'i indir": {
-      "main": [
-        [
-          {
-            "node": "Storage'a yükle",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Storage'a yükle": {
+    "PDF üret ve yükle": {
       "main": [
         [
           {
