@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Düzeltme Siparişi | Cyber Lion AI</title>
+  <meta name="description" content="Cyber Lion AI tek seferlik düzeltme hizmeti siparişiniz." />
+  <meta name="robots" content="noindex" />
+  <link rel="canonical" href="https://www.cyberlionai.com/fix-checkout" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha384-PPIZEGYM1v8zp5Py7UjFb79S58UeqCL9pYVnVPURKEqvioPROaVAJKKLzvH2rDnI" crossorigin="anonymous" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z' fill='%230a0a0f' stroke='%23d4af37' stroke-width='2.5'/%3E%3Ccircle cx='24' cy='22' r='9' fill='none' stroke='%23d4af37' stroke-width='2.5'/%3E%3C/svg%3E" />
+  <style>
+  :root{--primary-black:#0a0a0f;--secondary-black:#12121a;--card-black:#1a1a24;
+    --gold-primary:#d4af37;--gold-light:#ffdf00;--text-white:#f0f0f0;--text-gray:#a0a0b0;
+    --glass-bg:rgba(26,26,36,.7);--glass-border:rgba(212,175,55,.2);--hairline:rgba(255,255,255,.08);
+    --ok:#5fd98a;--warn:#ffd166;--bad:#ff8f87;
+    --font-heading:'Orbitron','Segoe UI',sans-serif;--font-body:'Space Grotesk','Segoe UI',sans-serif}
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--primary-black);color:var(--text-white);font-family:var(--font-body);
+    font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(60% 40% at 50% -10%,rgba(212,175,55,.08),transparent 70%)}
+  a{color:var(--gold-primary)}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--gold-light);outline-offset:3px;border-radius:4px}
+  .container{width:100%;max-width:760px;margin:0 auto;padding:0 16px}
+  header.top{border-bottom:1px solid var(--glass-border);background:var(--glass-bg);backdrop-filter:blur(16px)}
+  header.top .container{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;padding-bottom:14px;max-width:1120px}
+  .brand{font-family:var(--font-heading);font-weight:800;letter-spacing:.08em;text-decoration:none;color:var(--gold-primary)}
+  .lang{display:inline-flex;border:1px solid var(--hairline);border-radius:8px;overflow:hidden}
+  .lang button{background:none;border:0;color:var(--text-gray);padding:5px 10px;font:inherit;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:rgba(212,175,55,.18);color:var(--gold-light)}
+  h1{font-family:var(--font-heading);font-size:1.6rem;letter-spacing:.06em;margin:36px 0 8px}
+  h2{font-family:var(--font-heading);font-size:1rem;letter-spacing:.08em;color:var(--gold-primary);margin:0 0 12px}
+  .lead{color:var(--text-gray);margin:0 0 24px}
+  .card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:20px;margin-bottom:18px}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .input{flex:1 1 220px;min-width:0;padding:11px 13px;border-radius:10px;border:1px solid var(--hairline);
+    background:rgba(255,255,255,.03);color:var(--text-white);font:inherit}
+  .btn{padding:11px 18px;border-radius:10px;border:1px solid var(--gold-primary);background:var(--gold-primary);
+    color:var(--primary-black);font:inherit;font-weight:600;cursor:pointer}
+  .btn--ghost{background:transparent;color:var(--gold-primary)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .tabs{display:flex;flex-wrap:wrap;border:1px solid var(--hairline);border-radius:10px;overflow:hidden;margin-bottom:14px}
+  .tabs button{flex:1 1 0;padding:10px 12px;background:none;border:0;color:var(--text-gray);font:inherit;cursor:pointer}
+  .tabs button[aria-selected="true"]{background:rgba(212,175,55,.18);color:var(--gold-light)}
+  .field{margin:0 0 12px}
+  .field__label{display:block;color:var(--text-gray);font-size:.82rem;margin-bottom:4px}
+  .copybox{display:flex;gap:8px;align-items:stretch}
+  .copybox code{flex:1;min-width:0;display:block;padding:10px 12px;border-radius:8px;background:var(--primary-black);
+    border:1px solid var(--hairline);color:var(--gold-primary);font-size:.82rem;overflow-wrap:anywhere;white-space:pre-wrap}
+  .copybox button{flex:0 0 auto;padding:0 12px;border-radius:8px;border:1px solid var(--hairline);background:none;color:var(--text-white);cursor:pointer}
+  .msg{margin:12px 0 0;font-size:.92rem}
+  .msg--ok{color:var(--ok)} .msg--bad{color:var(--bad)} .msg--warn{color:var(--warn)}
+  .note{color:var(--text-gray);font-size:.85rem;margin:10px 0 0}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:.92rem}
+  ul.list li:last-child{border-bottom:0}
+  .badge{font-size:.78rem;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+  .badge--ok{color:var(--ok)} .badge--wait{color:var(--warn)}
+  footer{color:var(--text-gray);font-size:.82rem;text-align:center;padding:30px 16px}
+  /* Dar ekranda uzun değerler (bulgu listesi, tutar) kesilmesin: satır kırılır. */
+  ul.list li{flex-wrap:wrap}
+  ul.list li span{min-width:0;overflow-wrap:anywhere;white-space:normal}
+  ul.list li span:last-child{text-align:right;flex:1 1 180px}
+  .h1__sub{font-size:.7em;color:var(--text-gray)}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="/">CYBER LION AI</a>
+    </div>
+  </header>
+  <main class="container">
+    <h1>Düzeltme Siparişi <span class="h1__sub">/ Fix Order</span></h1>
+    <section class="card" id="card">
+      <p id="msg" class="msg" role="status" aria-live="polite">Yükleniyor… / Loading…</p>
+      <ul class="list" id="details" hidden></ul>
+    </section>
+    <section class="card">
+      <h2>Sonraki adım / Next step</h2>
+      <p class="note">Ekibimiz siparişinizi kontrol edip <strong>iyzico ödeme bağlantısını</strong> hesabınızdaki e-posta adresine gönderir. Kart bilgileriniz bize ulaşmaz. Ödeme onayından sonra hizmet <strong>en geç 3 iş günü</strong> içinde tamamlanır (acil siparişlerde hedef 24 saat). Alan adı erişimi, Cloudflare yetkisi veya onayınız gecikirse süre en fazla 5 iş gününe uzar ve size bilgi verilir. Tamamlandığında bildirilirsiniz. Sorularınız için: <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></p>
+      <p class="note">Our team reviews your order and sends an <strong>iyzico payment link</strong> to your account's email address. Your card details never reach us. After payment confirmation the service is completed <strong>within 3 business days</strong> (24 hours targeted for urgent orders). If domain access, Cloudflare authorisation or your approval is delayed, this extends to at most 5 business days and you are informed. You are notified when it is done. Questions: <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></p>
+      <p class="note">Fiyatlar KDV hariçtir. / Prices exclude VAT. · <a href="/mesafeli-satis-sozlesmesi">Mesafeli Satış Sözleşmesi</a> · <a href="/pages/on-bilgilendirme-formu">Ön Bilgilendirme Formu</a> · <a href="/iade-iptal-politikasi">Teslimat ve İade</a> · <a href="/kvkk-aydinlatma-metni">KVKK Aydınlatma Metni</a> · <a href="/gizlilik-politikasi">Gizlilik</a></p>
+    </section>
+  </main>
+  <footer>© Cyber Lion AI · <a href="/kullanim-kosullari">Kullanım Şartları</a></footer>
+  <script src="/fix-checkout.js" defer></script>
+</body>
+</html>

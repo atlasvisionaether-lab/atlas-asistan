@@ -1,0 +1,173 @@
+{
+  "name": "CYBERLION_3_PDFReport",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cl-report-pdf",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-cl-report-pdf",
+      "name": "Webhook: report-pdf",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "cl-report-pdf",
+      "notes": "Govde: { jobId }. WORKFLOW 2 cagiriyor.\nTUM HTTP DUGUMLERI ETKIN. Adres ve sirlar $env ile okunuyor; dugum govdesinde sir YOK. Gerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, N8N_WEBHOOK_BASE (bkz. docker-compose.yml)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst g = $input.first().json.body || $input.first().json;\nconst jobId = String(g.jobId || '');\nif (!UUID.test(jobId)) throw new Error('gecersiz jobId');\nreturn [{ json: { jobId } }];"
+      },
+      "id": "c-jobId doğrul",
+      "name": "jobId doğrula",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "notes": ""
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.N8N_API_BASE }}/api/report?jobId={{ $json.jobId }}&lang=tr",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.CL_CRON_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "h-PDF'i indir",
+      "name": "PDF'i indir",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "PDF'i KENDIMIZ URETMIYORUZ: /api/report zaten OWASP raporunu uretiyor (api/_lib/report-owasp.js) ve bir ikinci uretici iki farkli rapor demek olurdu.\n\nDIKKAT: /api/report GIRIS ISTIYOR, cron sirri KABUL ETMIYOR. Bu dugum bugun 401 doner. Secenekler: (a) bu akisi panodan tetiklenen bir indirmeyle degistirin, (b) /api/report'a cron yolu eklemek icin bir istek acin. Sessizce bir kimlik dogrulama atlatma basligi EKLENMEDI."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/storage/v1/object/reports/{{ $json.jobId }}.pdf",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/pdf"
+            },
+            {
+              "name": "x-upsert",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "id": "h-Storage'a yü",
+      "name": "Storage'a yükle",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "`reports` kovasi PRIVATE olmali. Public yapilirsa is kimligini bilen herkes raporu indirir; kimlikler tahmin edilemez ama paylasilan bir baglanti sizar."
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\n  ok: true,\n  jobId: $('jobId doğrula').first().json.jobId,\n  path: 'reports/' + $('jobId doğrula').first().json.jobId + '.pdf'\n} }];"
+      },
+      "id": "c-Sonuç",
+      "name": "Sonuç",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "notes": ""
+    }
+  ],
+  "connections": {
+    "Webhook: report-pdf": {
+      "main": [
+        [
+          {
+            "node": "jobId doğrula",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jobId doğrula": {
+      "main": [
+        [
+          {
+            "node": "PDF'i indir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF'i indir": {
+      "main": [
+        [
+          {
+            "node": "Storage'a yükle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Storage'a yükle": {
+      "main": [
+        [
+          {
+            "node": "Sonuç",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    {
+      "name": "cyberlion"
+    }
+  ]
+}

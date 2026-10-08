@@ -58,7 +58,7 @@ Vercel > cyberlionai > Settings > Environment Variables > **Preview**:
 | 3.6 | `scan_findings` | Bulgular yazılmış |
 | 3.7 | S3 kovası | `reports/<yıl>/<ay>/<scanId>.pdf` var |
 | 3.8 | `scan_jobs.report_url` ve `report_key` | Dolu |
-| 3.9 | `cl_scans` | **Bir** yeni satır, `scan_job_id` dolu |
+| 3.9 | `cl_scans` | **Bir** yeni satır, `job_id` dolu |
 | 3.10 | Dünya haritası | Sayı arttı |
 
 3.4 için: sayaç duruyor ve çubuğu sunucu sürüyor. İki değer arasında ileri

@@ -85,7 +85,7 @@ dogru('kuyruğa bırakılamayan iş failed yazılıyor',
   /db\.markJobFailed\(jobId, kod\)/.test(startSrc));
 dogru('başarılı kuyruklama 202 dönüyor', /return res\.status\(202\)\.json\(/.test(scanSrc));
 dogru('202 yanıtı jobId taşıyor', /jobId: kuyruk\.jobId/.test(scanSrc));
-dogru('202 yanıtı kotayı bildiriyor', /quota: \{/.test(scanSrc));
+dogru('202 yanıtı kotayı bildiriyor', /quota: (\{|entitlement\.quotaView\()/.test(scanSrc));
 dogru('hedef kuyruğa bırakılmadan önce doğrulanıyor',
   startSrc.indexOf('normalizeTarget(input.url)') !== -1
   && startSrc.indexOf('normalizeTarget(input.url)') < startSrc.indexOf('createPendingJob'));
@@ -240,7 +240,7 @@ dogru('fiyat bölümü id değişmedi',
 [['vercel.json', vercel], ['_headers', headers]].forEach(function (c) {
   const m = c[1].match(/connect-src ([^;\\"]+)/);
   esit(c[0] + ' connect-src gevşetilmedi',
-    m && m[1].trim(), "'self' https://ipapi.co");
+    m && m[1].trim(), "'self'");
   dogru(c[0] + ' içinde amazonaws hedefi yok', c[1].indexOf('amazonaws.com') === -1);
   dogru(c[0] + ' içinde wss hedefi yok', c[1].indexOf('wss://') === -1);
 });
@@ -334,8 +334,21 @@ dogru('istemci durum ucunu yokluyor',
   html.indexOf("'/api/scan-status?id=' + encodeURIComponent(scanId)") !== -1);
 dogru('istemci olmayan /api/scan/<id> ucunu çağırmıyor',
   !/'\/api\/scan\/' \+ encodeURIComponent/.test(html));
+/* Kuyruk yolunda tahmini sayaç durdurulmalı, yoksa çubuk sunucunun bildirdiği
+   gerçek değer ile tahmin arasında zıplar. Artık yerel bir `ticker` yok;
+   sayaç tek yerden (`stopProgress`) yönetiliyor — kaçak sayaç yayında
+   taramayı %85'te dondurmuştu, bkz. tools/scanprogress-test.js. */
+/* Araya yorum girebilir, bu yüzden bitişiklik değil SIRA sınanıyor:
+   `return pollScan(` öncesindeki son DEYİM `stopProgress();` olmalı. */
+var kuyrukDali = html.slice(html.indexOf('API.enqueueScan(domain)'),
+  html.indexOf('return pollScan('));
+var sonDurdurma = kuyrukDali.lastIndexOf('stopProgress();');
 dogru('kuyruk yolunda tahmini ilerleme sayacı durduruluyor',
-  /clearInterval\(ticker\);\s*\n\s*return pollScan/.test(html));
+  sonDurdurma !== -1 &&
+  kuyrukDali.slice(sonDurdurma + 'stopProgress();'.length)
+    .replace(/\/\*[\s\S]*?\*\//g, '').trim() === '');
+dogru('ilerleme sayacı tek yerden yönetiliyor (yerel ticker yok)',
+  html.indexOf('var ticker') === -1 && html.indexOf('clearInterval(ticker)') === -1);
 
 /* ---- Sırlar ---- */
 

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>Panelim | Cyber Lion AI</title>
+  <meta name="description" content="Cyber Lion AI müşteri paneli: güvenlik skoru, tarama geçmişi, abonelik, güvenlik ayarları ve araçlar." />
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="https://www.cyberlionai.com/dashboard" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha384-PPIZEGYM1v8zp5Py7UjFb79S58UeqCL9pYVnVPURKEqvioPROaVAJKKLzvH2rDnI" crossorigin="anonymous" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z' fill='%230a0a0f' stroke='%23d4af37' stroke-width='2.5'/%3E%3Ccircle cx='24' cy='22' r='9' fill='none' stroke='%23d4af37' stroke-width='2.5'/%3E%3C/svg%3E" />
+  <style>
+  :root{--primary-black:#0a0a0f;--secondary-black:#12121a;--card-black:#1a1a24;
+    --gold-primary:#d4af37;--gold-light:#ffdf00;--accent-blue:#00d4ff;
+    --text-white:#f0f0f0;--text-gray:#a0a0b0;--glass-bg:rgba(26,26,36,.7);
+    --glass-border:rgba(212,175,55,.2);--hairline:rgba(255,255,255,.08);
+    --ok:#5fd98a;--warn:#ffd166;--bad:#ff8f87;
+    --font-heading:'Orbitron','Segoe UI',sans-serif;--font-body:'Space Grotesk','Segoe UI',sans-serif;
+    --ease:cubic-bezier(.4,0,.2,1)}
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--primary-black);color:var(--text-white);
+    font-family:var(--font-body);font-size:16px;line-height:1.6;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(60% 40% at 50% -10%,rgba(212,175,55,.08),transparent 70%)}
+  a{color:inherit}
+  [hidden]{display:none!important}
+  ::selection{background:var(--gold-primary);color:var(--primary-black)}
+  :focus-visible{outline:2px solid var(--gold-light);outline-offset:3px;border-radius:4px}
+  .container{width:100%;max-width:1120px;margin:0 auto;padding:0 20px}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  .alerts{list-style:none;margin:0 0 10px;padding:0}
+  .alerts li{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:.92rem}
+  .alerts li:last-child{border-bottom:0}
+  .alerts .sev{flex:0 0 auto;width:9px;height:9px;border-radius:50%;margin-top:7px}
+  .alerts .sev--critical{background:var(--bad)} .alerts .sev--warning{background:var(--warn)} .alerts .sev--info{background:var(--ok)}
+  .alerts .unread{font-weight:600}
+  .alerts time{display:block;color:var(--text-gray);font-size:.8rem}
+  /* ---- Üst çubuk (diğer alt sayfalarla aynı) ---- */
+  header.top{position:sticky;top:0;z-index:50;background:var(--glass-bg);
+    backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+    border-bottom:1px solid var(--glass-border)}
+  .bar{display:flex;align-items:center;gap:12px;height:66px}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex:0 0 auto}
+  .logo svg{width:32px;height:32px;filter:drop-shadow(0 0 8px rgba(212,175,55,.45))}
+  .logo span{font-family:var(--font-heading);font-weight:800;font-size:.8rem;letter-spacing:.11em;white-space:nowrap}
+  .spacer{margin-left:auto}
+  .lang{display:flex;border:1px solid var(--glass-border);border-radius:8px;overflow:hidden;background:rgba(255,255,255,.03)}
+  .lang button{font:inherit;font-family:var(--font-heading);font-size:.68rem;font-weight:600;
+    letter-spacing:.06em;padding:8px 9px;color:var(--text-gray);background:none;border:none;cursor:pointer}
+  .lang button[aria-pressed="true"]{color:#0a0a0f;background:linear-gradient(135deg,var(--gold-light),var(--gold-primary))}
+  .back{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-heading);
+    font-size:.68rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+    padding:9px 15px;border-radius:8px;border:1px solid var(--glass-border);
+    color:var(--text-white);text-decoration:none;white-space:nowrap}
+  .back:hover{color:var(--gold-primary);border-color:var(--gold-primary)}
+  @media(max-width:420px){.logo span{display:none}}
+
+  main{padding:34px 0 80px}
+
+  /* ---- Ortak bileşenler ---- */
+  .card{position:relative;background:var(--card-black);border:1px solid var(--glass-border);
+    border-radius:14px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.35);overflow:hidden}
+  .card::before{content:'';position:absolute;left:0;top:0;right:0;height:2px;
+    background:linear-gradient(90deg,var(--gold-primary),rgba(212,175,55,0))}
+  .card__title{display:flex;align-items:center;gap:10px;font-family:var(--font-heading);
+    font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold-primary);margin:0 0 14px}
+  .card__title i{width:1.1em;text-align:center}
+  .muted{color:var(--text-gray)}
+  .note{font-size:.84rem;color:var(--text-gray);margin:10px 0 0}
+  .section{scroll-margin-top:130px;margin-top:34px}
+  .section > h2{display:flex;align-items:center;gap:11px;font-family:var(--font-heading);
+    font-size:1rem;font-weight:700;letter-spacing:.04em;margin:0 0 16px}
+  .section > h2::before{content:'';width:16px;height:2px;border-radius:2px;background:var(--gold-primary)}
+  .grid{display:grid;gap:16px}
+  .grid--2{grid-template-columns:1fr}
+  @media(min-width:860px){.grid--2{grid-template-columns:1fr 1fr}}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:var(--font-heading);font-size:.7rem;font-weight:700;letter-spacing:.09em;
+    text-transform:uppercase;padding:12px 18px;border-radius:9px;border:1px solid transparent;
+    cursor:pointer;text-decoration:none;white-space:nowrap;transition:filter .25s var(--ease),border-color .25s var(--ease)}
+  .btn--gold{background:linear-gradient(135deg,var(--gold-light),var(--gold-primary));color:#0a0a0f}
+  .btn--gold:hover{filter:brightness(1.08)}
+  .btn--ghost{background:rgba(255,255,255,.04);border-color:var(--glass-border);color:var(--text-white)}
+  .btn--ghost:hover{border-color:var(--gold-primary);color:var(--gold-primary)}
+  .btn[disabled],.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed;filter:none}
+  .btn--sm{padding:8px 12px;font-size:.64rem}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-heading);
+    font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--glass-border);color:var(--text-gray);white-space:nowrap}
+  .pill--free{color:var(--text-white);border-color:rgba(255,255,255,.25)}
+  .pill--pro{color:#0a0a0f;background:linear-gradient(135deg,var(--gold-light),var(--gold-primary));border-color:transparent}
+  .pill--enterprise{color:var(--accent-blue);border-color:rgba(0,212,255,.5);background:rgba(0,212,255,.08)}
+  .pill--soon{color:var(--gold-primary);border-color:rgba(212,175,55,.4);background:rgba(212,175,55,.06)}
+  .pill--test{color:var(--warn);border-color:rgba(255,209,102,.45)}
+
+  label.field{display:block;font-size:.8rem;color:var(--text-gray);margin:12px 0 6px}
+  .input{width:100%;padding:11px 12px;border-radius:9px;background:rgba(255,255,255,.04);
+    border:1px solid var(--hairline);color:var(--text-white);font:inherit;font-size:.94rem}
+  .input:focus{outline:none;border-color:var(--gold-primary)}
+  select.input{appearance:auto}
+  .form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .form-row .grow{flex:1 1 240px}
+  .msg{font-size:.84rem;margin:10px 0 0;min-height:1.3em;color:var(--text-gray)}
+  .msg--ok{color:var(--ok)}
+  .msg--err{color:var(--bad)}
+
+  /* ---- Örnek veri şeridi ---- */
+  .demo{margin:0 0 20px;padding:12px 16px;border-radius:10px;font-size:.86rem;font-weight:600;
+    color:#0a0a0f;background:repeating-linear-gradient(45deg,var(--gold-light),var(--gold-light) 14px,var(--gold-primary) 14px,var(--gold-primary) 28px)}
+
+  /* ---- Giriş kapısı ---- */
+  .gate{max-width:520px;margin:30px auto 0}
+  .gate h1{font-family:var(--font-heading);font-size:clamp(1.3rem,4vw,1.8rem);margin:0 0 8px;color:var(--gold-primary)}
+
+  /* ---- A) Profil özeti ---- */
+  .profile{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .avatar{flex:0 0 auto;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--font-heading);font-weight:800;font-size:1.2rem;color:#0a0a0f;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold-primary));
+    box-shadow:0 0 0 3px rgba(212,175,55,.18)}
+  .profile__who{flex:1 1 220px;min-width:0}
+  .profile__email{font-weight:600;font-size:1.05rem;word-break:break-all;margin:0 0 6px}
+  .profile__meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.84rem;color:var(--text-gray)}
+  .quota{display:flex;flex-direction:column;gap:6px;min-width:170px}
+  .quota__bar{height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+  .quota__fill{height:100%;width:0;background:linear-gradient(90deg,var(--gold-light),var(--gold-primary));transition:width .5s var(--ease)}
+  .profile__acts{display:flex;gap:10px;flex-wrap:wrap}
+
+  /* ---- Bölüm gezintisi ---- */
+  .tabs{position:sticky;top:66px;z-index:40;margin:18px 0 0;padding:10px 0;
+    background:rgba(10,10,15,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--hairline)}
+  .tabs__list{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0;padding:0;list-style:none}
+  .tabs__list::-webkit-scrollbar{display:none}
+  .tabs a{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;
+    font-size:.8rem;text-decoration:none;color:var(--text-gray);white-space:nowrap;border:1px solid transparent}
+  .tabs a:hover,.tabs a[aria-current="true"]{color:var(--gold-primary);border-color:var(--glass-border);background:rgba(212,175,55,.06)}
+
+  /* ---- B) Genel bakış kartları ---- */
+  .stats{display:grid;gap:16px;grid-template-columns:1fr}
+  @media(min-width:560px){.stats{grid-template-columns:1fr 1fr}}
+  @media(min-width:1000px){.stats{grid-template-columns:repeat(4,1fr)}}
+  .stat__label{display:flex;align-items:center;gap:9px;font-size:.78rem;color:var(--text-gray);
+    text-transform:uppercase;letter-spacing:.08em}
+  .stat__label i{color:var(--gold-primary)}
+  .stat__value{font-family:var(--font-heading);font-weight:800;font-size:2rem;line-height:1.1;margin:12px 0 6px;display:flex;align-items:baseline;gap:10px}
+  .stat__sub{font-size:.82rem;color:var(--text-gray)}
+  .trend-up{color:var(--ok);font-size:.95rem}
+  .trend-down{color:var(--bad);font-size:.95rem}
+  .trend-flat{color:var(--text-gray);font-size:.95rem}
+  .v-low{color:var(--ok)}.v-medium{color:var(--warn)}.v-high{color:#ffb067}.v-critical{color:var(--bad)}
+  .chart svg{display:block;width:100%;height:auto}
+
+  /* ---- C) Tarama tablosu ---- */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+  .chip{font:inherit;font-family:var(--font-heading);font-size:.64rem;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;padding:8px 12px;border-radius:999px;cursor:pointer;
+    background:rgba(255,255,255,.03);border:1px solid var(--glass-border);color:var(--text-gray)}
+  .chip[aria-pressed="true"]{color:#0a0a0f;border-color:transparent;background:linear-gradient(135deg,var(--gold-light),var(--gold-primary))}
+  .toolbar .input{max-width:260px;padding:8px 12px;font-size:.86rem}
+  .table-wrap{position:relative;overflow-x:auto;border-radius:10px;border:1px solid var(--hairline)}
+  table.scans{width:100%;border-collapse:collapse;min-width:760px;font-size:.88rem}
+  .scans th{text-align:left;font-family:var(--font-heading);font-size:.62rem;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--gold-primary);padding:12px 14px;background:rgba(212,175,55,.05);border-bottom:1px solid var(--glass-border)}
+  .scans td{padding:12px 14px;border-bottom:1px solid var(--hairline);vertical-align:middle}
+  .scans tr:last-child td{border-bottom:none}
+  .scans .domain{font-weight:600;word-break:break-all}
+  .score{font-family:var(--font-heading);font-weight:700;font-size:.82rem;padding:3px 9px;border-radius:6px;display:inline-block}
+  .score--low{background:rgba(28,120,61,.18);color:var(--ok)}
+  .score--medium{background:rgba(184,135,10,.18);color:var(--warn)}
+  .score--high{background:rgba(217,102,13,.18);color:#ffb067}
+  .score--critical{background:rgba(204,41,33,.18);color:var(--bad)}
+  .state{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-gray)}
+  .state--completed{color:var(--ok)}.state--failed{color:var(--bad)}
+  .link-btn{background:none;border:none;padding:0;font:inherit;font-size:.82rem;color:var(--gold-primary);
+    text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .scans a.link-btn{display:inline-flex;align-items:center;gap:6px}
+  tr.locked td{filter:blur(4px);user-select:none;pointer-events:none}
+  .lock-over{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    padding:22px;text-align:center;background:linear-gradient(180deg,rgba(10,10,15,0),rgba(10,10,15,.92) 45%)}
+  tr.detail-row td{background:rgba(0,0,0,.25)}
+  .group{margin:4px 0 14px}
+  .group__h{font-size:.8rem;font-weight:600;color:var(--gold-primary);margin:0 0 6px}
+  .find{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .find:last-child{border-bottom:none}
+  .find__t{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+  .sev{font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;color:#0a0a0f;flex:0 0 auto}
+  .sev--critical{background:#cc2921;color:#fff}.sev--high{background:#d9660d}.sev--medium{background:#b8870a}
+  .sev--low{background:#4c6b8c;color:#fff}.sev--info{background:#6b6f78;color:#fff}
+  .find__d{font-size:.82rem;color:var(--text-gray);margin:5px 0 0}
+  .find__fix{margin:7px 0 0;padding:9px 11px;border-radius:8px;background:rgba(0,0,0,.35);border:1px solid var(--hairline);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.74rem;color:#d7e3ea;white-space:pre-wrap;overflow-x:auto}
+
+  /* ---- D/E/F) Liste satırları ---- */
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;margin:0;font-size:.92rem}
+  .kv dt{color:var(--text-gray)}
+  .kv dd{margin:0;font-weight:600}
+  .sub-list{display:grid;gap:10px;margin:14px 0 0;padding:0;list-style:none}
+  .sub-list li{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-radius:9px;
+    background:rgba(255,255,255,.03);border:1px solid var(--hairline);font-size:.88rem}
+  .soon-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    padding:12px 0;border-top:1px solid var(--hairline)}
+  .soon-row:first-of-type{border-top:none}
+  .soon-row__t{display:flex;align-items:center;gap:10px;font-size:.92rem}
+  .soon-row__t i{color:var(--gold-primary);width:1.1em;text-align:center}
+  .switch{position:relative;width:44px;height:24px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid var(--hairline);flex:0 0 auto}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#777;transition:transform .25s var(--ease)}
+  .switch[aria-checked="true"]{background:rgba(212,175,55,.35);border-color:var(--gold-primary)}
+  .switch[aria-checked="true"]::after{transform:translateX(20px);background:var(--gold-light)}
+  .switch[aria-disabled="true"]{opacity:.55}
+
+  /* ---- Araçlar ---- */
+  .badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-heading);font-size:.62rem;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .badge--ok{background:rgba(47,158,68,.14);color:var(--ok);border:1px solid rgba(47,158,68,.4)}
+  .badge--fail{background:rgba(204,41,33,.14);color:#ff6b5e;border:1px solid rgba(204,41,33,.4)}
+  .record{margin:9px 0 0;padding:10px 12px;border-radius:8px;background:var(--primary-black);border:1px solid var(--hairline);
+    font-size:.78rem;color:var(--gold-primary);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere;white-space:pre-wrap}
+  .dns-row{display:flex;gap:14px;padding:14px 0;border-top:1px solid var(--hairline)}
+  .dns-row__name{font-family:var(--font-heading);font-weight:700;font-size:.74rem;letter-spacing:.08em;flex:0 0 64px;margin-top:3px}
+  .dns-row__body{flex:1;min-width:0}
+
+  /* ---- G) Destek ---- */
+  .support{display:grid;gap:12px;grid-template-columns:1fr}
+  @media(min-width:700px){.support{grid-template-columns:repeat(3,1fr)}}
+  .support a{display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;text-decoration:none;
+    background:rgba(255,255,255,.03);border:1px solid var(--glass-border);transition:border-color .25s var(--ease)}
+  .support a:hover{border-color:var(--gold-primary)}
+  .support i{font-size:1.2rem;color:var(--gold-primary);width:1.4em;text-align:center}
+  .support strong{display:block;font-size:.92rem}
+  .support span{font-size:.8rem;color:var(--text-gray)}
+
+  footer{border-top:1px solid var(--glass-border);background:var(--secondary-black);padding:30px 0;margin-top:40px;
+    color:var(--text-gray);font-size:.84rem}
+  .fbar{display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+  .flinks{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+  .flinks a{text-decoration:none}
+  .flinks a:hover{color:var(--gold-primary)}
+  @media(min-width:760px){.fbar{flex-direction:row;justify-content:space-between;text-align:left}}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:.001ms!important}}
+  .form-row--mt14{margin-top:14px}
+  .muted--sm{font-size:.8rem}
+  .stat__value--lg{font-size:1.15rem}
+  .card--mt16{margin-top:16px}
+  .card--mt12{margin-top:12px}
+  .filter-group{display:flex;gap:8px;flex-wrap:wrap}
+  .lock-msg{margin:0;font-weight:600}
+  .pill--ok{color:var(--ok);border-color:rgba(95,217,138,.4)}
+  .muted--desc{font-size:.9rem;margin:0 0 12px}
+  .btn--mt14{margin-top:14px}
+  .link--underline{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="container bar">
+      <a class="logo" href="/"><svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <path d="M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z" fill="rgba(212,175,55,.07)" stroke="#d4af37" stroke-width="2.2" stroke-linejoin="round"/>
+        <circle cx="24" cy="22" r="9" fill="none" stroke="#d4af37" stroke-width="2.2"/>
+      </svg><span>CYBER LION AI</span></a>
+      <div class="spacer"></div>
+      <div class="lang" role="group" aria-label="Dil / Language">
+        <button type="button" data-lang="tr" aria-pressed="true">TR</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="back" href="/"><span data-i18n="nav.home">Ana Sayfa</span></a>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+
+      <!-- Yalnızca ?demo=1 ile: gerçek müşteriye ASLA örnek veri gösterilmez. -->
+      <p class="demo" id="demoBanner" hidden data-i18n="demo.banner">ÖRNEK VERİ — Bu görünüm ?demo=1 ile açıldı; hiçbir değer gerçek bir hesaba ait değildir.</p>
+
+      <!-- ============ GİRİŞ KAPISI ============ -->
+      <section class="gate" id="gate">
+        <div class="card" id="gateLoading">
+          <p class="muted"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> <span data-i18n="gate.loading">Panel yükleniyor…</span></p>
+        </div>
+
+        <div class="card" id="gateLogin" hidden>
+          <h1 data-i18n="gate.title">Panelinize giriş yapın</h1>
+          <p class="muted" data-i18n="gate.desc">E-posta adresinizi yazın, tek kullanımlık bir giriş bağlantısı gönderelim. Şifreyle giriş için ana sayfadaki "Giriş Yap" düğmesini kullanabilirsiniz.</p>
+          <form id="loginForm" novalidate>
+            <label class="field" for="loginEmail" data-i18n="gate.email">E-posta</label>
+            <input class="input" id="loginEmail" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="ornek@sirket.com" />
+            <div class="form-row form-row--mt14">
+              <button class="btn btn--gold" type="submit" id="loginBtn"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span data-i18n="gate.send">Giriş bağlantısı gönder</span></button>
+              <a class="btn btn--ghost" href="/"><span data-i18n="gate.password">Şifreyle giriş</span></a>
+            </div>
+            <p class="msg" id="loginMsg" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <div class="card" id="gateDown" hidden>
+          <p class="card__title"><i class="fa-solid fa-plug-circle-exclamation" aria-hidden="true"></i><span data-i18n="gate.downTitle">Panel şu an kullanılamıyor</span></p>
+          <p class="muted" data-i18n="gate.down">Hesap hizmetine şu an ulaşılamıyor. Tarama geçmişiniz kaybolmadı; lütfen birazdan tekrar deneyin.</p>
+        </div>
+      </section>
+
+      <!-- ============ PANEL ============ -->
+      <div id="app" hidden>
+
+        <!-- A) PROFİL ÖZETİ -->
+        <section class="card" aria-labelledby="profileEmail">
+          <div class="profile">
+            <div class="avatar" id="avatar" aria-hidden="true">?</div>
+            <div class="profile__who">
+              <p class="profile__email" id="profileEmail">—</p>
+              <div class="profile__meta">
+                <span class="pill pill--free" id="planPill">FREE</span>
+                <span id="planPrice"></span>
+              </div>
+            </div>
+            <div class="quota" id="quotaBox" hidden>
+              <span class="muted muted--sm"><span data-i18n="profile.quota">Kalan tarama hakkı</span>: <strong id="quotaText">—</strong></span>
+              <div class="quota__bar" role="progressbar" aria-valuemin="0" id="quotaBar"><div class="quota__fill" id="quotaFill"></div></div>
+            </div>
+            <div class="profile__acts">
+              <a class="btn btn--gold" id="upgradeBtn" href="/pricing"><i class="fa-solid fa-crown" aria-hidden="true"></i><span data-i18n="profile.upgrade">PRO'ya Geç</span></a>
+              <a class="btn btn--ghost" id="manageBtn" href="#billing" hidden><i class="fa-solid fa-sliders" aria-hidden="true"></i><span data-i18n="profile.manage">Planı Yönet</span></a>
+              <button class="btn btn--ghost" type="button" id="logoutBtn"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span data-i18n="profile.logout">Çıkış</span></button>
+            </div>
+          </div>
+        </section>
+
+        <nav class="tabs" aria-label="Panel bölümleri" data-i18n-aria="nav.sections">
+          <ul class="tabs__list">
+            <li><a href="#overview"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i><span data-i18n="nav.overview">Genel Bakış</span></a></li>
+            <li><a href="#scans"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span data-i18n="nav.scans">Taramalar</span></a></li>
+            <li><a href="#billing"><i class="fa-solid fa-receipt" aria-hidden="true"></i><span data-i18n="nav.billing">Abonelik</span></a></li>
+            <li><a href="#security"><i class="fa-solid fa-lock" aria-hidden="true"></i><span data-i18n="nav.security">Güvenlik</span></a></li>
+            <li><a href="#notifications"><i class="fa-solid fa-bell" aria-hidden="true"></i><span data-i18n="nav.notifications">Bildirimler</span></a></li>
+            <li><a href="#tools"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i><span data-i18n="nav.tools">Araçlar</span></a></li>
+            <li><a href="#support"><i class="fa-solid fa-headset" aria-hidden="true"></i><span data-i18n="nav.support">Destek</span></a></li>
+          </ul>
+        </nav>
+
+        <!-- B) GENEL BAKIŞ -->
+        <section class="section" id="overview" aria-labelledby="overviewTitle">
+          <h2 id="overviewTitle" data-i18n="overview.title">Genel Bakış</h2>
+          <div class="stats">
+            <div class="card">
+              <p class="stat__label"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span data-i18n="overview.score">Güvenlik Skoru</span></p>
+              <p class="stat__value"><span id="statScore">—</span><span id="statTrend"></span></p>
+              <p class="stat__sub" id="statScoreSub" data-i18n="overview.scoreSub">Son tamamlanan tarama</p>
+            </div>
+            <div class="card">
+              <p class="stat__label"><i class="fa-solid fa-chart-column" aria-hidden="true"></i><span data-i18n="overview.total">Toplam Tarama</span></p>
+              <p class="stat__value"><span id="statTotal">—</span></p>
+              <p class="stat__sub"><span data-i18n="overview.month">Bu ay</span>: <strong id="statMonth">—</strong></p>
+            </div>
+            <div class="card">
+              <p class="stat__label"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span data-i18n="overview.critical">Kritik Açık</span></p>
+              <p class="stat__value"><span id="statCritical">—</span></p>
+              <p class="stat__sub" id="statCriticalSub" data-i18n="overview.criticalSub">Son taramadaki kritik bulgular</p>
+            </div>
+            <div class="card">
+              <p class="stat__label"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span data-i18n="overview.last">Son Tarama</span></p>
+              <p class="stat__value stat__value--lg"><span id="statLast">—</span></p>
+              <a class="btn btn--gold btn--sm" href="/#hero"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span data-i18n="overview.quick">Hızlı Tara</span></a>
+            </div>
+          </div>
+          <div class="card card--mt16" id="trendCard" hidden>
+            <p class="card__title"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span data-i18n="overview.trend">Skor Eğilimi</span></p>
+            <!-- Satır içi SVG: grafik kütüphanesi için script-src gevşetilmez. -->
+            <div class="chart" id="trendChart"></div>
+            <p class="note" id="trendNote"></p>
+          </div>
+        </section>
+
+        <!-- C) SON TARAMALAR -->
+        <section class="section" id="scans" aria-labelledby="scansTitle">
+          <h2 id="scansTitle" data-i18n="scans.title">Son Taramalar</h2>
+          <div class="toolbar" id="scanToolbar" hidden>
+            <div role="group" aria-label="Durum" data-i18n-aria="scans.filter" class="filter-group">
+              <button type="button" class="chip" data-filter="" aria-pressed="true" data-i18n="scans.all">Tümü</button>
+              <button type="button" class="chip" data-filter="completed" aria-pressed="false" data-i18n="scans.completed">Tamamlandı</button>
+              <button type="button" class="chip" data-filter="failed" aria-pressed="false" data-i18n="scans.failed">Başarısız</button>
+            </div>
+            <label class="sr-only" for="scanSearch" data-i18n="scans.search">Alan adında ara</label>
+            <input class="input" id="scanSearch" type="search" placeholder="Alan adında ara" data-i18n-placeholder="scans.search" />
+          </div>
+          <div class="table-wrap" id="scanWrap">
+            <table class="scans">
+              <thead>
+                <tr>
+                  <th scope="col" data-i18n="scans.date">Tarih</th>
+                  <th scope="col" data-i18n="scans.domain">Domain</th>
+                  <th scope="col" data-i18n="scans.score">Skor</th>
+                  <th scope="col" data-i18n="scans.owasp">OWASP Açıklar</th>
+                  <th scope="col" data-i18n="scans.status">Durum</th>
+                  <th scope="col" data-i18n="scans.pdf">PDF</th>
+                  <th scope="col" data-i18n="scans.detail">Detay</th>
+                </tr>
+              </thead>
+              <tbody id="scanBody"></tbody>
+            </table>
+            <div class="lock-over" id="lockOver" hidden>
+              <p class="lock-msg" id="lockText"></p>
+              <a class="btn btn--gold" href="/pricing"><i class="fa-solid fa-crown" aria-hidden="true"></i><span data-i18n="profile.upgrade">PRO'ya Geç</span></a>
+            </div>
+          </div>
+          <p class="msg" id="scanMsg" role="status" aria-live="polite"></p>
+          <button type="button" class="btn btn--ghost" id="scanMore" hidden><span data-i18n="scans.more">Daha fazla</span></button>
+        </section>
+
+        <!-- D) ABONELİK & FATURALANDIRMA -->
+        <section class="section" id="billing" aria-labelledby="billingTitle">
+          <h2 id="billingTitle" data-i18n="billing.title">Abonelik ve Faturalandırma</h2>
+          <div class="grid grid--2">
+            <div class="card">
+              <p class="card__title"><i class="fa-solid fa-gem" aria-hidden="true"></i><span data-i18n="billing.current">Mevcut Plan</span></p>
+              <dl class="kv">
+                <dt data-i18n="billing.plan">Plan</dt><dd id="billPlan">—</dd>
+                <dt data-i18n="billing.price">Ücret</dt><dd id="billPrice">—</dd>
+                <dt data-i18n="billing.renewal">Yenileme</dt><dd id="billRenewal">—</dd>
+              </dl>
+              <ul class="sub-list" id="subList" hidden></ul>
+              <p class="note" id="billNote"></p>
+              <div class="form-row form-row--mt14">
+                <a class="btn btn--gold" href="/pricing" id="billUpgrade"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i><span data-i18n="billing.change">Planı Yükselt</span></a>
+                <a class="btn btn--ghost" id="billCancel" href="mailto:destek@cyberlionai.com?subject=Abonelik%20degisikligi%20/%20iptal" hidden><i class="fa-solid fa-envelope" aria-hidden="true"></i><span data-i18n="billing.cancel">Düşür / İptal Talebi</span></a>
+              </div>
+            </div>
+            <div class="card">
+              <p class="card__title"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i><span data-i18n="billing.invoices">Faturalar ve Şirket Bilgileri</span></p>
+              <div class="soon-row">
+                <span class="soon-row__t"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i><span data-i18n="billing.invoiceList">Fatura listesi (PDF)</span></span>
+                <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
+              </div>
+              <div class="soon-row">
+                <span class="soon-row__t"><i class="fa-solid fa-building" aria-hidden="true"></i><span data-i18n="billing.company">Şirket adı ve VKN düzenleme</span></span>
+                <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
+              </div>
+              <div class="soon-row">
+                <span class="soon-row__t"><i class="fa-solid fa-rotate" aria-hidden="true"></i><span data-i18n="billing.selfServe">Plan düşürme / iptal (iyzico)</span></span>
+                <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
+              </div>
+              <p class="note" data-i18n="billing.soonNote">Bu işlemler şimdilik destek ekibimiz tarafından yapılıyor. Fatura, şirket bilgisi veya iptal talebiniz için destek@cyberlionai.com adresine yazın; iptal, mesafeli satış sözleşmesindeki koşullarla işlenir.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- E) GÜVENLİK AYARLARI -->
+        <section class="section" id="security" aria-labelledby="securityTitle">
+          <h2 id="securityTitle" data-i18n="security.title">Güvenlik Ayarları</h2>
+          <div class="grid grid--2">
+            <div class="card">
+              <p class="card__title"><i class="fa-solid fa-key" aria-hidden="true"></i><span data-i18n="security.password">Şifreyi Değiştir</span></p>
+              <form id="pwForm" novalidate>
+                <!-- Kullanıcı adı alanı: tarayıcının şifre yöneticisi hangi hesabın
+                     şifresini güncellediğini bilsin diye (görünmez, salt okunur). -->
+                <input type="email" id="pwUser" autocomplete="username" class="sr-only" tabindex="-1" readonly aria-hidden="true" />
+                <label class="field" for="pwNew" data-i18n="security.new">Yeni şifre</label>
+                <input class="input" id="pwNew" type="password" autocomplete="new-password" minlength="10" />
+                <label class="field" for="pwRepeat" data-i18n="security.repeat">Yeni şifre (tekrar)</label>
+                <input class="input" id="pwRepeat" type="password" autocomplete="new-password" minlength="10" />
+                <button class="btn btn--gold btn--mt14" type="submit" id="pwBtn"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span data-i18n="security.save">Şifreyi Güncelle</span></button>
+                <p class="msg" id="pwMsg" role="status" aria-live="polite"></p>
+                <p class="note" data-i18n="security.pwNote">En az 10 karakter. Giriş bağlantısıyla girdiyseniz buradan ilk şifrenizi de belirleyebilirsiniz.</p>
+              </form>
+            </div>
+            <div class="card">
+              <p class="card__title"><i class="fa-solid fa-user-shield" aria-hidden="true"></i><span data-i18n="security.access">Erişim</span></p>
+              <div class="soon-row">
+                <span class="soon-row__t"><i class="fa-solid fa-laptop" aria-hidden="true"></i><span><span data-i18n="security.thisDevice">Bu cihaz</span>: <strong id="thisDevice">—</strong></span></span>
+                <span class="pill pill--ok" data-i18n="security.active">Aktif</span>
+              </div>
+              <div class="soon-row">
+                <span class="soon-row__t"><i class="fa-solid fa-display" aria-hidden="true"></i><span data-i18n="security.sessions">Diğer oturumlar</span></span>
+                <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
+              </div>
+              <div class="soon-row">
+                <span class="soon-row__t"><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i><span data-i18n="security.twofa">İki adımlı doğrulama (2FA)</span></span>
+                <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
+              </div>
+              <div class="soon-row">
+                <span class="soon-row__t"><i class="fa-solid fa-code" aria-hidden="true"></i><span data-i18n="security.apiToken">API token (Enterprise)</span></span>
+                <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
+              </div>
+              <p class="note" data-i18n="security.cfNote">Cloudflare 1-Tık Düzeltme bugün de kullanılabilir: Araçlar bölümünde kendi Cloudflare token'ınızla çalışır, token bizde saklanmaz.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- F) BİLDİRİMLER -->
+        <section class="section" id="notifications" aria-labelledby="notifTitle">
+          <h2 id="notifTitle" data-i18n="notif.title">Bildirimler</h2>
+          <div class="card">
+            <div class="soon-row">
+              <span class="soon-row__t"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i><span><span data-i18n="notif.weekly">Haftalık otomatik tarama</span><br /><small class="muted" id="weeklyNote"></small></span></span>
+              <span class="switch" role="switch" id="weeklySwitch" aria-checked="false" aria-disabled="true" aria-labelledby="notifTitle"></span>
+            </div>
+          <form class="form-row card--mt12" id="monForm" novalidate hidden>
+            <div class="grow">
+              <label class="sr-only" for="monDomain" data-i18n="mon.domain">İzlenecek alan adı</label>
+              <input class="input" id="monDomain" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="ornek.com" />
+            </div>
+            <button class="btn btn--gold" id="monBtn" type="submit"><span data-i18n="mon.save">Kaydet</span></button>
+          </form>
+          <p class="msg" id="monMsg" role="status" aria-live="polite"></p>
+            <div class="soon-row">
+              <span class="soon-row__t"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i><span data-i18n="notif.email">E-posta bildirim tercihleri</span></span>
+              <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
+            </div>
+          </div>
+          <div class="card card--mt16" id="alertsCard">
+            <p class="card__title"><i class="fa-solid fa-bell" aria-hidden="true"></i><span data-i18n="alerts.title">İzleme uyarıları</span></p>
+            <ul class="alerts" id="alertsList"></ul>
+            <button class="btn btn--ghost" id="alertsRead" type="button" hidden><span data-i18n="alerts.markRead">Tümünü okundu işaretle</span></button>
+          </div>
+        </section>
+
+        <!-- ARAÇLAR (eski /dashboard ve /panel içeriği) -->
+        <section class="section" id="tools" aria-labelledby="toolsTitle">
+          <h2 id="toolsTitle" data-i18n="tools.title">Araçlar</h2>
+          <div class="grid grid--2">
+            <div class="card" id="badgeCard">
+              <p class="card__title"><i class="fa-solid fa-certificate" aria-hidden="true"></i><span data-i18n="badge.title">Canlı Güven Rozeti</span></p>
+              <p class="muted muted--desc" data-i18n="badge.desc">Doğrulanmış alan adınızın son tarama skorunu ve tarihini gösteren rozet. Skor 80'in altındaysa gri görünür. Pro ve Enterprise planlarına dahildir.</p>
+              <div id="badgeList"></div>
+              <p class="msg" id="badgeMsg" role="status" aria-live="polite"></p>
+            </div>
+            <div class="card">
+              <p class="card__title"><i class="fa-solid fa-envelope-circle-check" aria-hidden="true"></i><span data-i18n="tools.dnsTitle">SPF ve DMARC Doğrulama</span></p>
+              <p class="muted muted--desc" data-i18n="tools.dnsDesc">Alan adınızın e-posta sahteciliğine karşı SPF ve DMARC kayıtlarını kontrol edin. Sorgu sunucu tarafında gerçek DNS üzerinden yapılır.</p>
+              <form class="form-row" id="dnsForm" novalidate>
+                <div class="grow">
+                  <label class="sr-only" for="dnsDomain" data-i18n="tools.domain">Alan adı</label>
+                  <input class="input" id="dnsDomain" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="ornek.com" />
+                </div>
+                <button class="btn btn--gold" id="dnsBtn" type="submit"><span data-i18n="tools.check">Kontrol Et</span></button>
+              </form>
+              <p class="msg" id="dnsMsg" role="status" aria-live="polite"></p>
+              <div id="dnsResult" hidden>
+                <div class="dns-row">
+                  <span class="dns-row__name">SPF</span>
+                  <div class="dns-row__body">
+                    <span class="badge" id="spfBadge"></span>
+                    <pre class="record" id="spfRecord" hidden></pre>
+                    <div id="spfHow" hidden>
+                      <p class="note" data-i18n="tools.spfHow">TXT kaydı olarak kök alan adına şu biçimde ekleyin (örnek):</p>
+                      <pre class="record">v=spf1 include:_spf.google.com ~all</pre>
+                    </div>
+                  </div>
+                </div>
+                <div class="dns-row">
+                  <span class="dns-row__name">DMARC</span>
+                  <div class="dns-row__body">
+                    <span class="badge" id="dmarcBadge"></span>
+                    <p class="note" id="dmarcPolicy" hidden></p>
+                    <pre class="record" id="dmarcRecord" hidden></pre>
+                    <div id="dmarcHow" hidden>
+                      <p class="note" data-i18n="tools.dmarcHow">_dmarc alt alan adına TXT kaydı ekleyin (örnek):</p>
+                      <pre class="record">_dmarc IN TXT "v=DMARC1; p=quarantine; rua=mailto:dmarc@ornek.com"</pre>
+                    </div>
+                  </div>
+                </div>
+                <div class="dns-row" id="dnssecRow" hidden>
+                  <span class="dns-row__name">DNSSEC</span>
+                  <div class="dns-row__body">
+                    <span class="badge" id="dnssecBadge"></span>
+                    <p class="note" id="dnssecHow" hidden data-i18n="tools.dnssecHow">DNSSEC'i alan adı kayıt firmanızın (ya da Cloudflare) panelinden açın; DS kaydı kayıt firmasına eklenir.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <p class="card__title"><i class="fa-brands fa-cloudflare" aria-hidden="true"></i><span data-i18n="tools.cfTitle">Cloudflare ile 1-Tık Düzeltme</span></p>
+              <form id="cfForm" novalidate>
+                <label class="field" for="cfDomain" data-i18n="tools.domain">Alan adı</label>
+                <input class="input" id="cfDomain" type="text" autocomplete="off" spellcheck="false" placeholder="ornek.com" />
+                <label class="field" for="cfToken" data-i18n="tools.cfToken">Cloudflare API token'ınız</label>
+                <input class="input" id="cfToken" type="password" autocomplete="off" spellcheck="false" />
+                <label class="field" for="cfFix" data-i18n="tools.cfFix">Düzeltme türü</label>
+                <select class="input" id="cfFix">
+                  <option value="hsts" selected>HSTS — max-age=31536000</option>
+                  <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
+                  <option value="all" data-i18n="tools.cfAll">Tümü (HSTS + X-Frame)</option>
+                </select>
+                <button class="btn btn--gold btn--mt14" type="submit" id="cfBtn"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span data-i18n="tools.cfApply">1 Tıkla Uygula</span></button>
+                <p class="msg" id="cfMsg" role="status" aria-live="polite"></p>
+              </form>
+              <p class="note" data-i18n="tools.cfWarn">Token'ınız bizde saklanmaz; yalnızca bu istek için kullanılır. Sitenizin zaten gönderdiği başlıklar değiştirilmez. Geri almak için Cloudflare Dashboard &gt; Rules &gt; Transform Rules'dan CyberLion kuralını silin. CSP siteye özel yazılması gerektiğinden 1-Tık ile uygulanmaz.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- G) DESTEK -->
+        <section class="section" id="support" aria-labelledby="supportTitle">
+          <h2 id="supportTitle" data-i18n="support.title">Destek</h2>
+          <div class="support">
+            <!-- mailto: bağlantısını mail-links.js yakalar: Gmail yedeği + panoya kopyalama. -->
+            <a href="mailto:destek@cyberlionai.com?subject=Panel%20destek%20talebi">
+              <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+              <div><strong data-i18n="support.mail">E-posta ile destek</strong><span>destek@cyberlionai.com</span></div>
+            </a>
+            <a href="/">
+              <i class="fa-solid fa-robot" aria-hidden="true"></i>
+              <div><strong data-i18n="support.assistant">Canlı Asistan</strong><span data-i18n="support.assistantSub">Ana sayfada sağ alt köşede; sık sorulan sorular dahil</span></div>
+            </a>
+            <a href="/pages/iletisim">
+              <i class="fa-solid fa-comments" aria-hidden="true"></i>
+              <div><strong data-i18n="support.contact">İletişim formu</strong><span data-i18n="support.contactSub">Hafta içi 09:00–18:00 (TSİ)</span></div>
+            </a>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container fbar">
+      <span><span data-i18n="footer.copy">© 2026 Ali Kotan - Şahıs İşletmesi</span> · <a href="tel:+905344682769">0534 468 27 69</a> · <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a></span>
+      <nav class="flinks" aria-label="Yasal" data-i18n-aria="footer.legal">
+        <a href="/kvkk-aydinlatma-metni" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a>
+        <a href="/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a>
+        <a href="/mesafeli-satis-sozlesmesi" data-i18n="footer.distance">Mesafeli Satış</a>
+        <a href="/iade-iptal-politikasi" data-i18n="footer.refund">Teslimat ve İade</a>
+        <a href="/kullanim-kosullari" data-i18n="footer.terms">Kullanım Şartları</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="/dashboard.js" defer></script>
+  <script src="/mail-links.js" defer></script>
+</body>
+</html>

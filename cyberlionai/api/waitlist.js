@@ -16,6 +16,7 @@
 
 const store = require('./_lib/store.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
+const tg = require('./_lib/telegram.js');
 
 const TABLE = 'cl_waitlist';
 const RATE_WINDOW_SECONDS = 3600;   // 1 saat
@@ -65,7 +66,7 @@ async function insertRow(row) {
   return true;
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST') {
@@ -118,12 +119,10 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: { code: 'waitlist_failed' } });
   }
 
-  // TODO (Görev 6): TELEGRAM_BOT_TOKEN ve TELEGRAM_CHAT_ID eklendiğinde aktif olacak.
-  // TODO (Görev 6): fetch('https://api.telegram.org/bot' + process.env.TELEGRAM_BOT_TOKEN + '/sendMessage', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text: '🔔 Yeni Pro ön kayıt: ' + email + ' (' + plan + ')' + (domain ? ' - ' + domain : '') })
-  // });
+  /* E-posta maskeli gidiyor; tam adres cl_waitlist tablosunda. */
+  await tg.sendTelegram(tg.mesaj.beklemeListesi(email, plan, domain), { type: 'waitlist' });
 
   return res.status(201).json({ ok: true });
-};
+}
+
+module.exports = tg.ucuSar(handler, '/api/waitlist');

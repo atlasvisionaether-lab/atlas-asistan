@@ -24,7 +24,11 @@
  *   Enterprise.
  */
 
-/* Fiyatlar KDV hariç, Türk lirası, aylık. Kuruş yok: tutarlar tam sayı. */
+/* KDV oranı. Sayfalarda KDV DAHİL tutar da gösteriliyor (`gross`). */
+const VAT_RATE = 0.20;
+
+/* Fiyatlar KDV hariç, Türk lirası, aylık. Kuruş yok: tutarlar tam sayı.
+   `gross` = priceTry × (1 + VAT_RATE), sayfada yazdığı biçimiyle. */
 const PLANS = {
   free: {
     id: 'free',
@@ -35,14 +39,14 @@ const PLANS = {
   pro: {
     id: 'pro',
     priceTry: 299,
-    tr: { price: '₺299/ay', period: 'Aylık, istediğiniz zaman iptal' },
-    en: { price: '₺299/mo', period: 'Monthly, cancel anytime' }
+    tr: { price: '₺299/ay', gross: '₺358,80', period: 'Aylık, istediğiniz zaman iptal' },
+    en: { price: '₺299/mo', gross: '₺358.80', period: 'Monthly, cancel anytime' }
   },
   enterprise: {
     id: 'enterprise',
     priceTry: 2499,
-    tr: { price: '₺2.499/ay', period: 'Aylık, istediğiniz zaman iptal' },
-    en: { price: '₺2,499/mo', period: 'Monthly, cancel anytime' }
+    tr: { price: '₺2.499/ay', gross: '₺2.998,80', period: 'Aylık, istediğiniz zaman iptal' },
+    en: { price: '₺2,499/mo', gross: '₺2,998.80', period: 'Monthly, cancel anytime' }
   }
 };
 
@@ -57,4 +61,4 @@ function plan(id) {
   return Object.prototype.hasOwnProperty.call(PLANS, id) ? PLANS[id] : null;
 }
 
-module.exports = { PLANS, PAID_PLAN_IDS, isPaidPlan, plan };
+module.exports = { VAT_RATE, PLANS, PAID_PLAN_IDS, isPaidPlan, plan };

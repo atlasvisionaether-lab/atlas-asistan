@@ -798,9 +798,80 @@ async function updateSubscriptionStatusByRef(subscriptionRef, patch) {
   return Array.isArray(rows) ? rows.length : 0;
 }
 
+/**
+ * AI analist raporunu kaydeder ve kimliğini döndürür.
+ *
+ * Rapor, taramanın KENDİSİ değil onun anlatımı: kayıt düşerse tarama yine
+ * döner (çağıran uca bakın). `job_id` zorunlu — sahipsiz bir rapor, kimsenin
+ * okuyamayacağı bir satır olurdu, çünkü RLS sahipliği scan_jobs üzerinden
+ * kuruyor.
+ */
+async function saveAiReport(jobId, rapor) {
+  if (!UUID_RE.test(String(jobId || ''))) throw new Error('bad_job_id');
+  const rows = await request('ai_reports?select=id', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation' },
+    body: [{
+      job_id: jobId,
+      domain: rapor.domain,
+      risk_level: rapor.risk_level,
+      score: typeof rapor.score === 'number' ? rapor.score : null,
+      scanner_score: typeof rapor.scanner_score === 'number' ? rapor.scanner_score : null,
+      summary_tr: rapor.summary_tr,
+      findings: rapor.findings || [],
+      recommendations: rapor.recommendations || [],
+      model: rapor.model || null
+    }]
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+/**
+ * AI raporu OLMAYAN, tamamlanmış son işler.
+ *
+ * Yalnızca zamanlanmış üretim için (api/cron/ai-reports.js). Kullanıcı
+ * isteğinden çağrılmıyor: hiçbir sahiplik filtresi yok ve gövdesi
+ * müşteriye dönmüyor, cron ucu yalnızca sayı döndürüyor.
+ *
+ * `not.in` yerine iki sorgu kullanılıyor: PostgREST'te büyük bir `not.in`
+ * listesi URL uzunluğuna takılıyor ve bu depo PostgREST sürüm desteğini
+ * tahmin etmeyi yasaklıyor (bkz. scanStats).
+ */
+async function jobsMissingAiReport(limit) {
+  const n = Math.max(1, Math.min(50, Number(limit) || 10));
+  const jobs = await request('scan_jobs'
+    + '?status=eq.completed'
+    + '&url=not.like.cloudflare-transform%3A%2F%2F*'
+    + '&select=id,url,result,created_at'
+    + '&order=created_at.desc&limit=' + String(n * 4));
+  const list = (Array.isArray(jobs) ? jobs : []).filter(function (j) {
+    return j && j.result && typeof j.result === 'object';
+  });
+  if (!list.length) return [];
+
+  const ids = list.map(function (j) { return j.id; });
+  const raporlar = await request('ai_reports'
+    + '?job_id=in.(' + ids.map(encodeURIComponent).join(',') + ')'
+    + '&select=job_id');
+  const var_ = new Set((Array.isArray(raporlar) ? raporlar : []).map(function (r) { return r.job_id; }));
+  return list.filter(function (j) { return !var_.has(j.id); }).slice(0, n);
+}
+
+/** Bir işin EN YENİ AI raporu. Sahiplik işin kendisinden geliyor. */
+async function latestAiReport(userId, jobId) {
+  const job = await getJob(userId, jobId);
+  if (!job) return null;
+  const rows = await request('ai_reports'
+    + '?job_id=eq.' + encodeURIComponent(job.id)
+    + '&select=id,domain,risk_level,score,scanner_score,summary_tr,findings,recommendations,model,created_at'
+    + '&order=created_at.desc&limit=1');
+  return rows && rows[0] ? rows[0] : null;
+}
+
 module.exports = {
 
-  isConfigured, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
+  saveAiReport, latestAiReport, jobsMissingAiReport,
+  isConfigured, request, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans, scanStats,
   listJobs, jobScoreTrend, getJob, getJobWithFindings, SEVERITY_ORDER,
   enterpriseScanTargets,

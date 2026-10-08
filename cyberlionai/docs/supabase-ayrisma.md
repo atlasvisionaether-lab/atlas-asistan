@@ -114,7 +114,7 @@ SELECT id, anonymous_session_id, host, score, checks_total, checks_passed,
 
 **Kota notu:** ücretsiz tarama sayacı Upstash'te tutuluyor ve Upstash
 değişmiyor. Anahtar `cl:quota:<oturum kimliği>` olduğu için taşıma sonrası
-kota da olduğu gibi devam eder — yeniden 5 hak doğmaz.
+kota da olduğu gibi devam eder — yeniden 3 hak doğmaz.
 
 **Rollback:** taşıma tek yönlü kopyalama; eski projedeki satırlara
 dokunulmaz. Yeni projede sorun çıkarsa ortam değişkenleri eski değerlere
@@ -354,7 +354,7 @@ uzun sürecekse şunu öneririm (ayrı, küçük bir PR):
 - Kayıt sekmesini ve kota dolduğunda açılan kayıt modalını geçici olarak
   devre dışı bırakmak
 - Yerine tek cümlelik bir bilgi: *"Hesap oluşturma yakında açılıyor. Şimdilik
-  kayıt olmadan 5 ücretsiz tarama yapabilirsiniz."*
+  kayıt olmadan 3 ücretsiz tarama yapabilirsiniz."*
 - Giriş, şifre sıfırlama ve magic link açık kalır (bunlar çalışıyor)
 
 Bunu bir bayrakla (`CONFIG.signupEnabled`) yapmak, geçiş bitince tek satırla

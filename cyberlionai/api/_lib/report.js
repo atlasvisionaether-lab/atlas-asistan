@@ -66,7 +66,7 @@ const T = {
     check: 'Kontrol', severity: 'Önem', state: 'Durum',
     fix: 'Düzeltme', impact: 'Etki',
     riskNames: { low: 'Düşük', medium: 'Orta', high: 'Yüksek', critical: 'Kritik' },
-    sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
+    sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük', info: 'Bilgi' },
     states: { pass: 'Geçti', fail: 'Kaldı', skipped: 'Ölçülemedi',
               skippedNa: 'Uygulanabilir değil', skippedNi: 'Uygulanmamış' },
     bands: 'Eşikler: 85–100 Düşük · 70–84 Orta · 50–69 Yüksek · 0–49 Kritik',
@@ -91,7 +91,7 @@ const T = {
     check: 'Check', severity: 'Severity', state: 'Status',
     fix: 'Fix', impact: 'Impact',
     riskNames: { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' },
-    sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
+    sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low', info: 'Info' },
     states: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured',
               skippedNa: 'Not applicable', skippedNi: 'Not implemented' },
     bands: 'Thresholds: 85–100 Low · 70–84 Medium · 50–69 High · 0–49 Critical',
@@ -113,8 +113,8 @@ const T = {
 const CHECKS = {
   tr: {
     https: ['HTTPS kullanımı', 'Trafiğin şifrelenmemesi, araya giren birinin veriyi okumasına ve değiştirmesine izin verir.', 'Tüm trafiği HTTPS üzerinden sunun; HTTP isteklerini 301 ile HTTPS\'e yönlendirin.'],
-    hsts: ['Strict-Transport-Security', 'HSTS olmadan tarayıcı ilk isteği HTTP ile yapabilir; SSL stripping saldırısına açık kalır.', 'Strict-Transport-Security: max-age=63072000; includeSubDomains'],
-    csp: ['Content-Security-Policy', 'CSP olmadan XSS açığı, sayfada istediği script\'i çalıştırabilir.', 'Content-Security-Policy: default-src \'self\'; object-src \'none\'; base-uri \'self\''],
+    hsts: ['Strict-Transport-Security', 'HSTS olmadan tarayıcı ilk isteği HTTP ile yapabilir; SSL stripping saldırısına açık kalır.', 'Strict-Transport-Security: max-age=63072000; includeSubDomains   (includeSubDomains: tüm alt alan adlarınız HTTPS sunmuyorsa bu kısmı çıkarın)'],
+    csp: ['Content-Security-Policy', 'CSP olmadan XSS açığı, sayfada istediği script\'i çalıştırabilir.', 'ÖNCE TEST ORTAMINDA DENEYİN: bu politika olduğu gibi uygulanırsa satır içi script/stil, yazı tipi ve analitiği engelleyip sitenizi bozabilir. Önce Content-Security-Policy-Report-Only adıyla ekleyin, konsoldaki ihlallere göre uyarlayın. Başlangıç: Content-Security-Policy: default-src \'self\'; object-src \'none\'; base-uri \'self\''],
     xframe: ['Çerçeveleme koruması', 'Sayfa başka bir sitenin iframe\'ine gömülüp clickjacking için kullanılabilir.', 'X-Frame-Options: DENY   (veya CSP frame-ancestors \'none\')'],
     nosniff: ['MIME tipi zorlaması', 'Tarayıcı içerik tipini tahmin ederek zararlı dosyayı script gibi çalıştırabilir.', 'X-Content-Type-Options: nosniff'],
     referrer: ['Referrer-Policy', 'Adres bilgisi dış sitelere sızabilir; iç yolları ve parametreleri açığa çıkarır.', 'Referrer-Policy: strict-origin-when-cross-origin'],
@@ -128,7 +128,7 @@ const CHECKS = {
     /* Bu bes kontrol motorda vardi ama BURADA yoktu; PDF'te ham kimlikleri
        ("coop", "sri") gorunuyordu. */
     coop: ['Çapraz köken açıcı politikası', 'Sekmeler arası yalıtım olmadan sayfa, açan pencereyle aynı süreçte kalabilir.', 'Cross-Origin-Opener-Policy: same-origin'],
-    coep: ['Çapraz köken gömme politikası', 'Yalıtım tamamlanmadan hassas ölçüm API\'leri kapalı kalır.', 'Cross-Origin-Embedder-Policy: require-corp'],
+    coep: ['Çapraz köken gömme politikası', 'Yalıtım tamamlanmadan hassas ölçüm API\'leri kapalı kalır.', 'Cross-Origin-Embedder-Policy: require-corp   (Dikkat: CORP/CORS başlığı olmayan dış resim, video ve gömülü içerikleri engeller; önce test ortamında deneyin)'],
     corp: ['Çapraz köken kaynak politikası', 'Kaynaklar başka sitelerce gömülebilir.', 'Cross-Origin-Resource-Policy: same-origin'],
     cors: ['Çapraz köken paylaşımı (CORS)', 'Joker köken ile kimlik bilgisi birlikte kullanılamaz; yapılandırma hatalıdır.', 'Access-Control-Allow-Origin: * ile Allow-Credentials: true birlikte kullanılmaz; belirli bir köken yazın.'],
     sri: ['Alt kaynak bütünlüğü (SRI)', 'Dış kaynaklı script değiştirilirse sayfa bunu fark etmez.', '<script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous">'],
@@ -136,12 +136,29 @@ const CHECKS = {
        girmiyorlar (agirlik info=0) ama bulgu olarak raporlaniyorlar. */
     spf: ['SPF kaydı', 'SPF olmadan üçüncü bir kişi bu alan adı adına e-posta gönderebilir ve alıcının bunu eleyecek dayanağı olmaz.', 'TXT kaydı:  v=spf1 include:<posta sağlayıcınız> -all'],
     dmarc: ['DMARC politikası', 'DMARC olmadan (veya p=none ile) SPF/DKIM doğrulamasından geçemeyen sahte e-posta yine teslim edilir.', 'TXT kaydı:  _dmarc.<alan>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<alan>'],
-    dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.']
+    dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.'],
+    blacklist: ['Kara liste (URLhaus)', 'Alan adınızın abuse.ch URLhaus kötü amaçlı yazılım listesinde olup olmadığını gösterir; listedeyse tarayıcılar ve güvenlik ürünleri sitenizi engelleyebilir.', 'Zararlı dosyayı/bağlantıyı kaldırın, sunucuyu temizleyin ve URLhaus üzerinden kaldırma talebi gönderin (urlhaus.abuse.ch).'],
+    dnssec: ['DNSSEC', 'DNSSEC, alan adınızın DNS yanıtlarını imzalar; sahte DNS yanıtıyla ziyaretçilerin başka bir sunucuya yönlendirilmesini zorlaştırır.', 'DNS sağlayıcınızda (ör. Cloudflare: DNS › Settings › DNSSEC) DNSSEC\'i açın ve verilen DS kaydını kayıt firmanıza ekleyin.'],
+    /* OWASP Lite kontrolleri (owasp.js). Bunlar burada yoktu; PDF'te ham
+       kimlikleri ("a02_hsts_preload") ve boş düzeltme kutusu görünüyordu. */
+    a01___env: ['Açıkta .env dosyası', '.env dosyası genellikle veritabanı şifreleri ve API anahtarları içerir; herkese açıksa doğrudan ele geçirilebilir.', 'Dosyayı web kökünden kaldırın ya da sunucuda bu yola erişimi engelleyin; içindeki anahtarları sızmış sayıp yenileyin.'],
+    a01___env_bak: ['Açıkta .env yedeği', '.env yedeği asıl dosyayla aynı gizli bilgileri taşır.', 'Yedeği web kökünden kaldırın; içindeki anahtarları sızmış sayıp yenileyin.'],
+    a01___git_HEAD: ['Açıkta .git dizini', 'Açık .git dizini, sitenin kaynak kodunu ve geçmişini indirmeye izin verir.', '.git dizinini yayına almayın ya da sunucuda /.git yoluna erişimi engelleyin.'],
+    a01___DS_Store: ['Açıkta .DS_Store dosyası', '.DS_Store dizindeki dosya adlarını ifşa eder.', 'Dosyayı silin ve sunucuda /.DS_Store yoluna erişimi engelleyin.'],
+    a01__config_json: ['Açıkta config.json', 'Yapılandırma dosyaları gizli anahtar veya iç adres içerebilir.', 'Yapılandırma dosyasını web kökünden çıkarın; içindeki gizli bilgileri yenileyin.'],
+    a01__backup_zip: ['Açıkta yedek arşivi (backup.zip)', 'Yedek arşivi sitenin kodunu ve verisini bütünüyle içerebilir.', 'Yedek arşivini web kökünden kaldırın.'],
+    a02_hsts_preload: ['HSTS preload hazırlığı', 'Preload listesindeki siteler ilk ziyarette bile yalnızca HTTPS ile açılır. İsteğe bağlı bir sağlamlaştırmadır; eksikliği tek başına bir açık değildir.', 'İsteğe bağlı. Yalnızca TÜM alt alan adlarınız HTTPS sunuyorsa: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload ekleyip hstspreload.org\'a başvurun. Listeden çıkmak aylar sürer; emin değilseniz uygulamayın.'],
+    a03_xss_reflection: ['Yansıyan XSS (güvenli deneme)', 'Sayfaya yansıyan girdi, saldırganın ziyaretçinin tarayıcısında script çalıştırmasına izin verebilir.', 'Kullanıcı girdisini sayfaya yazmadan önce bağlama uygun şekilde kaçışlayın (HTML encode); CSP ile ek koruma katmanı ekleyin.'],
+    a03_sqli_error: ['SQL enjeksiyonu (hata tabanlı)', 'Veritabanı hata mesajı, sorguya dışarıdan müdahale edilebildiğine işaret eder; veriler okunabilir veya değiştirilebilir.', 'Sorgularda parametreli ifadeler (prepared statement) kullanın; veritabanı hata mesajlarını kullanıcıya göstermeyin.'],
+    a05_debug_mode: ['Hata ayıklama çıktısı', 'Hata ayıklama çıktısı dosya yollarını, sürümleri ve bazen gizli bilgileri sızdırır.', 'Üretimde hata ayıklama modunu kapatın (ör. APP_DEBUG=false, DEBUG=False) ve ayrıntılı hata sayfalarını gizleyin.'],
+    a05_dir_listing: ['Dizin listeleme', 'Dizin listeleme, sunucudaki dosyaların tamamını herkese gösterir.', 'Nginx: autoindex off;    Apache: Options -Indexes'],
+    a06_outdated_libs: ['Güncelliğini yitirmiş kütüphaneler', 'Eski kütüphanelerin bilinen ve kamuya açık güvenlik açıkları vardır.', 'Sayfadaki eski kütüphaneleri (jQuery, Bootstrap, AngularJS vb.) güncel sürümlere yükseltin.'],
+    a07_rate_limit: ['Hız sınırı (bilgi)', 'Hız sınırı olmayan uçlar kaba kuvvet denemelerine ve kötüye kullanıma açıktır.', 'Giriş ve form uçlarında IP başına istek sınırı uygulayın.']
   },
   en: {
     https: ['HTTPS in use', 'Unencrypted traffic lets an interceptor read and modify data.', 'Serve all traffic over HTTPS; 301-redirect HTTP to HTTPS.'],
-    hsts: ['Strict-Transport-Security', 'Without HSTS the first request may go over HTTP, allowing SSL stripping.', 'Strict-Transport-Security: max-age=63072000; includeSubDomains'],
-    csp: ['Content-Security-Policy', 'Without CSP an XSS flaw can execute any script on the page.', 'Content-Security-Policy: default-src \'self\'; object-src \'none\'; base-uri \'self\''],
+    hsts: ['Strict-Transport-Security', 'Without HSTS the first request may go over HTTP, allowing SSL stripping.', 'Strict-Transport-Security: max-age=63072000; includeSubDomains   (includeSubDomains: drop it unless all your subdomains serve HTTPS)'],
+    csp: ['Content-Security-Policy', 'Without CSP an XSS flaw can execute any script on the page.', 'TRY IT ON STAGING FIRST: deployed as-is this policy can block inline scripts/styles, fonts and analytics and break your site. Add it as Content-Security-Policy-Report-Only first and adapt it using the console violations. Starting point: Content-Security-Policy: default-src \'self\'; object-src \'none\'; base-uri \'self\''],
     xframe: ['Framing protection', 'The page can be embedded in another site\'s iframe for clickjacking.', 'X-Frame-Options: DENY   (or CSP frame-ancestors \'none\')'],
     nosniff: ['MIME type enforcement', 'The browser may sniff content type and execute a file as script.', 'X-Content-Type-Options: nosniff'],
     referrer: ['Referrer-Policy', 'Address details can leak to third parties, exposing internal paths.', 'Referrer-Policy: strict-origin-when-cross-origin'],
@@ -153,13 +170,29 @@ const CHECKS = {
     tls_cert: ['SSL certificate', 'An expired or untrusted certificate shows users a security warning.', 'Renew the certificate and ensure the chain is complete.'],
     tls_legacy: ['Legacy TLS versions', 'Accepting TLS 1.0/1.1 enables downgrade attacks.', 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;    Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3'],
     coop: ['Cross-Origin-Opener-Policy', 'Without cross-tab isolation the page may share a process with its opener.', 'Cross-Origin-Opener-Policy: same-origin'],
-    coep: ['Cross-Origin-Embedder-Policy', 'Without full isolation, high-resolution measurement APIs stay disabled.', 'Cross-Origin-Embedder-Policy: require-corp'],
+    coep: ['Cross-Origin-Embedder-Policy', 'Without full isolation, high-resolution measurement APIs stay disabled.', 'Cross-Origin-Embedder-Policy: require-corp   (Caution: blocks external images, video and embeds without CORP/CORS headers; try it on staging first)'],
     corp: ['Cross-Origin-Resource-Policy', 'Resources can be embedded by other sites.', 'Cross-Origin-Resource-Policy: same-origin'],
     cors: ['Cross-origin sharing (CORS)', 'A wildcard origin cannot be combined with credentials; the configuration is invalid.', 'Do not combine Access-Control-Allow-Origin: * with Allow-Credentials: true; name a specific origin.'],
     sri: ['Subresource Integrity (SRI)', 'If an external script is altered, the page will not notice.', '<script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous">'],
     spf: ['SPF record', 'Without SPF a third party can send email as this domain and the recipient has no basis to reject it.', 'TXT record:  v=spf1 include:<your mail provider> -all'],
     dmarc: ['DMARC policy', 'Without DMARC (or with p=none) forged email that fails SPF/DKIM is still delivered.', 'TXT record:  _dmarc.<domain>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<domain>'],
-    dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.']
+    dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.'],
+    blacklist: ['Blacklist (URLhaus)', 'Shows whether your domain is on the abuse.ch URLhaus malware list; if it is, browsers and security products may block your site.', 'Remove the malicious file or link, clean the server and request removal via URLhaus (urlhaus.abuse.ch).'],
+    dnssec: ['DNSSEC', 'DNSSEC signs your domain\'s DNS answers, making it harder to send visitors to another server with forged DNS responses.', 'Enable DNSSEC at your DNS provider (e.g. Cloudflare: DNS › Settings › DNSSEC) and add the DS record it gives you at your registrar.'],
+    /* OWASP Lite checks (owasp.js). */
+    a01___env: ['Exposed .env file', 'A .env file usually holds database passwords and API keys; if public, they can be taken directly.', 'Remove the file from the web root or block this path on the server; treat the keys inside as leaked and rotate them.'],
+    a01___env_bak: ['Exposed .env backup', 'A .env backup carries the same secrets as the original file.', 'Remove the backup from the web root; treat the keys inside as leaked and rotate them.'],
+    a01___git_HEAD: ['Exposed .git directory', 'An exposed .git directory lets anyone download the site\'s source code and history.', 'Do not deploy the .git directory, or block the /.git path on the server.'],
+    a01___DS_Store: ['Exposed .DS_Store file', '.DS_Store reveals the file names in a directory.', 'Delete the file and block the /.DS_Store path on the server.'],
+    a01__config_json: ['Exposed config.json', 'Configuration files can contain secrets or internal addresses.', 'Move the configuration file out of the web root; rotate any secrets it contains.'],
+    a01__backup_zip: ['Exposed backup archive (backup.zip)', 'A backup archive can contain the site\'s entire code and data.', 'Remove the backup archive from the web root.'],
+    a02_hsts_preload: ['HSTS preload readiness', 'Preloaded sites open over HTTPS only, even on the first visit. It is optional hardening; its absence alone is not a vulnerability.', 'Optional. Only if ALL your subdomains serve HTTPS: add Strict-Transport-Security: max-age=63072000; includeSubDomains; preload and apply at hstspreload.org. Removal from the list takes months; skip it if unsure.'],
+    a03_xss_reflection: ['Reflected XSS (safe probe)', 'Input reflected into the page can let an attacker run script in a visitor\'s browser.', 'Escape user input for its context (HTML-encode) before writing it to the page; add CSP as an extra layer.'],
+    a03_sqli_error: ['SQL injection (error-based)', 'A database error message suggests the query can be tampered with from outside; data may be read or changed.', 'Use parameterised queries (prepared statements); never show database error messages to users.'],
+    a05_debug_mode: ['Debug output', 'Debug output leaks file paths, versions and sometimes secrets.', 'Turn off debug mode in production (e.g. APP_DEBUG=false, DEBUG=False) and hide detailed error pages.'],
+    a05_dir_listing: ['Directory listing', 'Directory listing shows every file on the server to anyone.', 'Nginx: autoindex off;    Apache: Options -Indexes'],
+    a06_outdated_libs: ['Outdated libraries', 'Outdated libraries have known, publicly documented vulnerabilities.', 'Upgrade outdated libraries on the page (jQuery, Bootstrap, AngularJS, etc.) to current versions.'],
+    a07_rate_limit: ['Rate limiting (info)', 'Endpoints without rate limits are open to brute force and abuse.', 'Apply per-IP request limits on login and form endpoints.']
   }
 };
 

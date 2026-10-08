@@ -192,10 +192,9 @@
             <input id="cf-token" type="password" placeholder="Boş bırakılırsa Preview env token kullanılır — bizde saklanmaz" autocomplete="off" />
             <label for="cf-fix" data-t-tr="Düzeltme Türü" data-t-en="Fix Type">Düzeltme Türü</label>
             <select id="cf-fix">
-              <option value="hsts" selected>HSTS — max-age=31536000; includeSubDomains; preload</option>
-              <option value="csp">CSP — default-src 'self'</option>
+              <option value="hsts" selected>HSTS — max-age=31536000</option>
               <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
-              <option value="all">Tümü (HSTS + CSP + X-Frame)</option>
+              <option value="all">Tümü (HSTS + X-Frame)</option>
             </select>
             <button type="submit" id="cf-btn" data-t-tr="1 Tıkla Ekle (Gerçek)" data-t-en="Apply 1-Click Fix (Live)">1 Tıkla Ekle (Gerçek)</button>
             <p class="cf-result" id="cf-result" role="status" aria-live="polite"></p>
@@ -221,10 +220,9 @@
             <input id="cf-token" type="password" placeholder="Leave empty to use the Preview env token — never stored" autocomplete="off" />
             <label for="cf-fix">Fix Type</label>
             <select id="cf-fix">
-              <option value="hsts" selected>HSTS — max-age=31536000; includeSubDomains; preload</option>
-              <option value="csp">CSP — default-src 'self'</option>
+              <option value="hsts" selected>HSTS — max-age=31536000</option>
               <option value="xframe">X-Frame-Options — SAMEORIGIN</option>
-              <option value="all">All (HSTS + CSP + X-Frame)</option>
+              <option value="all">All (HSTS + X-Frame)</option>
             </select>
             <button type="submit" id="cf-btn">Apply 1-Click Fix (Live)</button>
             <p class="cf-result" id="cf-result" role="status" aria-live="polite"></p>
@@ -252,6 +250,11 @@
           <p id="dash-auth-text"
              data-t-tr="Taramalarınızı görmek için giriş yapın. E-posta adresinizi yazın, tek kullanımlık bir giriş bağlantısı gönderelim."
              data-t-en="Sign in to see your scans. Enter your email and we will send a one-time sign-in link.">Taramalarınızı görmek için giriş yapın.</p>
+          <!-- /api/checkout oturumsuz isteği buraya ?checkout=<plan> ile
+               gönderiyor. Giriş sonrası kullanıcı /odeme'ye geri döner. -->
+          <p class="dash-note" id="dash-checkout-note" hidden
+             data-t-tr="Ödemeye devam etmek için giriş yapın. Giriş bağlantısına tıkladığınızda ödeme sayfasına geri dönersiniz."
+             data-t-en="Sign in to continue to payment. After you click the sign-in link you will return to the payment page.">Ödemeye devam etmek için giriş yapın.</p>
           <form id="dash-login" novalidate>
             <label for="dash-email" data-t-tr="E-posta" data-t-en="Email">E-posta</label>
             <input id="dash-email" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="ornek@sirket.com" />
@@ -298,13 +301,14 @@
 
   <footer>
     <div class="container fbar">
-      <span data-t-tr="© 2026 Cyber Lion AI — Tüm Hakları Saklıdır." data-t-en="© 2026 Cyber Lion AI — All Rights Reserved.">© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.</span>
+      <span data-t-tr="© 2026 Ali Kotan - Şahıs İşletmesi" data-t-en="© 2026 Ali Kotan - Sole Proprietorship">© 2026 Ali Kotan - Şahıs İşletmesi</span>
       <nav class="flinks">
-        <a href="/pages/kvkk-aydinlatma-metni" data-t-tr="KVKK Aydınlatma Metni" data-t-en="KVKK Privacy Notice">KVKK Aydınlatma Metni</a>
-        <a href="/pages/gizlilik-politikasi" data-t-tr="Gizlilik Politikası" data-t-en="Privacy Policy">Gizlilik Politikası</a>
-        <a href="/pages/mesafeli-satis-sozlesmesi" data-t-tr="Mesafeli Satış" data-t-en="Distance Sales">Mesafeli Satış</a>
-        <a href="/pages/teslimat-ve-iade-sartlari" data-t-tr="Teslimat ve İade" data-t-en="Delivery &amp; Returns">Teslimat ve İade</a>
-        <a href="/pages/kullanim-sartlari" data-t-tr="Kullanım Şartları" data-t-en="Terms of Use">Kullanım Şartları</a>
+        <a href="/kvkk-aydinlatma-metni" data-t-tr="KVKK Aydınlatma Metni" data-t-en="KVKK Privacy Notice">KVKK Aydınlatma Metni</a>
+        <a href="/gizlilik-politikasi" data-t-tr="Gizlilik Politikası" data-t-en="Privacy Policy">Gizlilik Politikası</a>
+        <a href="/mesafeli-satis-sozlesmesi" data-t-tr="Mesafeli Satış" data-t-en="Distance Sales">Mesafeli Satış</a>
+        <a href="/pages/on-bilgilendirme-formu" data-t-tr="Ön Bilgilendirme Formu" data-t-en="Pre-Contractual Information Form">Ön Bilgilendirme Formu</a>
+        <a href="/iade-iptal-politikasi" data-t-tr="Teslimat ve İade" data-t-en="Delivery &amp; Returns">Teslimat ve İade</a>
+        <a href="/kullanim-kosullari" data-t-tr="Kullanım Şartları" data-t-en="Terms of Use">Kullanım Şartları</a>
         <a href="/pages/cerez-politikasi" data-t-tr="Çerez Politikası" data-t-en="Cookie Policy">Çerez Politikası</a>
       </nav>
     </div>
@@ -770,10 +774,39 @@
       el('dash-more').addEventListener('click', function () { load(true); });
     }
 
+    /* ---- Ödemeye dönüş ----
+       /api/checkout oturumsuz isteği /panel?checkout=<plan> adresine
+       gönderiyor. Plan localStorage'a yazılıyor: giriş bağlantısı e-postadan
+       YENİ bir sekmede açılıyor ve sessionStorage oraya taşınmıyor. Ana sayfa
+       bağlantıyı doğruladıktan sonra aynı anahtarı okuyup /odeme'ye döner.
+       Doğrudan /api/checkout'a değil /odeme'ye: sözleşme onayları ödemeden
+       önce orada alınıyor. */
+    var CHECKOUT_KEY = 'cl_checkout_plan';
+    var CHECKOUT_TTL_MS = 60 * 60 * 1000;
+    var CHECKOUT_PLANS = ['pro', 'enterprise'];
+
+    function rememberCheckout() {
+      var plan = String(new URLSearchParams(location.search).get('checkout') || '').toLowerCase();
+      if (CHECKOUT_PLANS.indexOf(plan) === -1) return;
+      try { localStorage.setItem(CHECKOUT_KEY, JSON.stringify({ plan: plan, at: Date.now() })); } catch (e) {}
+      var note = el('dash-checkout-note');
+      if (note) note.hidden = false;
+    }
+
+    function pendingCheckout() {
+      try {
+        var v = JSON.parse(localStorage.getItem(CHECKOUT_KEY) || 'null');
+        if (v && CHECKOUT_PLANS.indexOf(v.plan) !== -1 && Date.now() - v.at < CHECKOUT_TTL_MS) return v.plan;
+        localStorage.removeItem(CHECKOUT_KEY);
+      } catch (e) {}
+      return null;
+    }
+
     /* ---- Açılış ---- */
     function start() {
       bindLogin();
       bindFilters();
+      rememberCheckout();
 
       fetch('/api/auth/me', { headers: { 'Accept': 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; })
@@ -785,6 +818,12 @@
             return;
           }
           if (!me.authenticated) { showLogin(); return; }
+          var plan = pendingCheckout();
+          if (plan) {
+            try { localStorage.removeItem(CHECKOUT_KEY); } catch (e) {}
+            location.replace('/odeme?plan=' + plan);
+            return;
+          }
           state.email = me.user && me.user.email;
           el('dash-main').hidden = false;
           el('dash-auth').hidden = true;

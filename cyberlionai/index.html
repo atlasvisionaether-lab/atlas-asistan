@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a0a0f" />
 
   <title>Cyber Lion AI - Yapay Zeka ile Güvenlik Taraması</title>
-  <meta name="description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez." />
+  <meta name="description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 3 ücretsiz tarama, kayıt gerekmez." />
   <meta name="keywords" content="güvenlik, siber güvenlik, AI, tarama, SSL, TLS, güvenlik başlıkları, CSP, HSTS" />
   <meta name="author" content="Cyber Lion AI" />
   <meta name="robots" content="index, follow" />
@@ -15,7 +15,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Cyber Lion AI" />
   <meta property="og:title" content="Cyber Lion AI - Yapay Zeka Destekli Güvenlik Tarama Platformu" />
-  <meta property="og:description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez." />
+  <meta property="og:description" content="Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 3 ücretsiz tarama, kayıt gerekmez." />
   <meta property="og:url" content="https://cyberlionai.com/" />
   <meta property="og:locale" content="tr_TR" />
   <meta property="og:locale:alternate" content="en_US" />
@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g" crossorigin="anonymous" />
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z' fill='%230a0a0f' stroke='%23d4af37' stroke-width='2.5'/%3E%3Ccircle cx='24' cy='22' r='9' fill='none' stroke='%23d4af37' stroke-width='2.5'/%3E%3C/svg%3E" />
 
@@ -317,7 +317,7 @@
   .nav__links { display: none; align-items: center; gap: 30px; margin-left: auto; }
   .nav__link {
     position: relative; color: var(--text-gray);
-    font-size: 0.9rem; font-weight: 500; padding: 6px 0;
+    font-size: 0.9rem; font-weight: 500; padding: 6px 0; white-space: nowrap;
     transition: color var(--transition-speed) var(--transition-ease);
   }
   .nav__link::after {
@@ -459,19 +459,23 @@
     align-items: stretch; margin-bottom: 40px;
   }
 
+  /* auto-fit: canlı sayaç açılınca (eşik üstü) beşinci kart olarak satıra
+     katılır, kapalıyken dört kart satırı doldurur. */
   .hero__stats {
-    display: grid; grid-template-columns: 1fr; gap: 14px;
-    max-width: 900px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;
+    max-width: 900px; margin: 36px auto 0;
   }
   .stat {
     padding: 20px 16px; border-radius: var(--radius);
     border: 1px solid var(--glass-border); background: var(--glass-bg);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
+  .stat__icon { display: block; margin-bottom: 8px; font-size: 1.2rem; color: var(--gold-primary); }
   .stat__value {
     display: block; font-family: var(--font-heading); font-weight: 800;
     font-size: 1.7rem; color: var(--gold-primary); line-height: 1.1;
   }
+  .stat__value--text { font-size: 1.25rem; letter-spacing: 0.06em; text-transform: uppercase; }
   .stat__label {
     display: block; margin-top: 6px; font-size: 0.8rem;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-gray);
@@ -757,6 +761,8 @@
   }
   @keyframes shimmer { to { background-position: 300% 0; } }
 
+  .plan__gross { display: block; font-size: 0.85rem; font-weight: 600; color: var(--gold-primary); margin-top: 6px; }
+
   .plan--enterprise {
     background: var(--glass-bg);
     backdrop-filter: blur(14px) saturate(140%);
@@ -817,10 +823,14 @@
   .footer__list a, .footer__list span { color: var(--text-gray); font-size: 0.9rem; transition: color var(--transition-speed) var(--transition-ease); }
   .footer__list a:hover { color: var(--gold-primary); }
 
-  .footer__contact { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; }
-  .footer__contact i { color: var(--gold-primary); }
-  .footer__contact a { color: var(--text-white); text-decoration: none; border-bottom: 1px solid var(--glass-border); }
-  .footer__contact a:hover { color: var(--gold-light); border-bottom-color: var(--gold-primary); }
+  .footer__copyright { font-size: 0.8rem; margin: 0; }
+  .footer__title--sub { margin-top: 26px; }
+  .footer__pay { color: var(--text-gray); font-size: 0.9rem; margin: 0 0 14px; }
+  .iyz-badge { display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 10px;
+    border: 1px solid var(--hairline); background: rgba(255,255,255,.04); color: var(--text-gray); font-size: 0.8rem; }
+  .iyz-badge__mark { font-weight: 600; font-size: 1.02rem; color: #1e64ff; background: #fff; padding: 2px 10px; border-radius: 6px; }
+  .footer__list li { overflow-wrap: anywhere; }
+  .footer__list li i { color: var(--gold-primary); width: 1.1em; text-align: center; }
   .footer__bottom {
     margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--hairline);
     display: flex; flex-direction: column; gap: 12px;
@@ -970,6 +980,7 @@
   .account__item:hover { background: var(--surface-raised); color: var(--gold-primary); }
   .account__item:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: -2px; }
   .account__item--danger:hover { color: #ff8a80; }
+  a.account__item { text-decoration: none; }
 
   @media (max-width: 640px) {
     /* Dar ekranda e-posta yerine yalnızca simge; menü tam genişliğe yayılır. */
@@ -1152,6 +1163,62 @@
                 border-color var(--transition-speed) var(--transition-ease);
   }
   .chip:hover { color: var(--gold-primary); border-color: var(--gold-primary); }
+  .checkout-decl { max-width: 760px; margin: 28px auto 0; padding: 14px 16px; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: var(--glass-bg); font-size: 0.9rem; text-align: left; }
+  .checkout-decl label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+  .checkout-decl input { margin-top: 4px; accent-color: var(--gold-primary); }
+  .checkout-decl a { color: var(--gold-primary); }
+  .checkout-decl__msg { margin: 8px 0 0; color: var(--sev-medium); }
+  .fixhow { margin-top: 8px; font-size: 0.8rem; }
+  .fixhow summary { cursor: pointer; color: var(--gold-primary); font-weight: 600; }
+  .fixhow summary:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: 2px; }
+  .fixhow__tabs { display: inline-flex; margin: 8px 0 6px; border: 1px solid var(--hairline); border-radius: var(--radius-sm); overflow: hidden; }
+  .fixhow__tabs button { padding: 5px 10px; font: inherit; color: var(--text-gray); background: transparent; border: 0; cursor: pointer; }
+  .fixhow__tabs button[aria-pressed="true"] { background: rgba(212, 175, 55, 0.18); color: var(--gold-light); }
+  .fixhow__code {
+    display: block; padding: 9px 11px; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere;
+    background: var(--primary-black); border: 1px solid var(--hairline); color: var(--gold-primary); font-size: 0.76rem;
+  }
+  .fixhow__note { display: block; margin-top: 6px; color: var(--text-gray); font-size: 0.74rem; }
+  .fixhow__copy, .fixact__btn {
+    margin-top: 6px; padding: 5px 10px; font: inherit; font-size: 0.78rem; cursor: pointer;
+    color: var(--text-white); background: transparent; border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  }
+  .fixact { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .fixact__btn--svc[aria-pressed="true"] { border-color: var(--gold-primary); background: rgba(212, 175, 55, 0.14); color: var(--gold-light); }
+  .fixact__btn--cf { border-color: rgba(0, 212, 255, 0.4); }
+  .fixact__btn s { color: var(--text-gray); }
+  .fixact__badge { margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 0.7rem; background: var(--gold-primary); color: #0a0a0f; }
+  /* Dar ekranda fiyat düğmesi kesilmesin: düğme satıra sığar, metin kırılır; eski fiyat ve indirim rozeti bölünmez. */
+  .fixact__btn--svc { max-width: 100%; white-space: normal; text-align: left; overflow-wrap: anywhere; line-height: 1.5; }
+  .fixact__btn--svc s, .fixact__badge { display: inline-block; white-space: nowrap; }
+  .fixact__cf { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+  .fixact__cf input { flex: 1 1 200px; min-width: 0; padding: 6px 9px; font: inherit; font-size: 0.8rem; color: var(--text-white); background: var(--surface-raised); border: 1px solid var(--hairline); border-radius: var(--radius-sm); }
+  .fixcart {
+    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 60;
+    width: min(760px, calc(100% - 32px)); padding: 12px 16px; border-radius: var(--radius-sm);
+    background: var(--glass-bg); border: 1px solid var(--gold-primary); box-shadow: var(--shadow-deep);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); font-size: 0.85rem;
+  }
+  .fixcart[hidden] { display: none; }
+  .fixcart__info { margin: 0 0 6px; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+  @media (max-width: 560px) {
+    .fixcart { bottom: 8px; padding: 10px 12px; max-height: 70vh; overflow-y: auto; }
+  }
+  .fixcart__info s { color: var(--text-gray); font-weight: 400; }
+  .fixcart__consent { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 6px; font-size: 0.8rem; color: var(--text-gray); }
+  .fixcart__consent a { color: var(--gold-primary); }
+  .fixcart__msg { margin: 6px 0 0; font-size: 0.8rem; color: var(--sev-medium); }
+  .fixcart__msg:empty { display: none; }
+  .assist-handoff { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+  .assist-handoff input {
+    flex: 1 1 140px; min-width: 0; padding: 8px 10px; font: inherit; font-size: 0.85rem;
+    color: var(--text-white); background: var(--surface-raised, rgba(255,255,255,.04));
+    border: 1px solid var(--hairline); border-radius: var(--radius-sm);
+  }
+  .assist-handoff input:focus-visible { outline: 2px solid var(--gold-primary); outline-offset: 1px; }
+  .assist-handoff .bubble__meta { flex-basis: 100%; }
+  .assist-handoff__status { flex-basis: 100%; margin: 0; font-size: 0.85rem; color: var(--gold-light); }
+  .assist-handoff__status:empty { display: none; }
 
   .typing { display: inline-flex; gap: 4px; align-items: center; padding: 3px 0; }
   .typing span {
@@ -1245,9 +1312,8 @@
      ============================================================ */
   @media (min-width: 560px) {
     .hero__actions { flex-direction: row; justify-content: center; }
-    .hero__stats { grid-template-columns: repeat(3, 1fr); }
     .scan__form { grid-template-columns: 1fr auto; }
-    .footer__bottom { flex-direction: row; justify-content: space-between; text-align: left; }
+    .footer__bottom { flex-direction: row; justify-content: center; text-align: left; }
     .cookie { flex-direction: row; align-items: center; justify-content: space-between; }
   }
 
@@ -1259,18 +1325,18 @@
     .logo__text { font-size: 0.95rem; letter-spacing: 0.13em; }
     .icon-btn { width: 38px; height: 38px; }
     .grid--2 { grid-template-columns: repeat(2, 1fr); }
-    .footer__grid { grid-template-columns: 1.6fr 1fr 1fr; }
+    .footer__grid { grid-template-columns: repeat(2, 1fr); }
     .modal__box { padding: 40px 36px 34px; }
     .toasts { left: auto; right: 20px; bottom: 20px; justify-items: end; }
   }
+  @media (min-width: 1024px) {
+    .footer__grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  }
+
 
   @media (min-width: 1024px) {
     :root { --nav-h: 84px; }
-    .nav__links { display: flex; }
-    .nav__links + .nav__actions { margin-left: 24px; }
     .nav__cta { display: inline-flex; }
-    .nav__toggle { display: none; }
-    .nav__drawer { display: none; }
     .grid--3 { grid-template-columns: repeat(3, 1fr); }
     .modes { grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .mode--featured { transform: scale(1.04); z-index: 2; }
@@ -1285,6 +1351,14 @@
                      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent); }
     .step { flex-direction: column; align-items: center; text-align: center; gap: 22px; }
     .step__body { padding-top: 0; }
+  }
+
+  /* Tam menü TR etiketleriyle ~1190px ister; daha darda çekmece menü kalır */
+  @media (min-width: 1280px) {
+    .nav__links { display: flex; gap: 22px; }
+    .nav__links + .nav__actions { margin-left: 24px; }
+    .nav__toggle { display: none; }
+    .nav__drawer { display: none; }
   }
 
   @media (min-width: 1440px) {
@@ -1320,7 +1394,16 @@
      Kaynak: /api/worldmap. Tarayıcı üçüncü tarafa çıkmaz.
      ========================================================== */
   .wmap { position: relative; }
-  .wmap__layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+  /* Harita tam genişlikte; kartlar ALTINDA ızgara. Yan sütunda dururken kart
+     yığını haritadan çok daha uzun kalıyor, haritanın altında büyük boş alan
+     açılıyordu. */
+  .wmap__layout { display: block; }
+  .wmap__panels {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px; align-items: start; margin-top: 20px;
+  }
+  .wmap__fail { position: absolute; inset: auto 0 0 0; margin: 0; padding: 10px 16px; text-align: center; color: var(--text-gray); font-size: 0.85rem; background: rgba(0, 0, 0, 0.55); }
+  .wmap__fail[hidden] { display: none; }
 
   .wmap__stage {
     position: relative; border-radius: var(--radius); overflow: hidden;
@@ -1363,7 +1446,6 @@
     border-radius: var(--radius-sm); padding: 16px;
     -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   }
-  .wmap__card + .wmap__card { margin-top: 16px; }
   .wmap__cardTitle { font-family: var(--font-heading); font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-primary); margin: 0 0 10px; }
 
   .wmap__ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -1421,6 +1503,15 @@
 
   .wmap__note { color: var(--text-gray); font-size: 0.82rem; line-height: 1.6; margin: 12px 0 0; }
   .wmap__empty { color: var(--text-gray); font-size: 0.9rem; padding: 8px 0; }
+  /* Veri gelene kadar metin değil iskelet: "Yükleniyor" yazısı yerine
+     satır biçiminde yer tutucu. */
+  .skel { display: grid; gap: 10px; padding: 6px 0; }
+  .skel span { display: block; height: 14px; border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255,255,255,.05) 25%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.05) 75%);
+    background-size: 300% 100%; animation: shimmer 1.6s linear infinite; }
+  .skel span:nth-child(2) { width: 82%; }
+  .skel span:nth-child(3) { width: 64%; }
+  @media (prefers-reduced-motion: reduce) { .skel span { animation: none; } }
 
   .wmap__tip {
     position: absolute; pointer-events: none; z-index: 3; transform: translate(-50%, -140%);
@@ -1430,9 +1521,6 @@
   }
   .wmap__tip[hidden] { display: none; }
 
-  @media (max-width: 960px) {
-    .wmap__layout { grid-template-columns: minmax(0, 1fr); }
-  }
   @media (max-width: 560px) {
     .wmap__ctl { gap: 6px; }
     .wmap__ctl select, .wmap__seg button { font-size: 0.82rem; padding: 8px 10px; }
@@ -1443,6 +1531,40 @@
     .wmap__ring { opacity: 0.35; transform: none; }
     .wmap__arc { transition: none; }
   }
+
+  /* Reveal animasyon gecikme sınıfları (unsafe-inline olmadan --reveal-delay) */
+  .reveal--100 { --reveal-delay: 100ms }
+  .reveal--120 { --reveal-delay: 120ms }
+  .reveal--140 { --reveal-delay: 140ms }
+  .reveal--200 { --reveal-delay: 200ms }
+  .reveal--240 { --reveal-delay: 240ms }
+  .reveal--280 { --reveal-delay: 280ms }
+  .reveal--300 { --reveal-delay: 300ms }
+  .reveal--360 { --reveal-delay: 360ms }
+
+  /* Hero alan tarama formu */
+  .scan__consent-label { display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;font-size:.72rem;line-height:1.5;color:var(--text-muted,#a0a0b0);cursor:pointer }
+  .scan__consent-check { margin-top:2px;accent-color:#d4af37 }
+  .scan__history-btn { margin-left:auto;background:none;border:none;color:var(--gold-primary);font:inherit;font-size:.78rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap }
+  .scan__quota { color:var(--gold-primary);white-space:nowrap }
+
+  /* Geçmiş modal */
+  .modal__box--history { max-width:620px }
+  .modal__title--mb4 { margin-bottom:4px }
+  .modal__subtitle--flush { margin:0 }
+
+  /* Altın rengi bağlantı */
+  .link--gold { color:var(--gold-primary) }
+
+  /* Dünya haritası — not margin sınıfları */
+  .wmap__note--t6  { margin:6px 0 0 }
+  .wmap__note--t10 { margin:10px 0 0 }
+  .wmap__note--t10b4 { margin:10px 0 4px }
+  .wmap__note--n2b8 { margin:-2px 0 8px }
+  .wmap__note--n4b8i { margin:-4px 0 8px 16px }
+  .wmap__note--b6  { margin:0 0 6px }
+  .wmap__note--t2b8 { margin:2px 0 8px }
+  .wmap__note--t8  { margin:8px 0 0 }
 
   </style>
 </head>
@@ -1505,6 +1627,7 @@
               <span class="account__email" id="accountEmail"></span>
             </button>
             <div class="account__menu" id="accountMenu" hidden>
+              <a class="account__item" id="accountDashboard" href="/dashboard" data-i18n="auth.dashboard">Panelim</a>
               <button type="button" class="account__item" id="accountHistory" data-i18n="history.title">Tarama Geçmişi</button>
               <button type="button" class="account__item" id="accountPassword" data-i18n="auth.changePassword">Şifreyi Değiştir</button>
               <button type="button" class="account__item account__item--danger" id="accountLogout" data-i18n="auth.signOut">Çıkış Yap</button>
@@ -1565,19 +1688,16 @@
               <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
               <span data-i18n="hero.cta1">Hemen Tara</span>
             </button>
-                    <label class="scan__consent" for="scanConsent" style="display:flex;gap:8px;align-items:flex-start;
-              margin:10px 0 0;font-size:0.72rem;line-height:1.5;color:var(--text-muted,#a0a0b0);cursor:pointer">
-              <input type="checkbox" id="scanConsent" style="margin-top:2px;accent-color:#d4af37" />
+                    <label class="scan__consent scan__consent-label" for="scanConsent">
+              <input type="checkbox" id="scanConsent" class="scan__consent-check" />
               <span data-i18n="hero.consent">Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.</span>
             </label>
           </form>
           <p class="scan__note">
             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            <span data-i18n="hero.scanNote">Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.</span>
-            <button type="button" id="historyOpen" style="margin-left:auto;background:none;border:none;
-              color:var(--gold-primary);font:inherit;font-size:0.78rem;cursor:pointer;text-decoration:underline;
-              text-underline-offset:3px;white-space:nowrap" data-i18n="history.open">Geçmiş</button>
-            <span id="scanQuota" style="color:var(--gold-primary);white-space:nowrap"></span>
+            <span data-i18n="hero.scanNote">Kayıt gerekmez — 3 ücretsiz tarama, saniyeler içinde sonuç.</span>
+            <button type="button" id="historyOpen" class="scan__history-btn" data-i18n="history.open">Geçmiş</button>
+            <span id="scanQuota" class="scan__quota"></span>
           </p>
 
           <div class="scan__output" id="scanOutput" aria-live="polite">
@@ -1586,7 +1706,7 @@
             <ul class="scan__log" id="scanLog"></ul>
             <div class="scan__summary" id="scanSummary" hidden>
               <span class="scan__score" id="scanScore">--<span>/100</span></span>
-              <p data-i18n="scan.demoNote">Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.</p>
+              <p data-i18n="scan.demoNote">Bu, ücretsiz tarama özetidir. Tam rapor ve düzeltme adımları PRO planla açılır.</p>
               <a class="btn btn--gold btn--sm" id="scanReportBtn" hidden>
                 <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
                 <span data-i18n="scan.downloadPdf">PDF Raporu İndir</span>
@@ -1618,12 +1738,31 @@
                göstermek de uydurmak olurdu. Bu yüzden sunucu tarafında bir
                değer gömülmüyor ve işaretlemede sabit sayı yok. -->
           <div class="stat reveal" id="heroScans" hidden>
+            <i class="stat__icon fa-solid fa-chart-line" aria-hidden="true"></i>
             <span class="stat__value" id="heroScansValue" data-count="0" data-suffix="+">0+</span>
             <span class="stat__label" data-i18n="hero.stat1">Taranan Site (Canlı)</span>
           </div>
-          <div class="stat reveal" style="--reveal-delay:240ms">
+          <!-- Özellik kartları sayaçtan BAĞIMSIZ: sayaç eşiğin altındayken
+               (STATS_MIN_TO_SHOW) satır tek karta düşüp boş görünüyordu. -->
+          <div class="stat reveal reveal--120">
+            <i class="stat__icon fa-solid fa-clock" aria-hidden="true"></i>
             <span class="stat__value" data-i18n="hero.stat3v">7/24</span>
             <span class="stat__label" data-i18n="hero.stat3">Hızlı Tarama</span>
+          </div>
+          <div class="stat reveal reveal--200">
+            <i class="stat__icon fa-solid fa-robot" aria-hidden="true"></i>
+            <span class="stat__value stat__value--text" data-i18n="hero.f2v">Yapay Zeka</span>
+            <span class="stat__label" data-i18n="hero.f2">Güçlendirilmiş Analiz</span>
+          </div>
+          <div class="stat reveal reveal--280">
+            <i class="stat__icon fa-solid fa-file-shield" aria-hidden="true"></i>
+            <span class="stat__value stat__value--text" data-i18n="hero.f3v">Anlık Rapor</span>
+            <span class="stat__label" data-i18n="hero.f3">PDF + Düzeltme Önerisi</span>
+          </div>
+          <div class="stat reveal reveal--360">
+            <i class="stat__icon fa-solid fa-lock" aria-hidden="true"></i>
+            <span class="stat__value stat__value--text" data-i18n="hero.f4v">KVKK Uyumlu</span>
+            <span class="stat__label" data-i18n="hero.f4">İzleme Çerezi Yok</span>
           </div>
         </div>
       </div>
@@ -1632,6 +1771,7 @@
     <!-- ==========================================================
          HİZMETLER
          ========================================================== -->
+    <div id="ozellikler" aria-hidden="true"></div>
     <section class="section" id="services">
       <div class="container">
         <div class="section__head reveal">
@@ -1647,19 +1787,19 @@
             <p class="feature__desc" data-i18n="services.s1d">Ölçülen kontrollerden dinamik bir güvenlik skoru üretir; ölçülemeyen kontrol puana girmez.</p>
           </article>
 
-          <article class="feature reveal" style="--reveal-delay:100ms">
+          <article class="feature reveal reveal--100">
             <div class="feature__icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></div>
             <h3 class="feature__title" data-i18n="services.s2t">SSL/TLS Analizi</h3>
             <p class="feature__desc" data-i18n="services.s2d">Sertifika geçerliliği, şifreleme gücü ve protokol uyumluluğunu kontrol eder.</p>
           </article>
 
-          <article class="feature reveal" style="--reveal-delay:200ms">
+          <article class="feature reveal reveal--200">
             <div class="feature__icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
             <h3 class="feature__title" data-i18n="services.s3t">Güvenlik Başlıkları</h3>
             <p class="feature__desc" data-i18n="services.s3d">CSP, HSTS, X-Frame-Options gibi kritik güvenlik başlıklarını analiz eder.</p>
           </article>
 
-          <article class="feature reveal" style="--reveal-delay:300ms">
+          <article class="feature reveal reveal--300">
             <div class="feature__icon"><i class="fa-solid fa-brain" aria-hidden="true"></i></div>
             <h3 class="feature__title" data-i18n="services.s4t">AI Düzeltme Kılavuzu</h3>
             <p class="feature__desc" data-i18n="services.s4d">Tespit edilen eksikler için kod örnekli düzeltme önerileri sunar.</p>
@@ -1671,6 +1811,7 @@
     <!-- ==========================================================
          NASIL ÇALIŞIR
          ========================================================== -->
+    <div id="nasil-calisir" aria-hidden="true"></div>
     <section class="section section--alt" id="how">
       <div class="container">
         <div class="section__head reveal">
@@ -1689,7 +1830,7 @@
             </div>
           </div>
 
-          <div class="step reveal" style="--reveal-delay:140ms">
+          <div class="step reveal reveal--140">
             <div class="step__num">02</div>
             <div class="step__body">
               <h3 class="step__title"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i><span data-i18n="how.s2t">AI Taramayı Başlatsın</span></h3>
@@ -1697,7 +1838,7 @@
             </div>
           </div>
 
-          <div class="step reveal" style="--reveal-delay:280ms">
+          <div class="step reveal reveal--280">
             <div class="step__num">03</div>
             <div class="step__body">
               <h3 class="step__title"><i class="fa-solid fa-file-shield" aria-hidden="true"></i><span data-i18n="how.s3t">Detaylı Raporu Alın</span></h3>
@@ -1777,13 +1918,14 @@
               <g id="wmOwn"></g>
             </svg>
             <div class="wmap__tip" id="wmTip" role="status" hidden></div>
+            <p class="wmap__fail" id="wmFail" role="status" hidden></p>
           </div>
 
-          <div>
+          <div class="wmap__panels">
             <div class="wmap__card reveal">
               <h3 class="wmap__cardTitle" id="wmDetailTitle" data-i18n="map.detailTitle">Ülke ayrıntısı</h3>
               <div id="wmDetail">
-                <p class="wmap__empty" data-i18n="map.pickCountry">Haritadan bir işaret seçin.</p>
+                <div class="skel" aria-hidden="true"><span></span><span></span></div>
               </div>
             </div>
 
@@ -1794,8 +1936,8 @@
 
             <div class="wmap__card reveal">
               <h3 class="wmap__cardTitle" data-i18n="map.countersTitle">Sayaçlar</h3>
-              <div id="wmCounters">
-                <p class="wmap__empty" data-i18n="map.loading">Yükleniyor…</p>
+              <div id="wmCounters" aria-busy="true">
+                <div class="skel" aria-hidden="true"><span></span><span></span><span></span></div>
               </div>
               <p class="wmap__note" data-i18n="map.countersNote">Bu beslemelerde ülke bilgisi yok; haritada işaret olarak değil, sayaç olarak gösterilirler.</p>
             </div>
@@ -1829,52 +1971,61 @@
             <div class="plan__price" data-i18n="pricing.free.price">₺0</div>
             <span class="plan__period" data-i18n="pricing.free.period">Süresiz ücretsiz</span>
             <ul class="plan__list">
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f1">5 Güvenlik Taraması</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f1">3 Güvenlik Taraması</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f2">Temel SSL/TLS Kontrolü</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f3">Güvenlik Başlıkları Kontrolü (CSP, HSTS, X-Frame)</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f4">Basit PDF Raporu</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f5">Kayıt Gerekmez (ilk 5 tarama)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f6">E-posta Güvenlik Skoru (SPF, DMARC, DKIM, DNSSEC)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.free.f5">Kayıt Gerekmez (ilk 3 tarama)</span></li>
             </ul>
             <button type="button" class="btn btn--muted btn--block" id="trialBtn" data-i18n="pricing.free.cta">Ücretsiz Tara</button>
           </article>
 
           <!-- PRO (öne çıkan) -->
-          <article class="plan plan--featured reveal" style="--reveal-delay:120ms">
+          <article class="plan plan--featured reveal reveal--120">
             <span class="plan__badge" data-i18n="pricing.pro.badge">Popüler</span>
             <h3 class="plan__name gold-text" data-i18n="pricing.pro.name">Pro</h3>
             <p class="plan__tagline" data-i18n="pricing.pro.tagline">Üretim ortamını sürekli izleyen ekipler için.</p>
             <div class="plan__price" data-i18n="pricing.pro.price">₺299/ay</div>
+            <span class="plan__gross" data-i18n="pricing.pro.gross">KDV dahil ₺358,80/ay</span>
             <span class="plan__period" data-i18n="pricing.pro.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f1">Ayda 50 Tarama</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f2">OWASP Lite Taraması (A01–A10)</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f3">OWASP Gruplu PDF Rapor (düzeltme kodu ile)</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f4">Panelde Tarama Geçmişi ve Skor Eğilimi</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f6">Günlük İzleme: skor düşüşü, SSL / alan adı bitişi ve kara liste uyarıları (panelde)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f7">Canlı Güven Rozeti (gerçek skor + tarih, sitenize yerleştirilebilir)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f8">Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">E-posta Desteği (destek@cyberlionai.com)</span></li>
             </ul>
-            <a class="btn btn--gold btn--block" href="/api/checkout?plan=pro" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
+            <a class="btn btn--gold btn--block" href="/odeme?plan=pro" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
           </article>
 
           <!-- ENTERPRISE -->
-          <article class="plan plan--enterprise reveal" style="--reveal-delay:240ms">
+          <article class="plan plan--enterprise reveal reveal--240">
             <span class="plan__badge" data-i18n="pricing.ent.badge">Kurumsal</span>
             <h3 class="plan__name" data-i18n="pricing.ent.name">Enterprise</h3>
             <p class="plan__tagline" data-i18n="pricing.ent.tagline">Kendi altyapınıza uyarlanmış tarama ve raporlama.</p>
             <div class="plan__price" data-i18n="pricing.ent.price">₺2.499/ay</div>
+            <span class="plan__gross" data-i18n="pricing.ent.gross">KDV dahil ₺2.998,80/ay</span>
             <span class="plan__period" data-i18n="pricing.ent.period">Aylık, istediğiniz zaman iptal</span>
             <ul class="plan__list">
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">Sınırsız Tarama</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)</span></li>
-              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f3">Haftalık Otomatik Tarama</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Cloudflare ile 1-Tık Düzeltme, sınırsız (kendi token'ınızla)</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f3">Günlük İzleme + 5 dakikada bir erişilebilirlik (uptime) kontrolü</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f4">Skor Eğilimi ve Alan Adı Karşılaştırması</span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span><a href="/guven-damgasi-kontrol" data-i18n="pricing.ent.f6">Güven Damgası Ön Kontrolü + KVKK Çerez / Üçüncü Taraf Betik Analizi</a></span></li>
+              <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f7">Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Öncelikli Destek ve Kurumsal Faturalandırma</span></li>
             </ul>
-            <a class="btn btn--blue btn--block" href="/api/checkout?plan=enterprise" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
+            <a class="btn btn--blue btn--block" href="/odeme?plan=enterprise" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
           </article>
 
         </div>
 
-        <p class="pricing__foot reveal" data-i18n="pricing.foot">Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur.</p>
+        <p class="pricing__foot reveal" data-i18n="pricing.fixNote">Tek seferlik düzeltme hizmeti ("Biz düzeltelim") - Yazılım Güvenlik Düzeltme Hizmeti: güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺5.000 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.</p>
+        <p class="pricing__foot reveal" data-i18n="pricing.foot">Liste fiyatları KDV hariçtir; %20 KDV dahil toplam her planın altında yazar. Ödemeler iyzico güvencesiyle alınır.</p>
         <p class="pricing__foot reveal"><a class="pricing__more" href="/pricing" data-i18n="pricing.more">Planları yan yana karşılaştır</a></p>
       </div>
     </section>
@@ -1901,48 +2052,63 @@
             </svg>
             <span class="logo__text">CYBER LION<small>AI SECURITY</small></span>
           </a>
-          <p data-i18n="footer.about">Yapay zeka destekli sürekli güvenlik taraması. Zafiyetleri saldırganlardan önce bulun, önceliklendirin ve kapatın.</p>
+          <p data-i18n="footer.about">SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması.</p>
           <!-- Sosyal medya bağlantısı BİLEREK yok. Buradaki dört bağlantı
                marka adından kalıp üretilerek yazılmıştı; hiçbiri doğrulanmamıştı
                ve en az biri başkasına ait bir hesaba gidiyordu. Doğrulanmamış
                bağlantı koymaktansa hiç koymamak doğru. -->
-          <p class="footer__contact">
-            <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-            <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a>
-          </p>
+          <h4 class="footer__title footer__title--sub" data-i18n="footer.company">Şirket Bilgileri</h4>
+          <!-- FOOTER_ILETISIM_START (değerler legal-data.js ile aynı olmalı) -->
+          <ul class="footer__list">
+            <li><a href="https://www.google.com/maps/search/?api=1&query=Ritim+AVM+Cevizli+Mahallesi+Zuhal+Caddesi+No+46+Maltepe+Istanbul" target="_blank" rel="noopener"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Ritim AVM, Cevizli Mah. Zuhal Cad. No:46/50 Maltepe/İstanbul</a></li>
+            <li><a href="tel:+905344682769"><i class="fa-solid fa-phone" aria-hidden="true"></i> <span data-i18n="footer.tel">Tel</span>: 0534 468 27 69</a></li>
+            <li><i class="fa-solid fa-envelope" aria-hidden="true"></i> <a href="mailto:info@cyberlionai.com">info@cyberlionai.com</a> / <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></li>
+            <li><i class="fa-solid fa-id-card" aria-hidden="true"></i> <span data-i18n="footer.vkn">VKN: 5810910912</span></li>
+          </ul>
+          <!-- FOOTER_ILETISIM_END -->
         </div>
 
         <div>
-          <h4 class="footer__title" data-i18n="footer.quick">Hızlı Linkler</h4>
+          <h4 class="footer__title" data-i18n="footer.legal">Yasal</h4>
           <ul class="footer__list">
-            <li><a href="#hero" data-i18n="nav.home">Ana Sayfa</a></li>
-            <li><a href="#services" data-i18n="nav.services">Hizmetler</a></li>
-            <li><a href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
-            <li><a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
+            <li><a href="/mesafeli-satis-sozlesmesi" data-i18n="footer.dist">Mesafeli Satış Sözleşmesi</a></li>
+            <li><a href="/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a></li>
+            <li><a href="/kvkk-aydinlatma-metni" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a></li>
+            <li><a href="/iade-iptal-politikasi" data-i18n="footer.refund">İade ve İptal Politikası</a></li>
+            <li><a href="/kullanim-kosullari" data-i18n="footer.terms">Kullanım Koşulları</a></li>
+            <li><a href="/teslimat-bilgisi" data-i18n="footer.delivery">Teslimat Bilgisi</a></li>
+            <li><a href="/pages/on-bilgilendirme-formu" data-i18n="footer.predisclosure">Ön Bilgilendirme Formu</a></li>
+            <li><a href="/pages/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a></li>
+            <li><a href="/pages/tarama-yetkisi" data-i18n="footer.scanAuth">Tarama Yetkisi</a></li>
+            <li><a href="/pages/iletisim" data-i18n="footer.contactPage">İletişim</a></li>
           </ul>
         </div>
 
         <div>
-          <h4 class="footer__title" data-i18n="footer.contact">İletişim</h4>
+          <h4 class="footer__title" data-i18n="footer.product">Ürün</h4>
           <ul class="footer__list">
-            <li><a href="mailto:info@cyberlionai.com"><i class="fa-solid fa-envelope" aria-hidden="true"></i> info@cyberlionai.com</a></li>
-            <li><a href="mailto:destek@cyberlionai.com"><i class="fa-solid fa-headset" aria-hidden="true"></i> destek@cyberlionai.com</a></li>
-            <li><span data-i18n="footer.hours">Destek: Hafta içi 09:00 – 18:00 (TSİ)</span></li>
-            <li><a href="https://www.cyberlionai.com">https://www.cyberlionai.com</a></li>
+            <li><a href="/#ozellikler" data-i18n="footer.features">Özellikler</a></li>
+            <li><a href="/#nasil-calisir" data-i18n="nav.how">Nasıl Çalışır</a></li>
+            <li><a href="/#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
+            <li><a href="/odeme?plan=pro" data-i18n="nav.upgrade">Pro'ya Geç</a></li>
           </ul>
+        </div>
+
+        <div>
+          <h4 class="footer__title" data-i18n="footer.payTitle">Güvenli Ödeme</h4>
+          <p class="footer__pay" data-i18n="footer.payText">Ödemeler iyzico güvencesi ile alınmaktadır.</p>
+          <!-- iyzico logo alanı: resmî logo iyzico marka kitinden alınıp
+               /images/iyzico/ altına konunca bu kutu <img> ile değişir. -->
+          <div class="iyz-badge" aria-label="iyzico ile öde"><span class="iyz-badge__mark">iyzico</span><span data-i18n="footer.payWith">ile Öde</span></div>
         </div>
       </div>
 
       <div class="footer__bottom">
-        <span data-i18n="footer.rights">© 2026 Cyber Lion AI — Tüm Hakları Saklıdır.</span>
-        <nav class="footer__legal" aria-label="Yasal">
-          <a href="/pages/kvkk-aydinlatma-metni" data-i18n="footer.kvkk">KVKK Aydınlatma Metni</a>
-          <a href="/pages/gizlilik-politikasi" data-i18n="footer.privacy">Gizlilik Politikası</a>
-          <a href="/pages/mesafeli-satis-sozlesmesi" data-i18n="footer.dist">Mesafeli Satış</a>
-          <a href="/pages/teslimat-ve-iade-sartlari" data-i18n="footer.refund">Teslimat ve İade</a>
-          <a href="/pages/kullanim-sartlari" data-i18n="footer.terms">Kullanım Şartları</a>
-          <a href="/pages/cerez-politikasi" data-i18n="footer.cookies">Çerez Politikası</a>
-        </nav>
+        <!-- FOOTER_ISLETME_START (değerler legal-data.js ile aynı olmalı) -->
+        <p class="footer__copyright" data-i18n="footer.rights">© 2026 Ali Kotan - Şahıs İşletmesi</p>
+        <p class="footer__copyright" data-i18n="footer.vat">Cyber Lion AI · Liste fiyatları KDV hariçtir, KDV dahil toplam her planın altında yazar · Ödemeler iyzico güvencesiyle alınır; kart bilgileriniz bize ulaşmaz.</p>
+        <p class="footer__copyright" data-i18n="footer.fixSupport">Tek seferlik düzeltme hizmeti ve teknik destek: destek@cyberlionai.com</p>
+        <!-- FOOTER_ISLETME_END -->
       </div>
     </div>
   </footer>
@@ -2007,7 +2173,7 @@
         <button type="submit" class="btn btn--gold btn--block" data-i18n="auth.signUp">Hesap Oluştur</button>
         <p class="modal__foot">
           <span data-i18n="modal.foot">Kayıt olarak Kullanım Şartları ve Gizlilik Politikası'nı kabul etmiş olursunuz.</span>
-          <a href="/pages/kullanim-sartlari" style="color:var(--gold-primary)" data-i18n="modal.termsLink">Şartları oku</a>
+          <a href="/kullanim-kosullari" class="link--gold" data-i18n="modal.termsLink">Şartları oku</a>
         </p>
       </form>
 
@@ -2046,15 +2212,15 @@
        TARAMA GEÇMİŞİ
        ========================================================== -->
   <div class="modal" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyTitle" hidden>
-    <div class="modal__box" role="document" style="max-width:620px">
+    <div class="modal__box modal__box--history" role="document">
       <button type="button" class="modal__close" data-close-modal aria-label="Kapat" data-i18n-aria="modal.close">
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
 
       <div class="history__head">
         <div>
-          <h2 class="modal__title" id="historyTitle" style="margin-bottom:4px" data-i18n="history.title">Tarama Geçmişi</h2>
-          <p class="modal__subtitle" style="margin:0" data-i18n="history.subtitle">Bu tarayıcıdan yaptığınız taramalar.</p>
+          <h2 class="modal__title modal__title--mb4" id="historyTitle" data-i18n="history.title">Tarama Geçmişi</h2>
+          <p class="modal__subtitle modal__subtitle--flush" data-i18n="history.subtitle">Bu tarayıcıdan yaptığınız taramalar.</p>
         </div>
       </div>
 
@@ -2140,9 +2306,18 @@
         "@type": "Organization",
         "@id": "https://cyberlionai.com/#organization",
         "name": "Cyber Lion AI",
+        "legalName": "Ali Kotan",
         "url": "https://cyberlionai.com/",
         "description": "Yapay zeka destekli web güvenlik tarama platformu.",
-        "email": "destek@cyberlionai.com"
+        "email": "destek@cyberlionai.com",
+        "telephone": "+905344682769",
+        "taxID": "5810910912",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Ritim AVM, Cevizli Mahallesi, Zuhal Caddesi No: 46, İç Kapı No: 50",
+          "addressLocality": "Maltepe/İstanbul",
+          "addressCountry": "TR"
+        }
       },
       {
         "@type": "WebSite",
@@ -2178,8 +2353,9 @@
       apiBaseUrl: '',               // backend hazır olduğunda: 'https://api.cyberlionai.com'
       useMockApi: true,             // kayıt/destek/düzeltme uçları için; backend gelince false
       liveScan: true,               // /api/scan gerçek: sunucusuz fonksiyon yayında
-      freeScanLimit: 5,             // kayıt gerektirmeyen ücretsiz tarama hakkı
-      geoLookupUrl: 'https://ipapi.co/country_code/',
+      freeScanLimit: 3,             // kayıt gerektirmeyen ücretsiz tarama hakkı
+      /* Kendi ucumuz: ülke Vercel başlığından okunur, IP üçüncü tarafa gitmez (bkz. api/geo.js). */
+      geoLookupUrl: '/api/geo',
       storageKeys: {
         lang: 'preferredLang',
         theme: 'preferredTheme',
@@ -2207,7 +2383,7 @@
       tr: {
         meta: {
           title: 'Cyber Lion AI - Yapay Zeka ile Güvenlik Taraması',
-          desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 5 ücretsiz tarama, kayıt gerekmez.'
+          desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin. 3 ücretsiz tarama, kayıt gerekmez.'
         },
         a11y: { skip: 'İçeriğe geç', theme: 'Temayı değiştir', menu: 'Menüyü aç/kapat', toTop: 'Sayfanın başına dön' },
         nav: {
@@ -2231,7 +2407,6 @@
           detailTitle: 'Ülke ayrıntısı',
           pickCountry: 'Haritadan bir işaret seçin.',
           countersTitle: 'Sayaçlar',
-          loading: 'Yükleniyor…',
           countersNote: 'Bu beslemelerde ülke bilgisi yok; haritada işaret olarak değil, sayaç olarak gösterilirler.',
           sourcesTitle: 'Kaynaklar',
           r1h: '1s', r24h: '24s', r7d: '7g', rAll: 'Tümü',
@@ -2253,10 +2428,15 @@
           desc: 'Sitenizin SSL ve güvenlik başlıklarını saniyeler içinde analiz edin.',
           scanLabel: 'Taranacak adres',
           scanPlaceholder: 'ornek.com',
-          scanNote: 'Kayıt gerekmez — 5 ücretsiz test, saniyeler içinde sonuç.',
+          scanNote: 'Kayıt gerekmez — 3 ücretsiz tarama, saniyeler içinde sonuç.',
+          consent: 'Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.',
           cta1: 'Hemen Tara', cta2: "Pro'ya Geç", cta3: 'Nasıl Çalışır?', cta4: 'Örnek Rapor (PDF)',
           stat1: 'Taranan Site (Canlı)',
-          stat3: 'Hızlı Tarama', stat3v: '7/24'
+          stat3: 'Hızlı Tarama', stat3v: '7/24',
+          f2v: 'Yapay Zeka', f2: 'Güçlendirilmiş Analiz',
+          f3v: 'Anlık Rapor', f3: 'PDF + Düzeltme Önerisi',
+          f4v: 'KVKK Uyumlu', f4: 'İzleme Çerezi Yok',
+          consent: 'Bu alan adının sahibi olduğumu veya tarama iznim olduğunu onaylıyorum. Onay ile XSS/SQLi güvenli kontrolleri de çalışır.'
         },
         scan: {
           step1: 'Hedef doğrulanıyor',
@@ -2276,9 +2456,9 @@
              satırlar hiç görünmez; bayrak kapalıyken akış değişmiyor. */
           queued: 'Tarama kuyruğa alındı, sıra bekleniyor',
           running: 'Tarama sunucuda sürüyor',
-          demoNote: 'Bu bir demo çıktısıdır. Tam rapor ve düzeltme adımları PRO planla açılır.',
+          demoNote: 'Bu, ücretsiz tarama özetidir. Tam rapor ve düzeltme adımları PRO planla açılır.',
           fullReport: 'Tam Raporu Al',
-          sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
+          sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük', info: 'Bilgi' },
           /* "Ölçülemedi" üç FARKLI durumu tek kelimede topluyordu: çerez
              göndermeyen bir sayfa ile COOP başlığını yazmamış bir sunucu aynı
              etikete düşüyordu. Biri nötr, diğeri tavsiye — ayrılıyorlar.
@@ -2287,11 +2467,50 @@
                    skippedNa: 'Uygulanabilir değil', skippedNi: 'Uygulanmamış' },
           scoreLabel: 'Güvenlik skoru',
           summary: '{passed} geçti · {failed} kaldı · {skipped} puan dışı',
-          quota: 'Kalan ücretsiz tarama: {n}/5',
-          quotaOut: "Ücretsiz tarama hakkınız doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
-          quotaOutAccount: "Hesabınızın ücretsiz tarama hakkı doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
+          quota: 'Kalan ücretsiz tarama: {n}/{limit}',
+          quotaOut: "Ücretsiz tarama hakkınız doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
+          quotaOutAccount: "Hesabınızın ücretsiz tarama hakkı doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
           quotaAccount: 'Hesabınızda {n} ücretsiz tarama kaldı',
+          quotaMonthly: 'Bu ay kalan tarama: {n}/{limit}',
+          quotaUnlimited: 'Enterprise: sınırsız tarama',
+          quotaOutMonthly: "Bu ayki {limit} tarama hakkınız doldu. Hakkınız yeni ayda yenilenir; sınırsız tarama için Enterprise'a geçebilirsiniz.",
           fixLabel: 'Düzeltme',
+          howTitle: 'Nasıl düzeltirim? (ücretsiz kod)',
+          howNone: 'Bu bulgu için genel bir sunucu yapılandırması yok; düzeltme siteye özgü. Biz düzeltelim hizmetiyle çözebiliriz.',
+          howErr: 'Düzeltme kodu alınamadı. Tekrar açmayı deneyin.',
+          copy: 'Kopyala', copied: 'Kopyalandı',
+          cfBtn: 'Cloudflare ile 1-Tık Düzelt',
+          cfToken: 'Cloudflare API belirteciniz (saklanmaz)',
+          cfApply: 'Uygula',
+          cfOk: 'Cloudflare kuralı eklendi. Birkaç dakika içinde etkin olur; taramayı tekrarlayın.',
+          cfZone: 'Bu belirteçle alan adınızın Cloudflare bölgesi bulunamadı.',
+          cfErr: 'Cloudflare kuralı eklenemedi',
+          cfAlready: 'Siteniz bu başlığı zaten gönderiyor; mevcut ayarınızı ezmemek için kural eklenmedi.',
+          cfPrecheck: 'Siteniz şu an okunamadı. Neyi değiştireceğimizi doğrulayamadığımız için kural eklenmedi; biraz sonra tekrar deneyin.',
+          cfHelp: "Cloudflare > My Profile > API Tokens > Create Token > Custom Token ile oluşan NORMAL belirteci yapıştırın (sayfada gösterilen 'test' curl örneğini değil). Gerekli izinler: Zone › Zone › Read ve Zone › Transform Rules › Edit, bu alan adının bölgesi için. Belirteç bizde saklanmaz; yalnızca bu istekte kullanılır.",
+          cfMissing: 'Belirteçte eksik izin: {perm}. Cloudflare > API Tokens içinde belirteci düzenleyip bu izni bu alan adının bölgesi için ekleyin.',
+          cfTokenInvalid: 'Belirteç geçersiz. Gösterilen test curl satırını değil, oluşturulan belirtecin kendisini yapıştırın.',
+          svcBtn: 'Biz düzeltelim',
+          svcDiscount: '%{n} indirim',
+          cartCount: '{n} bulgu seçildi',
+          cartFull: 'Tam paket',
+          cartVat: '+ KDV',
+          cartAgree1: '',
+          cartAgreeLink: 'Mesafeli Satış Sözleşmesi',
+          cartAgreeSep1: ', ',
+          cartAgreeLink2: 'Ön Bilgilendirme Formu',
+          cartAgreeSep2: ' ile ',
+          cartAgreeLink3: 'Teslimat ve İade Şartları',
+          cartAgree2: '\'nı okudum, onaylıyorum.',
+          cartStart: 'Hizmetin cayma süresi içinde ifasına başlanmasını onaylıyorum; ifaya başlanınca cayma hakkımın sona ereceğini biliyorum.',
+          cartOrder: 'Sipariş ver',
+          cartConsentNeeded: 'Sipariş için iki onay kutusunu da işaretleyin.',
+          cartLogin: 'Sipariş için giriş yapın (sağ üstteki Giriş Yap).',
+          cartErr: 'Sipariş oluşturulamadı. Lütfen tekrar deneyin.',
+          emailScore: 'E-posta güvenlik skoru (SPF, DMARC, DKIM, DNSSEC): {n}/100',
+          activeLocked: 'Aktif testler (XSS/SQLi yoklaması, hassas dosya kontrolü) çalıştırılmadı: bu alan adı hesabınız için doğrulanmamış. Pasif tarama tamamlandı.',
+          activeLockedLink: 'Alan adını doğrula',
+          howNote: 'Değişiklikten sonra sunucuyu yeniden yükleyin ve taramayı tekrarlayın. Apache için mod_headers modülü açık olmalıdır.',
           downloadPdf: 'PDF Raporu İndir',
           warn: {
             error_response: 'Hedef {status} hata kodu döndürdü; ölçülen başlıklar normal sayfanınkinden farklı olabilir.',
@@ -2320,7 +2539,9 @@
             scan_failed: 'Tarama tamamlanamadı. Lütfen tekrar deneyin.',
             network: 'Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.',
             service_unavailable: 'Tarama servisi şu anda yapılandırılıyor. Kısa süre sonra tekrar deneyin.',
-            quota_exceeded: "Ücretsiz tarama hakkınız doldu. Sınırsız tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay)."
+            quota_exceeded: "Ücretsiz tarama hakkınız doldu. Ayda 50 tarama, detaylı PDF ve e-posta bildirimleri için Pro'ya geçin (₺299/ay).",
+            ownership_required: 'Bu alan adı giriş yaptığınız hesapta doğrulanmamış. cyberlionai.com/verify ile doğrulayın ya da alan adını doğrulamış hesapla giriş yapın (TCK m.243/244).',
+            verify_to_continue: 'Doğrulanmamış bu alan adı bugün 3 kez tarandı. Devam etmek için alan adını doğrulayın: cyberlionai.com/verify'
           },
           note: {
             unsafe_inline: "script-src 'unsafe-inline' içeriyor; koruma büyük ölçüde etkisiz",
@@ -2346,16 +2567,25 @@
             dkim_not_enumerable: 'yaygın seçicilerde anahtar bulunamadı; DKIM seçicileri DNS\'ten listelenemez',
             dkim_wildcard: 'alan adında joker _domainkey kaydı var; seçici taraması güvenilir değil',
             domain_not_found: 'alan adı DNS\'te bulunamadı',
+            requires_verified_ownership: 'aktif kontrol; yalnızca alan adı sahipliği doğrulanınca çalışır',
+            preload_not_ready: 'preload için includeSubDomains, preload ve en az 1 yıllık max-age birlikte gerekir',
+            preload_ready: 'preload için hazır',
+            hsts_missing: 'HSTS başlığı yok',
+            no_html_body: 'sayfa gövdesi HTML olarak alınamadı',
+            info_only: 'yalnızca bilgi; skora girmez',
+            timeout: 'istek zaman aşımına uğradı',
+            unreachable: 'hedefe ulaşılamadı',
+            unsupported_by_runtime: 'bu ortamda ölçülemedi',
             not_a_domain: 'hedef bir alan adı değil (IP adresi)',
             query_failed: 'DNS sorgusu yanıt vermedi',
             expired: 'sertifika süresi dolmuş',
-            expiring_soon: 'sertifikanın süresi yakında doluyor',
+            expiring_soon: 'sertifikanın süresi dolmak üzere',
             untrusted: 'sertifika doğrulanamadı'
           },
           checks: {
             https:         { name: 'HTTPS kullanımı', fix: 'Tüm trafiği HTTPS üzerinden sunun ve HTTP isteklerini 301 ile HTTPS\'e yönlendirin.' },
-            hsts:          { name: 'Strict-Transport-Security', fix: 'Strict-Transport-Security: max-age=63072000; includeSubDomains' },
-            csp:           { name: 'Content-Security-Policy', fix: "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'" },
+            hsts:          { name: 'Strict-Transport-Security', fix: 'Strict-Transport-Security: max-age=63072000; includeSubDomains  (includeSubDomains: tüm alt alan adlarınız HTTPS sunmuyorsa bu kısmı çıkarın)' },
+            csp:           { name: 'Content-Security-Policy', fix: 'ÖNCE TEST ORTAMINDA DENEYİN: bu politika olduğu gibi uygulanırsa satır içi script/stil, yazı tipi ve analitiği engelleyip sitenizi bozabilir. Önce Content-Security-Policy-Report-Only adıyla ekleyin, konsoldaki ihlallere göre uyarlayın. Başlangıç: Content-Security-Policy: default-src \'self\'; object-src \'none\'; base-uri \'self\'' },
             xframe:        { name: 'Çerçeveleme koruması', fix: "X-Frame-Options: DENY  (veya CSP frame-ancestors 'none')" },
             nosniff:       { name: 'MIME tipi zorlaması', fix: 'X-Content-Type-Options: nosniff' },
             referrer:      { name: 'Referrer-Policy', fix: 'Referrer-Policy: strict-origin-when-cross-origin' },
@@ -2367,13 +2597,28 @@
             tls_cert:      { name: 'SSL sertifikası', fix: 'Sertifikayı yenileyin ve zincirin tam olduğundan emin olun.' },
             tls_legacy:    { name: 'Eski TLS sürümleri', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' },
             coop:          { name: 'Çapraz köken açıcı politikası', fix: 'Cross-Origin-Opener-Policy: same-origin' },
-            coep:          { name: 'Çapraz köken gömücü politikası', fix: 'Cross-Origin-Embedder-Policy: require-corp' },
+            coep:          { name: 'Çapraz köken gömücü politikası', fix: 'Cross-Origin-Embedder-Policy: require-corp  (Dikkat: CORP/CORS başlığı olmayan dış resim, video ve gömülü içerikleri engeller; önce test ortamında deneyin)' },
             corp:          { name: 'Çapraz köken kaynak politikası', fix: 'Cross-Origin-Resource-Policy: same-origin' },
             cors:          { name: 'Çapraz köken paylaşımı (CORS)', fix: 'Access-Control-Allow-Origin: * ile birlikte Allow-Credentials: true kullanmayın; belirli bir köken yazın.' },
-            sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
-            spf:           { name: 'SPF kaydı', fix: 'TXT kaydı ekleyin:  v=spf1 include:&lt;posta sağlayıcınız&gt; -all' },
-            dmarc:         { name: 'DMARC politikası', fix: '_dmarc.&lt;alan adınız&gt; altında TXT kaydı:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;alan adınız&gt;' },
-            dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını &lt;seçici&gt;._domainkey.&lt;alan adınız&gt; altında yayınlayın.' }
+            sri:           { name: 'Alt kaynak bütünlüğü (SRI)', fix: '<script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous">' },
+            spf:           { name: 'SPF kaydı', fix: 'TXT kaydı ekleyin:  v=spf1 include:<posta sağlayıcınız> -all' },
+            dmarc:         { name: 'DMARC politikası', fix: '_dmarc.<alan adınız> altında TXT kaydı:  v=DMARC1; p=quarantine; rua=mailto:dmarc@<alan adınız>' },
+            dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan adınız> altında yayınlayın.' },
+            blacklist:     { name: 'Kara liste (URLhaus)', fix: 'Sitenizdeki zararlı dosyayı/bağlantıyı kaldırın, sunucuyu temizleyin ve URLhaus üzerinden kaldırma talebi gönderin (urlhaus.abuse.ch).' },
+            dnssec:        { name: 'DNSSEC', fix: 'Alan adı sağlayıcınızın (veya Cloudflare: DNS › Settings › DNSSEC) panelinden DNSSEC\'i açın ve verilen DS kaydını kayıt firmanıza ekleyin.' },
+            a01___env: { name: 'Açıkta .env dosyası', fix: 'Dosyayı web kökünden kaldırın ya da sunucuda bu yola erişimi engelleyin; içindeki anahtarları sızmış sayıp yenileyin.' },
+            a01___env_bak: { name: 'Açıkta .env yedeği', fix: 'Yedeği web kökünden kaldırın; içindeki anahtarları sızmış sayıp yenileyin.' },
+            a01___git_HEAD: { name: 'Açıkta .git dizini', fix: '.git dizinini yayına almayın ya da sunucuda /.git yoluna erişimi engelleyin.' },
+            a01___DS_Store: { name: 'Açıkta .DS_Store dosyası', fix: 'Dosyayı silin ve sunucuda /.DS_Store yoluna erişimi engelleyin.' },
+            a01__config_json: { name: 'Açıkta config.json', fix: 'Yapılandırma dosyasını web kökünden çıkarın; içindeki gizli bilgileri yenileyin.' },
+            a01__backup_zip: { name: 'Açıkta yedek arşivi (backup.zip)', fix: 'Yedek arşivini web kökünden kaldırın.' },
+            a02_hsts_preload: { name: 'HSTS preload hazırlığı', fix: 'İsteğe bağlı. Yalnızca TÜM alt alan adlarınız HTTPS sunuyorsa: Strict-Transport-Security: max-age=63072000; includeSubDomains; preload ekleyip hstspreload.org\'a başvurun. Listeden çıkmak aylar sürer; emin değilseniz uygulamayın.' },
+            a03_xss_reflection: { name: 'Yansıyan XSS (güvenli deneme)', fix: 'Kullanıcı girdisini sayfaya yazmadan önce bağlama uygun şekilde kaçışlayın (HTML encode); CSP ile ek koruma katmanı ekleyin.' },
+            a03_sqli_error: { name: 'SQL enjeksiyonu (hata tabanlı)', fix: 'Sorgularda parametreli ifadeler (prepared statement) kullanın; veritabanı hata mesajlarını kullanıcıya göstermeyin.' },
+            a05_debug_mode: { name: 'Hata ayıklama çıktısı', fix: 'Üretimde hata ayıklama modunu kapatın (ör. APP_DEBUG=false, DEBUG=False) ve ayrıntılı hata sayfalarını gizleyin.' },
+            a05_dir_listing: { name: 'Dizin listeleme', fix: 'Nginx: autoindex off;  ·  Apache: Options -Indexes' },
+            a06_outdated_libs: { name: 'Güncelliğini yitirmiş kütüphaneler', fix: 'Sayfadaki eski kütüphaneleri (jQuery, Bootstrap, AngularJS vb.) güncel sürümlere yükseltin.' },
+            a07_rate_limit: { name: 'Hız sınırı (bilgi)', fix: 'Giriş ve form uçlarında IP başına istek sınırı uygulayın.' }
           }
         },
         history: {
@@ -2395,72 +2640,19 @@
           inputLabel: 'Sorunuz', placeholder: 'Sorunuzu yazın…', send: 'Gönder',
           layerIdle: 'Hazır', layerLocal: 'Anlık yanıt', layerServer: 'Derin analiz', layerHuman: 'Uzman yönlendirmesi',
           greeting: 'Merhaba. Tarama, güvenlik başlıkları, fiyatlandırma ve raporlar hakkındaki sorularınızı yanıtlıyorum. Aşağıdakilerden birini seçebilir ya da doğrudan yazabilirsiniz.',
-          unknown: 'Bunu yanıtlayacak bir bilgim yok. Sorunuzu uzman ekibimize iletebilirim ya da şunlardan birini deneyebilirsiniz:',
+          unknown: 'Bu konuda net bilgi veremiyorum. İsterseniz aşağıdaki formla sorunuzu uzman ekibimize iletebilirim ya da şunlardan birini deneyebilirsiniz:',
+          smalltalk: 'Merhaba. Size nasıl yardımcı olabilirim? Aşağıdakilerden birini seçebilir ya da sorunuzu yazabilirsiniz.',
+          offline: 'Asistana şu anda ulaşılamıyor. Sorunuzu destek@cyberlionai.com adresine yazabilirsiniz; hafta içi 09:00–18:00 arasında dönüş yapıyoruz.',
+          handoffName: 'Adınız', handoffEmail: 'E-posta adresiniz', handoffSubmit: 'Uzmana ilet',
+          handoffNote: 'Ad ve e-posta yalnızca bu talebe dönüş yapmak için kullanılır.',
+          handoffInvalid: 'Lütfen adınızı ve geçerli bir e-posta adresi girin.',
+          handoffOk: 'Talebiniz ekibimize iletildi. Hafta içi 09:00–18:00 arasında e-postayla dönüş yapacağız.',
+          handoffErr: 'Talep iletilemedi. Lütfen destek@cyberlionai.com adresine yazın.',
           escalate: 'Bu konu uzman müdahalesi gerektiriyor gibi görünüyor. Talebinizi ekibimize iletmek için aşağıdaki düğmeyi kullanın; hafta içi 09:00–18:00 arasında dönüş yapıyoruz.',
-          escalateUrgent: 'Bu acil görünüyor. Aktif bir güvenlik olayı yaşıyorsanız önce etkilenen sistemi izole edin, ardından aşağıdaki düğmeyle doğrudan ekibimize ulaşın.',
+          escalateUrgent: 'Bu acil görünüyor. Aktif bir güvenlik olayı yaşıyorsanız önce etkilenen sistemi izole edin, ardından aşağıdaki formla ya da e-posta düğmesiyle doğrudan ekibimize ulaşın.',
           escalateBtn: 'Uzman ekibe yaz',
           more: 'Başka bir konu',
-          disclaimer: 'Bu asistan yerel bilgi tabanından yanıt verir; sitenizi taramaz ve hesabınıza erişmez.'
-        },
-        kb: {
-          scan: {
-            q: 'Nasıl tarama başlatırım?',
-            a: 'Sayfanın en üstündeki alana alan adınızı yazıp "Hemen Tara" düğmesine basın. Protokol veya "www" yazmanız gerekmez; ornek.com yeterlidir. Kayıt olmadan çalışır.|Şu an gösterilen sonuçlar örnek bir çıktıdır; tarama motoru devreye alındığında aynı arayüz gerçek bulguları listeleyecek.'
-          },
-          free: {
-            q: 'Ücretsiz mi, kayıt gerekiyor mu?',
-            a: 'Ücretsiz plan kayıt gerektirmez ve 5 güvenlik testi ile temel SSL kontrolü sunar. Hesap açmanız yalnızca sınırsız tarama, detaylı rapor ve düzeltme önerileri için gerekir.'
-          },
-          csp: {
-            q: 'Content-Security-Policy nasıl eklenir?',
-            a: 'CSP, tarayıcıya hangi kaynaklardan içerik yükleyebileceğini söyler ve XSS saldırılarının etkisini büyük ölçüde keser. Sıkı bir başlangıç noktası:',
-            code: "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
-            a2: 'Satır içi script kullanıyorsanız onları ayrı dosyalara taşıyın veya her bloğun sha256 özetini script-src listesine ekleyin. "unsafe-inline" kullanmak korumanın büyük kısmını iptal eder.'
-          },
-          hsts: {
-            q: 'HSTS başlığı nedir?',
-            a: 'Strict-Transport-Security, tarayıcıya siteye yalnızca HTTPS ile bağlanmasını söyler ve araya girme (SSL stripping) saldırılarını engeller:',
-            code: 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload',
-            a2: 'Dikkat: includeSubDomains eklemeden önce tüm alt alan adlarınızın HTTPS sunduğundan emin olun; aksi hâlde erişilemez hâle gelirler.'
-          },
-          xframe: {
-            q: 'Clickjacking / X-Frame-Options',
-            a: 'Sayfanızın başka bir sitenin iframe\'i içine gömülmesini engeller. Modern karşılığı CSP frame-ancestors direktifidir; ikisini birlikte kullanmak en güvenlisidir:',
-            code: "X-Frame-Options: DENY\nContent-Security-Policy: frame-ancestors 'none'"
-          },
-          tls: {
-            q: 'TLS 1.0 / 1.1 uyarısı aldım',
-            a: 'TLS 1.0 ve 1.1 artık güvenli kabul edilmiyor ve PCI DSS gibi standartlarca yasaklanmış durumda. Sunucunuzda yalnızca TLS 1.2 ve 1.3\'ü açık bırakın.|Nginx için: ssl_protocols TLSv1.2 TLSv1.3; Apache için: SSLProtocol -all +TLSv1.2 +TLSv1.3. Değişiklikten sonra sunucuyu yeniden yükleyin ve taramayı tekrarlayın.'
-          },
-          cookies: {
-            q: 'Çerez bayrakları (Secure / SameSite)',
-            a: 'Oturum çerezleri üç bayrağı da taşımalı: Secure (yalnızca HTTPS), HttpOnly (JavaScript okuyamaz), SameSite (CSRF koruması).',
-            code: 'Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax; Path=/'
-          },
-          authorization: {
-            q: 'Başkasının sitesini tarayabilir miyim?',
-            a: 'Hayır. Yalnızca sahibi olduğunuz veya sahibinden açık ve yazılı izin aldığınız sistemleri tarayabilirsiniz. İzinsiz tarama Türk Ceza Kanunu m.243 ve pek çok ülkenin mevzuatı kapsamında suç teşkil edebilir.|Ayrıntı için Kullanım Şartları\'nın üçüncü bölümüne bakın.'
-          },
-          pricing: {
-            q: 'Planlar ne kadar?',
-            a: 'Free ₺0, Pro ₺299/ay (ayda 50 OWASP Lite taraması, OWASP gruplu PDF rapor, panelde tarama geçmişi ve skor eğilimi), Enterprise ₺2.499/ay (sınırsız tarama, Cloudflare ile 1-Tık Düzeltme, haftalık otomatik tarama, öncelikli destek).|Tüm planlar KDV hariçtir.'
-          },
-          report: {
-            q: 'Rapor nasıl geliyor?',
-            a: 'Bulgular önem derecesine göre sıralanır (Kritik, Yüksek, Orta, Bilgi) ve her biri için kanıt ile uygulanabilir düzeltme adımı verilir. Ücretsiz planda basit PDF, Pro planda detaylı rapor ve düzeltme önerileri, Enterprise planda ayrıca yönetici özeti sunulur.'
-          },
-          privacy: {
-            q: 'Verilerimi ne kadar saklıyorsunuz?',
-            a: 'Tarama raporları 12 ay, teknik kayıtlar 12 ay, faturalandırma kayıtları mevzuat gereği 10 yıl saklanır. Hesabınızı silerseniz kişisel verileriniz en geç 30 gün içinde imha edilir.|Bu sitede izleme çerezi kullanılmıyor; dil ve tema tercihiniz yalnızca kendi tarayıcınızda tutuluyor.'
-          },
-          accuracy: {
-            q: 'Sonuçlar ne kadar güvenilir?',
-            a: 'Otomatik taramalar yanlış pozitif ve yanlış negatif üretebilir. Bu araç kapsamlı bir sızma testinin yerine geçmez; kritik sistemlerde otomatik taramayı düzenli uzman denetimiyle birlikte kullanın.'
-          },
-          contact: {
-            q: 'İnsan bir uzmanla konuşmak istiyorum',
-            a: 'Elbette. destek@cyberlionai.com adresine yazabilir ya da aşağıdaki düğmeyle talebinizi doğrudan iletebilirsiniz. Destek saatlerimiz hafta içi 09:00–18:00 (TSİ).'
-          }
+          disclaimer: 'Bu asistan Cyber Lion bilgi tabanından yanıt verir; sitenizi taramaz ve hesabınıza erişmez.'
         },
         services: {
           eyebrow: 'Yetenekler',
@@ -2488,45 +2680,60 @@
         pricing: {
           eyebrow: 'Planlar', title: 'SİZE UYGUN PLANI SEÇİN',
           subtitle: 'Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.',
-          foot: 'Tüm planlar KDV hariçtir. Kurumsal faturalandırma ve yıllık ödeme seçenekleri mevcuttur. | All prices exclude VAT.',
+          fixNote: 'Tek seferlik düzeltme hizmeti ("Biz düzeltelim") - Yazılım Güvenlik Düzeltme Hizmeti: güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺5.000 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.',
+          foot: 'Liste fiyatları KDV hariçtir; %20 KDV dahil toplam her planın altında yazar. Ödemeler iyzico güvencesiyle alınır.',
           free: {
             badge: 'Deneme', name: 'Free', tagline: 'Sitenizin güvenlik durumuna hızlı bir bakış.',
             price: '₺0', period: 'Süresiz ücretsiz',
-            f1: '5 Güvenlik Taraması', f2: 'Temel SSL/TLS Kontrolü',
+            f1: '3 Güvenlik Taraması', f2: 'Temel SSL/TLS Kontrolü',
             f3: 'Güvenlik Başlıkları Kontrolü (CSP, HSTS, X-Frame)', f4: 'Basit PDF Raporu',
-            f5: 'Kayıt Gerekmez (ilk 5 tarama)',
+            f5: 'Kayıt Gerekmez (ilk 3 tarama)',
+            f6: 'E-posta Güvenlik Skoru (SPF, DMARC, DKIM, DNSSEC)',
             cta: 'Ücretsiz Tara'
           },
           pro: {
             badge: 'Popüler', name: 'Pro', tagline: 'Üretim ortamını sürekli izleyen ekipler için.',
-            price: '₺299/ay', period: 'Aylık, istediğiniz zaman iptal',
+            price: '₺299/ay', gross: 'KDV dahil ₺358,80/ay', period: 'Aylık, istediğiniz zaman iptal',
             f1: 'Ayda 50 Tarama', f2: 'OWASP Lite Taraması (A01–A10)',
             f3: 'OWASP Gruplu PDF Rapor (düzeltme kodu ile)', f4: 'Panelde Tarama Geçmişi ve Skor Eğilimi',
             f5: 'E-posta Desteği (destek@cyberlionai.com)',
+            f6: 'Günlük İzleme: skor düşüşü, SSL / alan adı bitişi ve kara liste uyarıları (panelde)',
+            f7: 'Canlı Güven Rozeti (gerçek skor + tarih, sitenize yerleştirilebilir)',
+            f8: 'Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim',
             cta: "Pro'ya Geç"
           },
           ent: {
             badge: 'Kurumsal', name: 'Enterprise', tagline: 'Sürekli izleme ve düzeltme isteyen kurumlar için.',
-            price: '₺2.499/ay', period: 'Aylık, istediğiniz zaman iptal',
-            f1: 'Sınırsız Tarama', f2: "Cloudflare ile 1-Tık Düzeltme (kendi token'ınızla)",
-            f3: 'Haftalık Otomatik Tarama', f4: 'Skor Eğilimi ve Alan Adı Karşılaştırması',
+            price: '₺2.499/ay', gross: 'KDV dahil ₺2.998,80/ay', period: 'Aylık, istediğiniz zaman iptal',
+            f1: 'Sınırsız Tarama', f2: "Cloudflare ile 1-Tık Düzeltme, sınırsız (kendi token'ınızla)",
+            f3: 'Günlük İzleme + 5 dakikada bir erişilebilirlik (uptime) kontrolü', f4: 'Skor Eğilimi ve Alan Adı Karşılaştırması',
             f5: 'Öncelikli Destek ve Kurumsal Faturalandırma',
+            f6: 'Güven Damgası Ön Kontrolü + KVKK Çerez / Üçüncü Taraf Betik Analizi',
+            f7: 'Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim',
             cta: "Enterprise'a Geç"
           },
           more: 'Planları yan yana karşılaştır'
         },
         footer: {
-          about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması. Destek: destek@cyberlionai.com — www.cyberlionai.com',
+          about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması.',
           quick: 'Hızlı Linkler', contact: 'İletişim',
-          kvkk: 'KVKK Aydınlatma Metni', dist: 'Mesafeli Satış Sözleşmesi', refund: 'Teslimat ve İade',
-          hours: 'Destek: Hafta içi 09:00 – 18:00 (TSİ)',
-          rights: '© 2026 Cyber Lion AI — www.cyberlionai.com — Tüm Hakları Saklıdır.',
-          privacy: 'Gizlilik Politikası', terms: 'Kullanım Şartları', cookies: 'Çerez Politikası'
+          company: 'Şirket Bilgileri', legal: 'Yasal', product: 'Ürün', features: 'Özellikler', tel: 'Tel',
+          payTitle: 'Güvenli Ödeme', payText: 'Ödemeler iyzico güvencesi ile alınmaktadır.', payWith: 'ile Öde',
+          delivery: 'Teslimat Bilgisi',
+          kvkk: 'KVKK Aydınlatma Metni', dist: 'Mesafeli Satış Sözleşmesi',
+          predisclosure: 'Ön Bilgilendirme Formu', refund: 'İade ve İptal Politikası', scanAuth: 'Tarama Yetkisi', contactPage: 'İletişim',
+          vkn: 'VKN: 5810910912',
+          hours: 'Çalışma Saatleri: Hafta içi 09:00 – 18:00 (TSİ)',
+          rights: '© 2026 Ali Kotan - Şahıs İşletmesi',
+          vat: 'Cyber Lion AI · Liste fiyatları KDV hariçtir, KDV dahil toplam her planın altında yazar · Ödemeler iyzico güvencesiyle alınır; kart bilgileriniz bize ulaşmaz.',
+          fixSupport: 'Tek seferlik düzeltme hizmeti ve teknik destek: destek@cyberlionai.com',
+          privacy: 'Gizlilik Politikası', terms: 'Kullanım Koşulları', cookies: 'Çerez Politikası'
         },
         auth: {
           signIn: 'Giriş Yap', signUp: 'Hesap Oluştur', signOut: 'Çıkış Yap',
           tabsLabel: 'Giriş veya kayıt',
           changePassword: 'Şifreyi Değiştir',
+          dashboard: 'Panelim',
           forgot: 'Şifremi unuttum',
           magic: 'E-posta ile bağlantı gönder',
           forgotHint: 'Kayıtlı e-posta adresinizi girin; sıfırlama bağlantısı gönderelim.',
@@ -2571,7 +2778,7 @@
             password_too_short: 'Şifre en az 10 karakter olmalı.',
             password_too_long: 'Şifre en fazla 72 karakter olabilir.',
             weak_password: 'Bu şifre yeterince güçlü değil. Daha uzun bir şifre deneyin.',
-            link_invalid: 'Bağlantı geçersiz veya süresi dolmuş. Yeni bir bağlantı isteyin.',
+            link_invalid: 'Bu bağlantı daha önce kullanılmış ya da süresi dolmuş (her e-posta bağlantısı tek kullanımlıktır). Hesabınızı doğruladıysanız doğrudan giriş yapın; şifre sıfırlamak için yeni bağlantı isteyin ve yalnızca EN SON gelen e-postadaki bağlantıyı kullanın.',
             too_many_requests: 'Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.',
             too_many_requests_in: 'Çok fazla deneme yapıldı. {min} dakika sonra tekrar deneyin.',
             not_authenticated: 'Oturumunuz sonlanmış. Tekrar giriş yapın.',
@@ -2620,7 +2827,7 @@
       en: {
         meta: {
           title: 'Cyber Lion AI - AI-Powered Security Scanning',
-          desc: 'Analyze your SSL and security headers in seconds. 5 free scans, no sign-up required.'
+          desc: 'Analyze your SSL and security headers in seconds. 3 free scans, no sign-up required.'
         },
         a11y: { skip: 'Skip to content', theme: 'Toggle theme', menu: 'Toggle menu', toTop: 'Back to top' },
         nav: {
@@ -2644,7 +2851,6 @@
           detailTitle: 'Country detail',
           pickCountry: 'Select a marker on the map.',
           countersTitle: 'Counters',
-          loading: 'Loading…',
           countersNote: 'These feeds carry no country data, so they appear as counters rather than map markers.',
           sourcesTitle: 'Sources',
           r1h: '1h', r24h: '24h', r7d: '7d', rAll: 'All',
@@ -2666,10 +2872,15 @@
           desc: "Check your site's SSL and security headers in seconds.",
           scanLabel: 'Address to scan',
           scanPlaceholder: 'example.com',
-          scanNote: 'No sign-up required — 5 free tests, results in seconds.',
+          scanNote: 'No sign-up required — 3 free scans, results in seconds.',
+          consent: 'I confirm that I own this domain or am authorized to scan it. With consent, safe XSS/SQLi checks also run.',
           cta1: 'Scan Now', cta2: 'Go Pro', cta3: 'How It Works', cta4: 'Sample Report (PDF)',
           stat1: 'Sites Scanned (Live)',
-          stat3: 'Fast Scanning', stat3v: '24/7'
+          stat3: 'Fast Scanning', stat3v: '24/7',
+          f2v: 'AI-Powered', f2: 'Security Analysis',
+          f3v: 'Instant Report', f3: 'PDF + Fix Guidance',
+          f4v: 'KVKK Compliant', f4: 'No Tracking Cookies',
+          consent: 'I confirm that I own this domain or am authorised to scan it. With consent, the safe XSS/SQLi checks also run.'
         },
         scan: {
           step1: 'Validating target',
@@ -2687,18 +2898,57 @@
           done: 'Scan complete',
           queued: 'Scan queued, waiting for a worker',
           running: 'Scan is running on the server',
-          demoNote: 'This is a demo output. Full reports and remediation steps unlock with PRO.',
+          demoNote: 'This is the free scan summary. Full reports and remediation steps unlock with PRO.',
           fullReport: 'Get Full Report',
-          sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
+          sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low', info: 'Info' },
           state: { pass: 'Pass', fail: 'Fail', skipped: 'Not measured',
                    skippedNa: 'Not applicable', skippedNi: 'Not implemented' },
           scoreLabel: 'Security score',
           summary: '{passed} passed · {failed} failed · {skipped} not scored',
-          quota: 'Free scans left: {n}/5',
-          quotaOut: 'You have used your free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.',
-          quotaOutAccount: 'Your account has used its free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.',
+          quota: 'Free scans left: {n}/{limit}',
+          quotaOut: 'You have used your free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
+          quotaOutAccount: 'Your account has used its free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
           quotaAccount: '{n} free scans left on your account',
+          quotaMonthly: 'Scans left this month: {n}/{limit}',
+          quotaUnlimited: 'Enterprise: unlimited scans',
+          quotaOutMonthly: 'You have used this month\'s {limit} scans. Your allowance renews next month; upgrade to Enterprise for unlimited scans.',
           fixLabel: 'Fix',
+          howTitle: 'How do I fix it? (free code)',
+          howNone: 'There is no generic server configuration for this finding; the fix is site-specific. Our fix service can handle it.',
+          howErr: 'Could not load the fix code. Try opening it again.',
+          copy: 'Copy', copied: 'Copied',
+          cfBtn: '1-Click Fix with Cloudflare',
+          cfToken: 'Your Cloudflare API token (not stored)',
+          cfApply: 'Apply',
+          cfOk: 'Cloudflare rule added. It takes effect within a few minutes; run the scan again.',
+          cfZone: 'Your domain\'s Cloudflare zone could not be found with this token.',
+          cfErr: 'Could not add the Cloudflare rule',
+          cfAlready: 'Your site already sends this header; no rule was added so your existing setting is not overwritten.',
+          cfPrecheck: 'Your site could not be read right now. No rule was added because we could not verify what would change; try again shortly.',
+          cfHelp: "Paste the NORMAL token created under Cloudflare > My Profile > API Tokens > Create Token > Custom Token (not the 'test' curl example shown on that page). Required permissions: Zone › Zone › Read and Zone › Transform Rules › Edit, for this domain's zone. We do not store the token; it is used only for this request.",
+          cfMissing: 'The token is missing a permission: {perm}. Edit the token under Cloudflare > API Tokens and add it for this domain\'s zone.',
+          cfTokenInvalid: 'The token is invalid. Paste the token itself, not the test curl line.',
+          svcBtn: 'We fix it',
+          svcDiscount: '{n}% off',
+          cartCount: '{n} findings selected',
+          cartFull: 'Full package',
+          cartVat: '+ VAT',
+          cartAgree1: 'I have read and accept the ',
+          cartAgreeLink: 'Distance Sales Agreement',
+          cartAgreeSep1: ', the ',
+          cartAgreeLink2: 'Pre-Contractual Information Form',
+          cartAgreeSep2: ' and the ',
+          cartAgreeLink3: 'Delivery and Returns terms',
+          cartAgree2: '.',
+          cartStart: 'I consent to the service starting within the withdrawal period and understand that my right of withdrawal ends once it starts.',
+          cartOrder: 'Place order',
+          cartConsentNeeded: 'Please tick both boxes to order.',
+          cartLogin: 'Please sign in to order (Sign In at the top right).',
+          cartErr: 'The order could not be created. Please try again.',
+          emailScore: 'Email security score (SPF, DMARC, DKIM, DNSSEC): {n}/100',
+          activeLocked: 'Active tests (XSS/SQLi probes, sensitive file checks) were not run: this domain is not verified for your account. The passive scan is complete.',
+          activeLockedLink: 'Verify the domain',
+          howNote: 'Reload the server after the change and run the scan again. Apache needs mod_headers enabled.',
           downloadPdf: 'Download PDF Report',
           warn: {
             error_response: 'The target returned status {status}; the headers measured may differ from the normal page.',
@@ -2724,7 +2974,9 @@
             scan_failed: 'The scan could not be completed. Please try again.',
             network: 'Could not reach the server. Check your connection.',
             service_unavailable: 'The scanning service is being configured. Please try again shortly.',
-            quota_exceeded: 'You have used your free scans. Go Pro (₺299/mo) for unlimited scans, detailed PDF reports and email alerts.'
+            quota_exceeded: 'You have used your free scans. Go Pro (₺299/mo) for 50 scans a month, detailed PDF reports and email alerts.',
+            ownership_required: 'This domain is not verified for the account you are signed in with. Verify it at cyberlionai.com/verify or sign in with the account that verified it (Turkish Penal Code arts. 243/244).',
+            verify_to_continue: 'This unverified domain has been scanned 3 times today. Verify the domain to continue: cyberlionai.com/verify'
           },
           note: {
             unsafe_inline: "script-src allows 'unsafe-inline'; most of the protection is lost",
@@ -2750,6 +3002,15 @@
             dkim_not_enumerable: 'no key found at common selectors; DKIM selectors cannot be listed from DNS',
             dkim_wildcard: 'the domain has a wildcard _domainkey record; selector probing is unreliable',
             domain_not_found: 'the domain was not found in DNS',
+            requires_verified_ownership: 'active check; runs only after domain ownership is verified',
+            preload_not_ready: 'preload needs includeSubDomains, preload and a max-age of at least 1 year together',
+            preload_ready: 'ready for preload',
+            hsts_missing: 'no HSTS header',
+            no_html_body: 'the page body could not be read as HTML',
+            info_only: 'informational only; not scored',
+            timeout: 'the request timed out',
+            unreachable: 'the target could not be reached',
+            unsupported_by_runtime: 'could not be measured in this environment',
             not_a_domain: 'the target is not a domain name (IP address)',
             query_failed: 'the DNS query did not answer',
             expired: 'the certificate has expired',
@@ -2758,8 +3019,8 @@
           },
           checks: {
             https:         { name: 'HTTPS in use', fix: 'Serve all traffic over HTTPS and 301-redirect HTTP requests to HTTPS.' },
-            hsts:          { name: 'Strict-Transport-Security', fix: 'Strict-Transport-Security: max-age=63072000; includeSubDomains' },
-            csp:           { name: 'Content-Security-Policy', fix: "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'" },
+            hsts:          { name: 'Strict-Transport-Security', fix: 'Strict-Transport-Security: max-age=63072000; includeSubDomains  (includeSubDomains: drop it unless all your subdomains serve HTTPS)' },
+            csp:           { name: 'Content-Security-Policy', fix: 'TRY IT ON STAGING FIRST: deployed as-is this policy can block inline scripts/styles, fonts and analytics and break your site. Add it as Content-Security-Policy-Report-Only first and adapt it using the console violations. Starting point: Content-Security-Policy: default-src \'self\'; object-src \'none\'; base-uri \'self\'' },
             xframe:        { name: 'Framing protection', fix: "X-Frame-Options: DENY  (or CSP frame-ancestors 'none')" },
             nosniff:       { name: 'MIME type enforcement', fix: 'X-Content-Type-Options: nosniff' },
             referrer:      { name: 'Referrer-Policy', fix: 'Referrer-Policy: strict-origin-when-cross-origin' },
@@ -2771,13 +3032,28 @@
             tls_cert:      { name: 'SSL certificate', fix: 'Renew the certificate and make sure the chain is complete.' },
             tls_legacy:    { name: 'Legacy TLS versions', fix: 'Nginx: ssl_protocols TLSv1.2 TLSv1.3;  ·  Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3' },
             coop:          { name: 'Cross-Origin-Opener-Policy', fix: 'Cross-Origin-Opener-Policy: same-origin' },
-            coep:          { name: 'Cross-Origin-Embedder-Policy', fix: 'Cross-Origin-Embedder-Policy: require-corp' },
+            coep:          { name: 'Cross-Origin-Embedder-Policy', fix: 'Cross-Origin-Embedder-Policy: require-corp  (Caution: blocks external images, video and embeds without CORP/CORS headers; try it on staging first)' },
             corp:          { name: 'Cross-Origin-Resource-Policy', fix: 'Cross-Origin-Resource-Policy: same-origin' },
             cors:          { name: 'Cross-origin sharing (CORS)', fix: 'Do not combine Access-Control-Allow-Origin: * with Allow-Credentials: true; name a specific origin.' },
-            sri:           { name: 'Subresource Integrity (SRI)', fix: '&lt;script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous"&gt;' },
-            spf:           { name: 'SPF record', fix: 'Add a TXT record:  v=spf1 include:&lt;your mail provider&gt; -all' },
-            dmarc:         { name: 'DMARC policy', fix: 'TXT record at _dmarc.&lt;your domain&gt;:  v=DMARC1; p=quarantine; rua=mailto:dmarc@&lt;your domain&gt;' },
-            dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at &lt;selector&gt;._domainkey.&lt;your domain&gt;.' }
+            sri:           { name: 'Subresource Integrity (SRI)', fix: '<script src="https://cdn..." integrity="sha384-..." crossorigin="anonymous">' },
+            spf:           { name: 'SPF record', fix: 'Add a TXT record:  v=spf1 include:<your mail provider> -all' },
+            dmarc:         { name: 'DMARC policy', fix: 'TXT record at _dmarc.<your domain>:  v=DMARC1; p=quarantine; rua=mailto:dmarc@<your domain>' },
+            dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at <selector>._domainkey.<your domain>.' },
+            blacklist:     { name: 'Blacklist (URLhaus)', fix: 'Remove the malicious file or link from your site, clean the server and request removal via URLhaus (urlhaus.abuse.ch).' },
+            dnssec:        { name: 'DNSSEC', fix: 'Enable DNSSEC in your DNS provider (or Cloudflare: DNS › Settings › DNSSEC) and add the DS record it gives you at your registrar.' },
+            a01___env: { name: 'Exposed .env file', fix: 'Remove the file from the web root or block this path on the server; treat the keys inside as leaked and rotate them.' },
+            a01___env_bak: { name: 'Exposed .env backup', fix: 'Remove the backup from the web root; treat the keys inside as leaked and rotate them.' },
+            a01___git_HEAD: { name: 'Exposed .git directory', fix: 'Do not deploy the .git directory, or block the /.git path on the server.' },
+            a01___DS_Store: { name: 'Exposed .DS_Store file', fix: 'Delete the file and block the /.DS_Store path on the server.' },
+            a01__config_json: { name: 'Exposed config.json', fix: 'Move the configuration file out of the web root; rotate any secrets it contains.' },
+            a01__backup_zip: { name: 'Exposed backup archive (backup.zip)', fix: 'Remove the backup archive from the web root.' },
+            a02_hsts_preload: { name: 'HSTS preload readiness', fix: 'Optional. Only if ALL your subdomains serve HTTPS: add Strict-Transport-Security: max-age=63072000; includeSubDomains; preload and apply at hstspreload.org. Removal from the list takes months; skip it if unsure.' },
+            a03_xss_reflection: { name: 'Reflected XSS (safe probe)', fix: 'Escape user input for its context (HTML-encode) before writing it to the page; add CSP as an extra layer.' },
+            a03_sqli_error: { name: 'SQL injection (error-based)', fix: 'Use parameterised queries (prepared statements); never show database error messages to users.' },
+            a05_debug_mode: { name: 'Debug output', fix: 'Turn off debug mode in production (e.g. APP_DEBUG=false, DEBUG=False) and hide detailed error pages.' },
+            a05_dir_listing: { name: 'Directory listing', fix: 'Nginx: autoindex off;  ·  Apache: Options -Indexes' },
+            a06_outdated_libs: { name: 'Outdated libraries', fix: 'Upgrade outdated libraries on the page (jQuery, Bootstrap, AngularJS, etc.) to current versions.' },
+            a07_rate_limit: { name: 'Rate limiting (info)', fix: 'Apply per-IP request limits on login and form endpoints.' }
           }
         },
         history: {
@@ -2799,72 +3075,19 @@
           inputLabel: 'Your question', placeholder: 'Type your question…', send: 'Send',
           layerIdle: 'Ready', layerLocal: 'Instant answer', layerServer: 'Deep analysis', layerHuman: 'Expert escalation',
           greeting: 'Hello. I answer questions about scanning, security headers, pricing and reports. Pick one below or just type.',
-          unknown: 'I do not have an answer for that. I can pass your question to our expert team, or you could try one of these:',
+          unknown: 'I cannot give a clear answer on that. I can pass your question to our expert team with the form below, or you could try one of these:',
+          smalltalk: 'Hello. How can I help? Pick one of the topics below or type your question.',
+          offline: 'The assistant cannot be reached right now. You can write to destek@cyberlionai.com; we reply on weekdays between 09:00 and 18:00.',
+          handoffName: 'Your name', handoffEmail: 'Your email address', handoffSubmit: 'Send to an expert',
+          handoffNote: 'Your name and email are used only to reply to this request.',
+          handoffInvalid: 'Please enter your name and a valid email address.',
+          handoffOk: 'Your request has been passed to our team. We will reply by email on weekdays between 09:00 and 18:00.',
+          handoffErr: 'The request could not be sent. Please write to destek@cyberlionai.com.',
           escalate: 'This looks like it needs a human. Use the button below to send it to our team; we reply on weekdays between 09:00 and 18:00.',
-          escalateUrgent: 'This looks urgent. If you have an active security incident, isolate the affected system first, then reach our team directly with the button below.',
+          escalateUrgent: 'This looks urgent. If you have an active security incident, isolate the affected system first, then reach our team directly with the form or the email button below.',
           escalateBtn: 'Message the expert team',
           more: 'Another topic',
-          disclaimer: 'This assistant answers from a local knowledge base; it does not scan your site or access your account.'
-        },
-        kb: {
-          scan: {
-            q: 'How do I start a scan?',
-            a: 'Type your domain into the field at the top of the page and press "Scan Now". You do not need the protocol or "www" — example.com is enough. It works without signing up.|The results shown today are a sample output; once the scanning engine goes live the same interface will list real findings.'
-          },
-          free: {
-            q: 'Is it free? Do I need an account?',
-            a: 'The free plan needs no registration and gives you 5 security tests plus a basic SSL check. An account is only required for unlimited scans, detailed reports and remediation guidance.'
-          },
-          csp: {
-            q: 'How do I add a Content-Security-Policy?',
-            a: 'CSP tells the browser which sources may load content and drastically limits the impact of XSS. A strict starting point:',
-            code: "Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
-            a2: 'If you use inline scripts, move them into separate files or add each block\'s sha256 hash to script-src. Using "unsafe-inline" cancels most of the protection.'
-          },
-          hsts: {
-            q: 'What is the HSTS header?',
-            a: 'Strict-Transport-Security tells the browser to reach your site over HTTPS only, which blocks SSL stripping attacks:',
-            code: 'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload',
-            a2: 'Careful: before adding includeSubDomains, make sure every subdomain serves HTTPS, or they become unreachable.'
-          },
-          xframe: {
-            q: 'Clickjacking / X-Frame-Options',
-            a: 'This stops your page from being embedded in another site\'s iframe. The modern equivalent is the CSP frame-ancestors directive; sending both is safest:',
-            code: "X-Frame-Options: DENY\nContent-Security-Policy: frame-ancestors 'none'"
-          },
-          tls: {
-            q: 'I got a TLS 1.0 / 1.1 warning',
-            a: 'TLS 1.0 and 1.1 are no longer considered secure and are prohibited by standards such as PCI DSS. Leave only TLS 1.2 and 1.3 enabled on your server.|Nginx: ssl_protocols TLSv1.2 TLSv1.3; Apache: SSLProtocol -all +TLSv1.2 +TLSv1.3. Reload the server afterwards and scan again.'
-          },
-          cookies: {
-            q: 'Cookie flags (Secure / SameSite)',
-            a: 'Session cookies should carry all three flags: Secure (HTTPS only), HttpOnly (not readable from JavaScript) and SameSite (CSRF protection).',
-            code: 'Set-Cookie: session=...; Secure; HttpOnly; SameSite=Lax; Path=/'
-          },
-          authorization: {
-            q: 'Can I scan someone else\'s site?',
-            a: 'No. You may scan only systems you own or for which you hold explicit written permission. Unauthorised scanning can be a criminal offence under Turkish Criminal Code Art. 243 and comparable laws elsewhere.|See section three of the Terms of Use for details.'
-          },
-          pricing: {
-            q: 'What do the plans cost?',
-            a: 'Free ₺0, Pro ₺299/mo (50 OWASP Lite scans per month, PDF report grouped by OWASP, scan history and score trend in the panel), Enterprise ₺2,499/mo (unlimited scans, 1-Click Fix via Cloudflare, weekly automated scan, priority support).|All prices exclude VAT.'
-          },
-          report: {
-            q: 'What does the report look like?',
-            a: 'Findings are ranked by severity (Critical, High, Medium, Info), each with evidence and an actionable remediation step. The free plan gives a simple PDF, Pro adds detailed reporting and remediation guidance, Enterprise adds an executive summary.'
-          },
-          privacy: {
-            q: 'How long do you keep my data?',
-            a: 'Scan reports 12 months, technical logs 12 months, billing records 10 years as required by law. If you delete your account, your personal data is destroyed within 30 days.|This site uses no tracking cookies; your language and theme preference stay in your own browser.'
-          },
-          accuracy: {
-            q: 'How reliable are the results?',
-            a: 'Automated scans can produce false positives and false negatives. This tool does not replace a full penetration test; on critical systems, pair automated scanning with regular expert review.'
-          },
-          contact: {
-            q: 'I want to talk to a human',
-            a: 'Of course. Write to destek@cyberlionai.com, or use the button below to send your request directly. Support hours are weekdays 09:00–18:00 (GMT+3).'
-          }
+          disclaimer: 'This assistant answers from the Cyber Lion knowledge base; it does not scan your site or access your account.'
         },
         services: {
           eyebrow: 'Capabilities',
@@ -2892,45 +3115,60 @@
         pricing: {
           eyebrow: 'Plans', title: 'CHOOSE YOUR PLAN',
           subtitle: 'Start free. Upgrade when you are ready. No long-term commitment.',
-          foot: 'All prices exclude VAT. Corporate invoicing and annual billing are available. | Tüm planlar KDV hariçtir.',
+          fixNote: 'One-time fix service ("We fix it") - Software Security Remediation Service: security header ₺499, TLS/DNS ₺999, full package ₺5,000 + VAT; 50% off for Pro and Enterprise subscribers. Free fix code with every scan.',
+          foot: 'List prices exclude VAT; the total including 20% VAT is shown under each plan. Payments are processed securely by iyzico.',
           free: {
             badge: 'Trial', name: 'Free', tagline: 'A fast look at your site security posture.',
             price: '₺0', period: 'Free forever',
-            f1: '5 Security Scans', f2: 'Basic SSL/TLS Check',
+            f1: '3 Security Scans', f2: 'Basic SSL/TLS Check',
             f3: 'Security Headers Check (CSP, HSTS, X-Frame)', f4: 'Basic PDF Report',
-            f5: 'No Sign-Up Needed (first 5 scans)',
+            f5: 'No Sign-Up Needed (first 3 scans)',
+            f6: 'Email Security Score (SPF, DMARC, DKIM, DNSSEC)',
             cta: 'Scan for Free'
           },
           pro: {
             badge: 'Popular', name: 'Pro', tagline: 'For teams monitoring production continuously.',
-            price: '₺299/mo', period: 'Monthly, cancel anytime',
+            price: '₺299/mo', gross: 'incl. VAT ₺358.80/mo', period: 'Monthly, cancel anytime',
             f1: '50 Scans per Month', f2: 'OWASP Lite Scan (A01–A10)',
             f3: 'PDF Report Grouped by OWASP (with fix code)', f4: 'Scan History and Score Trend in the Panel',
             f5: 'Email Support via destek@cyberlionai.com',
+            f6: 'Daily Monitoring: score drop, SSL / domain expiry and blacklist alerts (in your panel)',
+            f7: 'Live Trust Badge (real score + date, embeddable on your site)',
+            f8: '50% off the one-time "We fix it" service',
             cta: 'Go Pro'
           },
           ent: {
             badge: 'Enterprise', name: 'Enterprise', tagline: 'For organizations that want continuous monitoring and remediation.',
-            price: '₺2,499/mo', period: 'Monthly, cancel anytime',
-            f1: 'Unlimited Scans', f2: '1-Click Fix via Cloudflare (with your own token)',
-            f3: 'Weekly Automated Scan', f4: 'Score Trend and Domain Comparison',
+            price: '₺2,499/mo', gross: 'incl. VAT ₺2,998.80/mo', period: 'Monthly, cancel anytime',
+            f1: 'Unlimited Scans', f2: '1-Click Fix via Cloudflare, unlimited (with your own token)',
+            f3: 'Daily Monitoring + availability (uptime) check every 5 minutes', f4: 'Score Trend and Domain Comparison',
             f5: 'Priority Support and Corporate Invoicing',
+            f6: 'Trust Stamp Pre-Check + KVKK Cookie / Third-Party Script Analysis',
+            f7: '50% off the one-time "We fix it" service',
             cta: 'Go Enterprise'
           },
           more: 'Compare the plans side by side'
         },
         footer: {
-          about: 'Fast security scanning that analyzes your SSL and security headers in seconds. Support: destek@cyberlionai.com — www.cyberlionai.com',
+          about: 'Fast security scanning that analyzes your SSL and security headers in seconds.',
           quick: 'Quick Links', contact: 'Contact',
-          kvkk: 'KVKK Privacy Notice', dist: 'Distance Sales Agreement', refund: 'Delivery & Returns',
-          hours: 'Support: Weekdays 09:00 – 18:00 (GMT+3)',
-          rights: '© 2026 Cyber Lion AI — www.cyberlionai.com — All Rights Reserved.',
+          company: 'Company Information', legal: 'Legal', product: 'Product', features: 'Features', tel: 'Phone',
+          payTitle: 'Secure Payment', payText: 'Payments are processed securely by iyzico.', payWith: 'checkout',
+          delivery: 'Delivery Information',
+          kvkk: 'KVKK Privacy Notice', dist: 'Distance Sales Agreement',
+          predisclosure: 'Pre-Contractual Information Form', refund: 'Refund & Cancellation Policy', scanAuth: 'Scan Authorisation', contactPage: 'Contact',
+          vkn: 'Tax ID (VKN): 5810910912',
+          hours: 'Business Hours: Weekdays 09:00 – 18:00 (GMT+3)',
+          rights: '© 2026 Ali Kotan - Sole Proprietorship',
+          vat: 'Cyber Lion AI · List prices exclude VAT; the VAT-inclusive total is shown under each plan · Payments are processed securely by iyzico; your card details never reach us.',
+          fixSupport: 'One-time fix service and technical support: destek@cyberlionai.com',
           privacy: 'Privacy Policy', terms: 'Terms of Use', cookies: 'Cookie Policy'
         },
         auth: {
           signIn: 'Sign In', signUp: 'Create Account', signOut: 'Sign Out',
           tabsLabel: 'Sign in or register',
           changePassword: 'Change Password',
+          dashboard: 'My Dashboard',
           forgot: 'Forgot password',
           magic: 'Send me a sign-in link',
           forgotHint: 'Enter your registered email address and we will send a reset link.',
@@ -2975,7 +3213,7 @@
             password_too_short: 'Password must be at least 10 characters.',
             password_too_long: 'Password can be at most 72 characters.',
             weak_password: 'That password is not strong enough. Try a longer one.',
-            link_invalid: 'The link is invalid or has expired. Request a new one.',
+            link_invalid: 'This link has already been used or has expired (each email link works once). If you have already verified your account, just sign in; to reset your password, request a new link and use only the MOST RECENT email.',
             too_many_requests: 'Too many attempts. Please try again later.',
             too_many_requests_in: 'Too many attempts. Please try again in {min} minutes.',
             not_authenticated: 'Your session ended. Please sign in again.',
@@ -3286,7 +3524,9 @@
      * Sayaç `.reveal` gözlemcisinden bağımsız tetikleniyor: kutu açıldığında
      * gözlemci büyük olasılıkla o bölgeyi çoktan geçmiş olur.
      */
-    var STATS_MIN_TO_SHOW = 50;
+    /* Eşik 1: gerçek sayı ilk taramadan itibaren gösteriliyor (ürün kararı,
+       2026-10-04). Uydurma ya da yuvarlanmış sayı YOK; sıfırken kutu kapalı. */
+    var STATS_MIN_TO_SHOW = 1;
 
     function loadLiveStats() {
       var box = document.getElementById('heroScans');
@@ -3300,11 +3540,8 @@
         })
         .then(function (data) {
           if (!data || typeof data.totalScans !== 'number') throw new Error('stats_malformed');
-          /* Eşiğin ALTINDA kutu açılmıyor. Sayı doğru ama bir güvenlik
-             ürününün ana sayfasında "3+ taranan site" yazması ürünü
-             olduğundan zayıf gösteriyor; eşik dolana kadar hiç sayı
-             göstermemek, küçük bir sayı göstermekten de uydurma bir sayı
-             göstermekten de dürüst. Eşik tek yerde: aşağıdaki sabit. */
+          /* Eşiğin altında (hiç tarama yokken) kutu açılmıyor. Eşik tek
+             yerde: STATS_MIN_TO_SHOW. */
           if (data.totalScans < STATS_MIN_TO_SHOW) {
             log('canlı sayaç eşiğin altında, gizli:', data.totalScans, '<', STATS_MIN_TO_SHOW);
             return;
@@ -3629,7 +3866,11 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: url, type: type || 'quick', mode: mode || null,
-            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true })
+            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true,
+            /* İşaretsizse açıkça pasif. İşaretliyse seviye gönderilmez: sunucu
+               ancak alan adı doğrulanmışsa aktif testleri açar, değilse pasif
+               döner ve sonuçta 'aktif testler çalıştırılmadı' notu çıkar. */
+            level: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true ? undefined : 'passive' })
         }).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
             if (!res.ok) throw (data && data.error) || { code: 'scan_failed' };
@@ -3654,7 +3895,11 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: url,
-            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true })
+            consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true,
+            /* İşaretsizse açıkça pasif. İşaretliyse seviye gönderilmez: sunucu
+               ancak alan adı doğrulanmışsa aktif testleri açar, değilse pasif
+               döner ve sonuçta 'aktif testler çalıştırılmadı' notu çıkar. */
+            level: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true ? undefined : 'passive' })
         }).then(function (res) {
           if (res.status === 404) throw { code: 'enqueue_unavailable' };
           return res.json().catch(function () { return {}; });
@@ -3671,10 +3916,10 @@
       /**
        * GET /api/scan-status — kuyruklu taramanın sonucu.
        *
-       * Supabase Realtime kullanılmıyor: tarayıcıdan `wss://*.supabase.co`
-       * açmak CSP'de `connect-src`'ı dış kaynağa açmak demek (bu depoda CSP
-       * gevşetilmiyor) ve RLS anonim taramayı (user_id null) zaten okutmuyor.
-       * Aynı köken üzerinden yoklama ikisine de dokunmuyor.
+       * Supabase Realtime kullanılmıyor: tarayıcıdan Supabase'in websocket
+       * ucuna bağlanmak CSP'de `connect-src`'ı dış kaynağa açmak demek (bu
+       * depoda CSP gevşetilmiyor) ve RLS anonim taramayı (user_id null) zaten
+       * okutmuyor. Aynı köken üzerinden yoklama ikisine de dokunmuyor.
        */
       pollScan: function (jobId, quota, onState) {
         var tries = 0;
@@ -3841,16 +4086,6 @@
           }, function () { throw { code: 'network' }; });
       },
 
-      /** POST /api/support — asistanın sunucu tarafı (2. kademe) analizi */
-      support: function (sessionId, message, context) {
-        if (CONFIG.useMockApi) {
-          return Promise.resolve({ sessionId: sessionId, layer: 'local', answer: null, confidence: 0 });
-        }
-        return API.request('/api/support', {
-          method: 'POST', body: { sessionId: sessionId, message: message, context: context || {} }
-        });
-      },
-
       /** GET /api/managed/{scanId}/ticket — yönetilen hizmet ticket durumu */
       getManagedTicket: function (scanId) {
         if (CONFIG.useMockApi) return Promise.resolve({ scanId: scanId, ticketNumber: null, status: 'not_created' });
@@ -3889,9 +4124,14 @@
        bağlı olarak kalıcı depoda tutulur. Buradaki değer yalnızca son sunucu
        yanıtının gösterimidir; tarayıcı verisi silinse bile sunucudaki sayaç
        ve IP hız sınırı yerinde kalır.                                        */
+    /* Sınır plana göre (sunucu bildirir): free 3 (ömür boyu), Pro aylık,
+       Enterprise sınırsız. Sunucu cevabı gelene dek free varsayılır. */
+    var quotaPlan = 'free';
+    var quotaLimit = CONFIG.freeScanLimit;
+
     function scansLeft() {
       var raw = parseInt(store.get(CONFIG.storageKeys.quota), 10);
-      return isNaN(raw) || raw < 0 ? CONFIG.freeScanLimit : Math.min(raw, CONFIG.freeScanLimit);
+      return isNaN(raw) || raw < 0 ? quotaLimit : Math.min(raw, quotaLimit);
     }
 
     /* Kotanın kime ait olduğu: 'anonymous' veya 'account'. Sunucu her tarama
@@ -3901,8 +4141,12 @@
 
     /** Sunucunun bildirdiği kalan hakkı gösterime yazar. */
     function setQuotaFromServer(quota) {
-      if (!quota || typeof quota.remaining !== 'number') return;
+      if (!quota) return;
       if (quota.scope) quotaScope = quota.scope;
+      if (quota.unlimited === true) { quotaPlan = 'enterprise'; renderQuota(); return; }
+      if (typeof quota.remaining !== 'number') return;
+      if (quota.plan) quotaPlan = quota.plan;
+      if (typeof quota.limit === 'number') quotaLimit = quota.limit;
       store.set(CONFIG.storageKeys.quota, String(quota.remaining));
       renderQuota();
     }
@@ -3910,8 +4154,10 @@
     function renderQuota() {
       var el = document.getElementById('scanQuota');
       if (!el) return;
+      if (quotaPlan === 'enterprise') { el.textContent = t('scan.quotaUnlimited'); return; }
+      if (quotaPlan === 'pro') { el.textContent = t('scan.quotaMonthly', { n: scansLeft(), limit: quotaLimit }); return; }
       var key = quotaScope === 'account' ? 'scan.quotaAccount' : 'scan.quota';
-      el.textContent = t(key, { n: scansLeft() });
+      el.textContent = t(key, { n: scansLeft(), limit: quotaLimit });
     }
 
     function setStatus(text, iconClass) {
@@ -3958,6 +4204,322 @@
     };
 
     /** Tek bir kontrolü listeye ekler: ad, kanıt, önem etiketi ve düzeltme. */
+    /* ==========================================================
+       DÜZELTME: "Nasıl düzeltirim?" (ücretsiz kod), Cloudflare 1-Tık
+       (Model A, Enterprise), "Biz düzeltelim" (Model B, ücretli hizmet).
+       Kod ve fiyat SUNUCUDAN: /api/fix-suggestion, /api/fix-pricing.
+       Sipariş fiyatı sunucuda yeniden hesaplanır; burada yalnızca gösterim.
+       ========================================================== */
+    var fixState = { host: null, plan: 'free', verified: false, pricing: null, cart: {} };
+    var pricingPromise = null;
+
+    function loadFixPricing() {
+      if (!pricingPromise) {
+        pricingPromise = fetch('/api/fix-pricing', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .catch(function () { return null; });
+      }
+      return pricingPromise;
+    }
+
+    function fmtTL(n) {
+      try { return '₺' + Number(n).toLocaleString(currentLang === 'en' ? 'en-US' : 'tr-TR'); } catch (e) { return '₺' + n; }
+    }
+
+    function isDiscounted() {
+      var p = fixState.pricing;
+      return !!(p && p.discountPlans && p.discountPlans.indexOf(fixState.plan) !== -1);
+    }
+    function discounted(n) {
+      var p = fixState.pricing;
+      return isDiscounted() ? Math.round(n * (100 - p.discountPercent) / 100) : n;
+    }
+    function priceOf(id) {
+      var p = fixState.pricing;
+      if (!p) return null;
+      var tier = (p.tierById && p.tierById[id]) || 'full';
+      return p.tiers[tier];
+    }
+
+    /** "Nasıl düzeltirim?" bölmesi: açılınca kodu sunucudan alır. */
+    function howToFixBlock(item) {
+      var box = document.createElement('details');
+      box.className = 'fixhow';
+      var sum = document.createElement('summary');
+      sum.textContent = t('scan.howTitle');
+      box.appendChild(sum);
+      var loaded = false;
+      box.addEventListener('toggle', function () {
+        if (!box.open || loaded) return;
+        loaded = true;
+        var wait = document.createElement('span');
+        wait.className = 'fixhow__note';
+        wait.textContent = '…';
+        box.appendChild(wait);
+        fetch('/api/fix-suggestion', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ domain: fixState.host, findingId: item.id, lang: currentLang })
+        }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+          box.removeChild(wait);
+          var fix = d && d.fix;
+          var keys = fix ? ['nginx', 'apache', 'cloudflare', 'dns'].filter(function (k) { return fix[k]; }) : [];
+          if (!keys.length) {
+            var none = document.createElement('span');
+            none.className = 'fixhow__note';
+            none.textContent = t('scan.howNone');
+            box.appendChild(none);
+            return;
+          }
+          var labels = { nginx: 'Nginx', apache: 'Apache', cloudflare: 'Cloudflare', dns: 'DNS' };
+          var tabs = document.createElement('div');
+          tabs.className = 'fixhow__tabs';
+          tabs.setAttribute('role', 'group');
+          var code = document.createElement('code');
+          code.className = 'fixhow__code';
+          keys.forEach(function (k, i) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = labels[k];
+            b.setAttribute('aria-pressed', String(i === 0));
+            b.addEventListener('click', function () {
+              Array.prototype.forEach.call(tabs.children, function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+              code.textContent = fix[k];
+            });
+            tabs.appendChild(b);
+          });
+          code.textContent = fix[keys[0]];
+          var copy = document.createElement('button');
+          copy.type = 'button';
+          copy.className = 'fixhow__copy';
+          copy.textContent = t('scan.copy');
+          copy.addEventListener('click', function () {
+            if (navigator.clipboard) navigator.clipboard.writeText(code.textContent).then(function () {
+              copy.textContent = t('scan.copied');
+              setTimeout(function () { copy.textContent = t('scan.copy'); }, 1500);
+            }, function () {});
+          });
+          var note = document.createElement('span');
+          note.className = 'fixhow__note';
+          note.textContent = t('scan.howNote');
+          box.appendChild(tabs);
+          box.appendChild(code);
+          box.appendChild(copy);
+          box.appendChild(note);
+        }).catch(function () { loaded = false; if (wait.parentNode) wait.textContent = t('scan.howErr'); });
+      });
+      return box;
+    }
+
+    /* Model A: Cloudflare 1-Tık — yalnızca Enterprise + doğrulanmış alan adı,
+       yalnızca Cloudflare kuralıyla düzeltilebilen başlıklar. Token istemcide
+       tutulmaz, sunucuda saklanmaz. */
+    /* CSP 1-Tık ile uygulanmaz: siteye özel yazılmalı (bkz. api/_lib/cloudflare.js). */
+    var CF_FIXABLE = { hsts: 'hsts', xframe: 'xframe' };
+
+    function cloudflareBlock(item) {
+      if (!CF_FIXABLE[item.id] || fixState.plan !== 'enterprise' || !fixState.verified) return null;
+      var wrap = document.createElement('div');
+      wrap.className = 'fixact';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fixact__btn fixact__btn--cf';
+      btn.textContent = '☁️ ' + t('scan.cfBtn');
+      var form = document.createElement('form');
+      form.className = 'fixact__cf';
+      form.hidden = true;
+      var input = document.createElement('input');
+      input.type = 'password';
+      input.autocomplete = 'off';
+      input.placeholder = t('scan.cfToken');
+      input.setAttribute('aria-label', t('scan.cfToken'));
+      var go = document.createElement('button');
+      go.type = 'submit';
+      go.className = 'fixact__btn';
+      go.textContent = t('scan.cfApply');
+      var msg = document.createElement('span');
+      msg.className = 'fixhow__note';
+      msg.setAttribute('role', 'status');
+      var help = document.createElement('span');
+      help.className = 'fixhow__note';
+      help.textContent = t('scan.cfHelp');
+      form.appendChild(input); form.appendChild(go); form.appendChild(help); form.appendChild(msg);
+      btn.addEventListener('click', function () { form.hidden = !form.hidden; if (!form.hidden) input.focus(); });
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var token = input.value.trim();
+        if (!token) return;
+        go.disabled = true;
+        msg.textContent = '…';
+        fetch('/api/autofix-cloudflare', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ domain: fixState.host, token: token, fixType: CF_FIXABLE[item.id], lang: currentLang })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (b) { return { s: r.status, b: b }; });
+        }).then(function (x) {
+          go.disabled = false;
+          input.value = '';
+          var code = x.b && x.b.error && x.b.error.code;
+          var perm = x.b && x.b.error && x.b.error.missingPermission;
+          msg.textContent = x.s === 200 ? t('scan.cfOk')
+            : code === 'ownership_required' ? t('scan.err.ownership_required')
+            : perm === 'token_invalid' ? t('scan.cfTokenInvalid')
+            : perm ? t('scan.cfMissing', { perm: perm })
+            : code === 'zone_not_found' ? t('scan.cfZone')
+            : code === 'already_present' ? t('scan.cfAlready')
+            : code === 'precheck_failed' ? t('scan.cfPrecheck')
+            : t('scan.cfErr') + (code ? ' (' + code + ')' : '');
+        }, function () { go.disabled = false; msg.textContent = t('scan.cfErr'); });
+      });
+      wrap.appendChild(btn);
+      wrap.appendChild(form);
+      return wrap;
+    }
+
+    /* Model B: "Biz düzeltelim" — bulgu sepete eklenir; alttaki çubuk toplamı
+       ve iki zorunlu onayı gösterir. */
+    function fixServiceBlock(item) {
+      var price = priceOf(item.id);
+      if (price === null) return null;
+      var wrap = document.createElement('div');
+      wrap.className = 'fixact';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fixact__btn fixact__btn--svc';
+      btn.setAttribute('aria-pressed', 'false');
+      var label = document.createElement('span');
+      label.textContent = '🛠️ ' + t('scan.svcBtn') + ' – ';
+      btn.appendChild(label);
+      if (isDiscounted()) {
+        var old = document.createElement('s');
+        old.textContent = fmtTL(price);
+        btn.appendChild(old);
+        btn.appendChild(document.createTextNode(' ' + fmtTL(discounted(price)) + ' '));
+        var badge = document.createElement('span');
+        badge.className = 'fixact__badge';
+        badge.textContent = t('scan.svcDiscount', { n: fixState.pricing.discountPercent });
+        btn.appendChild(badge);
+      } else {
+        btn.appendChild(document.createTextNode(fmtTL(price)));
+      }
+      btn.addEventListener('click', function () {
+        var on = !fixState.cart[item.id];
+        if (on) fixState.cart[item.id] = price; else delete fixState.cart[item.id];
+        btn.setAttribute('aria-pressed', String(on));
+        renderCart();
+      });
+      wrap.appendChild(btn);
+      return wrap;
+    }
+
+    var cartBar = null;
+    function renderCart() {
+      var ids = Object.keys(fixState.cart);
+      if (!cartBar) {
+        cartBar = document.createElement('div');
+        cartBar.className = 'fixcart';
+        cartBar.setAttribute('role', 'region');
+        cartBar.setAttribute('aria-label', t('scan.svcBtn'));
+        document.body.appendChild(cartBar);
+      }
+      cartBar.textContent = '';
+      cartBar.hidden = !ids.length;
+      if (!ids.length) return;
+      var p = fixState.pricing;
+      var sum = ids.reduce(function (a, id) { return a + fixState.cart[id]; }, 0);
+      var full = sum >= p.tiers.full;
+      var list = full ? p.tiers.full : sum;
+
+      var info = document.createElement('p');
+      info.className = 'fixcart__info';
+      info.textContent = t('scan.cartCount', { n: ids.length }) + ' · '
+        + (full ? t('scan.cartFull') + ' · ' : '');
+      if (isDiscounted()) {
+        var s = document.createElement('s');
+        s.textContent = fmtTL(list);
+        info.appendChild(s);
+        info.appendChild(document.createTextNode(' ' + fmtTL(discounted(list)) + ' (' + t('scan.svcDiscount', { n: p.discountPercent }) + ')'));
+      } else {
+        info.appendChild(document.createTextNode(fmtTL(list)));
+      }
+      info.appendChild(document.createTextNode(' ' + t('scan.cartVat')));
+
+      function consent(key, html) {
+        var l = document.createElement('label');
+        l.className = 'fixcart__consent';
+        var c = document.createElement('input');
+        c.type = 'checkbox';
+        c.id = key;
+        var sp = document.createElement('span');
+        html.forEach(function (part) {
+          if (typeof part === 'string') sp.appendChild(document.createTextNode(part));
+          else { var a = document.createElement('a'); a.href = part[1]; a.target = '_blank'; a.rel = 'noopener'; a.textContent = part[0]; sp.appendChild(a); }
+        });
+        l.appendChild(c); l.appendChild(sp);
+        return l;
+      }
+      var c1 = consent('fixAgree', [t('scan.cartAgree1'),
+        [t('scan.cartAgreeLink'), '/mesafeli-satis-sozlesmesi'], t('scan.cartAgreeSep1'),
+        [t('scan.cartAgreeLink2'), '/pages/on-bilgilendirme-formu'], t('scan.cartAgreeSep2'),
+        [t('scan.cartAgreeLink3'), '/iade-iptal-politikasi'], t('scan.cartAgree2')]);
+      var c2 = consent('fixStart', [t('scan.cartStart')]);
+      var go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'btn btn--gold btn--sm';
+      go.textContent = t('scan.cartOrder');
+      /* İki onay da işaretlenene kadar düğme KAPALI (sunucu da onaysız siparişi reddeder). */
+      function syncGo() { go.disabled = !(c1.querySelector('input').checked && c2.querySelector('input').checked); if (!go.disabled) msg.textContent = ''; }
+      c1.querySelector('input').addEventListener('change', function () { syncGo(); });
+      c2.querySelector('input').addEventListener('change', function () { syncGo(); });
+      var msg = document.createElement('p');
+      msg.className = 'fixcart__msg';
+      msg.setAttribute('role', 'alert');
+      go.addEventListener('click', function () {
+        if (!c1.querySelector('input').checked || !c2.querySelector('input').checked) { msg.textContent = t('scan.cartConsentNeeded'); return; }
+        go.disabled = true;
+        msg.textContent = '…';
+        fetch('/api/fix-order', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ domain: fixState.host, findingIds: ids, type: full ? 'full' : 'single',
+            agreements: true, startConsent: true, lang: currentLang })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (b) { return { s: r.status, b: b }; });
+        }).then(function (x) {
+          syncGo();
+          if (x.s === 201 && x.b.checkoutUrl) { window.location.href = x.b.checkoutUrl; return; }
+          var code = x.b && x.b.error && x.b.error.code;
+          if (x.s === 401) msg.textContent = t('scan.cartLogin');
+          else if (code === 'ownership_required') {
+            msg.textContent = t('scan.err.ownership_required') + ' ';
+            var a = document.createElement('a');
+            a.href = x.b.error.verifyUrl; a.textContent = t('scan.activeLockedLink');
+            msg.appendChild(a);
+          } else msg.textContent = t('scan.cartErr');
+        }, function () { syncGo(); msg.textContent = t('scan.cartErr'); });
+      });
+      cartBar.appendChild(info);
+      cartBar.appendChild(c1);
+      cartBar.appendChild(c2);
+      cartBar.appendChild(go);
+      cartBar.appendChild(msg);
+      syncGo();
+    }
+
+    /* Fiyat tablosu sabit; sayfa açılışında bir kez alınır ki sonuç satırları
+       fiyatı beklemeden çizilsin. İndirim, taramanın plan bilgisinden. */
+    loadFixPricing().then(function (p) { fixState.pricing = p; });
+
+    /** Yeni sonuç: durumu sıfırla, fiyatları hazırla. */
+    function prepareFixState(result) {
+      fixState.host = result.host || null;
+      fixState.plan = (result.quota && result.quota.plan) || 'free';
+      fixState.verified = !!(result.ownership && result.ownership.verified);
+      fixState.cart = {};
+      if (cartBar) renderCart();
+    }
+
     function addCheckRow(item) {
       var li = document.createElement('li');
       li.style.alignItems = 'flex-start';
@@ -4007,6 +4569,11 @@
         fix.style.overflowWrap = 'anywhere';
         fix.textContent = t('scan.checks.' + item.id + '.fix');
         body.appendChild(fix);
+        body.appendChild(howToFixBlock(item));
+        var cf = cloudflareBlock(item);
+        if (cf) body.appendChild(cf);
+        var svc = fixServiceBlock(item);
+        if (svc) body.appendChild(svc);
       }
 
       var tag = document.createElement('span');
@@ -4072,8 +4639,34 @@
       generating_report: 'report'
     };
 
+    /* Tahmini ilerleme sayacı TEK bir yerden yönetiliyor.
+
+       NEDEN: önceki sürümde sayaç yerel bir değişkende tutuluyordu ve
+       `ticker = startProgress()` İKİ kez çağrılabiliyordu — kuyruk ucu 404
+       döndüğünde (bayrak kapalı, normal durum) eşzamanlı yola düşerken.
+       İlk sayaç o yolda hiç durdurulmamıştı, dolayısıyla iki sayaç birden
+       koşuyor ve `clearInterval` yalnızca sonuncusunu durduruyordu. Kaçak
+       sayaç son adımda (%85 "rapor oluşturuluyor") sıkışıp kalıyor ve
+       `renderScanResult` çubuğu %100 yazdıktan ~900 ms sonra ÜSTÜNE tekrar
+       %85 ve döner spinner yazıyordu: tarama başarıyla bitse bile ekran
+       sonsuza kadar %85'te dönüyordu.
+
+       Artık sayaç kimliği modül düzeyinde duruyor ve `startProgress` işe
+       başlamadan önce öncekini durduruyor, yani iki sayacın birlikte
+       koşması YAPISAL olarak mümkün değil. */
+    var progressTimer = null;
+
+    /** Varsa çalışan tahmini ilerleme sayacını durdurur. Çağrılması güvenli. */
+    function stopProgress() {
+      if (progressTimer !== null) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+      }
+    }
+
     /** Yanıt beklenirken ilerleme çubuğunu adım adım, yüzdesiyle ilerletir. */
     function startProgress() {
+      stopProgress();
       var index = 0;
       var renderStep = function (step) {
         setStatus(t(step.key) + ' %' + step.pct, 'fa-solid fa-spinner fa-spin');
@@ -4081,10 +4674,11 @@
       };
       renderStep(PROGRESS_STEPS[0]);
 
-      return setInterval(function () {
+      progressTimer = setInterval(function () {
         index = Math.min(index + 1, PROGRESS_STEPS.length - 1);
         renderStep(PROGRESS_STEPS[index]);
       }, 900);
+      return progressTimer;
     }
 
     function runScan(domain) {
@@ -4096,9 +4690,9 @@
       scanBar.style.width = '0%';
 
       addNoticeRow(domain, 'fa-solid fa-globe', '--gold-primary');
-      var ticker = startProgress();
+      startProgress();
       var finish = function () {
-        clearInterval(ticker);
+        stopProgress();
         scanning = false;
         if (scanSubmit) scanSubmit.disabled = false;
       };
@@ -4113,15 +4707,24 @@
              Çubuğu bundan sonra sunucunun bildirdiği `progress` sürüyor;
              ikisi birlikte çalışsaydı çubuk gerçek ve tahmini değer
              arasında ileri geri zıplardı. */
-          clearInterval(ticker);
-          return pollScan(enq.scanId, 40);
+          stopProgress();
+          /* Sunucunun bildirdiği durum ucu kullanılır (enqueue-scan.js
+             statusUrl döndürüyor); GET /api/scan/{id} bir durum ucu DEĞİL. */
+          return pollScan(enq.scanId, enq.statusUrl, 40);
         })
         .then(function (result) { renderScanResult(result); finish(); })
-        .catch(function () {
+        .catch(function (err) {
+          /* Geri dönüş YALNIZ kuyruk ucu 404 döndüğünde (bayrak kapalı).
+             Yoklama zaman aşımında düşülmez: iş kuyruktadır, ikinci bir
+             tarama kotayı iki kez harcardı; hata dürüstçe gösterilir. */
+          if (err && err.code !== 'enqueue_unavailable') {
+            renderScanError(err); finish(); return;
+          }
           /* 2) Eşzamanlı tarama — mevcut davranış, adımlı mock ilerleme.
              Sayaç yukarıda durdurulmuş olabilir; eşzamanlı yolda ilerleme
-             tahminden geliyor, bu yüzden yeniden başlatılıyor. */
-          ticker = startProgress();
+             tahminden geliyor, bu yüzden yeniden başlatılıyor. `startProgress`
+             öncekini kendisi durduruyor, iki sayaç birden koşmuyor. */
+          startProgress();
           API.startScan(domain, 'quick', null)
             .then(function (result) { renderScanResult(result); })
             .catch(function (err) { renderScanError(err); })
@@ -4132,12 +4735,13 @@
     /** Kuyruğa alınan taramayı belirli aralıklarla sorar; sunucunun
         bildirdiği progress/current_step değerlerini çubuğa ve durum
         metnine yansıtır. Biten taramanın kaydını döndürür. */
-    function pollScan(scanId, maxTries) {
+    function pollScan(scanId, statusUrl, maxTries) {
       var tries = 0;
+      var url = statusUrl || ('/api/scan-status?id=' + encodeURIComponent(scanId));
       return new Promise(function (resolve, reject) {
         var timer = setInterval(function () {
           tries += 1;
-          API.getScan(scanId).then(function (job) {
+          API.request(url).then(function (job) {
             if (job && typeof job === 'object') {
               if (typeof job.progress === 'number') {
                 scanBar.style.width = Math.max(0, Math.min(job.progress, 99)) + '%';
@@ -4165,6 +4769,10 @@
     }
 
     function renderScanResult(result) {
+      prepareFixState(result);
+      /* Nihai durum yazılmadan önce tahmini sayaç durdurulur: sonradan
+         gelecek bir tik %100'ün üstüne %85 yazamasın. */
+      stopProgress();
       scanBar.style.width = '100%';
       setStatus(t('scan.done'), 'fa-solid fa-circle-check');
       scanLog.textContent = '';
@@ -4177,6 +4785,27 @@
         addNoticeRow(t('scan.warn.' + code, { status: result.httpStatus }),
           'fa-solid fa-circle-info', '--accent-blue');
       });
+
+      /* Beyan verildi ama sahiplik kanıtlanmadı: aktif testlerin neden
+         çalışmadığını söyle ve doğrulamaya yönlendir. Sessizce atlamak,
+         kullanıcıya testlerin geçtiğini düşündürebilirdi. */
+      var consentBox = document.getElementById('scanConsent');
+      if (result.ownership && !result.ownership.activeChecks && result.ownership.verifyUrl
+          && consentBox && consentBox.checked) {
+        var lockRow = addNoticeRow(t('scan.activeLocked'), 'fa-solid fa-lock', '--sev-medium');
+        var lockLink = document.createElement('a');
+        lockLink.href = result.ownership.verifyUrl;
+        lockLink.textContent = t('scan.activeLockedLink');
+        lockLink.style.display = 'block';
+        lockLink.style.color = 'var(--gold-primary)';
+        lockRow.querySelector('b').appendChild(lockLink);
+      }
+
+      /* E-posta güvenlik skoru ana skordan ayrı gösteriliyor (bkz. _lib/dnssec.js). */
+      if (result.emailScore && typeof result.emailScore.score === 'number') {
+        addNoticeRow(t('scan.emailScore', { n: result.emailScore.score }), 'fa-solid fa-envelope-circle-check',
+          result.emailScore.score >= 80 ? '--sev-low' : result.emailScore.score >= 50 ? '--sev-medium' : '--sev-critical');
+      }
 
       // Önce kalanlar, sonra geçenler, en sonda ölçülemeyenler
       var order = { fail: 0, pass: 1, skipped: 2 };
@@ -4250,13 +4879,18 @@
     }
 
     function renderScanError(err) {
+      /* Hata ekranı da nihai bir durum: sayaç burada da durdurulur. */
+      stopProgress();
       var code = (err && err.code) || 'scan_failed';
 
       // Kota sunucuda bitti.
       if (code === 'quota_exceeded') {
-        setQuotaFromServer({ remaining: 0 });
+        setQuotaFromServer({ remaining: 0, plan: err.plan, limit: err.limit });
         scanOutput.classList.remove('is-active');
-        if (authManager.isSignedIn()) {
+        if (err.plan === 'pro') {
+          // Aylık Pro hakkı bitti: kayıt veya Pro önerisi anlamsız olurdu.
+          toast(t('scan.quotaOutMonthly', { limit: err.limit }), 'info', 8000);
+        } else if (authManager.isSignedIn()) {
           // Zaten kayıtlı: kayıt modalını açmak yanlış olurdu. Hakkı biten
           // hesap için doğru adım Premium'a geçmek.
           toast(t('scan.quotaOutAccount'), 'info', 7000);
@@ -4646,8 +5280,8 @@
             toast(data.claimed > 0
               ? t('auth.toast.signedInClaimed', { count: data.claimed })
               : t('auth.toast.signedIn'), 'success');
-            // "Pro'ya Geç" ile gelen kullanıcı ödeme/ön kayıt akışına yönlenir.
-            try { if (sessionStorage.getItem('cl_pro_intent') === '1') window.location.href = '/checkout'; } catch (e) {}
+            // "Pro'ya Geç" ile gelen kullanıcı ödeme sayfasına yönlenir.
+            continueCheckout();
           }, function (err) {
             busy(form, false);
             showMsg(errText(err), 'error');
@@ -4684,8 +5318,8 @@
             toast(data.claimed > 0
               ? t('auth.toast.signedUpClaimed', { count: data.claimed })
               : t('auth.toast.signedUp'), 'success');
-            // "Pro'ya Geç" ile gelen kullanıcı ödeme/ön kayıt akışına yönlenir.
-            try { if (sessionStorage.getItem('cl_pro_intent') === '1') window.location.href = '/checkout'; } catch (e) {}
+            // "Pro'ya Geç" ile gelen kullanıcı ödeme sayfasına yönlenir.
+            continueCheckout();
           }, function (err) {
             busy(form, false);
             showMsg(errText(err), 'error');
@@ -4763,6 +5397,31 @@
       }
 
       /**
+       * Girişten sonra ödemeye dönüş.
+       *
+       * İki kaynak: /panel?checkout=<plan> (oturumsuz /api/checkout isteği
+       * oraya düşüyor) localStorage'a `cl_checkout_plan` yazar — giriş
+       * bağlantısı e-postadan yeni sekmede açıldığı için sessionStorage
+       * yetmiyor. "Pro'ya Geç" düğmeleri sessionStorage'a `cl_pro_intent`
+       * yazar. İkisi de /odeme'ye götürür; sözleşme onayları orada alınıyor.
+       * Eskiden hedef /checkout (ön kayıt formu) idi.
+       */
+      function continueCheckout() {
+        var plan = null;
+        try {
+          var v = JSON.parse(localStorage.getItem('cl_checkout_plan') || 'null');
+          if (v && (v.plan === 'pro' || v.plan === 'enterprise') && Date.now() - v.at < 3600000) plan = v.plan;
+          localStorage.removeItem('cl_checkout_plan');
+        } catch (e) {}
+        try {
+          if (!plan && sessionStorage.getItem('cl_pro_intent') === '1') plan = 'pro';
+          sessionStorage.removeItem('cl_pro_intent');
+        } catch (e) {}
+        if (plan) window.location.href = '/odeme?plan=' + plan;
+        return !!plan;
+      }
+
+      /**
        * E-posta bağlantısıyla dönüş.
        *
        * Supabase'in `token_hash` akışı kullanılıyor: adres çubuğunda gerçek
@@ -4814,6 +5473,8 @@
           toast(data.claimed > 0
             ? t('auth.toast.verifiedClaimed', { count: data.claimed })
             : t('auth.toast.verified'), 'success');
+          // Ödeme için girişe gönderilmişse (/panel?checkout=…) oraya dönülür.
+          continueCheckout();
           return true;
         }, function (err) {
           openModal(); setView('login');
@@ -5095,64 +5756,24 @@
       var timeEl = document.getElementById('assistTime');
       var layerEl = document.getElementById('assistLayer');
 
-      var sessionId = null;
       var busy = false;
       var greeted = false;
 
-      /* Konu anahtarları: bilgi tabanındaki kayıt -> eşleşecek kelimeler.
-         Türkçe ekler nedeniyle kökler kısa tutulur ("tara" → tarama, taramak…). */
-      var TOPICS = {
-        scan:          ['tara', 'tarama', 'scan', 'başlat', 'baslat', 'start', 'url', 'adres', 'domain', 'alan adı', 'alan adi'],
-        free:          ['ücretsiz', 'ucretsiz', 'bedava', 'free', 'kayıt', 'kayit', 'üye', 'uye', 'register', 'sign up', 'account', 'hesap aç', 'hesap ac'],
-        pricing:       ['fiyat', 'ücret', 'ucret', 'price', 'pricing', 'cost', 'plan', 'abonelik', 'subscription', 'ne kadar', 'how much'],
-        csp:           ['csp', 'content-security', 'content security', 'xss', 'inline script'],
-        hsts:          ['hsts', 'strict-transport', 'strict transport', 'ssl strip'],
-        xframe:        ['x-frame', 'xframe', 'clickjack', 'iframe', 'frame-ancestors', 'frame ancestors'],
-        tls:           ['tls', 'ssl', 'sertifika', 'certificate', 'şifreleme', 'sifreleme', 'encryption', 'https', 'protokol', 'protocol'],
-        cookies:       ['çerez', 'cerez', 'cookie', 'samesite', 'httponly', 'secure flag', 'bayrak'],
-        authorization: ['izin', 'yetki', 'permission', 'authoris', 'authoriz', 'yasal', 'legal', 'suç', 'suc', 'başkasının', 'baskasinin', 'someone else'],
-        report:        ['rapor', 'report', 'pdf', 'sonuç', 'sonuc', 'result', 'çıktı', 'cikti', 'output'],
-        privacy:       ['veri', 'data', 'gizlilik', 'privacy', 'kvkk', 'gdpr', 'saklama', 'retention', 'sil', 'delete'],
-        accuracy:      ['doğru', 'dogru', 'accura', 'güvenilir', 'guvenilir', 'reliable', 'yanlış pozitif', 'yanlis pozitif', 'false positive', 'hatalı', 'hatali'],
-        contact:       ['iletişim', 'iletisim', 'contact', 'insan', 'human', 'uzman', 'expert', 'destek', 'support', 'telefon', 'phone', 'mail', 'e-posta']
-      };
-
-      /* Aciliyet: aktif olay sinyalleri uzman kademesine yönlendirir. */
-      var CRITICAL = ['hack', 'saldırı', 'saldiri', 'attack', 'breach', 'sızıntı', 'sizinti', 'leak', 'çalındı', 'calindi', 'stolen',
-                      'fidye', 'ransom', 'şifrelendi', 'sifrelendi', 'site düştü', 'site dustu', 'down', 'erişemiyorum', 'erisemiyorum',
-                      'ele geçir', 'ele gecir', 'compromis', 'defac'];
-      var HIGH = ['acil', 'urgent', 'kritik', 'critical', 'hemen', 'immediately', 'çalışmıyor', 'calismiyor', 'not working', 'hata', 'error'];
-
-      /* Türkçe karakterleri sadeleştirip küçük harfe indirger. */
-      function normalize(text) {
-        return String(text).toLowerCase()
-          .replace(/ı/g, 'i').replace(/İ/g, 'i')
-          .replace(/ş/g, 's').replace(/ğ/g, 'g')
-          .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c');
+      /* Konuşma geçmişi: son 6 mesaj sunucuya gidiyor (bağlam için). Sunucu
+         yalnızca kullanıcı mesajlarını metin olarak kullanıyor. Cevaplar
+         bilgi tabanından geldiği için aynı soru her zaman aynı cevabı alır. */
+      var HISTORY_MAX = 6;
+      var history = [];
+      function remember(role, text) {
+        history.push({ role: role, text: String(text).slice(0, 500) });
+        if (history.length > HISTORY_MAX) history.shift();
+      }
+      function lastUserTexts(n) {
+        return history.filter(function (h) { return h.role === 'user'; })
+          .slice(-n).map(function (h) { return h.text; });
       }
 
-      /** Soruyu bilgi tabanındaki konularla eşleştirir; en yüksek puanlı konuyu döndürür. */
-      function match(question) {
-        var q = normalize(question);
-        var best = null, bestScore = 0;
-        for (var topic in TOPICS) {
-          if (!Object.prototype.hasOwnProperty.call(TOPICS, topic)) continue;
-          var score = 0;
-          for (var i = 0; i < TOPICS[topic].length; i++) {
-            if (q.indexOf(normalize(TOPICS[topic][i])) !== -1) score++;
-          }
-          if (score > bestScore) { bestScore = score; best = topic; }
-        }
-        return bestScore > 0 ? best : null;
-      }
-
-      /** 0–10 arası aciliyet puanı. 6 ve üzeri doğrudan uzman kademesine gider. */
-      function urgency(question) {
-        var q = normalize(question), score = 0;
-        for (var i = 0; i < CRITICAL.length; i++) if (q.indexOf(normalize(CRITICAL[i])) !== -1) score += 4;
-        for (var j = 0; j < HIGH.length; j++) if (q.indexOf(normalize(HIGH[j])) !== -1) score += 2;
-        return Math.min(score, 10);
-      }
+      function lang() { return document.documentElement.lang === 'en' ? 'en' : 'tr'; }
 
       /* ---- Arayüz yardımcıları (tümü textContent ile, innerHTML yok) ---- */
 
@@ -5189,33 +5810,104 @@
         bubble.appendChild(pre);
       }
 
-      /** Öneri düğmeleri; tıklanınca ilgili soruyu sorar. */
-      function chips(bubble, topics) {
+      /** Öneri düğmeleri: sunucunun verdiği { id, q } listesi. Tıklanınca niyet doğrudan sorulur. */
+      function chips(bubble, list) {
+        if (!list || !list.length) return;
         var wrap = document.createElement('div');
         wrap.className = 'chips';
-        topics.forEach(function (topic) {
+        list.forEach(function (s) {
           var btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'chip';
-          btn.textContent = t('kb.' + topic + '.q');
-          btn.addEventListener('click', function () { ask(t('kb.' + topic + '.q'), topic); });
+          btn.textContent = s.q;
+          btn.addEventListener('click', function () { ask(s.q, s.id); });
           wrap.appendChild(btn);
         });
         bubble.appendChild(wrap);
       }
 
-      /** Uzman ekibe yönlendirme düğmesi: konu ve soruyu e-postaya taşır. */
-      function escalationButton(bubble, question, level) {
+      /** Doğrudan e-posta düğmesi (asistan ya da iletişim ucu erişilemezse son çare). */
+      function mailButton(bubble, question, urgent) {
         var wrap = document.createElement('div');
         wrap.className = 'chips';
         var link = document.createElement('a');
         link.className = 'chip';
         link.textContent = t('assist.escalateBtn');
         link.href = 'mailto:destek@cyberlionai.com'
-          + '?subject=' + encodeURIComponent('[' + (level >= 6 ? 'ACİL' : 'Destek') + '] Cyber Lion AI')
-          + '&body=' + encodeURIComponent(question);
+          + '?subject=' + encodeURIComponent('[' + (urgent ? 'ACİL' : 'Destek') + '] Cyber Lion AI')
+          + '&body=' + encodeURIComponent(question || '');
         wrap.appendChild(link);
         bubble.appendChild(wrap);
+      }
+
+      /**
+       * İnsan desteği formu: ad + e-posta. /api/contact'a gider (source:
+       * 'assistant'); ekip Telegram'dan "İnsan desteği istendi" olarak görür.
+       * Talebe kullanıcının son üç mesajı eklenir.
+       */
+      function handoffForm(bubble) {
+        var f = document.createElement('form');
+        f.className = 'assist-handoff';
+        f.noValidate = true;
+
+        function field(type, key, auto) {
+          var inp = document.createElement('input');
+          inp.type = type;
+          inp.required = true;
+          inp.maxLength = type === 'email' ? 320 : 100;
+          inp.autocomplete = auto;
+          inp.placeholder = t(key);
+          inp.setAttribute('aria-label', t(key));
+          f.appendChild(inp);
+          return inp;
+        }
+        var nameIn = field('text', 'assist.handoffName', 'name');
+        var mailIn = field('email', 'assist.handoffEmail', 'email');
+        var btn = document.createElement('button');
+        btn.type = 'submit';
+        btn.className = 'chip';
+        btn.textContent = t('assist.handoffSubmit');
+        f.appendChild(btn);
+        var note = document.createElement('span');
+        note.className = 'bubble__meta';
+        note.textContent = t('assist.handoffNote');
+        f.appendChild(note);
+        var status = document.createElement('p');
+        status.className = 'assist-handoff__status';
+        status.setAttribute('role', 'status');
+        f.appendChild(status);
+
+        f.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var name = nameIn.value.trim();
+          var email = mailIn.value.trim();
+          if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            status.textContent = t('assist.handoffInvalid');
+            return;
+          }
+          btn.disabled = true;
+          var son = lastUserTexts(3);
+          fetch('/api/contact', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              name: name, email: email, source: 'assistant', lang: lang(),
+              message: son.length ? son.join(' | ') : '-',
+              /* Ayrı dizi: sunucu her mesajı ayrı puanlayıp ekibe önerilecek
+                 cevabın konusunu buluyor. */
+              lastMessages: son
+            })
+          }).then(function (r) {
+            if (!r.ok) throw new Error('http_' + r.status);
+            status.textContent = t('assist.handoffOk');
+            nameIn.disabled = true; mailIn.disabled = true;
+          }).catch(function () {
+            status.textContent = t('assist.handoffErr');
+            btn.disabled = false;
+          });
+        });
+        bubble.appendChild(f);
       }
 
       function meta(bubble, seconds, layerKey) {
@@ -5236,74 +5928,89 @@
         return bubble.parentNode;
       }
 
-      /* ---- Yanıt akışı ---- */
+      /* ---- Sunucu ---- */
 
-      function answerFromKb(bubble, topic) {
-        paragraphs(bubble, t('kb.' + topic + '.a'));
-        var code = t('kb.' + topic + '.code');
-        if (code && code.indexOf('kb.') !== 0) codeBlock(bubble, code);
-        var extra = t('kb.' + topic + '.a2');
-        if (extra && extra.indexOf('kb.') !== 0) paragraphs(bubble, extra);
+      function callAssistant(payload) {
+        var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+        var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
+        return fetch('/api/assistant', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: ctrl ? ctrl.signal : undefined
+        }).then(function (r) {
+          if (timer) clearTimeout(timer);
+          if (!r.ok) throw new Error('http_' + r.status);
+          return r.json();
+        }, function (err) {
+          if (timer) clearTimeout(timer);
+          throw err;
+        });
       }
 
-      /** İlgili konuya göre iki alternatif öneri seçer. */
-      function related(topic) {
-        var all = Object.keys(TOPICS).filter(function (k) { return k !== topic; });
-        var map = {
-          csp: ['hsts', 'xframe'], hsts: ['csp', 'tls'], xframe: ['csp', 'cookies'],
-          tls: ['hsts', 'cookies'], cookies: ['csp', 'privacy'],
-          scan: ['free', 'report'], free: ['pricing', 'scan'], pricing: ['free', 'report'],
-          report: ['accuracy', 'pricing'],
-          privacy: ['authorization', 'contact'], accuracy: ['report', 'contact'],
-          authorization: ['privacy', 'contact'], contact: ['pricing', 'free']
-        };
-        return map[topic] || all.slice(0, 2);
+      /** Sunucu cevabını çizer. Aynı cevap → aynı çıktı. */
+      function render(bubble, res, question) {
+        if (res.type === 'answer' && res.answer) {
+          paragraphs(bubble, res.answer.a);
+          if (res.answer.code) codeBlock(bubble, res.answer.code);
+          if (res.answer.a2) paragraphs(bubble, res.answer.a2);
+          if (res.handoff) handoffForm(bubble);
+          chips(bubble, res.suggestions);
+          return 'assist.layerLocal';
+        }
+        if (res.type === 'urgent') {
+          paragraphs(bubble, t('assist.escalateUrgent'));
+          handoffForm(bubble);
+          mailButton(bubble, question, true);
+          return 'assist.layerHuman';
+        }
+        if (res.type === 'smalltalk') {
+          paragraphs(bubble, t('assist.smalltalk'));
+          chips(bubble, res.suggestions);
+          return 'assist.layerLocal';
+        }
+        paragraphs(bubble, t('assist.unknown'));
+        handoffForm(bubble);
+        chips(bubble, res.suggestions);
+        return 'assist.layerHuman';
       }
 
-      function ask(question, forcedTopic) {
+      function ask(question, intent) {
         if (busy) return;
         busy = true;
         if (sendBtn) sendBtn.disabled = true;
 
         paragraphs(row('user'), question);
+        var payload = { lang: lang(), history: history.slice() };
+        if (intent) payload.intent = intent; else payload.message = question;
+        remember('user', question);
+
         var started = performance.now();
         var indicator = typing();
 
-        // Yerel bilgi tabanı anında yanıt verir; kısa gecikme okunabilirlik içindir.
-        setTimeout(function () {
-          if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
-          var elapsed = (performance.now() - started) / 1000;
-          var level = urgency(question);
-          var topic = forcedTopic || match(question);
-          var bubble = row('bot');
-
-          if (level >= 6) {
-            // Aktif olay sinyali: konu eşleşse bile uzman kademesine yönlendir
-            paragraphs(bubble, t('assist.escalateUrgent'));
-            escalationButton(bubble, question, level);
-            meta(bubble, elapsed, 'assist.layerHuman');
-          } else if (topic) {
-            answerFromKb(bubble, topic);
-            chips(bubble, related(topic));
-            meta(bubble, elapsed, 'assist.layerLocal');
-          } else {
-            paragraphs(bubble, t('assist.unknown'));
-            chips(bubble, ['scan', 'pricing', 'free']);
-            escalationButton(bubble, question, level);
-            meta(bubble, elapsed, 'assist.layerHuman');
-          }
-
+        function done() {
           logEl.scrollTop = logEl.scrollHeight;
           busy = false;
           if (sendBtn) sendBtn.disabled = false;
+        }
 
-          // Backend bağlandığında aynı soru sunucu tarafında da işlenir (2. kademe).
-          if (!CONFIG.useMockApi) {
-            API.support(sessionId, question, { topic: topic, urgency: level })
-              .then(function (res) { log('support layer 2', res); })
-              .catch(function (err) { log('support error', err); });
-          }
-        }, 420);
+        callAssistant(payload).then(function (res) {
+          if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
+          var bubble = row('bot');
+          var layer = render(bubble, res, question);
+          meta(bubble, (performance.now() - started) / 1000, layer);
+          remember('bot', res.intent || res.type);
+          done();
+        }).catch(function (err) {
+          log('assistant error', err);
+          if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
+          var bubble = row('bot');
+          paragraphs(bubble, t('assist.offline'));
+          mailButton(bubble, question, false);
+          meta(bubble, (performance.now() - started) / 1000, 'assist.layerHuman');
+          done();
+        });
       }
 
       function greet() {
@@ -5311,16 +6018,19 @@
         greeted = true;
         var bubble = row('bot');
         paragraphs(bubble, t('assist.greeting'));
-        chips(bubble, ['scan', 'pricing', 'free', 'csp']);
         var note = document.createElement('span');
         note.className = 'bubble__meta';
         note.textContent = t('assist.disclaimer');
         bubble.appendChild(note);
+        /* Karşılama düğmeleri bilgi tabanından: soru metni tek kaynakta. */
+        fetch('/api/assistant?lang=' + lang(), { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) { if (d && d.suggestions) { chips(bubble, d.suggestions); bubble.appendChild(note); } })
+          .catch(function (err) { log('assistant greet error', err); });
       }
 
       function open() {
         if (!panel) return;
-        sessionId = sessionId || 'sess-' + Date.now().toString(36);
         panel.hidden = false;
         void panel.offsetWidth;
         panel.classList.add('is-open');
@@ -5491,16 +6201,36 @@
             unknown:'Konumu bilinmeyen kayıt', noGeo:'ülke bilgisi yok', failed:'ulaşılamadı',
             cached:'önbellekten', live:'Canlı', paused:'Duraklatıldı', pick:'Haritadan bir işaret seçin.',
             none:'Bu aralıkta gösterilecek kayıt yok.', err:'Harita verisi alınamadı.',
-            shared:'Aynı aileyi paylaşan ülkeler', total:'Toplam', nodes:'düğüm' },
+            shared:'Aynı aileyi paylaşan ülkeler', total:'Toplam', nodes:'düğüm',
+            rangeScope:'Zaman filtresi yalnızca zaman damgası taşıyan kaynakları kapsar.',
+            rangeIncluded:'Bu görünümde sayılan', rangeExcluded:'Sayılmayan (zaman damgası yok)',
+            rangeNone:'Hiçbir kaynak zaman damgası taşımıyor; bu görünümde gösterilecek kayıt yok.',
+            ownTitle:'Cyber Lion AI tarama etkinliği',
+            ownNote:'Müşterilerimizin taradığı hedeflerin barındırma ülkesi. Beslemelerden ayrı sayılır; iki sayı toplanmaz.',
+            ownRangeNote:'Zaman filtresi bu katmanı kapsamıyor; yalnızca “Tümü” görünümünde gösterilir.',
+            mapFail:'Harita çizilemedi; sayaçlar güncel.' },
       en: { srcTorexit:'Tor exit nodes', geoResolved:'country resolved from IP table',
             geoNative:'country from the feed’s own field', geoTable:'IP→country table',
             countriesWord:'countries', of:'/', hosts:'hosting records', online:'online', families:'Malware families',
             unknown:'Records without a known location', noGeo:'no country data', failed:'unreachable',
             cached:'from cache', live:'Live', paused:'Paused', pick:'Select a marker on the map.',
             none:'No records to show in this range.', err:'Could not load map data.',
-            shared:'Countries sharing this family', total:'Total', nodes:'nodes' }
+            shared:'Countries sharing this family', total:'Total', nodes:'nodes',
+            rangeScope:'The time filter covers only sources that carry timestamps.',
+            rangeIncluded:'Counted in this view', rangeExcluded:'Not counted (no timestamps)',
+            rangeNone:'No source carries timestamps, so there is nothing to show in this view.',
+            ownTitle:'Cyber Lion AI scan activity',
+            ownNote:'Hosting country of targets our customers scanned. Counted separately from the feeds; the two are not additive.',
+            ownRangeNote:'The time filter does not cover this layer; it is shown only in the “All” view.',
+            mapFail:'The map could not be drawn; the counters are up to date.' }
     };
-    function t(k) { return (T[document.documentElement.lang] || T.tr)[k]; }
+    /* Eksik anahtar ekrana "undefined" basmasın: önce Türkçe'ye, o da yoksa
+       boş metne düşer. */
+    function t(k) {
+      var v = (T[document.documentElement.lang] || T.tr)[k];
+      if (v === undefined) v = T.tr[k];
+      return v === undefined ? '' : v;
+    }
 
     /* Kaynak adları sunucudan Türkçe sabit geliyor. Kimliği bilinen kaynaklar
        burada çevriliyor; bilinmeyen bir kimlik gelirse sunucunun verdiği ad
@@ -5541,7 +6271,7 @@
        (12.408 kayıt, 24 saatte 352). Varsayılan '24s' olsaydı ziyaretçi
        haritanın büyük kısmını hiç görmezdi ve bunun bir filtre yüzünden
        olduğunu anlamazdı. */
-    var state = { data: null, live: true, range: 'all', country: '', threat: '', selected: null, timer: null };
+    var state = { data: null, live: true, range: 'all', country: '', threat: '', selected: 'TR', timer: null };
 
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var REFRESH_MS = 60000;   // sunucu önbelleği 5 dk; bundan sık sormanın anlamı yok
@@ -5750,7 +6480,15 @@
     function select(code) {
       state.selected = code;
       var m = markers().find(function (x) { return x.country === code; });
-      if (!m) { els.detail.innerHTML = '<p class="wmap__empty">' + esc(t('pick')) + '</p>'; return; }
+      if (!m) {
+        /* Varsayılan seçim Türkiye; o aralıkta Türkiye kaydı yoksa bunu
+           açıkça yazar, boş bir "seçin" kutusu bırakmaz. */
+        els.detail.innerHTML = code
+          ? '<div class="wmap__row"><span>' + esc(countryName(code)) + '</span><span>0</span></div>'
+            + '<p class="wmap__empty">' + esc(t('none')) + '</p>'
+          : '<p class="wmap__empty">' + esc(t('pick')) + '</p>';
+        return;
+      }
 
       var partners = drawArcs(code);
       var html = '<div class="wmap__row"><span>' + esc(countryName(code)) + '</span><span>' + pencereSayisi(m) + '</span></div>';
@@ -5777,7 +6515,7 @@
         html += '<div class="wmap__row"><span>' + esc(srcLabel(s)) + '</span><span>' +
                 esc(deger) + '</span></div>';
         if (s.malware && s.malware.length) {
-          html += '<p class="wmap__srcNote" style="margin:6px 0 0">' + esc(t('families')) + '</p><ul class="wmap__list">';
+          html += '<p class="wmap__srcNote wmap__note--t6">' + esc(t('families')) + '</p><ul class="wmap__list">';
           s.malware.forEach(function (w) {
             html += '<li><span>' + esc(w.name) + '</span><b>' + w.count + '</b></li>';
           });
@@ -5786,7 +6524,7 @@
       });
 
       if (partners.length) {
-        html += '<p class="wmap__srcNote" style="margin:10px 0 0">' + esc(t('shared')) + ': ' +
+        html += '<p class="wmap__srcNote wmap__note--t10">' + esc(t('shared')) + ': ' +
                 esc(partners.map(function (p) { return countryName(p.country); }).join(', ')) + '</p>';
       }
       els.detail.innerHTML = html;
@@ -5815,14 +6553,18 @@
         return '<li>' +
           '<span>' + esc(countryName(m.country)) + '</span>' +
           '<b>' + sayi + '</b>' +
-          '<span class="bar"><i style="width:' + oran + '%"></i></span>' +
+          '<span class="bar"><i data-w="' + oran + '"></i></span>' +
           '</li>';
       }).join('');
+      els.top.querySelectorAll('.bar i[data-w]').forEach(function (el) {
+        el.style.width = el.dataset.w + '%';
+      });
     }
 
     function drawCounters() {
       var d = state.data;
       if (!d) return;
+      els.counters.removeAttribute('aria-busy');
       var html = '';
 
       /* BURASI BİR REGRESYONUN KAYNAĞIYDI. Döngü `s.geo` olan her kaynağı
@@ -5846,7 +6588,7 @@
         html += '<div class="wmap__row"><span>' + esc(srcLabel(s)) + '</span><span>' +
                 (deger === null || deger === undefined ? '—' : deger) + '</span></div>';
         if (deger === null) {
-          html += '<p class="wmap__srcNote" style="margin:-2px 0 8px">' +
+          html += '<p class="wmap__srcNote wmap__note--n2b8">' +
                   esc(t('rangeExcluded')) + '</p>';
         }
       });
@@ -5859,17 +6601,17 @@
          Başlık ve not, ikisinin ayrı şeyler olduğunu açıkça söylüyor. */
       var oa = d.ownActivity;
       if (oa && oa.available && Array.isArray(oa.countries) && oa.countries.length) {
-        html += '<p class="wmap__srcNote" style="margin:10px 0 4px"><b>' +
+        html += '<p class="wmap__srcNote wmap__note--t10b4"><b>' +
                 esc(t('ownTitle')) + '</b></p>';
         if (state.range !== 'all') {
-          html += '<p class="wmap__srcNote" style="margin:0 0 6px">' +
+          html += '<p class="wmap__srcNote wmap__note--b6">' +
                   esc(t('ownRangeNote')) + '</p>';
         }
         oa.countries.slice(0, 5).forEach(function (c) {
           html += '<div class="wmap__row"><span>' + esc(countryName(c.country)) +
                   '</span><span>' + c.count + '</span></div>';
         });
-        html += '<p class="wmap__srcNote" style="margin:2px 0 8px">' +
+        html += '<p class="wmap__srcNote wmap__note--t2b8">' +
                 esc(t('ownNote')) + '</p>';
       }
 
@@ -5881,7 +6623,7 @@
         html += '<div class="wmap__row"><span>' + esc(t('unknown')) + '</span><span>' + unknown + '</span></div>';
       }
       if (d.geoTable && d.geoTable.ready) {
-        html += '<p class="wmap__srcNote" style="margin:8px 0 0">' +
+        html += '<p class="wmap__srcNote wmap__note--t8">' +
                 esc(t('geoTable')) + ': ' + d.geoTable.countries + ' ' + esc(t('countriesWord')) +
                 ' · ' + d.geoTable.generatedAt + '</p>';
       }
@@ -5929,7 +6671,7 @@
                 '<span>' + esc(srcLabel(s)) + '</span>' +
                 (note ? '<span class="wmap__srcNote">' + esc(note) + '</span>' : '') +
                 '</div>' +
-                '<p class="wmap__srcNote" style="margin:-4px 0 8px 16px">' + esc(s.attribution) +
+                '<p class="wmap__srcNote wmap__note--n4b8i">' + esc(s.attribution) +
                 (s.geoSource === 'resolved' ? ' — ' + esc(t('geoResolved'))
                  : s.geoSource === 'native' ? ' — ' + esc(t('geoNative')) : '') + '</p>';
       });
@@ -6029,15 +6771,25 @@
       els.rangeNote.hidden = false;
     }
 
+    /* Her parça ayrı korunuyor: haritayı çizen kısım hata verirse sayaçlar ve
+       kaynaklar yine dolsun, harita yerinde kısa bir not görünsün. */
+    var failEl = document.getElementById('wmFail');
+    function guard(fn, onMap) {
+      try { fn(); return true; }
+      catch (err) {
+        if (window.console) console.error('worldmap:', fn.name, err);
+        if (onMap && failEl) { failEl.textContent = t('mapFail'); failEl.hidden = false; }
+        return false;
+      }
+    }
     function render() {
       if (!state.data) return;
-      drawDots();
-      drawTop();
-      drawCounters();
-      drawSources();
-      drawOwn();
-      drawRangeNote();
-      if (state.selected) select(state.selected);
+      if (guard(drawDots, true) && guard(drawOwn, true) && failEl) failEl.hidden = true;
+      guard(drawTop);
+      guard(drawCounters);
+      guard(drawSources);
+      guard(drawRangeNote);
+      if (state.selected) guard(function selected() { select(state.selected); });
     }
 
     /* ---------- veri ---------- */
@@ -6052,6 +6804,8 @@
         render();
       } catch (err) {
         els.counters.innerHTML = '<p class="wmap__empty">' + esc(t('err')) + '</p>';
+        els.counters.removeAttribute('aria-busy');
+        if (!state.data) els.detail.innerHTML = '<p class="wmap__empty">' + esc(t('err')) + '</p>';
         if (window.console) console.warn('worldmap:', err.message);
       }
     }
@@ -6129,5 +6883,6 @@
   })();
   </script>
 
+ <script src="/mail-links.js" defer></script>
 </body>
 </html>

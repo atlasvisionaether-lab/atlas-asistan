@@ -2,6 +2,8 @@
 .env
 .env.local
 .env.*.local
+# docker-compose ortam dosyasi: n8n paneli sifresi ve servis rolu anahtari tasiyor.
+.env.docker
 supabase/.env
 *.log
 .DS_Store

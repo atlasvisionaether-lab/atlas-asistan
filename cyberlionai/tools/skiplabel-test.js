@@ -45,7 +45,13 @@ function dene(ad, fn) {
 const KOK = path.join(__dirname, '..');
 const SAYFA = fs.readFileSync(path.join(KOK, 'index.html'), 'utf8');
 const RAPOR = fs.readFileSync(path.join(KOK, 'api', '_lib', 'report.js'), 'utf8');
-const MOTOR = fs.readFileSync(path.join(KOK, 'api', '_lib', 'scanner.js'), 'utf8');
+/* Kontroller ve notlar artık alt motorlarda (api/_lib/engines/); scanner.js
+   yalnızca birleştiriyor. İkisi birlikte okunur. */
+const MOTOR = [fs.readFileSync(path.join(KOK, 'api', '_lib', 'scanner.js'), 'utf8')]
+  .concat(fs.readdirSync(path.join(KOK, 'api', '_lib', 'engines'))
+    .filter(function (f) { return /\.js$/.test(f); })
+    .map(function (f) { return fs.readFileSync(path.join(KOK, 'api', '_lib', 'engines', f), 'utf8'); }))
+  .join('\n');
 /* Notların bir kısmı motorda değil, e-posta modülünde üretiliyor (`not:`
    alanıyla) ve oradan motora geçiyor. Yalnızca scanner.js'e bakmak, tam da
    bu sınamanın doğduğu boşluğu yeniden açardı. */

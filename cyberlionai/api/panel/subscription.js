@@ -27,13 +27,47 @@
 const db = require('../_lib/db.js');
 const auth = require('../_lib/auth.js');
 const { PLANS } = require('../_lib/plans.js');
+const { planFromSubscriptions } = require('../_lib/entitlement.js');
+const ownership = require('../_lib/ownership.js');
+
+/**
+ * POST /api/panel/subscription { domain }
+ * İzlenecek alan adını etkin ücretli aboneliğe yazar. Alan adı bu hesap için
+ * DOĞRULANMIŞ olmalı: günlük izleme o alan adına her gün istek atıyor ve
+ * izlemenin hedefi kullanıcının beyanıyla değil kanıtıyla belirleniyor.
+ */
+async function setDomain(req, res, user) {
+  let body = req.body;
+  if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }
+  const domain = ownership.normalizeDomain(body && body.domain);
+  if (!domain) return res.status(400).json({ error: { code: 'invalid_domain' } });
+  if (!(await ownership.isVerified(user.id, domain))) {
+    return res.status(403).json({ error: { code: 'ownership_required', verifyUrl: '/verify?domain=' + encodeURIComponent(domain) } });
+  }
+  let rows;
+  try { rows = await db.listSubscriptions(user.id); } catch (err) {
+    return res.status(503).json({ error: { code: 'panel_unavailable' } });
+  }
+  const sub = rows.filter(function (r) { return r.active === true && (r.plan === 'pro' || r.plan === 'enterprise'); })[0];
+  if (!sub) return res.status(409).json({ error: { code: 'no_paid_subscription' } });
+  try {
+    await db.request('cl_subscriptions?id=eq.' + encodeURIComponent(sub.id)
+      + '&user_id=eq.' + encodeURIComponent(user.id), {
+      method: 'PATCH', headers: { 'Prefer': 'return=minimal' }, body: { domain: domain }
+    });
+  } catch (err) {
+    if (console && console.error) console.error('subscription domain update failed:', err.message);
+    return res.status(503).json({ error: { code: 'panel_unavailable' } });
+  }
+  return res.status(200).json({ ok: true, domain: domain, plan: sub.plan });
+}
 
 module.exports = async function handler(req, res) {
   /* Kişiye özel veri: ara önbelleklerde ASLA durmamalı. */
   res.setHeader('Cache-Control', 'no-store');
 
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: { code: 'method_not_allowed' } });
   }
 
@@ -45,6 +79,7 @@ module.exports = async function handler(req, res) {
   if (!user) {
     return res.status(401).json({ error: { code: 'auth_required' } });
   }
+  if (req.method === 'POST') return setDomain(req, res, user);
 
   let rows;
   try {
@@ -60,11 +95,9 @@ module.exports = async function handler(req, res) {
   }
 
   const active = rows.filter(function (r) { return r.active === true; });
-  /* Birden çok etkin abonelik olabilir (iki alan adı). Plan, en kapsamlı
-     olanı: Enterprise varsa Enterprise. */
-  const planId = active.some(function (r) { return r.plan === 'enterprise'; })
-    ? 'enterprise'
-    : (active.length ? 'pro' : 'free');
+  /* Plan, tarama kotasını belirleyen kuralla AYNI fonksiyondan: panelde
+     "Pro" yazıp taramada free sınırı uygulamak mümkün olmasın. */
+  const planId = planFromSubscriptions(rows);
 
   return res.status(200).json({
     plan: planId,

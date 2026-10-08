@@ -61,7 +61,7 @@ function buildClScanRow(jobRow, result, versions) {
     /* Tekrar teslimde ikinci bir tarama sayılmasın: bu sütunda TEKİL indeks
        var ve yazım `resolution=ignore-duplicates` ile yapılıyor
        (göç: db/2026-10-02-clscans-job-link.sql). */
-    scan_job_id: jobRow.id
+    job_id: jobRow.id
   };
 }
 

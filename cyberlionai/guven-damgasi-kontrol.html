@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Güven Damgası Ön Kontrol | Cyber Lion AI</title>
+  <meta name="description" content="E-ticaret sitenizde Güven Damgası başvurularında sıkça istenen unsurların (sözleşmeler, KVKK, iletişim bilgileri, çerez onayı) otomatik ön kontrolü. Resmi değerlendirme değildir." />
+  <meta name="robots" content="noindex" />
+  <link rel="canonical" href="https://www.cyberlionai.com/guven-damgasi-kontrol" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha384-PPIZEGYM1v8zp5Py7UjFb79S58UeqCL9pYVnVPURKEqvioPROaVAJKKLzvH2rDnI" crossorigin="anonymous" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z' fill='%230a0a0f' stroke='%23d4af37' stroke-width='2.5'/%3E%3Ccircle cx='24' cy='22' r='9' fill='none' stroke='%23d4af37' stroke-width='2.5'/%3E%3C/svg%3E" />
+  <style>
+  :root{--primary-black:#0a0a0f;--secondary-black:#12121a;--card-black:#1a1a24;
+    --gold-primary:#d4af37;--gold-light:#ffdf00;--text-white:#f0f0f0;--text-gray:#a0a0b0;
+    --glass-bg:rgba(26,26,36,.7);--glass-border:rgba(212,175,55,.2);--hairline:rgba(255,255,255,.08);
+    --ok:#5fd98a;--warn:#ffd166;--bad:#ff8f87;
+    --font-heading:'Orbitron','Segoe UI',sans-serif;--font-body:'Space Grotesk','Segoe UI',sans-serif}
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--primary-black);color:var(--text-white);font-family:var(--font-body);
+    font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(60% 40% at 50% -10%,rgba(212,175,55,.08),transparent 70%)}
+  a{color:var(--gold-primary)}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--gold-light);outline-offset:3px;border-radius:4px}
+  .container{width:100%;max-width:760px;margin:0 auto;padding:0 16px}
+  header.top{border-bottom:1px solid var(--glass-border);background:var(--glass-bg);backdrop-filter:blur(16px)}
+  header.top .container{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;padding-bottom:14px;max-width:1120px}
+  .brand{font-family:var(--font-heading);font-weight:800;letter-spacing:.08em;text-decoration:none;color:var(--gold-primary)}
+  .lang{display:inline-flex;border:1px solid var(--hairline);border-radius:8px;overflow:hidden}
+  .lang button{background:none;border:0;color:var(--text-gray);padding:5px 10px;font:inherit;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:rgba(212,175,55,.18);color:var(--gold-light)}
+  h1{font-family:var(--font-heading);font-size:1.6rem;letter-spacing:.06em;margin:36px 0 8px}
+  h2{font-family:var(--font-heading);font-size:1rem;letter-spacing:.08em;color:var(--gold-primary);margin:0 0 12px}
+  .lead{color:var(--text-gray);margin:0 0 24px}
+  .card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:20px;margin-bottom:18px}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .input{flex:1 1 220px;min-width:0;padding:11px 13px;border-radius:10px;border:1px solid var(--hairline);
+    background:rgba(255,255,255,.03);color:var(--text-white);font:inherit}
+  .btn{padding:11px 18px;border-radius:10px;border:1px solid var(--gold-primary);background:var(--gold-primary);
+    color:var(--primary-black);font:inherit;font-weight:600;cursor:pointer}
+  .btn--ghost{background:transparent;color:var(--gold-primary)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .tabs{display:flex;flex-wrap:wrap;border:1px solid var(--hairline);border-radius:10px;overflow:hidden;margin-bottom:14px}
+  .tabs button{flex:1 1 0;padding:10px 12px;background:none;border:0;color:var(--text-gray);font:inherit;cursor:pointer}
+  .tabs button[aria-selected="true"]{background:rgba(212,175,55,.18);color:var(--gold-light)}
+  .field{margin:0 0 12px}
+  .field__label{display:block;color:var(--text-gray);font-size:.82rem;margin-bottom:4px}
+  .copybox{display:flex;gap:8px;align-items:stretch}
+  .copybox code{flex:1;min-width:0;display:block;padding:10px 12px;border-radius:8px;background:var(--primary-black);
+    border:1px solid var(--hairline);color:var(--gold-primary);font-size:.82rem;overflow-wrap:anywhere;white-space:pre-wrap}
+  .copybox button{flex:0 0 auto;padding:0 12px;border-radius:8px;border:1px solid var(--hairline);background:none;color:var(--text-white);cursor:pointer}
+  .msg{margin:12px 0 0;font-size:.92rem}
+  .msg--ok{color:var(--ok)} .msg--bad{color:var(--bad)} .msg--warn{color:var(--warn)}
+  .note{color:var(--text-gray);font-size:.85rem;margin:10px 0 0}
+  ul.list{list-style:none;margin:0;padding:0}
+  ul.list li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:.92rem}
+  ul.list li:last-child{border-bottom:0}
+  .badge{font-size:.78rem;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+  .badge--ok{color:var(--ok)} .badge--wait{color:var(--warn)}
+  footer{color:var(--text-gray);font-size:.82rem;text-align:center;padding:30px 16px}
+  .items{list-style:none;margin:0;padding:0}
+  .items li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:.93rem}
+  .items li:last-child{border-bottom:0}
+  .st{flex:0 0 auto;font-size:.8rem;padding:2px 9px;border-radius:999px;border:1px solid currentColor}
+  .st--pass{color:var(--ok)} .st--fail{color:var(--bad)} .st--warn{color:var(--warn)}
+  .disclaimer{border-left:3px solid var(--warn);padding:10px 14px;background:rgba(255,209,102,.06);border-radius:6px;font-size:.88rem;color:var(--text-gray)}
+  .h2--mt20{margin-top:20px}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="/">CYBER LION AI</a>
+      <div class="lang" role="group" aria-label="Dil / Language">
+        <button type="button" data-lang="tr" aria-pressed="true">TR</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1 data-t="title">Güven Damgası Ön Kontrol</h1>
+    <p class="lead" data-t="lead">E-ticaret sitenizde, Güven Damgası başvurularında sıkça istenen unsurların görünür olup olmadığını otomatik olarak işaretler: yasal sözleşmeler, KVKK metinleri, satıcı iletişim bilgileri ve çerez onayı.</p>
+    <p class="disclaimer" data-t="disclaimer">Bu araç resmi bir değerlendirme değildir; TOBB veya ETBİS ile bağlantımız yoktur. Sonuçlar başvurunuzun kabul edileceği anlamına gelmez. Yalnızca sitenizin herkese açık sayfaları okunur.</p>
+
+    <section class="card" id="loginCard" hidden>
+      <p data-t="loginNeeded">Bu araç Enterprise planına dahildir. Devam etmek için giriş yapın.</p>
+      <a class="btn" href="/panel" data-t="login">Giriş Yap</a>
+    </section>
+
+    <section class="card" id="planCard" hidden>
+      <p data-t="planNeeded">Güven Damgası ön kontrolü Enterprise planına dahildir.</p>
+      <a class="btn" href="/pricing" data-t="seePlans">Planları Gör</a>
+    </section>
+
+    <section class="card" id="formCard" hidden>
+      <form class="row" id="form" novalidate>
+        <label class="sr-only" for="domain" data-t="domain">Alan adı</label>
+        <input class="input" id="domain" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="magazam.com" />
+        <button class="btn" id="btn" type="submit" data-t="run">Kontrol Et</button>
+      </form>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" id="resultCard" hidden>
+      <h2 id="resultTitle"></h2>
+      <ul class="items" id="items"></ul>
+      <h2 class="h2--mt20" data-t="tpTitle">Üçüncü taraf betikler</h2>
+      <p class="note" data-t="tpNote">Bu sunucular ziyaretçilerinizin tarayıcısından veri alabilir; KVKK aydınlatma metninizde ve çerez onayınızda yer almaları gerekir.</p>
+      <ul class="items" id="tp"></ul>
+    </section>
+  </main>
+
+  <footer>© Cyber Lion AI · <a href="/kullanim-kosullari">Kullanım Şartları</a> · <a href="/pages/tarama-yetkisi">Tarama Yetkisi</a></footer>
+
+  <script src="/guven-damgasi.js" defer></script>
+</body>
+</html>

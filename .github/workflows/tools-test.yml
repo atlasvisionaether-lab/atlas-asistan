@@ -128,6 +128,37 @@ jobs:
       - name: Tarama ucu gerçekten çağrılıyor (senkron + kuyruk yolu)
         run: node cyberlionai/tools/scanhandler-test.js
 
+      # Ilerleme cubugu: yayinda tarama %85'te sonsuza kadar donuyordu, cunku
+      # kuyruk ucu 404 dondugunde esizamanli yola duserken IKINCI bir sayac
+      # baslatiliyor ve ilki hic durdurulmuyordu. Kacak sayac, sonuc gelip
+      # cubuk %100 yazildiktan sonra ustune tekrar %85 yaziyordu. Bu adim
+      # index.html'den sokulen kodu sahte saatle CALISTIRIYOR.
+      - name: Tarama ilerleme çubuğu (kaçak sayaç yok)
+        run: node cyberlionai/tools/scanprogress-test.js
+      # /api/verify-dns: p=none'un KIRMIZI sayilmasi, SPF'te `found`un varlik
+      # degil koruma anlamina gelmesi ve POST'un hicbir hata yolunda 404
+      # donmemesi (ekran onu "uc yayinda degil" diye okuyor) burada sabit.
+      - name: Alan adı doğrulama ucu (SPF/DMARC)
+        run: node cyberlionai/tools/verifydns-test.js
+
+      # Telegram bildirimleri. En onemlisi: belirtec ADRESIN icinde oldugu
+      # icin siradan bir hata logu onu sizdirir. Bu adim logda belirtecin
+      # tamamini, yalniz sir kismini ve api.telegram.org dizgesini ariyor.
+      - name: Telegram bildirimleri (belirteç sızmıyor)
+        run: node cyberlionai/tools/telegram-test.js
+
+      # AI analist. Buradaki tek gercek risk gizlilik: tarama GOVDESI
+      # (ham baslik degerleri, Set-Cookie, IP, e-posta) bir dis modele
+      # gidemez. Sinama ozetleyicinin yalnizca id/severity/status tasidigini
+      # ve anahtarin loga girmedigini dogruluyor.
+      - name: AI analist (tarama gövdesi modele gitmiyor)
+        run: node cyberlionai/tools/aianalyst-test.js
+
+      # Rapor ucu. Sahiplik filtresi sorgunun icinde; sahipsiz bir okumaya
+      # cevrilirse baska hesabin tarama anlatimi sizar ve hicbir yanit bunu
+      # gostermez. Gosterilen puanin MOTORUN puani oldugu da burada kilitli.
+      - name: AI rapor ucu (sahiplik + motor puanı)
+        run: node cyberlionai/tools/ai-report-test.js
       # Faz 5.5: imzali rapor indirme ve cl_scans kaydi. Presign GERCEKTEN
       # kosturuluyor; kanonik istegin bicimi, parametre siralamasi ve imzanin
       # nesneye baglandigi dogrulaniyor. Ayrica report_key'in istemciden

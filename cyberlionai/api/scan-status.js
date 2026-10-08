@@ -23,6 +23,7 @@
 const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
 const { resolveOwner, clientIp, ipKey } = require('./_lib/session.js');
+const tg = require('./_lib/telegram.js');
 
 /* Yoklama sınırı. Taramanın kendisinden ayrı bir kova: yoklama ucuz bir
    okuma, tarama sınırını harcamamalı. Yine de sınırsız değil — bir istemci
@@ -30,7 +31,7 @@ const { resolveOwner, clientIp, ipKey } = require('./_lib/session.js');
 const POLL_WINDOW_SECONDS = 60;
 const POLL_MAX = 120;
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'GET') {
@@ -68,6 +69,12 @@ module.exports = async function handler(req, res) {
     row = await db.getJobStatus(owner, id);
   } catch (err) {
     if (console && console.error) console.error('job status read failed:', err.message);
+    /* Bu 503 diğerlerinden farklı: yapılandırma eksikliği değil, okuma
+       DENENDİ ve düştü. Bu yüzden uyarı üretiyor (`ucuSar` 503'leri atlıyor,
+       bkz. telegram.js). */
+    tg.bildirimIsaretle(res);
+    await tg.sendTelegram(tg.mesaj.hata('/api/scan-status', 503, 'job_status_read_failed'),
+      { type: 'alert' });
     return res.status(503).json({ error: { code: 'service_unavailable' } });
   }
 
@@ -75,6 +82,18 @@ module.exports = async function handler(req, res) {
 
   const sonuc = row.result || {};
   const bitti = row.status === 'completed';
+
+  /* Kuyruktan biten taramanın bildirimi. Taramayı Lambda bitiriyor ve
+     Vercel'e haber vermiyor; sonucu ilk gören yer bu yoklama. İş kimliği
+     başına BİR kez (istemci bitişten sonra da yoklayabilir). */
+  if ((bitti || row.status === 'failed') && await tg.tekSefer('done:' + row.id, 7 * 86400)) {
+    await tg.sendTelegram(bitti
+      ? tg.mesaj.taramaBittiKuyruk(row.domain,
+          typeof row.score === 'number' ? row.score : null,
+          (sonuc.summary && sonuc.summary.failed) || 0)
+      : tg.mesaj.taramaBasarisizKuyruk(row.domain, row.error_code),
+      { type: 'scan' });
+  }
 
   return res.status(200).json({
     jobId: row.id,
@@ -108,4 +127,6 @@ module.exports = async function handler(req, res) {
       ? { code: row.error_code || 'scan_failed' }
       : null
   });
-};
+}
+
+module.exports = tg.ucuSar(handler, '/api/scan-status');

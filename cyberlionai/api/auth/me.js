@@ -14,19 +14,18 @@
 const auth = require('../_lib/auth.js');
 const store = require('../_lib/store.js');
 const { resolveSession } = require('../_lib/session.js');
-const { FREE_SCAN_LIMIT } = require('../_lib/limits.js');
+const entitlement = require('../_lib/entitlement.js');
 
-/** Sayaç okunamazsa kota alanı hiç dönmez; arayüz eski gösterimini korur. */
+/** Sayaç okunamazsa kota alanı hiç dönmez; arayüz eski gösterimini korur.
+    Sınır plana göre (bkz. _lib/entitlement.js): tarama uçlarıyla aynı politika,
+    aynı sayaç anahtarı — gösterilen hak ile uygulanan hak ayrışamaz. */
 async function quotaFor(owner) {
   if (!store.isConfigured()) return null;
   try {
-    const used = await store.readQuota(store.quotaKey(owner));
-    return {
-      used: used,
-      limit: FREE_SCAN_LIMIT,
-      remaining: Math.max(0, FREE_SCAN_LIMIT - used),
-      scope: owner.userId ? 'account' : 'anonymous'
-    };
+    const policy = await entitlement.resolvePolicy(owner, store.quotaKey(owner));
+    const scope = owner.userId ? 'account' : 'anonymous';
+    if (policy.unlimited) return entitlement.quotaView(policy, null, scope);
+    return entitlement.quotaView(policy, await store.readQuota(policy.key), scope);
   } catch (err) {
     return null;
   }

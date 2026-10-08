@@ -165,7 +165,16 @@ async function cacheSet(key, value, ttlSeconds) {
   await command(['SET', key, JSON.stringify(value), 'EX', String(ttlSeconds)]);
 }
 
+/**
+ * Anahtarı yalnızca YOKSA yazar (SET NX). İlk çağıran true, sonrakiler false
+ * alır. Aynı olay için tek seferlik iş (ör. bir bildirim) bununla kilitlenir.
+ */
+async function setOnce(key, ttlSeconds) {
+  const result = await command(['SET', key, '1', 'NX', 'EX', String(ttlSeconds)]);
+  return result === 'OK';
+}
+
 module.exports = {
   isConfigured, hitRateLimit, reserveQuota, refundQuota, readQuota,
-  addToQuota, quotaKey, cacheGet, cacheSet
+  addToQuota, quotaKey, cacheGet, cacheSet, setOnce
 };

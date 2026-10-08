@@ -37,6 +37,18 @@ const html = oku('index.html');
 const vercel = oku('vercel.json');
 const headers = oku('_headers');
 const gocSrc = oku('db/2026-10-02-clscans-job-link.sql');
+/* Dedup indeksi AYRI dosyada: 2026-10-02 dosyası sütunu, FK'yı ve panelin
+   kısmi indeksini kuruyor; tekil indeks sonradan ona EK olarak açılıyor. */
+const gocIndeksSrc = oku('db/2026-10-08-clscans-job-id-unique.sql');
+
+/* YORUMLARI AT. "RLS'e dokunulmuyor" diye yazan bir yorum, RLS'e dokunan bir
+   göçle aynı metni taşıyor; süzgeç yorumları okursa doğrulama kelime
+   oyununa indirgenir. Yalnızca ÇALIŞAN SQL'e bakılıyor. */
+function sadeSql(src) {
+  return String(src).split('\n')
+    .filter(function (l) { return l.trim().indexOf('--') !== 0; })
+    .join('\n');
+}
 
 const sigv4 = require('../aws/lambda-scanner/lib/sigv4.js');
 const { buildClScanRow, sanitizeFindings } = require('../aws/lambda-scanner/lib/clscan.js');
@@ -219,7 +231,7 @@ const result = {
 };
 const satir = buildClScanRow(jobRow, result, { scanner: 's1', report: 'r1' });
 
-/* Alan kümesi `db.saveScan()` ile birebir aynı olmalı (+ scan_job_id). */
+/* Alan kümesi `db.saveScan()` ile birebir aynı olmalı (+ job_id). */
 const saveScanGovde = dbSrc.slice(dbSrc.indexOf('async function saveScan'),
   dbSrc.indexOf('const rows = await request(TABLE'));
 const beklenenAlanlar = (saveScanGovde.match(/^\s{4}([a-z_]+):/gm) || [])
@@ -231,11 +243,11 @@ dogru('saveScan en az 16 alan taşıyor (süzgeç gerçekten alan buldu)',
 const fazla = Object.keys(satir).filter(function (a) {
   return beklenenAlanlar.indexOf(a) === -1;
 });
-esit('fazladan yalnızca scan_job_id var', JSON.stringify(fazla), '["scan_job_id"]');
+esit('fazladan yalnızca job_id var', JSON.stringify(fazla), '["job_id"]');
 
 esit('anonim oturum kimliği yazılıyor', satir.anonymous_session_id, 'oturum-1');
 esit('anonim satırda user_id boş', satir.user_id, null);
-esit('iş kimliği satıra bağlanıyor', satir.scan_job_id, jobRow.id);
+esit('iş kimliği satıra bağlanıyor', satir.job_id, jobRow.id);
 
 const hesapliJob = buildClScanRow(
   { id: 'j', user_id: 'kullanici-1', session_id: 'oturum-1' }, result, { scanner: 's', report: 'r' });
@@ -268,12 +280,18 @@ dogru('cl_scans yazımı completed yazımından ÖNCE',
   lambdaSrc.indexOf('insertScanRow(') < lambdaSrc.indexOf("status: 'completed'"));
 dogru('tekrar teslimde çift kayıt engelli',
   oku('aws/lambda-scanner/lib/supabase.js').indexOf('resolution=ignore-duplicates') !== -1);
-dogru('göç tekil indeks kuruyor', /CREATE UNIQUE INDEX IF NOT EXISTS/.test(gocSrc));
-dogru('göç kısmi indeks KURMUYOR (PostgREST 42P10)',
-  gocSrc.indexOf('CREATE UNIQUE INDEX') !== -1
-  && !/CREATE UNIQUE INDEX[\s\S]{0,200}WHERE/.test(gocSrc));
+dogru('göç tekil indeks kuruyor', /CREATE UNIQUE INDEX IF NOT EXISTS/.test(gocIndeksSrc));
+/* Tekil indeks TAM olmak zorunda: PostgREST'in ignore-duplicates yolu kısmi
+   indeksi kullanamıyor (42P10). Panelin kısmi indeksi ayrı dosyada ve tekil
+   DEĞİL, yani buradaki `WHERE` yasağı yalnızca dedup indeksini bağlıyor. */
+dogru('dedup indeksi KISMİ değil (PostgREST 42P10)',
+  gocIndeksSrc.indexOf('CREATE UNIQUE INDEX') !== -1
+  && !/CREATE UNIQUE INDEX[\s\S]{0,200}WHERE/i.test(gocIndeksSrc));
+dogru('dedup göçü RLS ve policy değiştirmiyor',
+  !/POLICY/i.test(sadeSql(gocIndeksSrc))
+  && !/ROW LEVEL SECURITY/i.test(sadeSql(gocIndeksSrc)));
 dogru('göç RLS ve policy değiştirmiyor',
-  gocSrc.indexOf('POLICY') === -1 && gocSrc.indexOf('ROW LEVEL SECURITY') === -1);
+  !/POLICY/i.test(sadeSql(gocSrc)) && !/ROW LEVEL SECURITY/i.test(sadeSql(gocSrc)));
 dogru('göç yalnızca sütun ve indeks ekliyor',
   gocSrc.indexOf('DROP TABLE') === -1 && gocSrc.indexOf('DELETE FROM') === -1);
 
@@ -290,11 +308,22 @@ dogru('oturum açıkken dil duyarlı rapor tercih ediliyor',
 
 /* İmzalı adrese TEPE SEVİYE GEZİNME ile gidiliyor (302), fetch ile değil:
    `connect-src` dışa açılmıyor. Açılsaydı CSP gevşetilmiş olurdu. */
+/* Değer SABİTLENMİYOR: main `connect-src`'i zaman içinde daraltıyor (#72
+   ipapi.co'yu çıkardı) ve sabit bir dizge, PR'ın eklediği bir şey olmasa da
+   sınamayı kırar. Bağlanan şey asıl özellik: imzalı adres için DIŞ BİR
+   KÖKEN EKLENMEDİ ve iki dosya birbiriyle tutarlı. */
+const connectSrcler = [];
 [['vercel.json', vercel], ['_headers', headers]].forEach(function (c) {
   const m = c[1].match(/connect-src ([^;"]+)/);
-  esit(c[0] + ' connect-src gevşetilmedi', m && m[1].trim(), "'self' https://ipapi.co");
+  const deger = m && m[1].trim();
+  connectSrcler.push(deger);
+  dogru(c[0] + ' connect-src S3 kökeni taşımıyor',
+    !!deger && deger.indexOf('amazonaws') === -1 && deger.indexOf('s3.') === -1);
+  dogru(c[0] + ' connect-src yalnızca kendi kökeni (ya da main\'in izin verdikleri)',
+    !!deger && deger.indexOf("'self'") === 0);
   dogru(c[0] + ' içinde amazonaws hedefi yok', c[1].indexOf('amazonaws.com') === -1);
 });
+esit('iki dosyanın connect-src\'i aynı', connectSrcler[0], connectSrcler[1]);
 
 /* ---- Sonuç ---- */
 if (hatalar.length) {

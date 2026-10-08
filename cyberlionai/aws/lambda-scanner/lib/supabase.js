@@ -88,11 +88,11 @@ async function replaceFindings(jobId, findings) {
  * Dünya haritası katmanı için `cl_scans` satırını yazar.
  *
  * `resolution=ignore-duplicates`: SQS mesajı EN AZ BİR KEZ teslim ediliyor,
- * yani aynı iş iki kez işlenebilir. `scan_job_id` üzerindeki TEKİL indeks
+ * yani aynı iş iki kez işlenebilir. `job_id` üzerindeki TEKİL indeks
  * ikinci yazımı sessizce düşürüyor, böylece harita aynı taramayı iki kez
  * saymıyor. İndeks TAM olmalı (kısmi değil), yoksa PostgREST 42P10 döner.
  *
- * Satır yazılamazsa (göç henüz uygulanmadıysa `scan_job_id` sütunu yoktur)
+ * Satır yazılamazsa (göç henüz uygulanmadıysa `job_id` sütunu yoktur)
  * HATA FIRLATILIYOR ve çağıran bunu taramanın sonucundan ayırıyor: harita
  * kaydı, elde olan tarama sonucunu çöpe atmayı haklı çıkarmaz.
  */
