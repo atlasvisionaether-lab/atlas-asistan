@@ -108,6 +108,11 @@ async function handler(req, res) {
        değerler: Lambda her adımda yazıyor (bkz. aws/lambda-scanner/index.js).
        Göç uygulanmadıysa PostgREST bu sütunları döndürmez; null kalır ve
        istemci çubuğu kendi tahminiyle sürdürür. */
+    /* S3'teki PDF var mı. ANAHTARIN KENDİSİ DÖNMÜYOR, yalnızca varlığı:
+       istemci hangi nesnenin imzalanacağını seçemesin (imzalatma
+       /api/report-download üzerinden ve işin satırından okunan anahtarla
+       yapılıyor). Arayüz indirme düğmesini buna göre gösteriyor. */
+    reportAvailable: !!row.report_key,
     progress: typeof row.progress === 'number' ? row.progress : null,
     current_step: row.current_step || null,
     createdAt: row.created_at,

@@ -159,6 +159,12 @@ jobs:
       # gostermez. Gosterilen puanin MOTORUN puani oldugu da burada kilitli.
       - name: AI rapor ucu (sahiplik + motor puanı)
         run: node cyberlionai/tools/ai-report-test.js
+      # Faz 5.5: imzali rapor indirme ve cl_scans kaydi. Presign GERCEKTEN
+      # kosturuluyor; kanonik istegin bicimi, parametre siralamasi ve imzanin
+      # nesneye baglandigi dogrulaniyor. Ayrica report_key'in istemciden
+      # ALINMADIGI ve haritaya ham baslik degeri yazilmadigi sabitleniyor.
+      - name: İmzalı rapor indirme ve harita kaydı
+        run: node cyberlionai/tools/reportsign-test.js
 
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh

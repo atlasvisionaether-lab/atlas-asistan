@@ -84,4 +84,34 @@ async function replaceFindings(jobId, findings) {
   });
 }
 
-module.exports = { request, patchJob, replaceFindings, isConfigured: function () { return config() !== null; } };
+/**
+ * Dünya haritası katmanı için `cl_scans` satırını yazar.
+ *
+ * `resolution=ignore-duplicates`: SQS mesajı EN AZ BİR KEZ teslim ediliyor,
+ * yani aynı iş iki kez işlenebilir. `job_id` üzerindeki TEKİL indeks
+ * ikinci yazımı sessizce düşürüyor, böylece harita aynı taramayı iki kez
+ * saymıyor. İndeks TAM olmalı (kısmi değil), yoksa PostgREST 42P10 döner.
+ *
+ * `on_conflict=job_id` ZORUNLU, süs değil. Yokken PostgREST çatışmayı BİRİNCİL
+ * ANAHTARDA arıyor; `cl_scans.id` her satırda yeni üretilen bir uuid olduğu
+ * için çatışma hiç görülmüyor, yazım sade bir INSERT'e dönüyor ve ikinci
+ * teslimde `cl_scans_job_id_key` 23505 fırlatıyor. Yani başlık tek başına
+ * dedup kurmuyor; çatışma hedefi adıyla verilmek zorunda.
+ *
+ * Satır yazılamazsa (göç henüz uygulanmadıysa `job_id` sütunu yoktur)
+ * HATA FIRLATILIYOR ve çağıran bunu taramanın sonucundan ayırıyor: harita
+ * kaydı, elde olan tarama sonucunu çöpe atmayı haklı çıkarmaz.
+ */
+async function insertScanRow(row) {
+  const rows = await request('cl_scans?on_conflict=job_id', {
+    method: 'POST',
+    body: row,
+    headers: { 'Prefer': 'return=representation,resolution=ignore-duplicates' }
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+module.exports = {
+  request, patchJob, replaceFindings, insertScanRow,
+  isConfigured: function () { return config() !== null; }
+};

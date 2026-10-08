@@ -4849,11 +4849,23 @@
           upgradeBtn.hidden = true;
         } else if (result.jobId && authManager.isSignedIn()) {
           /* Kuyruklu yolda `cl_scans` kaydı yok, yalnızca `scan_jobs` işi var.
-             Rapor o işten üretiliyor. Bu uç GİRİŞ İSTİYOR (iş kayıtları
-             yalnızca hesaba bağlı), bu yüzden bağlantı yalnızca oturum
-             açıkken gösteriliyor; aksi hâlde 401 veren bir düğme olurdu. */
+             Rapor o işten İSTEK ANINDA üretiliyor; bu yol SEÇİLEN DİLDE rapor
+             veriyor, bu yüzden oturum açıkken S3 kopyasına tercih ediliyor
+             (Lambda'nın ürettiği PDF şimdilik yalnızca Türkçe). Uç giriş
+             istiyor: iş kayıtlarının bu yolu hesaba bağlı. */
           reportBtn.href = CONFIG.apiBaseUrl + '/api/report?jobId=' + encodeURIComponent(result.jobId)
             + '&lang=' + currentLang;
+          reportBtn.hidden = false;
+          upgradeBtn.hidden = true;
+        } else if (result.jobId && result.reportAvailable) {
+          /* ANONİM kuyruk taraması: Lambda PDF'i üretip S3'e koymuş.
+             /api/report-download sahipliği `user_id` VEYA `session_id`
+             üzerinden kuruyor, yani giriş gerekmiyor — kullanıcı kendi
+             raporunu indiriyor, başkasının raporunu indiremiyor. Uç süreli
+             imzalı adrese 302 ile yönlendiriyor.
+             `lang` YOK: S3'teki kopya Lambda'nın ürettiği Türkçe rapor. */
+          reportBtn.href = CONFIG.apiBaseUrl + '/api/report-download?id='
+            + encodeURIComponent(result.jobId);
           reportBtn.hidden = false;
           upgradeBtn.hidden = true;
         } else {

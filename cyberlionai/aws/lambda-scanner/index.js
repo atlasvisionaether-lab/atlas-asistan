@@ -42,6 +42,7 @@ const { buildOwaspReport } = require('./_lib/report-owasp.js');
 const supabase = require('./lib/supabase.js');
 const s3 = require('./lib/s3.js');
 const { buildDetail } = require('./lib/detail.js');
+const { buildClScanRow } = require('./lib/clscan.js');
 const { parseMessage, errorCode, retryDecision } = require('./lib/message.js');
 
 /** Tek bir işi baştan sona yürütür. */
@@ -98,6 +99,19 @@ async function processJob(message) {
     rapor = await s3.putReport(message.scanId, pdf);
   } catch (err) {
     if (console && console.error) console.error('report upload failed:', errorCode(err));
+  }
+
+  /* Dünya haritasının etkinlik katmanı `cl_scans`'ten besleniyor ve kuyruklu
+     yolda satırı açan tek yer burası. BAŞARISIZLIĞI taramayı geçersiz
+     KILMIYOR: göç uygulanmadıysa sütun yoktur ve istek reddedilir; elde olan
+     sonucu bu yüzden çöpe atmak yanlış olurdu. Haritada eksik bir satır,
+     kullanıcının kaybettiği bir tarama kadar pahalı değil. */
+  try {
+    await supabase.insertScanRow(buildClScanRow(jobRow, result, {
+      scanner: SCANNER_VERSION, report: REPORT_VERSION
+    }));
+  } catch (err) {
+    if (console && console.error) console.error('cl_scans insert failed:', errorCode(err));
   }
 
   await supabase.patchJob(message.scanId, {
