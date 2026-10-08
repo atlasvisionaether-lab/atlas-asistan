@@ -128,9 +128,38 @@ function clearSessionCookies(res) {
   appendCookie(res, RT_COOKIE + '=; Max-Age=0; Path=' + RT_PATH + '; HttpOnly; Secure; SameSite=Lax');
 }
 
-function readTokens(req) {
+/**
+ * Oturum belirteclerini istekten okur.
+ *
+ * VARSAYILAN: YALNIZCA CEREZ. Tarayici icin dogru olan bu — belirteci
+ * JavaScript'in okuyabilecegi bir yere koymuyoruz (dosya basindaki gerekce).
+ *
+ * `secenek.bearerKabul` yalnizca YERLI UYGULAMA ucu icin acilir
+ * (`/api/device-token`). Sebebi: bir mobil uygulamada tarayici cerez kavrami
+ * yok; Supabase SDK'si kullaniciya bir erisim belirteci veriyor ve uygulama onu
+ * kendi guvenli deposunda tutuyor. Bu bir ATLATMA DEGIL: gelen belirtec yine
+ * GoTrue'nun `/auth/v1/user` ucuna sorulup dogrulaniyor, yani cerez yolundaki
+ * ile TAM AYNI kimlik denetimi isliyor; paylasilan bir sir, bir baslik hilesi
+ * ya da ikinci bir yetki kaynagi eklenmiyor.
+ *
+ * Bayrak uc uca opt-in: varsayilan kapali oldugu icin bu dosyayi kullanan
+ * diger uclarin yetki yuzeyi DEGISMIYOR. Yenileme belirteci bearer yolunda
+ * HIC okunmuyor — belirtec dolunca uc 401 doner ve yenilemeyi uygulama kendi
+ * SDK'si ile yapar; boylece sunucu mobil oturumun sahibi olmaz.
+ */
+function readTokens(req, secenek) {
   const jar = parseCookies(req.headers && req.headers.cookie);
-  return { accessToken: jar[AT_COOKIE] || null, refreshToken: jar[RT_COOKIE] || null };
+  const cerezAt = jar[AT_COOKIE] || null;
+  const cerezRt = jar[RT_COOKIE] || null;
+  if (cerezAt || !(secenek && secenek.bearerKabul)) {
+    return { accessToken: cerezAt, refreshToken: cerezRt, bearer: false };
+  }
+  const h = req.headers && (req.headers.authorization || req.headers.Authorization);
+  const m = /^Bearer[ ]+([A-Za-z0-9._~+/=-]{20,4096})$/.exec(String(h || '').trim());
+  if (!m) return { accessToken: null, refreshToken: cerezRt, bearer: false };
+  /* Bearer yolunda yenileme belirteci TASIMIYORUZ: cerez yenileme yolu
+     tarayici icin var, mobilde yenilemeyi uygulama yapiyor. */
+  return { accessToken: m[1], refreshToken: null, bearer: true };
 }
 
 /* ------------------------------------------------------------------
@@ -192,14 +221,18 @@ async function logout(accessToken) {
  * yeni çerezler yanıta eklenir. Yenilenemezse oturum çerezleri temizlenir:
  * kullanıcı anonim duruma düşer, geçersiz bir çerezle dolaşmaz.
  *
+ * `secenek.bearerKabul` true ise ve oturum çerezi YOKSA `Authorization:
+ * Bearer <supabase access_token>` başlığı kabul edilir; yerli uygulama ucu
+ * için (bkz. readTokens). Varsayılan kapalı.
+ *
  * Dönüş: { id, email, accessToken } veya null. Erişim token'ı da döner çünkü
  * yenileme sonrası çağıranın elindeki çerez artık eskidir; şifre değiştirme
  * gibi işlemler güncel token'a ihtiyaç duyar.
  */
-async function resolveUser(req, res) {
+async function resolveUser(req, res, secenek) {
   if (!isConfigured()) return null;
 
-  const tokens = readTokens(req);
+  const tokens = readTokens(req, secenek);
 
   if (tokens.accessToken) {
     let r;
@@ -210,8 +243,9 @@ async function resolveUser(req, res) {
   }
 
   if (!tokens.refreshToken) {
-    // Erişim çerezi var ama geçersizse temizle; yoksa dokunma.
-    if (tokens.accessToken) clearSessionCookies(res);
+    /* Bearer yolunda temizlenecek cerez YOK; clearSessionCookies cagirmak
+       mobil istege anlamsiz Set-Cookie basliklari eklerdi. */
+    if (tokens.accessToken && !tokens.bearer) clearSessionCookies(res);
     return null;
   }
 

@@ -105,12 +105,46 @@ Pano aynı köken yoklamasını sürdürüyor. Bkz. `docs/scan-queue.md`.
 2. Firebase konsolundan bir **servis hesabı** anahtarı indirin ve JSON'un
    tamamını Vercel'de `FIREBASE_SERVICE_ACCOUNT` olarak tanımlayın.
 3. `CRON_SECRET` zaten tanımlı olmalı (yoksa cron uçları 503 verir).
-4. Mobil uygulama açılışta `POST /api/device-token { token }` çağırsın.
+4. Mobil uygulama açılışta `POST /api/device-token { token, platform }` çağırsın;
+   istemci parçası `mobile/flutter/` altında hazır (bkz. aşağıdaki bölüm).
 5. n8n'de WORKFLOW 4'ü yeniden içe aktarın ve etkinleştirin.
 
 Doğrulama: sırsız `GET /api/cron/notify?jobId=<uuid>` **401** dönmeli.
 `503 cron_unconfigured` gelirse `CRON_SECRET` yok; `503 fcm_unconfigured`
 gelirse `FIREBASE_SERVICE_ACCOUNT` yok.
+
+## Mobil istemci ve Bearer yolu
+
+İstemci parçası `mobile/flutter/` altında: `lib/services/push_token_service.dart`
+(izin isteme, `getToken`, `onTokenRefresh`, açılışta POST, çıkışta DELETE) ve
+üç satırlık `pubspec.example.yaml`. **Bu bir uygulama değil**, bir uygulamaya
+kopyalanmak üzere duran iki dosya: depoda mobil uygulama yok ve bu kapta
+Android/iOS SDK'sı yok, yani kod derlenip çalıştırılamadı.
+
+`/api/device-token` artık çerezin yanında
+`Authorization: Bearer <supabase access_token>` da kabul ediyor — mobilde
+tarayıcı çerezi kavramı yok. Bu bir yetki atlatması değil:
+
+* Gelen belirteç GoTrue'nun `/auth/v1/user` ucuna sorulup doğrulanıyor; çerez
+  yolundaki ile **aynı** kimlik denetimi işliyor. Paylaşılan bir sır, bir
+  başlık hilesi ya da ikinci bir yetki kaynağı eklenmedi.
+* Bayrak uç uca opt-in (`resolveUser(req, res, { bearerKabul: true })`) ve
+  YALNIZCA bu uçta açık; `_lib/auth.js`'i kullanan diğer uçların yüzeyi
+  değişmedi. Sınama bunu dosya listesiyle kilitliyor.
+* Çerez varsa **çerez kazanır**: bir XSS, çalınmış bir belirteci başlıkta
+  deneyip tarayıcı oturumunu ezemez.
+* Bearer yolunda yenileme belirteci hiç okunmuyor ve `Set-Cookie` yazılmıyor:
+  belirteç dolunca uç 401 döner, oturumu uygulama kendi SDK'sı ile tazeler.
+
+Doğrulama `tools/devicetoken-mobile-test.js` (68 doğrulama): adres, başlıklar,
+gövde alanları ve platform kümesi **Dart kaynağından okunup** gerçek handler'a
+geçiriliyor, `_lib/auth.js` saplanmıyor (sahte GoTrue). Yani "istemci ile
+sunucu aynı şeyi konuşuyor" sınanmış; "uygulama derleniyor" sınanmamış.
+On mutasyonun onu yakalandı.
+
+İstemci yapılandırması `--dart-define=CL_API_BASE` (ve web hedefi için
+`CL_VAPID_KEY`) ile geliyor. `NEXT_PUBLIC_*` değişkeni eklenmedi: bu depoda
+Next.js yok, site düz HTML + Vercel fonksiyonları.
 
 ## Doğrulanmayanlar
 
