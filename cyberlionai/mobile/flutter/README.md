@@ -78,6 +78,33 @@ YALNIZCA bu uçta açık; `_lib/auth.js`'i kullanan diğer uçların yetki yüze
 değişmedi. Bearer yolunda yenileme belirteci hiç okunmuyor: belirteç dolunca uç
 401 döner ve oturumu uygulama kendi SDK'sı ile tazeler.
 
+## Elle deneme (curl)
+
+Uygulamayı derlemeden sözleşmeyi görmek için:
+
+```
+curl -i -X POST https://www.cyberlionai.com/api/device-token \
+  -H "Authorization: Bearer <supabase access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"token":"<en az 20 karakter>","platform":"android"}'
+# → 200 {"ok":true,"platform":"android"}
+
+curl -i -X DELETE https://www.cyberlionai.com/api/device-token \
+  -H "Authorization: Bearer <supabase access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"token":"<aynı jeton>"}'
+# → 200 {"ok":true,"removed":1}
+```
+
+Belirteç, Supabase oturumunun `access_token`'ı. Tarayıcıdan alınacaksa `cl_at`
+çerezi `HttpOnly` olduğu için `document.cookie` onu göstermez; Application →
+Cookies panelinden kopyalanır. Çerezi gönderirseniz (`-b "cl_at=<...>"`)
+`Authorization` başlığına gerek yok, zaten çerez kazanır.
+
+Bu iki çağrı **2026-10-08'de üretimde koşuldu** ve iki yol da 200 döndü
+(Bearer yolu #81 öncesinde 401 veriyordu). Ayrıntı:
+`../../docs/notifications.md`.
+
 ## Firebase tarafı (kullanıcıda)
 
 1. Firebase konsolunda Android/iOS uygulamasını ekle, `google-services.json` ve

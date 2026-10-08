@@ -372,6 +372,41 @@ göre dörtte bir boyut (189 KB), Türkçe kapsaması tam. Üretilen rapor ~185 
 
 ---
 
+## Cihaz bildirim jetonu
+
+### `POST /api/device-token`
+
+Gövde: `{ "token": "<fcm kayıt jetonu>", "platform": "android|ios|web" }`.
+Yanıt: `{ "ok": true, "platform": "android" }`.
+
+### `DELETE /api/device-token`
+
+Gövde: `{ "token": "<fcm kayıt jetonu>" }`. Yanıt: `{ "ok": true, "removed": 1 }`.
+Çıkışta, oturum kapatılmadan **önce** çağrılır.
+
+**Kimlik:** oturum çerezi (`cl_at`) ya da — çerez yokken —
+`Authorization: Bearer <supabase access_token>`. İki yolda da belirteç GoTrue'ya
+sorulup doğrulanır; Bearer yolu yalnızca bu uçta açıktır ve yenileme belirteci
+okumaz. Çerez varsa çerez kazanır.
+
+**Sahip oturumdan gelir, gövdeden değil.** Gövdede kullanıcı kimliği aranmaz.
+Jeton ne yanıtta döner ne log satırına yazılır: bir FCM kayıt jetonu o cihaza
+bildirim gönderme yetkisidir.
+
+| Kod | HTTP | Sebep |
+|---|---|---|
+| `bad_token` | 400 | Jeton 20 karakterden kısa ya da 4096'dan uzun (yetkiden önce bakılır) |
+| `unauthorized` | 401 | Oturum yok ya da belirteç geçersiz |
+| `method_not_allowed` | 405 | POST ve DELETE dışında bir yöntem |
+| `rate_limited` | 429 | IP başına saatte 20 istek |
+| `save_failed` | 503 | Veritabanı yazımı düştü |
+| `service_unavailable` | 503 | Supabase yapılandırılmamış |
+
+`platform` yazılmazsa `android` sayılır. Akış, mobil istemci kodu, curl
+örnekleri ve üretim doğrulaması: **[docs/notifications.md](notifications.md)**.
+
+---
+
 ## Kimlik doğrulama
 
 Uçların tam listesi, deneme sınırları, hata kodları ve Supabase Dashboard

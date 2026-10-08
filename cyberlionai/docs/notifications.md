@@ -146,6 +146,65 @@ On mutasyonun onu yakalandı.
 `CL_VAPID_KEY`) ile geliyor. `NEXT_PUBLIC_*` değişkeni eklenmedi: bu depoda
 Next.js yok, site düz HTML + Vercel fonksiyonları.
 
+### Uçtan uca akış
+
+Uygulama tarafında üç an var: açılış, jeton yenilenmesi, çıkış.
+
+```dart
+// main.dart — oturum açıldıktan sonra bir kez.
+final push = PushTokenService(
+  // Belirteç saklanmıyor; her istekte oturum katmanından tazesi isteniyor.
+  accessToken: () async =>
+      Supabase.instance.client.auth.currentSession?.accessToken,
+);
+
+// İzin ister, FirebaseMessaging.instance.getToken() ile jetonu alır,
+// POST /api/device-token ile hesaba bağlar ve onTokenRefresh'i dinlemeye
+// başlar; yenilenen jeton kendiliğinden yeniden gönderilir.
+await push.baslat();
+```
+
+```dart
+// Çıkış — DELETE, signOut'tan ÖNCE.
+await push.cikistaSil();
+await Supabase.instance.client.auth.signOut();
+```
+
+Sıra önemli: istek oturumla yetkileniyor. Belirteç gittikten sonra uç 401
+döner, kayıt silinmez ve kullanıcı çıktıktan sonra da bildirim alır.
+
+Doğrudan çağırmak isteyen için aynı sözleşme:
+
+```
+# Kaydet (mobil yol: Bearer)
+curl -i -X POST https://www.cyberlionai.com/api/device-token \
+  -H "Authorization: Bearer <supabase access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"token":"<fcm jetonu>","platform":"android"}'
+# → 200 {"ok":true,"platform":"android"}
+
+# Sil (çıkışta)
+curl -i -X DELETE https://www.cyberlionai.com/api/device-token \
+  -H "Authorization: Bearer <supabase access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"token":"<fcm jetonu>"}'
+# → 200 {"ok":true,"removed":1}
+```
+
+Tarayıcı oturumuyla (`cl_at` çerezi) aynı uç `Authorization` başlığı olmadan
+çalışır; `-b "cl_at=<...>"` yeterli. Çerez varsa çerez kazanır.
+
+`platform` yalnızca `android`, `ios`, `web` olabilir; yazılmazsa `android`
+sayılır. Jeton 20 karakterden kısa ya da 4096'dan uzunsa uç yetkiye bile
+bakmadan `400 bad_token` döner. Saatte 20 istek sınırı var (IP başına).
+
+**Üretimde doğrulandı** (2026-10-08, kullanıcı koşusu): çerez yoluyla POST
+`{"ok":true,"platform":"android"}`, Bearer yoluyla POST aynı yanıt (#81
+öncesinde bu yol `401 unauthorized` veriyordu), DELETE `{"removed":1}`.
+169 ve 950 karakterlik sahte jetonlarla da geçti. `cl_at` `HttpOnly` olduğu
+için `document.cookie` onu göstermez; çerez tarayıcının Application →
+Cookies panelinden alınır.
+
 ## Doğrulanmayanlar
 
 `fcm.googleapis.com` ve `oauth2.googleapis.com` bu oturumun ağ ilkesiyle
@@ -153,4 +212,6 @@ erişilemez durumda: **canlı bir bildirim gönderilmedi**. İmzalama yolu
 gerçek bir anahtar çiftiyle yerel olarak doğrulandı, istek gövdesi ve
 adresi sınamada sabit; ama FCM'in yanıtı ilk gerçek gönderimde görülecek.
 Depoda Android uygulaması da yok — `data.jobId`/`data.pdfKey` sözleşmesi
-uygulama tarafında karşılanmalı.
+uygulama tarafında karşılanmalı. `/api/device-token`'ın kendisi bu listede
+**değil**: iki yolu da üretimde koşuldu (yukarıdaki bölüm). Doğrulanmamış olan
+FCM'e gerçek gönderim ve derlenmiş bir mobil uygulama.
