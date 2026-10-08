@@ -147,6 +147,19 @@ jobs:
       - name: Telegram bildirimleri (belirteç sızmıyor)
         run: node cyberlionai/tools/telegram-test.js
 
+      # AI analist. Buradaki tek gercek risk gizlilik: tarama GOVDESI
+      # (ham baslik degerleri, Set-Cookie, IP, e-posta) bir dis modele
+      # gidemez. Sinama ozetleyicinin yalnizca id/severity/status tasidigini
+      # ve anahtarin loga girmedigini dogruluyor.
+      - name: AI analist (tarama gövdesi modele gitmiyor)
+        run: node cyberlionai/tools/aianalyst-test.js
+
+      # Rapor ucu. Sahiplik filtresi sorgunun icinde; sahipsiz bir okumaya
+      # cevrilirse baska hesabin tarama anlatimi sizar ve hicbir yanit bunu
+      # gostermez. Gosterilen puanin MOTORUN puani oldugu da burada kilitli.
+      - name: AI rapor ucu (sahiplik + motor puanı)
+        run: node cyberlionai/tools/ai-report-test.js
+
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
 
