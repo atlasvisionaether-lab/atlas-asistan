@@ -166,6 +166,48 @@ jobs:
       - name: İmzalı rapor indirme ve harita kaydı
         run: node cyberlionai/tools/reportsign-test.js
 
+      # WORKFLOW 3: AI raporunun PDF'i ve onu gizli kovaya koyan cron'lu uc.
+      # Burada kilitli olanlar: ucun cronauth ile kapandigi, kova yolunun
+      # ISTEMCIDEN alinmadigi, yanitin musteri verisi tasimadigi ve PDF'e
+      # MOTORUN puaninin (scanner_score) basildigi.
+      - name: AI rapor PDF'i ve Storage yüklemesi
+        run: node cyberlionai/tools/aireportpdf-test.js
+
+      # --------------------------------------------------------------------
+      # Asagidaki on sinama dosyasi depoda vardi ama HICBIR CI adiminda
+      # kosmuyordu (2026-10-08 denetiminde bulundu): yazilmis ama kimsenin
+      # kosturmadigi bir sinama, gerilemeyi yakalamayan bir sinamadir.
+      # --------------------------------------------------------------------
+      - name: Asistan (bilgi tabanı yanıtları)
+        run: node cyberlionai/tools/assistant-test.js
+
+      - name: Auth hata eşlemesi (Supabase hatası sızmıyor)
+        run: node cyberlionai/tools/auth-maperror-test.js
+
+      - name: Güven rozeti
+        run: node cyberlionai/tools/badge-test.js
+
+      - name: Tarama motorları
+        run: node cyberlionai/tools/engines-test.js
+
+      - name: Abonelik hak kontrolü
+        run: node cyberlionai/tools/entitlement-test.js
+
+      - name: Cloudflare 1-tık düzeltme
+        run: node cyberlionai/tools/fix-test.js
+
+      - name: Hukuki metinler
+        run: node cyberlionai/tools/legal-md-test.js
+
+      - name: İzleme (monitor)
+        run: node cyberlionai/tools/monitor-test.js
+
+      - name: Alan adı sahipliği doğrulaması
+        run: node cyberlionai/tools/ownership-test.js
+
+      - name: Güven kontrolü (trustcheck)
+        run: node cyberlionai/tools/trust-test.js
+
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
 

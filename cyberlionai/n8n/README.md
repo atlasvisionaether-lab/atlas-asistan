@@ -5,7 +5,7 @@
 | Dosya | Ne yapıyor |
 |---|---|
 | `CYBERLION_2_AIAnalyst.json` | `cl-scan-done` webhook'u → `/api/cron/ai-reports` → WORKFLOW 3 |
-| `CYBERLION_3_PDFReport.json` | `cl-report-pdf` webhook'u → `/api/report` → Supabase Storage |
+| `CYBERLION_3_PDFReport.json` | `cl-report-pdf` webhook'u → `/api/cron/ai-report-pdf` (PDF üret + Storage'a koy) |
 | `CYBERLION_4_Notify.json` | `cl-notify` webhook'u → FCM push → geri çağrı |
 | `CYBERLION_5_DailyCron.json` | Her gün 09:00 → haftalık tarama + eksik AI raporları |
 
@@ -27,7 +27,7 @@ JSON'ları paylaşmak bir sır sızdırmıyor. n8n'i bu değişkenlerle başlat�
 | `CL_CRON_SECRET` | Vercel'deki `CRON_SECRET` ile **aynı** değer |
 | `N8N_WEBHOOK_BASE` | n8n'in kendi dışa açık adresi (akışların birbirini çağırması için) |
 | `SUPABASE_URL` | Supabase projesi |
-| `SUPABASE_SERVICE_KEY` | Storage ve `scan_jobs`/`users` okuması |
+| `SUPABASE_SERVICE_KEY` | `scan_jobs`/`users` okuması (WORKFLOW 4). **WORKFLOW 3 artık istemiyor.** |
 | `FCM_PROJECT_ID`, `FCM_ACCESS_TOKEN` | WORKFLOW 4'ün push'u |
 
 n8n'de `$env` varsayılan olarak **kapalıdır**. `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`
@@ -36,10 +36,17 @@ olmadan bu akışlar adresi boş okur ve "invalid URL" verir;
 
 ## Bilinen eksikler — tahmin edilmedi, yazıldı
 
-1. **WORKFLOW 3 bugün 401 döner.** `/api/report` giriş istiyor, cron sırrını
-   kabul etmiyor. Sessizce bir kimlik doğrulama atlatma başlığı
-   **eklenmedi**; iki dürüst seçenek var: PDF'i panodan (oturumla) indirmek,
-   ya da `/api/report`'a cronauth yolu eklemek. Düğüm notunda da yazıyor.
+1. ~~**WORKFLOW 3 bugün 401 döner.**~~ **Düzeltildi.** `/api/report` giriş
+   istiyor ve cron sırrını kabul etmiyor; doğru düzeltme o uca bir makine
+   yolu açmak **değildi** (bu bir kimlik doğrulama atlatması olurdu, aynı
+   gerekçeyle `/api/ai-report` için de reddedilmişti). Onun yerine
+   `_lib/cronauth.js` ile yetkilenen ayrı bir uç eklendi:
+   `POST /api/cron/ai-report-pdf?jobId=<uuid>`. Uç PDF'i kendisi üretiyor
+   (`api/_lib/report-ai.js`) ve gizli `reports` kovasına `ai/<jobId>.pdf`
+   olarak koyuyor, yani **servis rolü anahtarı artık n8n'de durmuyor**.
+   Yanıtı müşteri verisi taşımıyor: `{ ok, via, bucket, key, bytes }`.
+   `404 no_ai_report`, WORKFLOW 2'nin raporu henüz üretmediği anlamına gelir
+   ve akış bunu "beklemede" olarak bitirir.
 2. **WORKFLOW 4'ün geri çağrı ucu yok.** Depoda `/api/n8n/*` diye bir şey
    yok. O düğüm 404 alır; push **zaten gitmiş** olur, yani akış bildirimi
    kaçırmıyor.
