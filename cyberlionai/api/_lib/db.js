@@ -882,7 +882,103 @@ async function latestAiReport(userId, jobId) {
   return aiReportOf(job.id);
 }
 
+/* ---------------------------------------------------------------- */
+/* Cihaz bildirim jetonları (WORKFLOW 4)                              */
+/* ---------------------------------------------------------------- */
+
+/**
+ * Jetonu kaydeder ya da tazeler.
+ *
+ * `on_conflict=token` ZORUNLU: jeton tekil ve aynı cihaz her açılışta aynı
+ * jetonu gönderiyor. Hedef verilmezse PostgREST çatışmayı birincil anahtarda
+ * arar, `id` her satırda yeni uuid olduğu için çatışma görülmez ve ikinci
+ * kayıt 23505 ile düşer (bkz. cl_scans dersi, aws/lambda-scanner/lib/supabase.js).
+ *
+ * Çatışmada `user_id` de güncelleniyor: aynı cihazda başka bir hesaba giriş
+ * yapılırsa jeton el değiştirmeli, iki hesaba birden bildirim gitmemeli.
+ */
+async function saveDeviceToken(userId, token, platform) {
+  if (!UUID_RE.test(String(userId || ''))) throw new Error('bad_user_id');
+  const t = String(token || '').trim();
+  if (t.length < 20 || t.length > 4096) throw new Error('bad_token');
+  const p = ['android', 'ios', 'web'].indexOf(String(platform)) !== -1 ? String(platform) : 'android';
+  const rows = await request('cl_device_tokens?on_conflict=token&select=id', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation,resolution=merge-duplicates' },
+    body: [{ user_id: userId, token: t, platform: p, last_seen_at: new Date().toISOString() }]
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+/** Kullanıcının kendi cihazını düşürmesi. Sahiplik filtresi sorgunun İÇİNDE. */
+async function deleteDeviceToken(userId, token) {
+  if (!UUID_RE.test(String(userId || ''))) return 0;
+  const t = String(token || '').trim();
+  if (!t) return 0;
+  const rows = await request('cl_device_tokens'
+    + '?user_id=eq.' + encodeURIComponent(userId)
+    + '&token=eq.' + encodeURIComponent(t)
+    + '&select=id', { method: 'DELETE', headers: { 'Prefer': 'return=representation' } });
+  return Array.isArray(rows) ? rows.length : 0;
+}
+
+/**
+ * Bir işin SAHİBİNİN cihaz jetonları.
+ *
+ * YALNIZCA SUNUCU İÇİ. Dönen değer bildirim ucundan dışarı yazılmıyor:
+ * `api/cron/notify.js` yalnızca kaç bildirim gittiğini döndürüyor. Anonim
+ * taramada (`user_id` null) boş dizi dönüyor — anonim bir işin kimliğini
+ * bilen biri, kimsenin jetonunu elde edemez.
+ */
+async function deviceTokensForJob(jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return { job: null, tokens: [] };
+  const jobs = await request('scan_jobs'
+    + '?id=eq.' + encodeURIComponent(jobId)
+    + '&select=id,user_id,url,status&limit=1');
+  const job = jobs && jobs[0] ? jobs[0] : null;
+  if (!job || !job.user_id) return { job: job, tokens: [] };
+  const rows = await request('cl_device_tokens'
+    + '?user_id=eq.' + encodeURIComponent(job.user_id)
+    + '&select=token,platform&order=last_seen_at.desc&limit=20');
+  return { job: job, tokens: Array.isArray(rows) ? rows : [] };
+}
+
+/** Ölü jetonu düşürür (FCM UNREGISTERED dedi). Sahip filtresi gerekmiyor:
+    jeton tekil ve çağıran cron. */
+async function dropDeviceToken(token) {
+  const t = String(token || '').trim();
+  if (!t) return;
+  await request('cl_device_tokens?token=eq.' + encodeURIComponent(t), { method: 'DELETE' });
+}
+
+/**
+ * Bildirimi bekleyen işler: tamamlanmış, AI raporu VAR, sahibi olan işler.
+ *
+ * Yalnızca zamanlanmış çağrı için (`api/cron/scan-jobs/pending.js`);
+ * `jobsMissingAiReport` ile aynı gerekçe — yanıt müşteri verisi taşımıyor.
+ */
+async function jobsPendingNotify(limit) {
+  const n = Math.max(1, Math.min(50, Number(limit) || 10));
+  const jobs = await request('scan_jobs'
+    + '?status=eq.completed'
+    + '&user_id=not.is.null'
+    + '&url=not.like.cloudflare-transform%3A%2F%2F*'
+    + '&select=id,created_at'
+    + '&order=created_at.desc&limit=' + String(n * 4));
+  const list = Array.isArray(jobs) ? jobs : [];
+  if (!list.length) return [];
+  const ids = list.map(function (j) { return j.id; });
+  const raporlar = await request('ai_reports'
+    + '?job_id=in.(' + ids.map(encodeURIComponent).join(',') + ')'
+    + '&select=job_id');
+  const var_ = new Set((Array.isArray(raporlar) ? raporlar : []).map(function (r) { return r.job_id; }));
+  return list.filter(function (j) { return var_.has(j.id); }).slice(0, n);
+}
+
 module.exports = {
+  saveDeviceToken, deleteDeviceToken, deviceTokensForJob, dropDeviceToken,
+  jobsPendingNotify,
+
 
   saveAiReport, latestAiReport, aiReportOf, jobsMissingAiReport,
   isConfigured, request, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
