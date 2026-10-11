@@ -45,6 +45,10 @@ on:
         description: "Sertifika makamını ölç (CAA kaydı yazmadan önce ZORUNLU)"
         type: boolean
         default: false
+      cert_detail:
+        description: "Sertifika detayı ölç (OCSP stapling, zincir, anahtar gücü)"
+        type: boolean
+        default: false
       dns_domains:
         description: "Hangi alan adları ölçülsün (boşlukla ayrılmış; boş = varsayılan liste)"
         required: false
@@ -117,6 +121,18 @@ jobs:
       - name: Sertifika makamını ölç
         if: inputs.cert_issuer
         run: bash cyberlionai/tools/cert-issuer-probe.sh ${{ inputs.dns_domains }}
+
+      # Sertifika detayi: OCSP stapling, zincir eksiksizligi, anahtar gucu.
+      # Kontrol YAZILMADAN once olculuyor, cunku ucu de varsayima dayanamaz:
+      # Node'un 'OCSPResponse' olayi gelmezse bu "sunucu stapling yapmiyor" ile
+      # "istegi yanlis kurduk" arasinda ayrim yapmiyor; Let's Encrypt 2025'te
+      # OCSP'yi kaldirdigi icin "stapling yok -> basarisiz" demek kendi
+      # sitemiz dahil herkesi haksiz cezalandirabilir; ve Node zinciri yerel
+      # kok deposundan tamamliyorsa eksik zincir bu yolla hic olculemez.
+      # Listede badssl.com negatif referanslari var (elle, bir kez, zamanli DEGIL).
+      - name: Sertifika detayını ölç
+        if: inputs.cert_detail
+        run: node cyberlionai/tools/cert-detail-probe.js ${{ inputs.dns_domains }}
 
       - name: PhishTank erişim durumunu ölç
         if: inputs.phishtank_access
