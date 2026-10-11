@@ -258,6 +258,14 @@
   .muted--desc{font-size:.9rem;margin:0 0 12px}
   .btn--mt14{margin-top:14px}
   .link--underline{text-decoration:underline}
+  /* Hesap silme: tehlikeli işlem, altın değil kırmızı. */
+  .card--danger{border-color:rgba(255,107,107,.35)}
+  .btn--danger{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.45);color:#ff8f8f}
+  .btn--danger:hover{background:rgba(255,107,107,.2);color:#ffb3b3}
+  .modal{border:1px solid var(--glass-border);background:#12121a;color:var(--text-white);border-radius:14px;padding:22px;max-width:460px;width:calc(100% - 32px)}
+  .modal::backdrop{background:rgba(0,0,0,.72)}
+  .modal__t{margin:0 0 10px;font-size:1rem}
+  .modal__row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
   </style>
 </head>
 <body>
@@ -491,6 +499,13 @@
               </div>
               <p class="note" data-i18n="security.cfNote">Cloudflare 1-Tık Düzeltme bugün de kullanılabilir: Araçlar bölümünde kendi Cloudflare token'ınızla çalışır, token bizde saklanmaz.</p>
             </div>
+            <div class="card card--danger">
+              <p class="card__title"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span data-i18n="del.title">Hesabı Sil</span></p>
+              <p class="muted muted--desc" data-i18n="del.desc">Hesabınız ve hesaba bağlı tüm veriler kalıcı olarak silinir. Bu işlem geri alınamaz.</p>
+              <button class="btn btn--danger" type="button" id="delBtn"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span data-i18n="del.open">Hesabı Sil</span></button>
+              <p class="msg" id="delMsg" role="status" aria-live="polite"></p>
+              <p class="note"><span data-i18n="del.note">Silme yolu web üzerinden de açıktır:</span> <a class="link--underline" href="/hesap-silme" data-i18n="del.page">cyberlionai.com/hesap-silme</a></p>
+            </div>
           </div>
         </section>
 
@@ -634,6 +649,16 @@
       </nav>
     </div>
   </footer>
+
+  <dialog class="modal" id="delModal" aria-labelledby="delModalT">
+    <h2 class="modal__t" id="delModalT" data-i18n="del.confirmTitle">Hesabınızı silmek üzeresiniz</h2>
+    <p class="muted muted--desc" data-i18n="del.confirmBody">Tüm tarama geçmişiniz ve aboneliğiniz silinecek. Bu işlem geri alınamaz.</p>
+    <p class="note" data-i18n="del.confirmLegal">Üçüncü bir siteyi taradığınızı gösteren hukuki ispat günlüğü, kimliğinizle bağı kesilerek saklanır; ödeme ve fatura kayıtları yasal saklama süresince iyzico tarafında kalır.</p>
+    <div class="modal__row">
+      <button class="btn btn--danger" type="button" id="delYes"><span data-i18n="del.yes">Evet, hesabımı sil</span></button>
+      <button class="btn btn--ghost" type="button" id="delNo"><span data-i18n="del.no">Vazgeç</span></button>
+    </div>
+  </dialog>
 
   <script src="/dashboard.js" defer></script>
   <script src="/mail-links.js" defer></script>

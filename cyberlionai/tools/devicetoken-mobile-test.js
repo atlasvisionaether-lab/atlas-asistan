@@ -358,7 +358,13 @@ async function kos() {
       dogru('bearer olduğu işaretleniyor', t2.bearer === true);
     }
     {
-      /* Bearer'ı KULLANAN tek uç device-token olmalı. */
+      /* Bearer'ı KULLANAN uçlar SAYILI olmalı: her yeni uç, çerezsiz
+         (yani CSRF korumasının başka bir katmanına yaslanan) bir yüzey
+         açıyor. Bugün iki uç var ve ikisinin de gerekçesi yerli uygulama:
+           device-token.js   bildirim jetonunu yazan uç
+           panel/account.js  hesap silme — Play, silmenin UYGULAMA İÇİNDEN
+                             de yapılabilmesini şart koşuyor; uygulamanın
+                             elinde çerez değil access_token var. */
       const hepsi = [];
       (function tara(dizin) {
         fs.readdirSync(dizin, { withFileTypes: true }).forEach(function (e) {
@@ -370,8 +376,8 @@ async function kos() {
       const kullananlar = hepsi.filter(function (f) {
         return /bearerKabul/.test(fs.readFileSync(f, 'utf8'));
       }).map(function (f) { return path.relative(API, f); }).sort();
-      esit('bearerKabul yalnızca iki dosyada (uç + auth)',
-        kullananlar.join(','), '_lib/auth.js,device-token.js');
+      esit('bearerKabul yalnızca gerekçeli uçlarda (+ auth)',
+        kullananlar.join(','), '_lib/auth.js,device-token.js,panel/account.js');
     }
 
     /* ================================================================ */

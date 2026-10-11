@@ -57,6 +57,13 @@
       'security.access': 'Erişim', 'security.thisDevice': 'Bu cihaz', 'security.active': 'Aktif',
       'security.sessions': 'Diğer oturumlar', 'security.twofa': 'İki adımlı doğrulama (2FA)', 'security.apiToken': 'API token (Enterprise)',
       'security.cfNote': "Cloudflare 1-Tık Düzeltme bugün de kullanılabilir: Araçlar bölümünde kendi Cloudflare token'ınızla çalışır, token bizde saklanmaz.",
+      'del.title': 'Hesabı Sil', 'del.open': 'Hesabı Sil',
+      'del.desc': 'Hesabınız ve hesaba bağlı tüm veriler kalıcı olarak silinir. Bu işlem geri alınamaz.',
+      'del.note': 'Silme yolu web üzerinden de açıktır:', 'del.page': 'cyberlionai.com/hesap-silme',
+      'del.confirmTitle': 'Hesabınızı silmek üzeresiniz',
+      'del.confirmBody': 'Tüm tarama geçmişiniz ve aboneliğiniz silinecek. Bu işlem geri alınamaz.',
+      'del.confirmLegal': 'Üçüncü bir siteyi taradığınızı gösteren hukuki ispat günlüğü, kimliğinizle bağı kesilerek saklanır; ödeme ve fatura kayıtları yasal saklama süresince iyzico tarafında kalır.',
+      'del.yes': 'Evet, hesabımı sil', 'del.no': 'Vazgeç',
       'notif.title': 'Bildirimler', 'notif.weekly': 'Günlük izleme ve uyarılar', 'notif.email': 'E-posta bildirim tercihleri',
       'mon.domain': 'İzlenecek alan adı', 'mon.save': 'Kaydet',
       'alerts.title': 'İzleme uyarıları', 'alerts.markRead': 'Tümünü okundu işaretle',
@@ -81,6 +88,10 @@
       title: 'Panelim',
       quotaMonth: 'Bu ay kalan tarama', quotaUnlimited: 'Sınırsız',
       sending: 'Gönderiliyor…', sent: 'Giriş bağlantısı gönderildi. E-postanızı kontrol edin.',
+      delWorking: 'Hesap siliniyor…',
+      delDone: 'Hesabınız ve verileriniz silindi. Ana sayfaya yönlendiriliyorsunuz.',
+      delPartial: 'Verileriniz silindi ama hesap kaydı kapatılamadı. Lütfen birkaç dakika sonra tekrar deneyin.',
+      delUnavailable: 'Silme işlemi şu an yapılamıyor. Lütfen daha sonra tekrar deneyin ya da destek@cyberlionai.com adresine yazın.',
       badEmail: 'Geçerli bir e-posta adresi girin.', tooMany: 'Çok fazla deneme. Bir süre sonra tekrar deneyin.',
       failed: 'İşlem tamamlanamadı. Birazdan tekrar deneyin.', loading: 'Yükleniyor…',
       empty: 'Henüz taramanız yok. Ana sayfadan ilk taramanızı başlatın.', emptyFiltered: 'Bu süzgeçle eşleşen tarama yok.',
@@ -167,6 +178,13 @@
       'security.access': 'Access', 'security.thisDevice': 'This device', 'security.active': 'Active',
       'security.sessions': 'Other sessions', 'security.twofa': 'Two-factor authentication (2FA)', 'security.apiToken': 'API token (Enterprise)',
       'security.cfNote': 'Cloudflare 1-Click Fix is available today in Tools; it uses your own Cloudflare token, which we never store.',
+      'del.title': 'Delete Account', 'del.open': 'Delete Account',
+      'del.desc': 'Your account and all data linked to it are permanently deleted. This cannot be undone.',
+      'del.note': 'Deletion is also available on the web:', 'del.page': 'cyberlionai.com/hesap-silme',
+      'del.confirmTitle': 'You are about to delete your account',
+      'del.confirmBody': 'Your entire scan history and your subscription will be deleted. This cannot be undone.',
+      'del.confirmLegal': 'The legal-evidence log showing that you scanned a third-party site is kept with its link to your identity removed; payment and invoice records stay with iyzico for the statutory retention period.',
+      'del.yes': 'Yes, delete my account', 'del.no': 'Cancel',
       'notif.title': 'Notifications', 'notif.weekly': 'Daily monitoring and alerts', 'notif.email': 'Email notification preferences',
       'mon.domain': 'Domain to monitor', 'mon.save': 'Save',
       'alerts.title': 'Monitoring alerts', 'alerts.markRead': 'Mark all as read',
@@ -190,6 +208,10 @@
       title: 'My Dashboard',
       quotaMonth: 'Scans left this month', quotaUnlimited: 'Unlimited',
       sending: 'Sending…', sent: 'Sign-in link sent. Please check your email.',
+      delWorking: 'Deleting your account…',
+      delDone: 'Your account and data have been deleted. Redirecting to the home page.',
+      delPartial: 'Your data was deleted but the account record could not be closed. Please try again in a few minutes.',
+      delUnavailable: 'Deletion is unavailable right now. Please try again later or write to destek@cyberlionai.com.',
       badEmail: 'Enter a valid email address.', tooMany: 'Too many attempts. Please try again later.',
       failed: 'Could not complete. Please try again shortly.', loading: 'Loading…',
       empty: 'No scans yet. Start your first scan from the home page.', emptyFiltered: 'No scans match this filter.',
@@ -318,6 +340,18 @@
   function postJSON(url, body) {
     return fetch(url, {
       method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (d) { return { status: r.status, ok: r.ok, data: d }; });
+    });
+  }
+
+  /* DELETE gövdeli istek: onay dizgesi gövdede gidiyor (bkz.
+     api/panel/account.js — kazara silmeye karşı açık onay). */
+  function delJSON(url, body) {
+    return fetch(url, {
+      method: 'DELETE', credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(body || {})
     }).then(function (r) {
@@ -735,6 +769,46 @@
     return br + (os ? ' · ' + os : '');
   }
 
+  /* Hesap silme. İki adım: düğme onay penceresini açar, pencere uca gider.
+     Geri alınamayan tek işlem olduğu için tek tıkla çalışmıyor; ?demo=1
+     görünümünde ise hiç çalışmıyor — örnek veride silinecek hesap yok. */
+  function bindDelete() {
+    var modal = $('delModal'), msg = $('delMsg');
+    if (!modal) return;
+    function kapat() { if (modal.open) modal.close(); }
+
+    $('delBtn').addEventListener('click', function () {
+      if (S.demo) { setMsg(msg, t('demoOff'), 'err'); return; }
+      setMsg(msg, '');
+      if (typeof modal.showModal === 'function') modal.showModal();
+      else modal.setAttribute('open', 'open');
+    });
+    $('delNo').addEventListener('click', kapat);
+
+    $('delYes').addEventListener('click', function () {
+      var btn = $('delYes');
+      btn.disabled = true;
+      setMsg(msg, t('delWorking'));
+      /* Onay dizgesi sunucudaki listeyle aynı olmalı (ONAY). */
+      delJSON('/api/panel/account', { confirm: 'HESABIMI SIL' }).then(function (r) {
+        btn.disabled = false;
+        kapat();
+        if (r.ok) {
+          setMsg(msg, t('delDone'), 'ok');
+          setTimeout(function () { location.href = '/'; }, 2500);
+          return;
+        }
+        var code = r.data && r.data.error && r.data.error.code;
+        if (code === 'account_delete_partial') setMsg(msg, t('delPartial'), 'err');
+        else if (r.status === 401) setMsg(msg, t('pwAuth'), 'err');
+        else if (r.status === 503) setMsg(msg, t('delUnavailable'), 'err');
+        else setMsg(msg, t('failed'), 'err');
+      }).catch(function () {
+        btn.disabled = false; kapat(); setMsg(msg, t('failed'), 'err');
+      });
+    });
+  }
+
   function bindPassword() {
     $('pwForm').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -1014,7 +1088,7 @@
         applyLang(); if (!$('app').hidden) renderAll();
       });
     });
-    bindLogin(); bindTable(); bindPassword(); bindDns(); bindCloudflare(); bindTabs();
+    bindLogin(); bindTable(); bindPassword(); bindDelete(); bindDns(); bindCloudflare(); bindTabs();
     $('logoutBtn').addEventListener('click', function () {
       if (S.demo) { location.href = '/dashboard'; return; }
       fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })

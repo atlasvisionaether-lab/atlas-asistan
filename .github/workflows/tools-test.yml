@@ -67,6 +67,15 @@ jobs:
       - name: Veri kataloğu ve Data Safety kaynağı
         run: node cyberlionai/tools/data-catalog-test.js
 
+      # Hesap silme: Play'in "hesabi ve verileri sil" sarti. Asil kilit
+      # KAPSAM: db/*.sql olculdu ve yabanci anahtarlar TEK TIP DEGIL —
+      # scan_jobs ve scan_logs 'on delete set null'. Yani yalnizca hesabi
+      # silmek scan_jobs satirlarini SILMEZ, sahipsiz birakir. Bu adim
+      # auth.users'a bagli her tabloyu goc dosyalarindan OKUYUP silme
+      # yolunda karsiligi olup olmadigini siniyor.
+      - name: Hesap silme yolu (kapsam, yetki, arayüz)
+        run: node cyberlionai/tools/account-delete-test.js
+
       # Elle yazilmis yasal sayfalar (on bilgilendirme, cerez) legal/*.md
       # hattinin DISINDA; kimlik ve fiyat orada bayatlasa hicbir sinama
       # dusmuyordu. iyzico altbilgi listesi de burada kilitli.

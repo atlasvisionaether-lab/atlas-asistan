@@ -166,6 +166,78 @@
       "politikaAnahtari": "Bekleme listesi"
     },
     {
+      "id": "dogrulanmis_alan",
+      "tr": "Doğrulanmış alan adı kaydı",
+      "en": "Verified domain record",
+      "kaynak": "verified_domains — db/migrations/008_domain_ownership.sql; api/_lib/ownership.js",
+      "amac": "Aktif tarama ve Cloudflare düzeltmesi yalnızca sahipliği kanıtlanmış alan adında çalışsın",
+      "playKategori": "App activity",
+      "playTip": "Other user-generated content",
+      "toplanir": true,
+      "paylasilir": false,
+      "zorunlu": false,
+      "aktarimdaSifreli": true,
+      "silinebilir": true,
+      "ucuncuTaraf": ["Supabase"],
+      "politikada": true,
+      "politikaAnahtari": "Doğrulanmış alan adları"
+    },
+    {
+      "id": "izleme_uyarisi",
+      "tr": "İzleme uyarısı (skor düşüşü, sertifika bitişi)",
+      "en": "Monitoring alert (score drop, certificate expiry)",
+      "kaynak": "monitor_alerts — db/migrations/009_monitor_alerts.sql; api/panel/alerts.js",
+      "amac": "Günlük izlemede bulunan sorunu panelde ve bildirimde göstermek",
+      "playKategori": "App activity",
+      "playTip": "App interactions",
+      "toplanir": true,
+      "paylasilir": false,
+      "zorunlu": false,
+      "aktarimdaSifreli": true,
+      "silinebilir": true,
+      "ucuncuTaraf": ["Supabase"],
+      "politikada": true,
+      "politikaAnahtari": "İzleme uyarıları"
+    },
+    {
+      "id": "tarama_gunlugu",
+      "tr": "Tarama günlüğü (kim, hangi alan adını, hangi seviyede taradı)",
+      "en": "Scan log (who scanned which domain, at which level)",
+      "kaynak": "scan_logs — db/migrations/008_domain_ownership.sql",
+      "amac": "Hukuki ispat: izinsiz tarama şüphesinde kaydın incelenmesi (TCK m.243/244)",
+      "not": "12 ay saklanır. Hesap silindiğinde satır KALIR ama user_id NULL'a çekilir: kayıt kişiye bağlı değildir (api/_lib/db.js deleteAccountData).",
+      "playKategori": "App activity",
+      "playTip": "App interactions",
+      "toplanir": true,
+      "paylasilir": false,
+      "zorunlu": true,
+      "aktarimdaSifreli": true,
+      "silinebilir": false,
+      "silinemezSebep": "Yasal yükümlülük (hukuki ispat, 12 ay). Satır silinmiyor; hesap silindiğinde kişiyle bağı kesiliyor.",
+      "ucuncuTaraf": ["Supabase"],
+      "politikada": true,
+      "politikaAnahtari": "Tarama günlüğü"
+    },
+    {
+      "id": "duzeltme_siparisi",
+      "tr": "Ücretli düzeltme siparişi (alan adı, tutar, ödeme zamanı)",
+      "en": "Paid fix order (domain, amount, payment time)",
+      "kaynak": "fix_orders — db/migrations/010_fix_orders.sql; api/fix-order.js",
+      "amac": "Sipariş takibi ve fatura",
+      "not": "Hesap silindiğinde satır KALIR ama user_id NULL'a çekilir: vergi mevzuatı gereği tutar kaydı duruyor, kişiye bağlı değil.",
+      "playKategori": "Financial info",
+      "playTip": "Purchase history",
+      "toplanir": true,
+      "paylasilir": true,
+      "zorunlu": false,
+      "aktarimdaSifreli": true,
+      "silinebilir": false,
+      "silinemezSebep": "Fatura ve vergi yükümlülüğü. Satır silinmiyor; hesap silindiğinde kişiyle bağı kesiliyor.",
+      "ucuncuTaraf": ["iyzico", "Supabase"],
+      "politikada": true,
+      "politikaAnahtari": "Düzeltme siparişleri"
+    },
+    {
       "id": "ic_bildirim",
       "tr": "İç bildirim (Telegram)",
       "en": "Internal notification (Telegram)",
@@ -185,6 +257,30 @@
       "politikaAnahtari": "Telegram"
     }
   ],
+
+  "hesapSilme": {
+    "_hakkinda": [
+      "Google Play'in 'hesabı ve verileri sil' şartı ve KVKK silme talebi için.",
+      "Play Console'daki 'Data deletion URL' alanına webSayfasi yazılır."
+    ],
+    "uc": "DELETE /api/panel/account",
+    "kaynak": "api/panel/account.js; silme işi api/_lib/db.js deleteAccountData",
+    "panelYolu": "/dashboard#security",
+    "webSayfasi": "https://www.cyberlionai.com/hesap-silme",
+    "yetki": "Oturum zorunlu; bir hesap yalnızca kendisini silebilir (kimlik gövdeden değil oturumdan)",
+    "onay": "Gövdede confirm dizgesi şart (kazara silmeye karşı)",
+    "silinenTablolar": [
+      "scan_jobs", "scan_findings", "ai_reports", "cl_scans", "cl_subscriptions",
+      "cl_device_tokens", "verified_domains", "monitor_alerts", "cl_waitlist"
+    ],
+    "silinenHesap": "Supabase auth.users satırı (GoTrue admin ucu, servis rolü)",
+    "anonimlestirilenTablolar": ["scan_logs", "fix_orders"],
+    "neden": [
+      "Yabancı anahtarlar tek tip değil: scan_jobs ve scan_logs 'on delete set null'.",
+      "Yalnızca hesabı silmek scan_jobs satırlarını SAHİPSİZ bırakırdı, silmezdi.",
+      "scan_logs ve fix_orders yasal yükümlülük; satır kalıyor, kişiyle bağı kesiliyor."
+    ]
+  },
 
   "toplanmayanlar": [
     {

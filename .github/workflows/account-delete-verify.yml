@@ -1,0 +1,51 @@
+name: Hesap silme doğrulaması (test hesabıyla)
+
+# DELETE /api/panel/account ucunu ÜRETİMDE, kendi açtığı test hesabıyla
+# doğrular. Gerçek bir kullanıcıya DOKUNMAZ.
+#
+# NEDEN AYRI BİR İŞ AKIŞI: betik üretim veritabanına yazar ve siler. Bu
+# yüzden zamanlamaya bağlı DEĞİL, yalnızca elle çalıştırılır ve ayrıca
+# confirm=evet ister.
+#
+# GEREKLİ GİZLİ DEĞİŞKENLER (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL                 proje adresi
+#   SUPABASE_SERVICE_ROLE_KEY    servis rolü anahtarı (test hesabını açmak,
+#                                silmenin GERÇEKTEN olduğunu okumak için)
+# İkisi yoksa betik tahmin etmez: "ÖLÇÜLEMEDİ" der ve çıkar.
+#
+# Anahtarlar bu dosyada yazılı DEĞİL ve çıktıya hiç basılmıyor.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Hedef adres (sonunda / olmadan)
+        required: true
+        default: https://www.cyberlionai.com
+      confirm:
+        description: "Üretim veritabanına test satırı yazılacak: onaylıyorsanız 'evet'"
+        required: true
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Silme akışını doğrula
+        env:
+          BASE: ${{ inputs.base }}
+          CONFIRM: ${{ inputs.confirm }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: node cyberlionai/tools/account-delete-verify.js
