@@ -13,6 +13,7 @@
 const { check, parseMaxAge, getSetCookies } = require('./common.js');
 const { fixCodeFor } = require('./fixes.js');
 const mail = require('../mail');
+const caaModul = require('../caa.js');
 
 function analyze(context, lang) {
   const h = context.headers;
@@ -77,7 +78,23 @@ function analyze(context, lang) {
       : check('dnssec', 'info', 'skipped', null, { note: ds.reason || 'not_measured' }));
   }
 
+  /* CAA (bkz. _lib/caa.js). DNSSEC gibi: bağlamda yoksa kontrol hiç
+     eklenmez, çünkü kalibrasyon sınaması buildChecks'i CAA'sız çağırıyor.
+     YOKLUK başarısızlık DEĞİL "uygulanmamış": saldırı için bir sertifika
+     makamının ihlali de gerekir. */
+  const caa = context.caa;
+  if (caa) {
+    if (!caa.ok) {
+      checks.push(check('caa', 'info', 'skipped', null, { note: caa.sebep || 'not_measured' }));
+    } else {
+      const sonuc = caaModul.caaDegerlendir(caa.kayitlar);
+      checks.push(sonuc.durum === 'none'
+        ? check('caa', 'info', 'skipped', null, { note: 'not_implemented' })
+        : check('caa', 'info', 'pass', sonuc.detay || null));
+    }
+  }
+
   return { checks: checks, findings: [], fixCode: fixCodeFor(checks, lang) };
 }
 
-module.exports = { analyze, IDS: ["spf", "dmarc", "dkim", "dnssec"] };
+module.exports = { analyze, IDS: ["spf", "dmarc", "dkim", "dnssec", "caa"] };

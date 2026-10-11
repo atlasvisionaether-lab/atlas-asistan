@@ -19,8 +19,12 @@ const cikti = require('./engines-golden-fixture.js');
 esit('400 durumda çıktı bölmeden önceki kodla birebir', crypto.createHash('sha256').update(cikti).digest('hex'), ONCEKI_OZET);
 
 const sc = require(path.join(__dirname, '..', 'api', '_lib', 'scanner.js'));
+/* Sıra BİLEREK güncellendi: `caa` yeni bir kontrol ve DNS motoruna,
+   dnssec'in ardına eklendi (bkz. _lib/caa.js). Yukarıdaki altın fikstür
+   özeti DEĞİŞMEDİ — CAA bağlamda yoksa kontrol hiç eklenmiyor, yani eski
+   çıktı birebir aynı kalıyor. */
 esit('kontrol sırası', sc.ORDER.join(','),
-  'https,hsts,csp,xframe,nosniff,referrer,permissions,cookies,disclosure,mixed_content,coop,coep,corp,cors,sri,tls_protocol,tls_cert,tls_legacy,spf,dmarc,dkim,dnssec,blacklist');
+  'https,hsts,csp,xframe,nosniff,referrer,permissions,cookies,disclosure,mixed_content,coop,coep,corp,cors,sri,tls_protocol,tls_cert,tls_legacy,spf,dmarc,dkim,dnssec,caa,blacklist');
 
 const E = path.join(__dirname, '..', 'api', '_lib', 'engines');
 ['header-scanner', 'cookie-scanner', 'tls-scanner', 'dns-scanner', 'blacklist-scanner'].forEach(function (n) {

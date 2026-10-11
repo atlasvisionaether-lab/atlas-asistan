@@ -151,7 +151,10 @@ const FIXES = {
       en: 'TXT  <selector>._domainkey  "<DKIM key from your mail provider>"' }),
   dnssec: fixed('tls_dns', null, null,
     { tr: 'Cloudflare panelinde: DNS › Settings › DNSSEC › Enable; verilen DS kaydını alan adı kayıt firmanıza ekleyin.',
-      en: 'In the Cloudflare dashboard: DNS › Settings › DNSSEC › Enable; add the DS record it gives you at your registrar.' }, null)
+      en: 'In the Cloudflare dashboard: DNS › Settings › DNSSEC › Enable; add the DS record it gives you at your registrar.' }, null),
+  caa: fixed('tls_dns', null, null, null,
+    { tr: 'CAA  @  0 issue "letsencrypt.org"   — yalnızca gerçekten kullandığınız makamı yazın',
+      en: 'CAA  @  0 issue "letsencrypt.org"   — name only the CA you actually use' })
 };
 
 /* Kontrollerin önem derecesi (motorlardaki check() çağrılarıyla aynı). */
@@ -159,7 +162,7 @@ const SEVERITY = {
   https: 'critical', csp: 'critical', hsts: 'high', cookies: 'high', mixed_content: 'high',
   tls_protocol: 'high', tls_cert: 'high', tls_legacy: 'high', xframe: 'medium', nosniff: 'medium',
   referrer: 'low', permissions: 'low', disclosure: 'low', sri: 'low',
-  coop: 'info', coep: 'info', corp: 'info', cors: 'info', spf: 'info', dmarc: 'info', dkim: 'info', dnssec: 'info'
+  coop: 'info', coep: 'info', corp: 'info', cors: 'info', spf: 'info', dmarc: 'info', dkim: 'info', dnssec: 'info', caa: 'info'
 };
 
 /** Bir bulgunun düzeltmesi; listede yoksa null (yalnızca tam pakette). */

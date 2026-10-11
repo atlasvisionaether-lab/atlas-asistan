@@ -15,6 +15,7 @@ const { normalizeTarget, assertPublicHost } = require('./guard.js');
 const geo = require('./geo.js');
 const mail = require('./mail');
 const dnssec = require('./dnssec.js');
+const caa = require('./caa.js');
 const owaspLite = require('./owasp.js');
 
 const FETCH_TIMEOUT_MS = 9000;
@@ -24,7 +25,7 @@ const MAX_REDIRECTS = 4;
 
 /* Rapor ve motor sürümü: kaydedilen her taramaya ve PDF'e yazılır, böylece
    eski bir sonuç hangi kural setiyle üretildiği bilinerek okunabilir. */
-const SCANNER_VERSION = '1.3.1-owasp-lite';
+const SCANNER_VERSION = '1.4.0-owasp-lite';
 const REPORT_VERSION = '1';
 
 /* ============================================================
@@ -271,6 +272,10 @@ async function scanSite(rawUrl, options) {
   const blacklistSozu = blacklistEngine.loadBlacklist().catch(function () { return null; });
   /* DNSSEC sorgusu da paralel: hedef siteye değil genel DNS'e. */
   const dnssecSozu = dnssec.dnssecDurumu(host).catch(function () { return { ok: false, reason: 'not_measured' }; });
+  /* CAA, DNSSEC ve posta kayıtlarıyla PARALEL: üçü de ağı bekliyor, sırayla
+     yapılsaydı süreleri toplanırdı. Sorgu düşerse kontrol "ölçülemedi" olur,
+     tarama DÜŞMEZ. */
+  const caaSozu = caa.caaKayitlari(host).catch(function () { return { ok: false, sebep: 'not_measured' }; });
 
   let tlsInfo = null;
   let legacyInfo = null;
@@ -295,6 +300,7 @@ async function scanSite(rawUrl, options) {
 
   const mailInfo = await mailSozu;
   const dnssecInfo = await dnssecSozu;
+  const caaInfo = await caaSozu;
 
   const engineResult = runEngines({
     headers: response.headers,
@@ -304,6 +310,7 @@ async function scanSite(rawUrl, options) {
     legacyTls: legacyInfo,
     mail: mailInfo,
     dnssec: dnssecInfo,
+    caa: caaInfo,
     blacklist: await blacklistSozu
   }, opts.lang);
   const baseChecks = engineResult.checks;

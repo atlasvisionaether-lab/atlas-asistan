@@ -61,6 +61,11 @@ jobs:
       - name: E-posta kimlik kayıtları
         run: node cyberlionai/tools/mail-test.js
 
+      # CAA degerlendiricisi. DNSSEC main'de ayri bir modulde (_lib/dnssec.js,
+      # DoH ile); burada yalnizca CAA var. Yokluk 'uygulanmamis' sayiliyor.
+      - name: CAA kaydı
+        run: node cyberlionai/tools/caa-test.js
+
       # "Puan disi" etiketleri ve cevirilerin eksiksizligi. Bir musteri
       # raporunda ham anahtar ("scan_note_not_implemented") gorundugu icin var.
       - name: Puan dışı etiketleri ve çeviriler

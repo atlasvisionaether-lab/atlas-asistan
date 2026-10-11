@@ -55,7 +55,8 @@ const MOTOR = [fs.readFileSync(path.join(KOK, 'api', '_lib', 'scanner.js'), 'utf
 /* Notların bir kısmı motorda değil, e-posta modülünde üretiliyor (`not:`
    alanıyla) ve oradan motora geçiyor. Yalnızca scanner.js'e bakmak, tam da
    bu sınamanın doğduğu boşluğu yeniden açardı. */
-const POSTA = fs.readFileSync(path.join(KOK, 'api', '_lib', 'mail.js'), 'utf8');
+const POSTA = fs.readFileSync(path.join(KOK, 'api', '_lib', 'mail.js'), 'utf8')
+  + fs.readFileSync(path.join(KOK, 'api', '_lib', 'caa.js'), 'utf8');
 const RAPOR_KONTROL = RAPOR.slice(RAPOR.indexOf('const CHECKS'));
 
 /** `['a', 'b']` biçimindeki bir dizi değişmezini okur. */

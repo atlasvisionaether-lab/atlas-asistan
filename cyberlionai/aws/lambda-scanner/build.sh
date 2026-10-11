@@ -21,9 +21,10 @@ rm -rf _lib _assets scanner.zip
 mkdir -p _lib _assets
 
 # Tarama motoru, PDF üreteci ve bağımlılıkları.
-# scanner.js  → guard.js, geo.js (→ geo-table.js), mail.js, dnssec.js, owasp.js, engines/*
+# scanner.js  → guard.js, geo.js (→ geo-table.js), mail.js, dnssec.js, caa.js,
+#               owasp.js, engines/*
 # report-owasp.js → pdf.js, report.js
-for f in scanner.js guard.js geo.js geo-table.js mail.js dnssec.js owasp.js \
+for f in scanner.js guard.js geo.js geo-table.js mail.js dnssec.js caa.js owasp.js \
          report-owasp.js report.js pdf.js; do
   cp "$LIB/$f" "_lib/$f"
 done

@@ -46,7 +46,10 @@ const SEVERITY = {
      skor ise WEB yuzeyi icin kalibre edilmis; agirlik vermek hicbir seyini
      degistirmemis musterilerin skorunu dusururdu. Bunun gercekten boyle
      oldugu asagida AYRICA sinaniyor (bolum 7). */
-  spf: 'info', dmarc: 'info', dkim: 'info'
+  spf: 'info', dmarc: 'info', dkim: 'info',
+  /* CAA: yine info (0). Yoklugu BASARISIZLIK degil 'uygulanmamis'
+     sayiliyor; bkz. _lib/caa.js basligi. */
+  caa: 'info'
 };
 
 function ctx(o) {
@@ -63,7 +66,10 @@ function ctx(o) {
     legacyTls: 'legacyTls' in o ? o.legacyTls : { tested: true, accepted: false },
     /* Belirtilmemisse UNDEFINED birakiliyor: "olculmedi" demek, uydurma bir
        kayit vermek degil. */
-    mail: o.mail
+    mail: o.mail,
+    /* Belirtilmemisse UNDEFINED birakiliyor: motor o zaman kontrolu hic
+       eklemiyor — "olculmedi" demek, uydurma bir kayit vermek degil. */
+    caa: o.caa
   };
 }
 
@@ -239,6 +245,29 @@ ok(spfDurum.status === 'fail' && dmarcDurum.status === 'fail',
    'SPF ve DMARC yoklugu BULGU olarak raporlaniyor (' + spfDurum.status + '/' + dmarcDurum.status + ')');
 ok(dkimDurum.status === 'skipped',
    'DKIM bulunamadiginda BASARISIZ degil ATLANMIS sayiliyor (' + dkimDurum.status + ')');
+
+head('8. CAA da skoru KAYDIRMIYOR');
+/* Soz: CAA eklenmesi, hicbir seyini degistirmemis bir musterinin skorunu
+   degistirmez. Ayni site uc kez puanlaniyor - kayit olculmemis, kayit var,
+   kayit yok. Uc skor da AYNI cikmali. */
+const caaYok = scoreOf(buildChecks(ctx({ headers: {} })));
+const caaVar = scoreOf(buildChecks(ctx({ headers: {},
+  caa: { ok: true, kayitlar: [{ critical: 0, issue: 'letsencrypt.org' }] } })));
+const caaBos = scoreOf(buildChecks(ctx({ headers: {}, caa: { ok: true, kayitlar: [] } })));
+
+ok(caaYok === caaVar && caaVar === caaBos,
+   'skor uc durumda da ayni (' + [caaYok, caaVar, caaBos].join(' = ') + ')');
+
+/* Ama RAPORDA gorunuyor: agirliksiz olmak gorunmez olmak degil. */
+const caaK = buildChecks(ctx({ headers: {}, caa: { ok: true, kayitlar: [] } }))
+  .find(function (c) { return c.id === 'caa'; });
+ok(caaK && caaK.status === 'skipped' && caaK.note === 'not_implemented',
+   'CAA yoklugu "uygulanmamis" olarak raporlaniyor (' + (caaK && caaK.note) + ')');
+
+/* Baglamda yoksa kontrol HIC eklenmiyor: beyan edilen kontrol sayisi
+   kaymasin diye (bu dosyanin 2. bolumu onu sayiyor). */
+ok(!buildChecks(ctx({ headers: {} })).some(function (c) { return c.id === 'caa'; }),
+   'CAA olculmediginde kontrol listeye hic girmiyor');
 
 process.stdout.write('\n\x1b[1m' + (failed ? 'SONUÇ: BAŞARISIZ' : 'SONUÇ: HEPSİ GEÇTİ') + '\x1b[0m\n');
 process.stdout.write('\nKalibrasyon tablosu:\n');
