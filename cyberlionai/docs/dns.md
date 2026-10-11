@@ -19,6 +19,23 @@ Beşinin de ağırlığı `info` (0). Skoru etkilemiyorlar; kalibrasyon sınamas
 8. bölümü bunu söz olarak tutuyor (CAA'lı, CAA'sız ve boş CAA'lı üç bağlam
 aynı skoru veriyor).
 
+## DNS nerede tutuluyor: Hostinger, Vercel DEĞİL
+
+Kayıt eklemeye çalışırken ölçüldü (11.10.2026, Vercel API):
+
+```
+GET /v5/domains/cyberlionai.com
+  serviceType : external
+  zone        : false
+  nameservers : helios.dns-parking.com, aster.dns-parking.com
+GET /v4/domains/cyberlionai.com/records  →  0 kayıt
+```
+
+`dns-parking.com` nameserver'ları Hostinger'a ait. Yani **yetkili bölge
+Hostinger'da**; Vercel'in bu alan adı için bir DNS bölgesi yok. Vercel API'siyle
+yazılan bir kayıt gerçek DNS'e **yansımaz**. Aşağıdaki kayıtların tamamı
+Hostinger hPanel → DNS Zone Editor'dan girilir (SPF ve DMARC da orada).
+
 ## CAA: MX düzelene kadar yalnızca `issue`
 
 Eklenecek kayıt, **tek satır**:
@@ -84,7 +101,7 @@ kimliğidir: Let's Encrypt → `letsencrypt.org`, Google Trust Services →
 ## DNSSEC
 
 `dnssec` FAIL = bölge imzasız. Ölçüm doğru; bu bir arıza değil, kapalı bir
-katman. Açmak alan adı sağlayıcısının (bugün Vercel DNS) tarafında bir iş ve
+katman. Açmak DNS sağlayıcısının (bugün Hostinger) tarafında bir iş ve
 `caa` ile aynı sınıfta: ağırlık `info` (0), skora etkisi yok.
 
 Raporda `dnssec`'in "Kaldı", `caa`'nın "Uygulanmamış" görünmesi bilinen bir
