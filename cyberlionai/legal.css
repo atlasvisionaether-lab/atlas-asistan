@@ -1,0 +1,67 @@
+/* Yasal sayfalar (tools/render-legal-md.js çıktıları) için ortak stil.
+   Tailwind "prose prose-invert max-w-4xl mx-auto p-8" düzeninin karşılığı:
+   bu depoda Tailwind derlemesi yok, CSP de harici betiğe izin vermiyor. */
+:root{--bg:#0a0a0f;--bg2:#12121a;--gold:#d4af37;--gold-light:#ffdf00;
+  --text:#f0f0f0;--muted:#a8a8b8;--line:rgba(255,255,255,.08);--glass:rgba(26,26,36,.7);
+  --glass-border:rgba(212,175,55,.2);
+  --font-heading:'Orbitron','Segoe UI',sans-serif;--font-body:'Space Grotesk','Segoe UI',system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);
+  font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background-image:radial-gradient(60% 40% at 50% -10%,rgba(212,175,55,.08),transparent 70%)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gold-light);outline-offset:3px;border-radius:4px}
+.wrap{width:100%;max-width:56rem;margin:0 auto;padding-left:20px;padding-right:20px}
+
+.site-head{position:sticky;top:0;z-index:10;background:var(--glass);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-border)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo svg{width:30px;height:30px}
+.logo span{font-family:var(--font-heading);font-weight:800;font-size:.78rem;letter-spacing:.11em}
+.back{font-family:var(--font-heading);font-size:.66rem;font-weight:600;letter-spacing:.09em;
+  text-transform:uppercase;text-decoration:none;padding:9px 14px;border-radius:8px;border:1px solid var(--glass-border)}
+.back:hover{color:var(--gold);border-color:var(--gold)}
+
+/* p-8 */
+.legal{padding-top:2rem;padding-bottom:4rem}
+@media(min-width:640px){.legal{padding:2rem}}
+
+/* prose prose-invert */
+.prose{color:var(--muted);max-width:none}
+.prose h1{font-family:var(--font-heading);font-weight:800;color:var(--gold);
+  font-size:clamp(1.45rem,4.5vw,2.2rem);line-height:1.2;margin:0 0 1.6rem;letter-spacing:.01em}
+.prose h2{font-family:var(--font-heading);font-weight:700;color:var(--text);
+  font-size:1.05rem;letter-spacing:.02em;line-height:1.4;margin:2.2rem 0 .8rem;
+  padding-top:1.4rem;border-top:1px solid var(--line)}
+.prose p{margin:0 0 1.1rem}
+.prose strong{color:var(--text);font-weight:600}
+.prose ul,.prose ol{margin:0 0 1.2rem;padding-left:1.4rem}
+.prose li{margin:.35rem 0;padding-left:.2rem}
+.prose ul>li::marker{color:var(--gold)}
+.prose ol>li::marker{color:var(--gold);font-weight:600}
+.prose a,.legal-meta a{color:var(--gold);text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+
+.legal-meta{margin-top:2.5rem;padding:1.2rem 1.4rem;border-radius:12px;
+  border:1px solid var(--glass-border);background:rgba(255,255,255,.03);font-size:.9rem;color:var(--muted)}
+.legal-meta p{margin:0 0 .6rem}
+.legal-meta p:last-child{margin:0}
+.legal-meta strong{color:var(--text)}
+
+.site-foot{border-top:1px solid var(--glass-border);background:var(--bg2);padding:40px 0 26px;
+  color:var(--muted);font-size:.86rem}
+.site-foot .wrap{max-width:66rem}
+.fgrid{display:grid;gap:26px;grid-template-columns:1fr}
+@media(min-width:640px){.fgrid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.fgrid{grid-template-columns:1.3fr 1fr 1fr 1fr}}
+.fgrid h3{font-family:var(--font-heading);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:0 0 12px}
+.fgrid ul{list-style:none;margin:0;padding:0}
+.fgrid li{margin-bottom:8px;overflow-wrap:anywhere}
+.fgrid a{text-decoration:none}
+.fgrid a:hover{color:var(--gold)}
+.fgrid p{margin:0 0 12px}
+.iyz{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:.8rem}
+.iyz__mark{font-weight:600;font-size:1.02rem;color:#1e64ff;background:#fff;padding:2px 10px;border-radius:6px}
+.fcopy{margin:28px 0 0;padding-top:18px;border-top:1px solid var(--line);font-size:.78rem;text-align:center}
+@media(max-width:400px){.logo span{display:none}}

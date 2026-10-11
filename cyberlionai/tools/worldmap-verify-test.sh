@@ -72,6 +72,22 @@ import json, sys
 dosya = sys.argv[1]
 durum = dict(zip(['feodo', 'urlhaus', 'torexit', 'phishtank'], sys.argv[2:6]))
 pencere = sys.argv[6] if len(sys.argv) > 6 else 'normal'
+# ownActivity katmani: canlida ACIK (veri var), ama kapali da olabilir. Ucu de
+# sinanıyor, cunku eskiden betik yalnizca 'kapali'yi kabul ediyordu.
+import os
+oa_bicim = os.environ.get('OA_BICIM', 'kapali')
+if oa_bicim == 'acik':
+    oa = {'available': True, 'reason': None, 'total': 3, 'truncated': False,
+          'countries': [{'country': 'TR', 'count': 2}, {'country': 'DE', 'count': 1}]}
+elif oa_bicim == 'acik_bozuk_ulke':
+    oa = {'available': True, 'reason': None, 'total': 1, 'truncated': False,
+          'countries': [{'country': 'turkiye', 'count': 1}]}
+elif oa_bicim == 'kapali_sebepsiz':
+    oa = {'available': False, 'countries': []}
+elif oa_bicim == 'bozuk':
+    oa = {'available': 'evet', 'countries': []}
+else:
+    oa = {'available': False, 'reason': 'no_geo_in_scan_history', 'countries': []}
 kaynaklar = []
 for kid, ok in durum.items():
     # ÖLÇÜLDÜ: zaman filtresini yalnızca urlhaus destekliyor.
@@ -106,14 +122,14 @@ json.dump({
     'unresolved': 0,
     'geoTable': {'ok': True},
     'sources': kaynaklar,
-    'ownActivity': {'available': False, 'reason': 'no_geo_in_scan_history', 'countries': []},
+    'ownActivity': oa,
 }, open(dosya, 'w'))
 PY
   printf '%s' "$dosya"
 }
 
 kos() {  # <feodo> <urlhaus> <torexit> <phishtank> [pencere bicimi]
-  local g; g="$(govde "$@")"
+  local g; g="$(OA_BICIM="${OA_BICIM:-kapali}" govde "$@")"
   rm -f "$KOK/durum.txt"
   PATH="$KOK/bin:$PATH" \
   SAHTE_GOVDE="$g" SAHTE_SAYFA="$KOK/sayfa.html" \
@@ -143,6 +159,19 @@ dene 'bütün kaynaklar ayakta → temiz'          temiz     0 1 1 1 1
 dene 'bir kaynak düştü → uyarı, iş kırmızı değil' uyari  0 0 1 1 1
 dene 'iki kaynak düştü → yine uyarı'           uyari     0 0 0 1 1
 dene 'bütün kaynaklar düştü → başarısız'       basarisiz 1 0 0 0 0
+
+printf '\033[1mownActivity katmanı\033[0m\n'
+# NEDEN: bu bolum bir zamanlar 'available' icin 'false' bekliyordu. Katman
+# canlida veri bulup acildiginda gunluk kosu kirmiziya dondu — urunun
+# duzelmesi kontrolu bozdu. Artik sozlesme sinaniyor, deger degil.
+# Bir fonksiyon cagrisinin onune yazilan atama bash'te fonksiyona tasinmaz;
+# bu yuzden acikca export edilip sonra temizleniyor.
+dene_oa() { export OA_BICIM="$1"; shift; dene "$@"; unset OA_BICIM; }
+dene_oa acik            'ownActivity açık → temiz'                       temiz     0 1 1 1 1
+dene_oa kapali          'kapalı ama sebebi yazılı → temiz'               temiz     0 1 1 1 1
+dene_oa kapali_sebepsiz 'kapalı ve sebepsiz → başarısız'                 basarisiz 1 1 1 1 1
+dene_oa bozuk           'available boolean değil → başarısız'            basarisiz 1 1 1 1 1
+dene_oa acik_bozuk_ulke 'açık ama ülke kodu ISO-2 değil → başarısız'     basarisiz 1 1 1 1 1
 
 printf '\033[1mUyarı metni düşen kaynağı adıyla söylüyor\033[0m\n'
 kos 0 1 1 1 >/dev/null 2>&1

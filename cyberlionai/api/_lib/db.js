@@ -218,8 +218,774 @@ async function claimAnonymousScans(sessionId, userId) {
   return rows ? rows.length : 0;
 }
 
-module.exports = {
 
-  isConfigured, saveScan, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
-  sanitizeFindings, claimAnonymousScans
+/* ============================================================
+   OWASP LITE: scan_jobs + scan_findings kaydı (servis rolü).
+   Yazma yalnızca buradan; anon/authenticated INSERT policy yok.
+   ============================================================ */
+async function saveOwaspJob(result, owner, versions, consent) {
+  const row = {
+    user_id: owner.userId || null,
+    domain: result.host,
+    url: result.url,
+    status: 'completed',
+    result: {
+      score: result.score,
+      summary: result.summary,
+      owaspFailedCategories: result.owaspFailedCategories || {},
+      activeChecksConsent: consent === true
+    },
+    score: typeof result.score === 'number' ? result.score : null,
+    scanner_mode: consent === true ? 'active' : 'passive',
+    consent_ip: consent === true ? (owner.ip || null) : null,
+    consent_at: consent === true ? new Date().toISOString() : null,
+    country: result.country
+  };
+  const rows = await request('scan_jobs', {
+    method: 'POST',
+    body: row,
+    headers: { 'Prefer': 'return=representation' }
+  });
+  const jobId = rows && rows[0] ? rows[0].id : null;
+
+  const findings = result.owaspFindings || [];
+  if (jobId && findings.length) {
+    const payload = findings.map(function (f) {
+      return {
+        job_id: jobId,
+        owasp_category: f.owasp_category,
+        severity: f.severity,
+        title: f.title.slice(0, 300),
+        description: (f.description || '').slice(0, 2000),
+        evidence: (f.evidence || '').slice(0, 500),
+        fix_code: (f.fix_code || '').slice(0, 4000)
+      };
+    });
+    await request('scan_findings', {
+      method: 'POST',
+      body: payload,
+      headers: { 'Prefer': 'return=minimal' }
+    });
+  }
+  return jobId;
+}
+
+
+/* ============================================================
+   Cloudflare 1-Tık Düzeltme denetim izi (token'sız).
+   Yazma yalnızca servis rolü; anon policy yok.
+   ============================================================ */
+async function saveAutofixJob(domain, fixType, ruleId) {
+  const row = {
+    domain: domain,
+    url: 'cloudflare-transform://' + domain + '/' + fixType,
+    status: 'completed',
+    result: { autofix: true, fixType: fixType, ruleId: ruleId || null },
+    score: null,
+    scanner_mode: 'passive',
+    completed_at: new Date().toISOString()
+  };
+  const rows = await request('scan_jobs', {
+    method: 'POST',
+    body: row,
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+async function saveAutofixFinding(jobId, domain, fixType, ruleId) {
+  const row = {
+    job_id: jobId,
+    owasp_category: 'A05',
+    severity: 'info',
+    title: 'Auto-Fix Applied via Cloudflare',
+    description: '1-click fix applied: ' + fixType.toUpperCase()
+      + ' header set via Cloudflare Transform Rule (user-provided token)',
+    evidence: 'zone=' + domain + '; ruleId=' + (ruleId || 'n/a')
+      + '; fixedAt=' + new Date().toISOString(),
+    fix_code: null
+  };
+  const rows = await request('scan_findings', {
+    method: 'POST',
+    body: row,
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+/* ============================================================
+   Ana sayfadaki SAYAÇ için toplamlar.
+
+   SAHİPSİZ ve KİMLİKSİZ: yalnızca kaç tarama yapıldığı, kaç ayrı alan adı
+   tarandığı, ortalama skor ve son yedi günün günlük dağılımı. Alan adının
+   KENDİSİ dışarı çıkmıyor (yalnızca benzersiz sayısı için sayılıyor) ve
+   kullanıcı/oturum bilgisi bu yanıtta yok.
+
+   Neden SQL tarafında COUNT/AVG değil: `countryCounts` ile aynı sebep —
+   PostgREST'in toplama desteği sürüme bağlı ve bu depoda "sürüm tahmin etme"
+   kuralı var. Gereken sütunlar ÜST SINIRA kadar çekilip burada sayılıyor.
+   Sınıra dayanıldığında bu SAKLANMIYOR: `truncated` ile dışarı bildiriliyor
+   ve o noktada doğrusu bir veritabanı görünümü/RPC'ye geçmektir.
+
+   `cloudflare-transform://` ile başlayan satırlar bir TARAMA DEĞİL: Cloudflare
+   1-Tık Düzeltme'nin denetim izi aynı tabloya yazılıyor (bkz. saveAutofixJob).
+   Sayaca katılsalardı "taranan site" sayısı düzeltme sayısıyla şişerdi.
+   Ayıklama burada, JS tarafında yapılıyor — PostgREST'in `like` kalıbında
+   `://` kaçışını tahmin etmek yerine. */
+const STATS_LIMIT = 10000;
+const AUTOFIX_URL_PREFIX = 'cloudflare-transform://';
+const TREND_DAYS = 7;
+
+function utcDay(iso) {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
+async function scanStats() {
+  const query = 'scan_jobs'
+    + '?select=domain,score,status,url,created_at'
+    + '&order=created_at.desc'
+    + '&limit=' + (STATS_LIMIT + 1);
+
+  const rows = await request(query, {});
+  const list = Array.isArray(rows) ? rows : [];
+  const truncated = list.length > STATS_LIMIT;
+  const sayilan = truncated ? list.slice(0, STATS_LIMIT) : list;
+
+  /* Son yedi günün iskeleti ÖNCE kuruluyor: tarama olmayan gün listeden
+     düşerse grafik günleri kaydırır ve boş günü yoğun günün yanına koyar. */
+  const gunler = new Map();
+  const bugun = new Date();
+  for (let i = TREND_DAYS - 1; i >= 0; i--) {
+    const d = new Date(bugun.getTime() - i * 86400000);
+    gunler.set(d.toISOString().slice(0, 10), 0);
+  }
+
+  const alanAdlari = new Set();
+  let taramaSayisi = 0;
+  let skorToplami = 0;
+  let skorAdedi = 0;
+
+  sayilan.forEach(function (r) {
+    if (!r || typeof r.url !== 'string') return;
+    if (r.url.indexOf(AUTOFIX_URL_PREFIX) === 0) return;
+    if (r.status !== 'completed') return;
+
+    taramaSayisi += 1;
+    if (typeof r.domain === 'string' && r.domain) alanAdlari.add(r.domain.toLowerCase());
+    if (typeof r.score === 'number') { skorToplami += r.score; skorAdedi += 1; }
+
+    const gun = utcDay(r.created_at);
+    if (gun !== null && gunler.has(gun)) gunler.set(gun, gunler.get(gun) + 1);
+  });
+
+  return {
+    totalScans: taramaSayisi,
+    uniqueDomains: alanAdlari.size,
+    /* Ortalama yalnızca skoru OLAN taramalardan; başarısız tarama skoru
+       null bırakır ve sıfır sayılması ortalamayı yanlış aşağı çeker. */
+    averageScore: skorAdedi > 0 ? Math.round(skorToplami / skorAdedi) : null,
+    scoredScans: skorAdedi,
+    last7Days: Array.from(gunler.entries()).map(function (p) {
+      return { date: p[0], count: p[1] };
+    }),
+    truncated: truncated
+  };
+}
+
+/* ============================================================
+   PANEL: hesabın kendi scan_jobs kayıtları ve bulguları.
+
+   Sahiplik filtresi SORGUNUN İÇİNDE (`user_id=eq.…`), tıpkı `ownerFilter`
+   kullanan uçlarda olduğu gibi: başka bir kullanıcının iş kimliğini bilmek
+   işe yaramaz. Tarayıcı veritabanına hiç bağlanmıyor; panel bu sunucu
+   uçlarından okuyor. Tablodaki RLS bunun ikinci katmanı, tek katmanı değil.
+   ============================================================ */
+const PANEL_MAX_LIMIT = 50;
+
+function jobOwnerFilter(userId) {
+  return 'user_id=eq.' + encodeURIComponent(userId);
+}
+
+/** Bir satır gerçekten tarama mı, yoksa düzeltme denetim izi mi? */
+function isScanRow(row) {
+  return !!row && typeof row.url === 'string' && row.url.indexOf(AUTOFIX_URL_PREFIX) !== 0;
+}
+
+/**
+ * Hesabın taramaları, yeniden eskiye.
+ *
+ * `status` verilirse ona göre süzülür ('completed' | 'failed' | …). Düzeltme
+ * denetim satırları listede GÖRÜNMEZ: panel "taramalarım" diyor ve bir
+ * Cloudflare düzeltmesi tarama değil.
+ */
+async function listJobs(userId, options) {
+  const opts = options || {};
+  const limit = Math.min(Math.max(parseInt(opts.limit, 10) || 20, 1), PANEL_MAX_LIMIT);
+  const offset = Math.max(parseInt(opts.offset, 10) || 0, 0);
+
+  let query = 'scan_jobs'
+    + '?' + jobOwnerFilter(userId)
+    + '&select=id,domain,url,status,score,scanner_mode,country,created_at,completed_at'
+    + '&order=created_at.desc'
+    /* Bir fazlası isteniyor: sonraki sayfa var mı sorusunu ayrı bir sayım
+       turu yapmadan cevaplamak için (history.js ile aynı desen). */
+    + '&limit=' + (limit + 1) + '&offset=' + offset;
+
+  if (typeof opts.status === 'string' && /^[a-z]{1,16}$/.test(opts.status)) {
+    query += '&status=eq.' + opts.status;
+  }
+
+  const rows = await request(query, {});
+  const list = (Array.isArray(rows) ? rows : []).filter(isScanRow);
+  const hasMore = list.length > limit;
+
+  return {
+    items: (hasMore ? list.slice(0, limit) : list).map(function (r) {
+      return {
+        id: r.id, domain: r.domain, status: r.status, score: r.score,
+        scannerMode: r.scanner_mode, country: r.country,
+        createdAt: r.created_at, completedAt: r.completed_at
+      };
+    }),
+    limit: limit,
+    offset: offset,
+    hasMore: hasMore
+  };
+}
+
+/**
+ * Skor eğilimi: hesabın skoru olan taramaları, ESKİDEN YENİYE.
+ *
+ * Grafiğin x ekseni gün değil TARAMA: bir hesabın taramaları günlere seyrek
+ * dağılıyor ve günlük ortalama, tek taramalı bir günü yoğun bir günle aynı
+ * ağırlıkta gösterirdi. Nokta başına tarih veriliyor, arayüz etiketi ondan
+ * yazıyor.
+ */
+async function jobScoreTrend(userId, limit) {
+  const n = Math.min(Math.max(parseInt(limit, 10) || 30, 1), 200);
+  const query = 'scan_jobs'
+    + '?' + jobOwnerFilter(userId)
+    + '&status=eq.completed'
+    + '&score=not.is.null'
+    + '&select=id,domain,score,created_at,url'
+    + '&order=created_at.desc'
+    + '&limit=' + n;
+
+  const rows = await request(query, {});
+  return (Array.isArray(rows) ? rows : [])
+    .filter(isScanRow)
+    .map(function (r) {
+      return { id: r.id, domain: r.domain, score: r.score, createdAt: r.created_at };
+    })
+    .reverse();
+}
+
+/** Tek iş — sahiplik filtresi sorgunun içinde. */
+async function getJob(userId, jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const rows = await request('scan_jobs'
+    + '?' + jobOwnerFilter(userId)
+    + '&id=eq.' + encodeURIComponent(jobId)
+    + '&select=*&limit=1');
+  const row = rows && rows[0] ? rows[0] : null;
+  return isScanRow(row) ? row : null;
+}
+
+/**
+ * Bir işin bulguları, OWASP kategorisine göre gruplanmış.
+ *
+ * ÖNCE iş sahiplik filtresiyle okunuyor, bulgular ANCAK sonra: `job_id`
+ * üzerinden doğrudan sorgulamak, başkasının iş kimliğini bilen birine o işin
+ * bulgularını verirdi. `scan_findings` tablosunda sahip sütunu yok, sahiplik
+ * yalnızca iş üzerinden kurulabiliyor.
+ *
+ * Dönüş null ise iş yok ya da bu hesaba ait değil — ikisi arayüze AYNI
+ * görünüyor (404), çünkü ayırmak "bu kimlik var ama sizin değil" demek olurdu.
+ */
+const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info'];
+
+async function getJobWithFindings(userId, jobId) {
+  const job = await getJob(userId, jobId);
+  if (!job) return null;
+
+  const rows = await request('scan_findings'
+    + '?job_id=eq.' + encodeURIComponent(job.id)
+    + '&select=id,owasp_category,severity,title,description,evidence,fix_code,created_at'
+    + '&order=created_at.asc'
+    + '&limit=500');
+
+  const findings = Array.isArray(rows) ? rows : [];
+
+  /* Kategorisiz bulgu DÜŞÜRÜLMÜYOR: 'A00' gibi uydurma bir kategoriye de
+     atanmıyor, ayrı bir 'other' grubunda duruyor. Raporda görünmeyen bulgu,
+     olmayan bulgudan daha kötüdür. */
+  const gruplar = new Map();
+  findings.forEach(function (f) {
+    const key = /^A(0[1-9]|10)$/.test(String(f.owasp_category || '')) ? f.owasp_category : 'other';
+    if (!gruplar.has(key)) gruplar.set(key, []);
+    gruplar.get(key).push({
+      id: f.id,
+      owaspCategory: f.owasp_category || null,
+      severity: f.severity,
+      title: f.title,
+      description: f.description,
+      evidence: f.evidence,
+      fixCode: f.fix_code
+    });
+  });
+
+  const siraliGruplar = Array.from(gruplar.entries())
+    /* 'other' her zaman sonda; kalanlar A01..A10 sırasında. */
+    .sort(function (a, b) {
+      if (a[0] === 'other') return 1;
+      if (b[0] === 'other') return -1;
+      return a[0] < b[0] ? -1 : 1;
+    })
+    .map(function (p) {
+      return {
+        category: p[0],
+        findings: p[1].sort(function (x, y) {
+          return SEVERITY_ORDER.indexOf(x.severity) - SEVERITY_ORDER.indexOf(y.severity);
+        })
+      };
+    });
+
+  const sayac = {};
+  SEVERITY_ORDER.forEach(function (s) { sayac[s] = 0; });
+  findings.forEach(function (f) {
+    if (Object.prototype.hasOwnProperty.call(sayac, f.severity)) sayac[f.severity] += 1;
+  });
+
+  return {
+    job: {
+      id: job.id, domain: job.domain, url: job.url, status: job.status,
+      score: job.score, scannerMode: job.scanner_mode, country: job.country,
+      createdAt: job.created_at, completedAt: job.completed_at,
+      result: job.result || null
+    },
+    severityCounts: sayac,
+    totalFindings: findings.length,
+    groups: siraliGruplar
+  };
+}
+
+/* ============================================================
+   Asenkron tarama kuyruğu (SQS + Lambda).
+
+   Satır BURADA açılır, iş SQS'e bırakılır, Lambda aynı satırı ilerletir.
+   Kimliği sunucu üretir; istemci "şu kimlikle iş aç" diyemez, yoksa
+   başkasının iş kimliğini seçip satırını ezebilirdi.
+
+   SAHİPLİK: giriş yapılmışsa `user_id`, değilse `session_id`. Anonim
+   taramanın da bir sahibi olmak zorunda, çünkü sonucu SONRADAN soruluyor;
+   sahip sütunu olmasa iş kimliğini bilen herkes sonucu okuyabilirdi.
+   ============================================================ */
+
+/** Kuyruğa bırakılmak üzere 'pending' bir iş satırı açar, kimliğini döner. */
+async function createPendingJob(input, owner, consent) {
+  const row = {
+    user_id: owner.userId || null,
+    session_id: owner.userId ? null : (owner.sessionId || null),
+    domain: input.host,
+    url: input.url,
+    status: 'pending',
+    scanner_mode: consent === true ? 'active' : 'passive',
+    consent_ip: consent === true ? (owner.ip || null) : null,
+    consent_at: consent === true ? new Date().toISOString() : null
+  };
+  const rows = await request('scan_jobs', {
+    method: 'POST', body: row, headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+/** Mesaj SQS'e gittikten sonra. 'pending' kalan iş = kuyruğa hiç düşmemiş iş. */
+async function markJobQueued(jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const rows = await request('scan_jobs?id=eq.' + encodeURIComponent(jobId), {
+    method: 'PATCH',
+    body: { status: 'queued', queued_at: new Date().toISOString() },
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0] : null;
+}
+
+/**
+ * Kuyruğa bırakılamayan işi kapatır. Kod şemanın kabul ettiği kısa biçime
+ * indirilir; serbest metin yazılmaz (istemciye çevrilmek üzere döner).
+ */
+async function markJobFailed(jobId, code) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const kod = String(code || 'scan_failed').toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_').slice(0, 40) || 'scan_failed';
+  const rows = await request('scan_jobs?id=eq.' + encodeURIComponent(jobId), {
+    method: 'PATCH',
+    body: { status: 'failed', error_code: kod, completed_at: new Date().toISOString() },
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows && rows[0] ? rows[0] : null;
+}
+
+/** Kuyruk işleri için sahiplik süzgeci: hesap varsa hesap, yoksa oturum. */
+function queueOwnerFilter(owner) {
+  return owner.userId
+    ? 'user_id=eq.' + encodeURIComponent(owner.userId)
+    : 'session_id=eq.' + encodeURIComponent(owner.sessionId);
+}
+
+/**
+ * İstemcinin yokladığı durum kaydı.
+ *
+ * Sahiplik filtresi SORGUNUN İÇİNDE: başka bir oturumun iş kimliğini bilmek
+ * işe yaramaz. İş yok ile "sizin değil" arayüze AYNI görünür (null), çünkü
+ * ayırmak "bu kimlik var ama sizin değil" demek olurdu.
+ *
+ * `result` bütünüyle dönmüyor; yalnızca istemcinin çizdiği alanlar. Ham
+ * başlık değerleri geçmiş listesinde de tutulmuyor (bkz. sanitizeFindings).
+ */
+async function getJobStatus(owner, jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const rows = await request('scan_jobs'
+    + '?' + queueOwnerFilter(owner)
+    + '&id=eq.' + encodeURIComponent(jobId)
+    + '&select=id,domain,url,status,score,error_code,scanner_mode,country,'
+    + 'result,created_at,queued_at,completed_at,attempts,progress,current_step,'
+    + 'report_key&limit=1');
+  const row = rows && rows[0] ? rows[0] : null;
+  return isScanRow(row) ? row : null;
+}
+
+/* ============================================================
+   Haftalık tarama için abonelik kaynağı.
+
+   DİKKAT: `scan_jobs` tablosunda abonelik/plan sütunu YOK ve hiç olmadı.
+   Haftalık taramanın kimi tarayacağını söyleyen bir kayıt gerekiyor; bu
+   `cl_subscriptions` tablosu onun için (göç dosyası:
+   db/2026-10-01-cl-subscriptions.sql). Tablo HENÜZ UYGULANMADIYSA bu
+   fonksiyon uydurma bir liste döndürmüyor: `available: false` ve sebep
+   dönüyor, çağıran da hiçbir tarama tetiklemiyor. Olmayan müşteriyi
+   varsaymak, hiç taramamaktan kötüdür.
+   ============================================================ */
+async function enterpriseScanTargets(limit) {
+  const n = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+  const query = 'cl_subscriptions'
+    + '?plan=eq.enterprise'
+    + '&active=is.true'
+    + '&select=user_id,domain'
+    + '&order=created_at.asc'
+    + '&limit=' + n;
+
+  let rows;
+  try {
+    rows = await request(query, {});
+  } catch (err) {
+    /* Tablo yoksa PostgREST 404 veriyor. Bunu "abone yok" diye SESSİZCE
+       yutmak, kurulumun eksik olduğunu gizlemek olurdu. */
+    if (/db_error_404/.test(err.message)) {
+      return { available: false, reason: 'no_subscriptions_table', targets: [] };
+    }
+    throw err;
+  }
+
+  const list = (Array.isArray(rows) ? rows : []).filter(function (r) {
+    return r && UUID_RE.test(String(r.user_id || ''))
+      && typeof r.domain === 'string' && /^[a-z0-9.-]{1,253}\.[a-z]{2,}$/i.test(r.domain);
+  });
+
+  return {
+    available: true,
+    reason: list.length ? null : 'no_active_subscriptions',
+    targets: list.map(function (r) {
+      return { userId: r.user_id, domain: r.domain.toLowerCase() };
+    })
+  };
+}
+
+/* ============================================================
+   Abonelik okuma ve yazma (iyzico).
+
+   OKUMA panelden geliyor ve her zaman kullanıcı kimliğiyle sınırlı: filtre
+   sorgunun İÇİNDE (`user_id=eq.…`). YAZMA yalnızca webhook'tan geliyor ve
+   servis rolüyle yapılıyor; tabloda anon/authenticated INSERT ya da UPDATE
+   policy'si bilerek yok, yoksa bir kullanıcı kendini Enterprise ilan ederdi.
+   ============================================================ */
+
+const SUBS_TABLE = 'cl_subscriptions';
+const SUB_SELECT = 'id,domain,plan,active,status,iyzico_env,'
+  + 'iyzico_subscription_ref,iyzico_customer_ref,created_at,updated_at';
+
+/** Hesabın kendi abonelikleri. Başkasının satırı bu sorgudan ÇIKAMAZ. */
+async function listSubscriptions(userId) {
+  if (!UUID_RE.test(String(userId || ''))) return [];
+  const rows = await request(SUBS_TABLE
+    + '?user_id=eq.' + encodeURIComponent(userId)
+    + '&select=' + SUB_SELECT
+    + '&order=created_at.desc&limit=50', {});
+  return Array.isArray(rows) ? rows : [];
+}
+
+/**
+ * Webhook'tan gelen abonelik durumunu yazar.
+ *
+ * Eşleme anahtarı iyzico'nun abonelik referansı: aynı webhook iki kez
+ * gelirse (iyzico yeniden deniyor) ikinci çağrı yeni satır açmıyor, mevcut
+ * satırı güncelliyor. `user_id` ve `domain` İSTEKTEN GELMİYOR — webhook'un
+ * gövdesi bunları taşısa bile güvenilmez; kendi tarafımızdaki müşteri
+ * eşlemesinden geliyor (çağıran veriyor).
+ */
+async function upsertIyzicoSubscription(row) {
+  if (!UUID_RE.test(String(row.userId || ''))) throw new Error('subscription_user_invalid');
+  if (!row.subscriptionRef) throw new Error('subscription_ref_missing');
+
+  const body = {
+    user_id: row.userId,
+    /* Alan adı YOKSA null yazılıyor, boş dizge DEĞİL: tabloda
+       unique (user_id, domain) var ve boş dizge gerçek bir değer sayılır.
+       '' yazılsa aynı hesabın ikinci aboneliği (Pro'dan sonra Enterprise)
+       tekillik ihlaliyle reddedilirdi; NULL'lar birbirinden farklı sayılıyor. */
+    domain: row.domain ? String(row.domain).toLowerCase() : null,
+    plan: row.plan,
+    active: row.active === true,
+    status: row.status || null,
+    iyzico_env: row.env || null,
+    iyzico_subscription_ref: String(row.subscriptionRef),
+    iyzico_customer_ref: row.customerRef ? String(row.customerRef) : null,
+    iyzico_product_ref: row.productRef ? String(row.productRef) : null,
+    iyzico_plan_ref: row.planRef ? String(row.planRef) : null,
+    updated_at: new Date().toISOString()
+  };
+
+  const rows = await request(SUBS_TABLE + '?on_conflict=iyzico_subscription_ref', {
+    method: 'POST',
+    body: body,
+    headers: {
+      'Prefer': 'resolution=merge-duplicates,return=representation'
+    }
+  });
+  return rows && rows[0] ? rows[0] : null;
+}
+
+/** Abonelik satırını iyzico referansıyla bulur (webhook için). */
+async function findSubscriptionByRef(subscriptionRef) {
+  if (!subscriptionRef) return null;
+  const rows = await request(SUBS_TABLE
+    + '?iyzico_subscription_ref=eq.' + encodeURIComponent(subscriptionRef)
+    + '&select=' + SUB_SELECT + ',user_id&limit=1', {});
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+/**
+ * Var olan abonelik satırının durumunu günceller.
+ *
+ * Webhook YENİ satır açmıyor: hangi kullanıcıya ait olduğunu söyleyen eşleme
+ * yalnızca ödeme dönüşünde (oturumlu istekte) kuruluyor. Eşlemesi olmayan bir
+ * referans için satır açmak, aboneliği rastgele bir kullanıcıya yazmak olurdu.
+ */
+async function updateSubscriptionStatusByRef(subscriptionRef, patch) {
+  if (!subscriptionRef) throw new Error('subscription_ref_missing');
+  const body = {
+    active: patch.active === true,
+    status: patch.status || null,
+    updated_at: new Date().toISOString()
+  };
+  const rows = await request(SUBS_TABLE
+    + '?iyzico_subscription_ref=eq.' + encodeURIComponent(subscriptionRef), {
+    method: 'PATCH',
+    body: body,
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return Array.isArray(rows) ? rows.length : 0;
+}
+
+/**
+ * AI analist raporunu kaydeder ve kimliğini döndürür.
+ *
+ * Rapor, taramanın KENDİSİ değil onun anlatımı: kayıt düşerse tarama yine
+ * döner (çağıran uca bakın). `job_id` zorunlu — sahipsiz bir rapor, kimsenin
+ * okuyamayacağı bir satır olurdu, çünkü RLS sahipliği scan_jobs üzerinden
+ * kuruyor.
+ */
+async function saveAiReport(jobId, rapor) {
+  if (!UUID_RE.test(String(jobId || ''))) throw new Error('bad_job_id');
+  const rows = await request('ai_reports?select=id', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation' },
+    body: [{
+      job_id: jobId,
+      domain: rapor.domain,
+      risk_level: rapor.risk_level,
+      score: typeof rapor.score === 'number' ? rapor.score : null,
+      scanner_score: typeof rapor.scanner_score === 'number' ? rapor.scanner_score : null,
+      summary_tr: rapor.summary_tr,
+      findings: rapor.findings || [],
+      recommendations: rapor.recommendations || [],
+      model: rapor.model || null
+    }]
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+/**
+ * AI raporu OLMAYAN, tamamlanmış son işler.
+ *
+ * Yalnızca zamanlanmış üretim için (api/cron/ai-reports.js). Kullanıcı
+ * isteğinden çağrılmıyor: hiçbir sahiplik filtresi yok ve gövdesi
+ * müşteriye dönmüyor, cron ucu yalnızca sayı döndürüyor.
+ *
+ * `not.in` yerine iki sorgu kullanılıyor: PostgREST'te büyük bir `not.in`
+ * listesi URL uzunluğuna takılıyor ve bu depo PostgREST sürüm desteğini
+ * tahmin etmeyi yasaklıyor (bkz. scanStats).
+ */
+async function jobsMissingAiReport(limit) {
+  const n = Math.max(1, Math.min(50, Number(limit) || 10));
+  const jobs = await request('scan_jobs'
+    + '?status=eq.completed'
+    + '&url=not.like.cloudflare-transform%3A%2F%2F*'
+    + '&select=id,url,result,created_at'
+    + '&order=created_at.desc&limit=' + String(n * 4));
+  const list = (Array.isArray(jobs) ? jobs : []).filter(function (j) {
+    return j && j.result && typeof j.result === 'object';
+  });
+  if (!list.length) return [];
+
+  const ids = list.map(function (j) { return j.id; });
+  const raporlar = await request('ai_reports'
+    + '?job_id=in.(' + ids.map(encodeURIComponent).join(',') + ')'
+    + '&select=job_id');
+  const var_ = new Set((Array.isArray(raporlar) ? raporlar : []).map(function (r) { return r.job_id; }));
+  return list.filter(function (j) { return !var_.has(j.id); }).slice(0, n);
+}
+
+/**
+ * Bir işin EN YENİ AI raporu, SAHİPLİK FİLTRESİ OLMADAN.
+ *
+ * Yalnızca zamanlanmış üretim için (api/cron/ai-reports.js,
+ * api/cron/ai-report-pdf.js) — `jobsMissingAiReport` ile aynı gerekçe: cron
+ * kimliği `_lib/cronauth.js` ile doğrulanıyor ve o uçların yanıtı müşteri
+ * verisi taşımıyor. BİR KULLANICI İSTEĞİNDEN ÇAĞRILMAZ; kullanıcı yolu
+ * `latestAiReport(userId, jobId)`.
+ */
+async function aiReportOf(jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return null;
+  const rows = await request('ai_reports'
+    + '?job_id=eq.' + encodeURIComponent(jobId)
+    + '&select=id,job_id,domain,risk_level,score,scanner_score,summary_tr,findings,recommendations,model,created_at'
+    + '&order=created_at.desc&limit=1');
+  return rows && rows[0] ? rows[0] : null;
+}
+
+/** Bir işin EN YENİ AI raporu. Sahiplik işin kendisinden geliyor. */
+async function latestAiReport(userId, jobId) {
+  const job = await getJob(userId, jobId);
+  if (!job) return null;
+  return aiReportOf(job.id);
+}
+
+/* ---------------------------------------------------------------- */
+/* Cihaz bildirim jetonları (WORKFLOW 4)                              */
+/* ---------------------------------------------------------------- */
+
+/**
+ * Jetonu kaydeder ya da tazeler.
+ *
+ * `on_conflict=token` ZORUNLU: jeton tekil ve aynı cihaz her açılışta aynı
+ * jetonu gönderiyor. Hedef verilmezse PostgREST çatışmayı birincil anahtarda
+ * arar, `id` her satırda yeni uuid olduğu için çatışma görülmez ve ikinci
+ * kayıt 23505 ile düşer (bkz. cl_scans dersi, aws/lambda-scanner/lib/supabase.js).
+ *
+ * Çatışmada `user_id` de güncelleniyor: aynı cihazda başka bir hesaba giriş
+ * yapılırsa jeton el değiştirmeli, iki hesaba birden bildirim gitmemeli.
+ */
+async function saveDeviceToken(userId, token, platform) {
+  if (!UUID_RE.test(String(userId || ''))) throw new Error('bad_user_id');
+  const t = String(token || '').trim();
+  if (t.length < 20 || t.length > 4096) throw new Error('bad_token');
+  const p = ['android', 'ios', 'web'].indexOf(String(platform)) !== -1 ? String(platform) : 'android';
+  const rows = await request('cl_device_tokens?on_conflict=token&select=id', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=representation,resolution=merge-duplicates' },
+    body: [{ user_id: userId, token: t, platform: p, last_seen_at: new Date().toISOString() }]
+  });
+  return rows && rows[0] ? rows[0].id : null;
+}
+
+/** Kullanıcının kendi cihazını düşürmesi. Sahiplik filtresi sorgunun İÇİNDE. */
+async function deleteDeviceToken(userId, token) {
+  if (!UUID_RE.test(String(userId || ''))) return 0;
+  const t = String(token || '').trim();
+  if (!t) return 0;
+  const rows = await request('cl_device_tokens'
+    + '?user_id=eq.' + encodeURIComponent(userId)
+    + '&token=eq.' + encodeURIComponent(t)
+    + '&select=id', { method: 'DELETE', headers: { 'Prefer': 'return=representation' } });
+  return Array.isArray(rows) ? rows.length : 0;
+}
+
+/**
+ * Bir işin SAHİBİNİN cihaz jetonları.
+ *
+ * YALNIZCA SUNUCU İÇİ. Dönen değer bildirim ucundan dışarı yazılmıyor:
+ * `api/cron/notify.js` yalnızca kaç bildirim gittiğini döndürüyor. Anonim
+ * taramada (`user_id` null) boş dizi dönüyor — anonim bir işin kimliğini
+ * bilen biri, kimsenin jetonunu elde edemez.
+ */
+async function deviceTokensForJob(jobId) {
+  if (!UUID_RE.test(String(jobId || ''))) return { job: null, tokens: [] };
+  const jobs = await request('scan_jobs'
+    + '?id=eq.' + encodeURIComponent(jobId)
+    + '&select=id,user_id,url,status&limit=1');
+  const job = jobs && jobs[0] ? jobs[0] : null;
+  if (!job || !job.user_id) return { job: job, tokens: [] };
+  const rows = await request('cl_device_tokens'
+    + '?user_id=eq.' + encodeURIComponent(job.user_id)
+    + '&select=token,platform&order=last_seen_at.desc&limit=20');
+  return { job: job, tokens: Array.isArray(rows) ? rows : [] };
+}
+
+/** Ölü jetonu düşürür (FCM UNREGISTERED dedi). Sahip filtresi gerekmiyor:
+    jeton tekil ve çağıran cron. */
+async function dropDeviceToken(token) {
+  const t = String(token || '').trim();
+  if (!t) return;
+  await request('cl_device_tokens?token=eq.' + encodeURIComponent(t), { method: 'DELETE' });
+}
+
+/**
+ * Bildirimi bekleyen işler: tamamlanmış, AI raporu VAR, sahibi olan işler.
+ *
+ * Yalnızca zamanlanmış çağrı için (`api/cron/scan-jobs/pending.js`);
+ * `jobsMissingAiReport` ile aynı gerekçe — yanıt müşteri verisi taşımıyor.
+ */
+async function jobsPendingNotify(limit) {
+  const n = Math.max(1, Math.min(50, Number(limit) || 10));
+  const jobs = await request('scan_jobs'
+    + '?status=eq.completed'
+    + '&user_id=not.is.null'
+    + '&url=not.like.cloudflare-transform%3A%2F%2F*'
+    + '&select=id,created_at'
+    + '&order=created_at.desc&limit=' + String(n * 4));
+  const list = Array.isArray(jobs) ? jobs : [];
+  if (!list.length) return [];
+  const ids = list.map(function (j) { return j.id; });
+  const raporlar = await request('ai_reports'
+    + '?job_id=in.(' + ids.map(encodeURIComponent).join(',') + ')'
+    + '&select=job_id');
+  const var_ = new Set((Array.isArray(raporlar) ? raporlar : []).map(function (r) { return r.job_id; }));
+  return list.filter(function (j) { return var_.has(j.id); }).slice(0, n);
+}
+
+module.exports = {
+  saveDeviceToken, deleteDeviceToken, deviceTokensForJob, dropDeviceToken,
+  jobsPendingNotify,
+
+
+  saveAiReport, latestAiReport, aiReportOf, jobsMissingAiReport,
+  isConfigured, request, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
+  sanitizeFindings, claimAnonymousScans, scanStats,
+  listJobs, jobScoreTrend, getJob, getJobWithFindings, SEVERITY_ORDER,
+  enterpriseScanTargets,
+  createPendingJob, markJobQueued, markJobFailed, getJobStatus,
+  listSubscriptions, upsertIyzicoSubscription,
+  findSubscriptionByRef, updateSubscriptionStatusByRef
 };

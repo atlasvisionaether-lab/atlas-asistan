@@ -106,6 +106,23 @@ function ustAlan(alan) {
   return ust;
 }
 
+/* Bir TXT sorgusunun başarısızlığı "kayıt YOK" demek midir?
+
+   ENODATA: isim var, o türde kayıt yok. ENOTFOUND: isim yok. İkisi de KESİN
+   bir cevap, yani "SPF yok" demek doğru olur.
+
+   ETIMEOUT / ESERVFAIL / EREFUSED / ECONNREFUSED ise cevap DEĞİL: sorgu
+   tamamlanamadı. Bunu "kayıt yok" saymak ölçüm değil tahmin olurdu ve
+   ölçtüğümüz şeyin tersini söyleyebilir — google.com'un TXT sorgusu bu
+   ortamda zaman aşımına uğruyor ve kaydı olmasına rağmen "SPF yok"
+   görünüyordu. Çağıran bu ayrımı görmek zorunda. */
+const KESIN_YOK = ['ENODATA', 'ENOTFOUND'];
+
+function sorguSonucu(r) {
+  if (r.ok) return { ok: true, kesin: true, kod: null };
+  return { ok: false, kesin: KESIN_YOK.indexOf(r.kod) !== -1, kod: r.kod || 'error' };
+}
+
 /* ============================================================
    Ayrıştırıcılar — ağ gerektirmez, doğrudan sınanabilir
    ============================================================ */
@@ -186,11 +203,23 @@ function dkimAnahtarMi(kayit) {
  * Bir host için e-posta kimlik kayıtlarını ölçer.
  * Ağ hatası TARAMAYI DÜŞÜRMEZ: sonuç `{ ok: false, sebep }` olur.
  */
-async function mailKayitlari(host) {
+/**
+ * YALNIZCA SPF ve DMARC kayıtlarını okur — DKIM seçici taraması YAPMAZ.
+ *
+ * Neden ayrı: DKIM taraması seçici listesi + joker denetimi demek, yani 9 DNS
+ * sorgusu. Panelin alan adı doğrulama ekranı DKIM göstermiyor; onun için 9
+ * sorgu atmak hem gecikme hem de başkasının yetkili sunucusuna gereksiz yük
+ * olurdu. `mailKayitlari` bu işlevi çağırıp üstüne DKIM'i ekliyor, yani iki
+ * ayrı uygulama yok.
+ *
+ * @param {string} host
+ * @param {object} [cozucuDisi] hazır çözücü (sorguları tek çözücüde toplamak için)
+ */
+async function spfDmarcKayitlari(host, cozucuDisi) {
   const alan = alanAdi(host);
   if (!alan || alan.indexOf('.') === -1) return { ok: false, sebep: 'not_a_domain' };
 
-  const cozucu = cozucuYap();
+  const cozucu = cozucuDisi || cozucuYap();
 
   /* Önce alan adının VAR olduğunu doğrula: NXDOMAIN dönen bir isimde "SPF yok"
      demek anlamsız. Herhangi bir kayıt türü yeter. */
@@ -208,6 +237,7 @@ async function mailKayitlari(host) {
   let dmarcAd = '_dmarc.' + alan;
   let dmarc = await txtOku(cozucu, dmarcAd);
   let dmarcKayitlari = dmarc.ok ? dmarc.kayitlar.filter(function (k) { return /^v=DMARC1\s*;/i.test(k); }) : [];
+  let dmarcSorgu = sorguSonucu(dmarc);
   if (dmarcKayitlari.length === 0) {
     const ust = ustAlan(alan);
     if (ust) {
@@ -216,8 +246,32 @@ async function mailKayitlari(host) {
         const bulunan = ustDmarc.kayitlar.filter(function (k) { return /^v=DMARC1\s*;/i.test(k); });
         if (bulunan.length) { dmarcKayitlari = bulunan; dmarcAd = '_dmarc.' + ust; }
       }
+      /* Kayıt bulunamadı VE üst alan sorgusu da tamamlanamadıysa "DMARC yok"
+         demek ölçüme dayanmaz: üstte kayıt olabilir. */
+      if (dmarcKayitlari.length === 0 && dmarcSorgu.kesin && !ustDmarc.ok) {
+        dmarcSorgu = sorguSonucu(ustDmarc);
+      }
     }
+  } else {
+    dmarcSorgu = { ok: true, kesin: true, kod: null };
   }
+
+  return {
+    ok: true, alan: alan, spf: spfKayitlari,
+    dmarc: dmarcKayitlari, dmarcAd: dmarcAd,
+    /* Sorgu TAMAMLANDI mı: kayıt listesinin boş olması ile sorgunun
+       düşmesi aynı şey değil. */
+    spfSorgu: sorguSonucu(apex),
+    dmarcSorgu: dmarcSorgu
+  };
+}
+
+async function mailKayitlari(host) {
+  const cozucu = cozucuYap();
+
+  const temel = await spfDmarcKayitlari(host, cozucu);
+  if (!temel.ok) return temel;
+  const alan = temel.alan;
 
   /* DKIM: joker denetimi ÖNCE. Joker varsa seçici taraması anlamsızdır ve
      sonucu kullanmıyoruz. */
@@ -233,19 +287,15 @@ async function mailKayitlari(host) {
     dkimSecici = sonuclar.filter(Boolean)[0] || null;
   }
 
-  return {
-    ok: true,
-    alan: alan,
-    spf: spfKayitlari,
-    dmarc: dmarcKayitlari,
-    dmarcAd: dmarcAd,
+  return Object.assign({}, temel, {
     dkimSecici: dkimSecici,
     dkimJoker: jokerVar
-  };
+  });
 }
 
 module.exports = {
   mailKayitlari,
+  spfDmarcKayitlari,
   spfDegerlendir,
   dmarcDegerlendir,
   dkimAnahtarMi,

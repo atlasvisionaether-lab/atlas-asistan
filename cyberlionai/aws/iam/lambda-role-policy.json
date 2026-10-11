@@ -1,0 +1,26 @@
+{
+  "Version": "2012-10-17",
+  "Comment": "cyberlionai-scan-worker gorev rolune eklenecek izinler. <HESAP> ve kova adi gercek degerlerle degistirilir. Yildiz (*) KASITLI OLARAK YOK: tarama iscisi yalnizca kendi kuyrugunu okur ve yalnizca rapor onekine yazar; genis izin, sizan bir anahtarin tum S3 ve SQS yuzeyini acmasi demek olurdu.",
+  "Statement": [
+    {
+      "Sid": "KuyruguTuket",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:ChangeMessageVisibility"
+      ],
+      "Resource": "arn:aws:sqs:eu-central-1:<HESAP>:cyberlionai-scan-queue"
+    },
+    {
+      "Sid": "RaporuYaz",
+      "Effect": "Allow",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::cyberlionai-reports/reports/*",
+      "Condition": {
+        "StringEquals": { "s3:x-amz-server-side-encryption": "AES256" }
+      }
+    }
+  ]
+}

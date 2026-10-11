@@ -1,0 +1,5 @@
+# build.sh'in api/_lib ve api/_assets'ten kopyaladıkları. Kaynak tek yerde
+# durur; buradaki kopya üretim artığıdır ve depoya girmez.
+_lib/
+_assets/
+scanner.zip

@@ -1,0 +1,60 @@
+'use strict';
+
+/**
+ * GET /api/cloudflare-zones  →  { domain } (token header veya query)
+ *
+ * Kullanıcının Cloudflare zone listesini döndürür (yalnızca name + id).
+ *
+ * Token güvenliği (bkz. _lib/cloudflare.js):
+ *   - Token loglanmaz, DB'ye yazılmaz, yanıta açık girmez.
+ *   - Token gövdeden ya da Authorization başlığından (Bearer) alınır. URL'de
+ *     (?token=) KABUL EDİLMEZ: sorgu dizgesi erişim loglarına yazılır.
+ *   - Oturum zorunlu, sunucu token'ına düşüş yok (bkz. _lib/cfaccess.js).
+ */
+
+const { cf, maskToken } = require('./_lib/cloudflare.js');
+const { requireUser, validToken } = require('./_lib/cfaccess.js');
+
+module.exports = async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    res.setHeader('Allow', 'GET, POST');
+    return res.status(405).json({ error: { code: 'method_not_allowed' } });
+  }
+
+  const user = await requireUser(req, res);
+  if (!user) return;
+
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (e) { body = null; }
+  }
+
+  const auth = req.headers && req.headers.authorization || '';
+  const headerToken = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  const bodyToken = body && typeof body.token === 'string' ? body.token : null;
+  /* Token asla loglanmaz / yazılmaz; sunucu token'ına düşüş yok. */
+  const token = bodyToken || headerToken;
+
+  if (!validToken(token)) {
+    return res.status(400).json({ error: { code: 'token_required' } });
+  }
+
+  const qDomain = (req.query && typeof req.query.domain === 'string') ? req.query.domain.trim().toLowerCase() : '';
+  const domain = (body && typeof body.domain === 'string' && body.domain) ? body.domain.trim().toLowerCase() : qDomain;
+  const path = '/zones?per_page=50' + (domain ? '&name=' + encodeURIComponent(domain) : '');
+
+  const r = await cf(path, 'GET', token);
+  if (!r.ok) {
+    const status = (r.code === 'cf_unreachable') ? 502
+      : (typeof r.code === 'string' && /cf_error_9[0-9]{3}/.test(r.code)) ? 401 : 400;
+    return res.status(status).json({ error: { code: r.code } });
+  }
+
+  const zones = ((r.data && r.data.result) || []).map(function (z) {
+    return { id: z.id, name: z.name };
+  });
+
+  return res.status(200).json({ zones: zones, tokenMasked: maskToken() });
+};

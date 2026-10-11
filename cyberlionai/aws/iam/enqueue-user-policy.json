@@ -1,0 +1,12 @@
+{
+  "Version": "2012-10-17",
+  "Comment": "Supabase Edge Function'in (enqueue-scan) kullandigi IAM kullanicisinin TEK izni. SendMessage disinda hicbir sey: bu anahtar Supabase gizli degiskenlerinde duruyor ve sizarsa yapabilecegi en kotu sey kuyruga is birakmaktir. ReceiveMessage YOK (baskasinin isini okuyamaz), DeleteMessage YOK (kuyrugu bosaltamaz).",
+  "Statement": [
+    {
+      "Sid": "YalnizcaIsBirak",
+      "Effect": "Allow",
+      "Action": "sqs:SendMessage",
+      "Resource": "arn:aws:sqs:eu-central-1:<HESAP>:cyberlionai-scan-queue"
+    }
+  ]
+}

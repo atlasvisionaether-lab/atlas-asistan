@@ -1,0 +1,67 @@
+# CyberLion yerel yığını — n8n + akışların konuştuğu servisler.
+#
+# NE YAPMIYOR: Vercel'de çalışan API'yi burada ÇALIŞTIRMIYOR. `cyberlionai/api`
+# altındaki uçlar Vercel'in serverless çalışma zamanına (req/res imzası,
+# dosya-başına-işlev yönlendirmesi) bağlı; bunları bir Express kabuğuna
+# sarmak, üretimdekinden farklı davranan ikinci bir sunucu demek olurdu ve
+# iki ayrı davranış ayıklanamaz. Yerel API için `vercel dev` kullanın.
+#
+# Supabase de burada yok: proje yönetilen (cyberlionai, eu-central-1).
+# Yerel bir Postgres, canlıdaki RLS politikalarını taşımaz ve "benim makinemde
+# çalışıyordu" demenin en kısa yolu olurdu. Supabase'i yerelde isterseniz
+# `supabase start` (CLI) ayrı bir yığın kurar.
+#
+# Kullanım:
+#   cp .env.docker.example .env.docker   &&  değerleri doldurun
+#   docker compose --env-file .env.docker up -d
+#   → n8n: http://localhost:5678
+
+services:
+  n8n:
+    image: n8nio/n8n:1.68.0
+    container_name: cyberlion-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Akışlar adresleri ve sırları $env ile okuyor. n8n'de bu ERİŞİM
+      # VARSAYILAN OLARAK KAPALI; açılmazsa düğümler boş adres okur.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+
+      # Zamanlayıcı saat dilimi. Ayarlanmazsa UTC: WORKFLOW 5'in 09:00'ı
+      # Türkiye'de 12:00 olur.
+      GENERIC_TIMEZONE: Europe/Istanbul
+      TZ: Europe/Istanbul
+
+      # Webhook'ların dışa açık adresi. Tünel (ngrok/Cloudflare) kullanıyorsanız
+      # tünel adresini yazın, yoksa Vercel buraya ulaşamaz.
+      WEBHOOK_URL: ${N8N_WEBHOOK_BASE:-http://localhost:5678}
+
+      # Temel kimlik doğrulama. BUNU AÇIK BIRAKMAYIN: korumasız bir n8n,
+      # içindeki her sırla birlikte herkese açık bir uzaktan çalıştırma ucudur.
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:?n8n kullanıcı adı gerekli}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:?n8n şifresi gerekli}
+
+      # Akışların kullandığı değişkenler (bkz. cyberlionai/n8n/README.md).
+      N8N_API_BASE: ${N8N_API_BASE:?API kökü gerekli}
+      N8N_WEBHOOK_BASE: ${N8N_WEBHOOK_BASE:-http://localhost:5678}
+      CL_CRON_SECRET: ${CL_CRON_SECRET:?Vercel CRON_SECRET ile aynı değer}
+      SUPABASE_URL: ${SUPABASE_URL:?}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:?}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_ACCESS_TOKEN: ${FCM_ACCESS_TOKEN:-}
+    volumes:
+      # Akışlar ve kimlik bilgileri burada kalıcı. Bu dizin SIR TAŞIR:
+      # yedeklerken şifreleyin, depoya koymayın.
+      - n8n_data:/home/node/.n8n
+      # İçe aktarılacak JSON'lar salt okunur bağlanıyor.
+      - ./cyberlionai/n8n:/akislar:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  n8n_data:

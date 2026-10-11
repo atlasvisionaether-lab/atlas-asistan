@@ -1,0 +1,128 @@
+{
+  "name": "CYBERLION_3_PDFReport",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cl-report-pdf",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-cl-report-pdf",
+      "name": "Webhook: report-pdf",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "cl-report-pdf",
+      "notes": "Govde: { jobId }. WORKFLOW 2 cagiriyor.\nGerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET. SUPABASE_SERVICE_KEY ARTIK BU AKISTA GEREKMIYOR (bkz. 'PDF uret ve yukle' notu)."
+    },
+    {
+      "parameters": {
+        "jsCode": "const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst g = $input.first().json.body || $input.first().json;\nconst jobId = String(g.jobId || '');\nif (!UUID.test(jobId)) throw new Error('gecersiz jobId');\nreturn [{ json: { jobId } }];"
+      },
+      "id": "c-jobId doğrul",
+      "name": "jobId doğrula",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "notes": "Ucun kendi dogrulamasi var (400 bad_job_id); bu dugum akisi erken kesiyor, tek savunma degil."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_API_BASE }}/api/cron/ai-report-pdf?jobId={{ $json.jobId }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.CL_CRON_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "h-PDF uret ve yukle",
+      "name": "PDF üret ve yükle",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "ESKI HALI /api/report'u cagiriyordu ve o uc GIRIS ISTEDIGI icin akis 401 ile dusuyordu. Dogru duzeltme /api/report'a bir makine yolu acmak DEGILDI (bu bir kimlik dogrulama atlatmasi olurdu): deponun cron kimligiyle (_lib/cronauth.js) yetkilenen ayri bir uc eklendi.\n\nUC HEM URETIYOR HEM YUKLUYOR: PDF'i (api/_lib/report-ai.js) uretip gizli `reports` kovasina ai/<jobId>.pdf olarak koyuyor. Bu yuzden SUPABASE_SERVICE_KEY artik n8n'de DURMUYOR -- servis rolu anahtari yalnizca Vercel'de.\n\nYanit musteri verisi TASIMIYOR: { ok, via, bucket, key, bytes }.\n\n404 no_ai_report = WORKFLOW 2 raporu henuz uretmemis; bu bir hata degil, sira meselesi. 'Sonuc' dugumu bu durumu ayri raporluyor, akis kirmiziya donmuyor."
+    },
+    {
+      "parameters": {
+        "jsCode": "const y = $input.first().json || {};\nconst durum = y.statusCode || 0;\nconst govde = y.body || {};\nconst jobId = $('jobId doğrula').first().json.jobId;\nif (durum === 200) {\n  return [{ json: { ok: true, jobId, bucket: govde.bucket, key: govde.key, bytes: govde.bytes } }];\n}\nconst kod = (govde.error && govde.error.code) || 'bilinmiyor';\nif (durum === 404 && kod === 'no_ai_report') {\n  return [{ json: { ok: false, jobId, beklemede: true, kod } }];\n}\nthrow new Error('PDF uretilemedi: ' + durum + ' ' + kod);"
+      },
+      "id": "c-Sonuç",
+      "name": "Sonuç",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Rapor henuz yoksa akis beklemede isaretiyle bitiyor; gercek hatalar firlatiliyor."
+    }
+  ],
+  "connections": {
+    "Webhook: report-pdf": {
+      "main": [
+        [
+          {
+            "node": "jobId doğrula",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jobId doğrula": {
+      "main": [
+        [
+          {
+            "node": "PDF üret ve yükle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF üret ve yükle": {
+      "main": [
+        [
+          {
+            "node": "Sonuç",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    {
+      "name": "cyberlion"
+    }
+  ]
+}

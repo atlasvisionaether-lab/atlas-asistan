@@ -6,14 +6,29 @@
 # tarayıcının gördüğü gibi (çerezlerle) istek atar. Üretime hiçbir geçici kod
 # eklenmez. Ürettiği her kayıt sonunda gerçek silme ucuyla temizlenir.
 #
-# Hedef sabittir: yalnızca kendi alan adımız taranır.
+# Hedefler sabittir ve YALNIZCA kendi altyapımızdır: üçüncü taraf alan adı
+# taranmaz. Üç ayrı ana bilgisayar adı kullanılıyor çünkü günlük alan adı
+# sınırı (scan-gate.js) adı olduğu gibi anahtar yapıyor; "farklı alan adı"
+# davranışı ancak böyle ölçülebilir.
+#
+# İKİ AYRI SINIR VAR (api/scan.js sırası: IP hız sınırı → alan adı kapısı → kota):
+#   - Alan adı kapısı: doğrulanmamış bir alan adına AYNI IP'den günde en çok
+#     UNVERIFIED_DAILY_MAX tarama; aşınca 429 verify_to_continue. Oturuma değil
+#     IP'ye bağlı: yeni oturum açmak sıfırlamaz. Başka alan adının sayacı ayrı.
+#   - Ücretsiz kota: oturum başına FREE_LIMIT tarama (tüm alan adları toplamı);
+#     bitince 402 quota_exceeded.
+# Günlük sayaç 24 saat yaşar: runner aynı IP'yi 24 saat içinde yeniden alırsa
+# 1. bölüm baştan 429 görür; betik bunu ayrıca söyler (yeniden çalıştırın).
 
 set -uo pipefail
 
 BASE="${BASE:-https://www.cyberlionai.com}"
-TARGET="cyberlionai.com"
-FREE_LIMIT=5
-RATE_MAX=12
+D1="cyberlionai.com"
+D2="www.cyberlionai.com"
+D3="cyberlionai.vercel.app"
+FREE_LIMIT=3            # api/_lib/limits.js FREE_SCAN_LIMIT
+DOMAIN_DAILY_MAX=3      # api/_lib/scan-gate.js UNVERIFIED_DAILY_MAX
+RATE_MAX=12             # api/_lib/limits.js RATE_MAX
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -25,13 +40,13 @@ fail() { printf '  \033[31mFAIL\033[0m  %s\n' "$1"; FAILED=1; }
 head1() { printf '\n\033[1m== %s\033[0m\n' "$1"; }
 check() { if [ "$1" = "$2" ]; then pass "$3 ($2)"; else fail "$3 — beklenen '$2', gelen '$1'"; fi; }
 
-# scan JAR -> STATUS, BODY dosyası, HDR dosyası
+# scan JAR ALAN_ADI -> STATUS, BODY dosyası, HDR dosyası
 scan() {
   BODY="$WORK/body.json"; HDR="$WORK/hdr.txt"
   STATUS=$(curl -sS -o "$BODY" -D "$HDR" -w '%{http_code}' \
     -c "$1" -b "$1" -X POST "$BASE/api/scan" \
     -H 'content-type: application/json' \
-    --data "{\"url\":\"$TARGET\"}")
+    --data "{\"url\":\"$2\"}")
 }
 
 api() { # api JAR METHOD PATH [JSON_GOVDE] -> STATUS, BODY, HDR
@@ -47,19 +62,24 @@ api() { # api JAR METHOD PATH [JSON_GOVDE] -> STATUS, BODY, HDR
 }
 
 hdr() { grep -i "^$1:" "$HDR" | tail -1 | cut -d' ' -f2- | tr -d '\r'; }
+code() { jq -r '.error.code // empty' "$BODY"; }
 
 echo "Hedef ortam: $BASE"
-echo "Taranan alan adı: $TARGET (kendi altyapımız)"
+echo "Taranan alan adları: $D1, $D2, $D3 (kendi altyapımız)"
+echo "Sınırlar: oturum başına $FREE_LIMIT ücretsiz tarama; alan adı başına günde $DOMAIN_DAILY_MAX (IP); 10 dk'da $RATE_MAX istek (IP)"
 
 ################################################################################
-head1 "1. Gerçek tarama sonucu ve ücretsiz kota (oturum A)"
+head1 "1. Gerçek tarama sonucu ve ücretsiz kota (oturum A, $D1)"
 ################################################################################
 REMAINING=""
-FIRST_SUMMARY=""
 for i in $(seq 1 $FREE_LIMIT); do
-  scan "$JAR_A"
+  scan "$JAR_A" "$D1"
   if [ "$STATUS" != "200" ]; then
     fail "tarama $i beklenmedik durum: $STATUS — $(head -c 300 "$BODY")"
+    if [ "$STATUS" = "429" ] && [ "$(code)" = "verify_to_continue" ]; then
+      printf '        Bu runner IP'"'"'si son 24 saatte %s alan adını zaten taramış (günlük sayaç).\n' "$D1"
+      printf '        Ölçüm geçersiz: iş akışını yeniden çalıştırın (yeni runner farklı IP alır).\n'
+    fi
     break
   fi
   R=$(jq -r '.quota.remaining' "$BODY")
@@ -80,24 +100,45 @@ for i in $(seq 1 $FREE_LIMIT); do
       || fail "scanId null — veritabanına yazılamadı"
   fi
 done
-check "$(echo $REMAINING)" "4 3 2 1 0" "kota sayacı 5 taramada tükendi"
+check "$(echo $REMAINING)" "2 1 0" "kota sayacı $FREE_LIMIT taramada tükendi"
+check "$(jq -r '.quota.limit' "$BODY")" "$FREE_LIMIT" "sunucunun bildirdiği ücretsiz sınır"
 
-head1 "2. Kota aşımı (6. tarama)"
-scan "$JAR_A"
-check "$STATUS" "402" "6. tarama reddedildi"
-CODE=$(jq -r '.error.code' "$BODY")
-check "$CODE" "quota_exceeded" "makine-okunur kod (arayüz kayıt modalını açar)"
+################################################################################
+head1 "2. Günlük alan adı sınırı ve kota aşımı (oturum A)"
+################################################################################
+# 4. istek, AYNI alan adı: kapı kotadan önce çalışır → 429 verify_to_continue.
+scan "$JAR_A" "$D1"
+check "$STATUS" "429" "aynı alan adına $((DOMAIN_DAILY_MAX + 1)). tarama reddedildi"
+check "$(code)" "verify_to_continue" "makine-okunur kod (arayüz doğrulama sayfasına yönlendirir)"
+check "$(jq -r '.error.limit' "$BODY")" "$DOMAIN_DAILY_MAX" "günlük alan adı sınırı"
+check "$(jq -r '.error.verifyUrl' "$BODY")" "/verify?domain=$D1" "doğrulama adresi"
+[ -n "$(hdr retry-after)" ] && pass "Retry-After döndü ($(hdr retry-after) sn)" || fail "Retry-After yok"
+
+# FARKLI alan adı: kapıdan geçer (sayaç ayrı), ama oturumun kotası bitti → 402.
+scan "$JAR_A" "$D2"
+check "$STATUS" "402" "farklı alan adı kapıdan geçti, oturum kotası bitti"
+check "$(code)" "quota_exceeded" "makine-okunur kod (arayüz kayıt modalını açar)"
 echo "  gövde: $(cat "$BODY")"
 
-head1 "3. İkinci anonim oturum (B) — kendi kotası"
+################################################################################
+head1 "3. İkinci anonim oturum (B) — kendi kotası, farklı alan adları"
+################################################################################
+# D2'nin günlük sayacı A'nın reddedilen isteğiyle 1'de. B iki kez D2, bir kez D3.
 REM_B=""
-for i in $(seq 1 $FREE_LIMIT); do
-  scan "$JAR_B"
-  [ "$STATUS" = "200" ] || { fail "B tarama $i durum $STATUS"; break; }
+for d in "$D2" "$D2" "$D3"; do
+  scan "$JAR_B" "$d"
+  [ "$STATUS" = "200" ] || { fail "B tarama ($d) durum $STATUS — $(head -c 200 "$BODY")"; break; }
   REM_B="$REM_B$(jq -r '.quota.remaining' "$BODY") "
 done
-check "$(echo $REM_B)" "4 3 2 1 0" "B oturumu bağımsız 5 hakka sahip"
-SCAN_ID_B=$(jq -r '.scanId' "$BODY")
+check "$(echo $REM_B)" "2 1 0" "B oturumu bağımsız $FREE_LIMIT hakka sahip"
+[ "$(echo $REM_B | wc -w)" = "3" ] \
+  && pass "farklı alan adları ($D2, $D3) günlük sınıra takılmadan tarandı" \
+  || fail "farklı alan adı taraması tamamlanamadı"
+
+# Günlük sınır IP'ye bağlı: yeni oturum sıfırlamaz. D2 bu IP'den 4. kez.
+scan "$JAR_B" "$D2"
+check "$STATUS" "429" "yeni oturum günlük alan adı sınırını sıfırlamıyor"
+check "$(code)" "verify_to_continue" "makine-okunur kod"
 
 ################################################################################
 head1 "4. Geçmiş — yalnızca kendi oturumunun kayıtları"
@@ -105,13 +146,13 @@ head1 "4. Geçmiş — yalnızca kendi oturumunun kayıtları"
 api "$JAR_A" GET /api/history
 check "$STATUS" "200" "A geçmişi okundu"
 COUNT_A=$(jq -r '.items|length' "$BODY")
-check "$COUNT_A" "5" "A oturumu 5 kayıt görüyor"
+check "$COUNT_A" "$FREE_LIMIT" "A oturumu $FREE_LIMIT kayıt görüyor (reddedilenler kayıt üretmez)"
 jq -r '.items[] | "    \(.host)  \(.score)/100  gecti=\(.checks_passed) kaldi=\(.checks_failed) olculemedi=\(.checks_skipped)  \(.scanned_at)"' "$BODY"
 jq -r '.items[].id' "$BODY" | sort > "$WORK/ids_a.txt"
 
 api "$JAR_B" GET /api/history
 COUNT_B=$(jq -r '.items|length' "$BODY")
-check "$COUNT_B" "5" "B oturumu 5 kayıt görüyor"
+check "$COUNT_B" "$FREE_LIMIT" "B oturumu $FREE_LIMIT kayıt görüyor"
 jq -r '.items[].id' "$BODY" | sort > "$WORK/ids_b.txt"
 
 OVERLAP=$(comm -12 "$WORK/ids_a.txt" "$WORK/ids_b.txt" | wc -l | tr -d ' ')
@@ -179,22 +220,27 @@ check "$NSTATUS" "404" "çerezsiz istek de 404 alıyor"
 ################################################################################
 head1 "7. IP hız sınırı"
 ################################################################################
-# Buraya kadar aynı IP'den 11 /api/scan isteği yapıldı (A:6, B:5).
-scan "$JAR_C"
-echo "  12. istek durumu: $STATUS  (sınır: $RATE_MAX)"
-scan "$JAR_C"
+# Buraya kadar bu IP'den 9 /api/scan isteği yapıldı (A:5, B:4). Hız sınırı
+# kapıdan ve kotadan ÖNCE sayar; reddedilen istekler de sayılır.
+# C: D3 iki kez (sayaç 2, 3) → 10. ve 11. istek, 12. istek D1 (kapı reddi).
+for d in "$D3" "$D3" "$D1"; do
+  scan "$JAR_C" "$d"
+  echo "  istek ($d): $STATUS $(code)"
+  [ "$(code)" = "rate_limited" ] && fail "hız sınırı $RATE_MAX istekten ÖNCE devreye girdi"
+done
+scan "$JAR_C" "$D3"
 check "$STATUS" "429" "13. istek hız sınırına takıldı"
 RETRY=$(hdr retry-after)
 echo "  Retry-After: $RETRY"
 [ -n "$RETRY" ] && [ "$RETRY" -gt 0 ] 2>/dev/null \
   && pass "Retry-After saniye cinsinden döndü" || fail "Retry-After yok/geçersiz"
-check "$(jq -r '.error.code' "$BODY")" "rate_limited" "makine-okunur kod"
+check "$(code)" "rate_limited" "makine-okunur kod"
 
 # Sahte X-Forwarded-For ile atlatma denemesi
 SSTATUS=$(curl -sS -o "$BODY" -w '%{http_code}' -c "$JAR_C" -b "$JAR_C" \
   -X POST "$BASE/api/scan" -H 'content-type: application/json' \
   -H 'X-Forwarded-For: 1.2.3.4' -H 'X-Real-IP: 1.2.3.4' \
-  --data "{\"url\":\"$TARGET\"}")
+  --data "{\"url\":\"$D3\"}")
 check "$SSTATUS" "429" "sahte X-Forwarded-For / X-Real-IP sınırı atlatamadı"
 
 

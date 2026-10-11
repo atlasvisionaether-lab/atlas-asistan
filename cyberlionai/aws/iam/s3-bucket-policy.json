@@ -1,0 +1,27 @@
+{
+  "Version": "2012-10-17",
+  "Comment": "cyberlionai-reports kovasina eklenecek politika. Raporlar bir guvenlik taramasinin ciktisi: hangi basligin eksik oldugunu ve bulgu kanitlarini tasiyorlar. Herkese acik bir kovada durmalari, musterinin zafiyet listesini internete koymak olurdu. Bu politika sifrelenmemis ve TLS'siz her istegi REDDEDER; okuma izni hic verilmez (indirme imzali URL ile yapilir).",
+  "Statement": [
+    {
+      "Sid": "TLSsizReddet",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::cyberlionai-reports",
+        "arn:aws:s3:::cyberlionai-reports/*"
+      ],
+      "Condition": { "Bool": { "aws:SecureTransport": "false" } }
+    },
+    {
+      "Sid": "SifrelenmemisYazmayiReddet",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::cyberlionai-reports/*",
+      "Condition": {
+        "StringNotEquals": { "s3:x-amz-server-side-encryption": "AES256" }
+      }
+    }
+  ]
+}

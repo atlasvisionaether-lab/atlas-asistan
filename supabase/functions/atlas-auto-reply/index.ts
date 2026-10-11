@@ -35,6 +35,33 @@ interface AssistantSettingsRow {
   fallback_message: string;
   model: string;
   temperature: number;
+  kb_enabled?: boolean;
+}
+
+interface KbRow {
+  heading: string | null;
+  content: string;
+}
+
+/* Bilgi bankası istemi: en çok bu kadar karakter (≈1000 token). Parçalar
+   sıralı geliyor (en ilgili önce); sığmayan sonuncular atlanır. */
+const KB_MAX_CHARS = 4000;
+
+/** Onaylanmış salon belgelerinden ilgili parçalar → sistem istemi eki (yoksa ""). */
+function knowledgeBlock(rows: KbRow[]): string {
+  if (!rows.length) return "";
+  let used = 0;
+  const parts: string[] = [];
+  rows.forEach((r, i) => {
+    const text = (r.heading ? r.heading + "\n" : "") + r.content;
+    if (used + text.length > KB_MAX_CHARS) return;
+    used += text.length;
+    parts.push(`[${i + 1}] ${text}`);
+  });
+  if (!parts.length) return "";
+  return "Salonun kendi belgelerinden ilgili bilgiler (fiyat, politika ve hizmet ayrıntısı için " +
+    "YALNIZCA bunlara ve hizmet listesine dayan; burada olmayan bir fiyatı veya kuralı uydurma, " +
+    "emin değilsen ekibimizin döneceğini söyle):\n" + parts.join("\n\n");
 }
 
 const DEFAULT_SYSTEM_PROMPT =
@@ -56,6 +83,7 @@ async function generateReply(
   messages: Array<{ role: string; content: string }>,
   services: ServiceRow[],
   settings: AssistantSettingsRow | null,
+  knowledge: KbRow[] = [],
 ): Promise<string | null> {
   const systemPrompt = settings?.system_prompt || DEFAULT_SYSTEM_PROMPT;
   const fallback = settings?.fallback_message ||
@@ -66,6 +94,7 @@ async function generateReply(
     ? "Hizmetler ve fiyatlar:\n" +
       services.map((s) => `- ${s.name}: ${s.price ?? "fiyat bilgisi yok"}`).join("\n")
     : "Hizmet listesi henüz boş.";
+  const systemContent = [systemPrompt, serviceList, knowledgeBlock(knowledge)].filter(Boolean).join("\n\n");
 
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const openaiKey = Deno.env.get("OPENAI_API_KEY");
@@ -76,7 +105,7 @@ async function generateReply(
     model,
     temperature,
     messages: [
-      { role: "system", content: systemPrompt + "\n\n" + serviceList },
+      { role: "system", content: systemContent },
       ...messages,
     ],
   };
@@ -107,7 +136,7 @@ async function generateReply(
           model: "gpt-4o-mini",
           temperature,
           messages: [
-            { role: "system", content: systemPrompt + "\n\n" + serviceList },
+            { role: "system", content: systemContent },
             ...messages,
           ],
         }),
@@ -268,15 +297,31 @@ Deno.serve(async (req) => {
   }
 
   // Org'a özel asistan ayarları (0009); yoksa default'lar.
+  // "*": kb_enabled (0014) göç uygulanmadan önce de okunabilsin; sütun yoksa
+  // undefined gelir ve bilgi bankası kapalı sayılır — seçim hata vermez.
   const { data: settingsRows } = await db
     .from("assistant_settings")
-    .select("system_prompt, fallback_message, model, temperature")
+    .select("*")
     .eq("organization_id", orgId)
     .limit(1);
   const settings = (settingsRows && settingsRows[0]) || null;
 
+  // c2) Bilgi bankası (0014): yalnızca salon açtıysa ve mesaj yüksek riskli
+  // değilse. Yalnızca ONAYLANMIŞ belgelerin parçaları (kb_search). Arama
+  // düşerse cevap bilgi bankası olmadan üretilir; müşteri cevapsız kalmaz.
+  let knowledge: KbRow[] = [];
+  if (!highRisk && settings?.kb_enabled === true && record.content) {
+    const { data: kb, error: kbErr } = await db.rpc("kb_search", {
+      p_org: orgId,
+      p_query: String(record.content).slice(0, 500),
+      p_limit: 4,
+    });
+    if (kbErr) console.warn("kb_search başarısız:", kbErr.message);
+    else knowledge = (kb || []) as KbRow[];
+  }
+
   // d) Cevap üretimi (yüksek riskte üretilmez, devralma notu yazılır).
-  const reply = highRisk ? HEALTHY_HANDOVER : await generateReply(context, services || [], settings);
+  const reply = highRisk ? HEALTHY_HANDOVER : await generateReply(context, services || [], settings, knowledge);
   if (!reply) {
     return jsonResponse({ skipped: true, reason: "empty reply" });
   }

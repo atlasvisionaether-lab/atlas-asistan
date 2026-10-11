@@ -1,0 +1,138 @@
+{
+  "name": "CYBERLION_5_DailyCron",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron",
+      "name": "Her gün 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -220,
+        0
+      ],
+      "notes": "Saat dilimi n8n'in GENEL_TIMEZONE ayarindan geliyor; docker-compose'da GENERIC_TIMEZONE=Europe/Istanbul. Ayarlanmazsa UTC'de calisir ve 09:00 Turkiye'de 12:00 olur.\nTUM HTTP DUGUMLERI ETKIN. Adres ve sirlar $env ile okunuyor; dugum govdesinde sir YOK. Gerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, N8N_WEBHOOK_BASE (bkz. docker-compose.yml)."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.N8N_API_BASE }}/api/cron/weekly-scan",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.CL_CRON_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "h-Haftalık tar",
+      "name": "Haftalık taramayı tetikle",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "notes": "URL LISTESINI N8N TUTMUYOR. Hedefler veritabaninda ve /api/cron/weekly-scan kota, karaliste ve 'bir kez talep et' mantigini zaten uyguluyor (api/_lib/monitor.js). Burada ikinci bir liste tutmak, iki farkli hedef kumesi demekti."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.N8N_API_BASE }}/api/cron/ai-reports",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.CL_CRON_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "h-Eksik AI rap",
+      "name": "Eksik AI raporlarını üret",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Bir kosuda en cok 5 rapor; kalanlar yarin."
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nreturn [{ json: { ok: r.ok === true, generated: r.generated || 0, errors: r.errors || {} } }];"
+      },
+      "id": "c-Özet",
+      "name": "Özet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": ""
+    }
+  ],
+  "connections": {
+    "Her gün 09:00": {
+      "main": [
+        [
+          {
+            "node": "Haftalık taramayı tetikle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Haftalık taramayı tetikle": {
+      "main": [
+        [
+          {
+            "node": "Eksik AI raporlarını üret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Eksik AI raporlarını üret": {
+      "main": [
+        [
+          {
+            "node": "Özet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    {
+      "name": "cyberlion"
+    }
+  ]
+}

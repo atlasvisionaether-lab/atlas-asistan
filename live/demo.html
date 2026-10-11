@@ -1,0 +1,695 @@
+<!-- KAYNAK: atlasasistan.com/checkout (demo sayfasi), 2026-09-29 indirildi. Bu dosya canli varyantin versiyon kontrolune alinmis kopyasidir; dogrudan editlenmez. -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canlı Demo — Atlas Asistan</title>
+<meta name="description" content="Atlas Asistan'ı gerçek bir güzellik kliniği senaryosunda deneyin.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><rect x='4' y='7' width='16' height='12' rx='3'/><circle cx='9' cy='13' r='1.5' fill='white'/><circle cx='15' cy='13' r='1.5' fill='white'/><rect x='11' y='3' width='2' height='4' rx='1'/></svg>">
+<style>
+/* Atlas Asistan — atlasasistan.com */
+:root{
+  --bg: hsl(240 20% 4%);
+  --fg: hsl(214 32% 91%);
+  --card: hsl(240 15% 8%);
+  --secondary: hsl(240 10% 14%);
+  --muted: hsl(215 20% 55%);
+  --border: hsl(240 10% 16%);
+  --blue: #3b82f6;
+  --blue-btn: #2563eb;
+  --blue-btn-h: #1d4ed8;
+  --emerald: #34d399;
+  --emerald-btn: #059669;
+  --emerald-btn-h: #047857;
+  --orange: #fb923c;
+  --pink: #f472b6;
+  --yellow: #facc15;
+  --radius: .75rem;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img,svg{display:block}
+button{font:inherit;cursor:pointer}
+input,textarea{font:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+
+.container{max-width:80rem;margin:0 auto;padding:0 1rem}
+.narrow{max-width:48rem}
+.mid{max-width:56rem}
+
+/* ---- Nav ---- */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;background:hsl(240 20% 4% / .8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:4rem}
+.brand{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:1.05rem}
+.brand .bot{width:1.75rem;height:1.75rem;color:var(--blue)}
+.badge{display:inline-block;font-size:.7rem;padding:.1rem .5rem;border-radius:999px;border:1px solid hsl(217 91% 60% / .3);color:#60a5fa}
+.nav-links{display:none;align-items:center;gap:1.4rem}
+.nav-links a.plain{font-size:.875rem;color:var(--muted);transition:color .2s}
+.nav-links a.plain:hover{color:var(--fg)}
+.hamb{display:inline-flex;background:none;border:1px solid var(--border);border-radius:.5rem;padding:.4rem .55rem;color:var(--fg)}
+@media(min-width:768px){.nav-links{display:flex}.hamb{display:none}}
+.mobile-menu{display:none;flex-direction:column;gap:.75rem;padding:1rem;border-top:1px solid var(--border);background:var(--bg)}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:.95rem;color:var(--muted)}
+
+/* ---- Buttons ---- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-size:.875rem;font-weight:500;border-radius:.6rem;padding:.55rem 1rem;border:1px solid transparent;transition:background .2s,border-color .2s,color .2s}
+.btn.lg{padding:.75rem 1.4rem;font-size:.95rem}
+.btn.blue{background:var(--blue-btn);color:#fff}
+.btn.blue:hover{background:var(--blue-btn-h)}
+.btn.green{background:var(--emerald-btn);color:#fff}
+.btn.green:hover{background:var(--emerald-btn-h)}
+.btn.outline-blue{border-color:hsl(217 91% 60% / .5);color:#60a5fa;background:transparent}
+.btn.outline-blue:hover{background:hsl(217 91% 60% / .1)}
+.btn.outline-green{border-color:hsl(160 84% 39% / .5);color:var(--emerald);background:transparent}
+.btn.outline-green:hover{background:hsl(160 84% 39% / .1)}
+.btn.gray{background:var(--secondary);color:var(--fg)}
+.btn.gray:hover{background:hsl(240 10% 18%)}
+.btn.block{width:100%}
+
+/* ---- Sections ---- */
+.section{padding:5rem 1rem}
+.section.alt{background:hsl(240 10% 14% / .3)}
+.sec-head{text-align:center;margin-bottom:3rem}
+.sec-head h2{font-size:clamp(1.75rem,4vw,2.25rem);font-weight:700;margin-bottom:1rem}
+.sec-head p{color:var(--muted);max-width:42rem;margin:0 auto}
+.eyebrow{display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.03em;padding:.25rem .75rem;border-radius:999px;margin-bottom:1rem;background:hsl(25 95% 53% / .1);color:var(--orange);border:1px solid hsl(25 95% 53% / .2)}
+
+/* ---- Hero ---- */
+.hero{padding:8rem 1rem 5rem;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60rem 30rem at 20% 0%,hsl(217 91% 60% / .08),transparent 60%),radial-gradient(50rem 26rem at 90% 20%,hsl(160 84% 39% / .06),transparent 60%);pointer-events:none}
+.hero-grid{position:relative;display:grid;gap:3rem;align-items:center}
+@media(min-width:1024px){.hero-grid{grid-template-columns:1.1fr .9fr}}
+.hero h1{font-size:clamp(2.25rem,5.5vw,3.6rem);font-weight:700;line-height:1.15}
+.text-gradient{background:linear-gradient(to right,#60a5fa,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{margin-top:1.5rem;font-size:1.1rem;color:var(--muted);max-width:36rem}
+.hero-ctas{display:flex;flex-direction:column;gap:1rem;margin-top:2rem}
+@media(min-width:640px){.hero-ctas{flex-direction:row}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2.5rem;max-width:26rem}
+.stat{text-align:center}
+.stat b{display:block;font-size:1.5rem;font-weight:700}
+.stat span{font-size:.75rem;color:var(--muted)}
+.c-blue{color:#60a5fa}.c-green{color:var(--emerald)}.c-orange{color:var(--orange)}
+
+/* Chat mockup */
+.glass-card{border-radius:var(--radius);border:1px solid #ffffff1a;background:#ffffff0d;backdrop-filter:blur(4px);padding:1.5rem;max-width:24rem;margin:0 auto;width:100%}
+.chat-head{display:flex;align-items:center;gap:.75rem;padding-bottom:.85rem;margin-bottom:1rem;border-bottom:1px solid #ffffff1a}
+.chat-avatar{width:2.5rem;height:2.5rem;border-radius:999px;background:var(--blue-btn);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.chat-head .who b{display:block;font-size:.9rem}
+.chat-head .who span{font-size:.75rem;color:var(--emerald)}
+.chat-head .tag{margin-left:auto;font-size:.7rem;padding:.15rem .5rem;border-radius:999px;background:hsl(160 84% 39% / .2);color:var(--emerald)}
+.bubble{max-width:85%;padding:.6rem .8rem;border-radius:.9rem;font-size:.83rem;margin-bottom:.6rem;white-space:pre-line}
+.bubble.in{background:var(--secondary);border-bottom-left-radius:.25rem}
+.bubble.out{background:var(--blue-btn);color:#fff;margin-left:auto;border-bottom-right-radius:.25rem}
+.bubble time{display:block;font-size:.65rem;opacity:.6;margin-top:.25rem;text-align:right}
+
+/* ---- Cards ---- */
+.grid-3{display:grid;gap:1.5rem}
+@media(min-width:768px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+.grid-2{display:grid;gap:2rem}
+@media(min-width:768px){.grid-2{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;transition:border-color .2s}
+.card:hover.hov-blue{border-color:hsl(217 91% 60% / .3)}
+.card:hover.hov-green{border-color:hsl(160 84% 39% / .3)}
+.card:hover.hov-orange{border-color:hsl(25 95% 53% / .3)}
+.icon-box{width:3rem;height:3rem;border-radius:.6rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem}
+.icon-box.blue{background:hsl(217 91% 60% / .1);color:#60a5fa}
+.icon-box.green{background:hsl(160 84% 39% / .1);color:var(--emerald)}
+.icon-box.orange{background:hsl(25 95% 53% / .1);color:var(--orange)}
+.metric{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+.card h3{font-size:1.05rem;font-weight:600;margin-bottom:.5rem}
+.card p{font-size:.875rem;color:var(--muted)}
+
+/* ---- Pricing ---- */
+.plans{display:grid;gap:2rem;max-width:56rem;margin:3rem auto 0}
+@media(min-width:768px){.plans{grid-template-columns:repeat(2,1fr)}}
+.plan{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:1.5rem}
+.plan.featured{border-color:hsl(217 91% 60% / .3)}
+.ribbon{position:absolute;top:0;right:0;background:var(--blue-btn);color:#fff;font-size:.7rem;font-weight:500;padding:.25rem .75rem;border-bottom-left-radius:.6rem}
+.pop{position:absolute;top:-0.8rem;left:50%;transform:translateX(-50%);background:var(--blue-btn);color:#fff;font-size:.7rem;font-weight:600;padding:.25rem .8rem;border-radius:999px}
+.plan h3{font-size:1.2rem;font-weight:700}
+.plan .sub{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+.price b{font-size:1.9rem;font-weight:700}
+.price .per{color:var(--muted);font-size:.95rem}
+.price .note{display:block;font-size:.78rem;color:#60a5fa;margin-top:.15rem}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:.7rem;flex:1}
+.plan li{display:flex;align-items:center;gap:.5rem;font-size:.875rem}
+.check{color:var(--emerald);flex-shrink:0}
+.plan-cta{display:flex;gap:.5rem}
+.plan-cta .btn{flex:1}
+
+/* ---- Testimonials ---- */
+.t-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+.starrow{display:flex;gap:.2rem;color:var(--yellow)}
+.t-card blockquote{font-size:.875rem;color:var(--muted);font-style:italic}
+.t-card .who{padding-top:.75rem;border-top:1px solid var(--border)}
+.t-card .who b{font-size:.875rem;display:block}
+.t-card .who span{font-size:.75rem;color:var(--muted)}
+
+/* ---- FAQ ---- */
+.faq{display:flex;flex-direction:column;gap:.75rem;max-width:48rem;margin:0 auto}
+.faq details{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:0 1rem}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 0;font-size:.9rem;font-weight:500}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:1.2rem;color:var(--muted);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq .a{padding:0 0 1rem;font-size:.875rem;color:var(--muted)}
+
+/* ---- Contact ---- */
+.contact-grid{display:grid;gap:3rem;align-items:center}
+@media(min-width:768px){.contact-grid{grid-template-columns:1fr 1fr}}
+.contact-info h2{font-size:clamp(1.75rem,4vw,2.25rem);font-weight:700;margin-bottom:1.25rem}
+.contact-info>p{color:var(--muted);margin-bottom:1.5rem}
+.contact-line{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;color:var(--fg);transition:color .2s}
+.contact-line:hover{color:#60a5fa}
+.contact-line svg{color:#60a5fa;flex-shrink:0}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.85rem;font-weight:500;margin-bottom:.35rem}
+.field input{width:100%;background:var(--secondary);border:1px solid var(--border);border-radius:.5rem;padding:.6rem .8rem;color:var(--fg)}
+.field input::placeholder{color:hsl(215 20% 45%)}
+.field input:focus{outline:none;border-color:var(--blue)}
+
+/* ---- Footer ---- */
+footer{padding:3rem 1rem;border-top:1px solid var(--border)}
+.foot-grid{display:grid;gap:2rem;margin-bottom:2rem}
+@media(min-width:768px){.foot-grid{grid-template-columns:repeat(4,1fr)}}
+.foot-brand p{font-size:.875rem;color:var(--muted);margin:1rem 0}
+.socials{display:flex;gap:.75rem}
+.soc{width:2rem;height:2rem;border-radius:999px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.soc.wa{background:hsl(160 84% 39% / .1);color:var(--emerald)}
+.soc.wa:hover{background:hsl(160 84% 39% / .2)}
+.soc.ig{background:hsl(330 81% 60% / .1);color:var(--pink)}
+.soc.ig:hover{background:hsl(330 81% 60% / .2)}
+footer h4{font-size:.875rem;font-weight:600;margin-bottom:.9rem}
+footer ul{list-style:none;display:flex;flex-direction:column;gap:.55rem}
+footer ul a{font-size:.875rem;color:var(--muted);transition:color .2s}
+footer ul a:hover{color:var(--fg)}
+.foot-bottom{border-top:1px solid var(--border);padding-top:1.5rem;text-align:center;font-size:.8rem;color:var(--muted)}
+
+/* ---- Legal pages ---- */
+.legal{padding:7rem 1rem 5rem;max-width:48rem;margin:0 auto}
+.legal h1{font-size:2rem;font-weight:700;margin-bottom:.5rem}
+.legal .updated{font-size:.85rem;color:var(--muted);margin-bottom:2.5rem}
+.legal h2{font-size:1.2rem;font-weight:600;margin:2rem 0 .75rem}
+.legal p,.legal li{font-size:.93rem;color:var(--muted);margin-bottom:.9rem}
+.legal ul{padding-left:1.4rem;margin-bottom:1rem}
+.legal a{color:#60a5fa}
+.legal a:hover{text-decoration:underline}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--muted);margin-bottom:2rem;transition:color .2s}
+.back-link:hover{color:var(--fg)}
+
+/* ---- Demo page ---- */
+.demo-wrap{max-width:44rem;margin:0 auto;padding:5.5rem 1rem 2rem;display:flex;flex-direction:column;min-height:100dvh}
+.demo-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;flex:1;overflow:hidden}
+.demo-note{background:hsl(217 91% 60% / .08);border-bottom:1px solid hsl(217 91% 60% / .2);color:#93c5fd;font-size:.8rem;padding:.6rem 1rem;text-align:center}
+.demo-msgs{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column}
+.chip-row{display:flex;flex-wrap:wrap;gap:.5rem;padding:.75rem 1rem;border-top:1px solid var(--border)}
+.chip{background:var(--secondary);border:1px solid var(--border);color:var(--fg);font-size:.78rem;padding:.35rem .8rem;border-radius:999px;transition:border-color .2s}
+.chip:hover{border-color:var(--blue)}
+.demo-input{display:flex;gap:.6rem;padding:.85rem 1rem;border-top:1px solid var(--border)}
+.demo-input input{flex:1;background:var(--secondary);border:1px solid var(--border);border-radius:.6rem;padding:.6rem .9rem;color:var(--fg)}
+.demo-input input:focus{outline:none;border-color:var(--blue)}
+.typing{display:inline-flex;gap:.25rem;padding:.7rem .9rem}
+.typing i{width:.4rem;height:.4rem;border-radius:999px;background:var(--muted);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}
+.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* ---- Checkout ---- */
+.co-wrap{max-width:56rem;margin:0 auto;padding:6.5rem 1rem 4rem}
+.co-grid{display:grid;gap:2.5rem}
+@media(min-width:768px){.co-grid{grid-template-columns:1fr 1fr}}
+.notice{display:flex;gap:.75rem;align-items:flex-start;background:hsl(160 84% 39% / .05);border:1px solid hsl(160 84% 39% / .2);border-radius:.6rem;padding:1rem;margin-top:1.25rem}
+.notice svg{color:var(--emerald);flex-shrink:0;margin-top:.1rem}
+.notice b{display:block;font-size:.875rem}
+.notice span{font-size:.78rem;color:var(--muted)}
+.tagline{font-size:.7rem;padding:.15rem .6rem;border-radius:999px;background:hsl(217 91% 60% / .1);color:#60a5fa;border:1px solid hsl(217 91% 60% / .2)}
+
+
+/* --- Randevu slot seçici --- */
+.slots-wrap{background:hsl(240 10% 14% / .6);border:1px solid var(--border);border-radius:.75rem;padding:.85rem;margin-bottom:.6rem;max-width:100%}
+.slots-title{font-size:.82rem;font-weight:600;margin-bottom:.15rem}
+.slots-sub{font-size:.72rem;color:var(--muted);margin-bottom:.7rem}
+.day-block{margin-bottom:.7rem}
+.day-block:last-child{margin-bottom:0}
+.day-name{font-size:.76rem;font-weight:600;color:var(--fg);margin-bottom:.35rem;display:flex;align-items:center;gap:.4rem}
+.day-name .closed{font-size:.68rem;font-weight:400;color:var(--muted)}
+.slot-row{display:flex;flex-wrap:wrap;gap:.35rem}
+.slot{font-size:.74rem;padding:.28rem .6rem;border-radius:.4rem;border:1px solid;font-variant-numeric:tabular-nums;line-height:1.4}
+.slot.free{background:hsl(160 84% 39% / .12);border-color:hsl(160 84% 39% / .45);color:#34d399;cursor:pointer;transition:background .15s,transform .1s}
+.slot.free:hover{background:hsl(160 84% 39% / .25);transform:translateY(-1px)}
+.slot.busy{background:hsl(0 72% 51% / .1);border-color:hsl(0 72% 51% / .35);color:#f87171;text-decoration:line-through;cursor:not-allowed;opacity:.75}
+.slot.past{background:hsl(240 10% 20% / .5);border-color:var(--border);color:hsl(215 15% 40%);cursor:not-allowed;text-decoration:line-through}
+.slots-legend{display:flex;gap:.9rem;margin-top:.7rem;padding-top:.6rem;border-top:1px solid var(--border);font-size:.68rem;color:var(--muted);flex-wrap:wrap}
+.slots-legend span{display:inline-flex;align-items:center;gap:.3rem}
+.dot-l{width:.55rem;height:.55rem;border-radius:.15rem;display:inline-block}
+.dot-l.g{background:hsl(160 84% 39% / .6)}
+.dot-l.r{background:hsl(0 72% 51% / .5)}
+.dot-l.x{background:hsl(240 10% 30%)}
+.dot-l.k{background:hsl(38 92% 50% / .5)}
+.kapali-rozet{font-size:.68rem;font-weight:600;padding:.1rem .45rem;border-radius:.3rem;background:hsl(38 92% 50% / .12);border:1px solid hsl(38 92% 50% / .35);color:#fbbf24}
+.kapali-not{font-size:.72rem;color:var(--muted);padding:.15rem 0 .1rem}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/" class="brand">
+        <svg class="bot" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
+        ATLAS ASİSTAN <span class="badge">AI Demo</span>
+      </a>
+      <div class="nav-links">
+        <a class="plain" href="/">← Ana Sayfa</a>
+        <a href="https://wa.me/905344682769?text=Merhaba%2C%20Atlas%20Asistan%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum" target="_blank" rel="noopener noreferrer" class="btn green">WhatsApp'tan Yazın</a>
+      </div>
+      <a href="/" class="hamb" style="text-decoration:none">←</a>
+    </div>
+  </div>
+</nav>
+
+<div class="demo-wrap">
+  <div class="demo-panel">
+    <div class="demo-note">🤖 Bu bir demo sohbettir. Gerçek bir güzellik kliniği senaryosunu deneyimleyin. Fiyat, randevu, kampanya sorabilirsiniz.</div>
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.85rem 1.25rem;border-bottom:1px solid var(--border)">
+      <div class="chat-avatar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
+      </div>
+      <div><b style="font-size:.9rem">Atlas Asistan Demo</b><div style="font-size:.75rem;color:var(--emerald)">● Çevrimiçi — Güzellik Kliniği Senaryosu</div></div>
+    </div>
+    <div class="demo-msgs" id="msgs"></div>
+    <div class="chip-row">
+      <button class="chip" data-q="Fiyat listesi">Fiyat listesi</button>
+      <button class="chip" data-q="Randevu al">Randevu al</button>
+      <button class="chip" data-q="Kampanyalar">Kampanyalar</button>
+      <button class="chip" data-q="Lazer epilasyon">Lazer epilasyon</button>
+      <button class="chip" data-q="Çalışma saatleri">Çalışma saatleri</button>
+    </div>
+    <form class="demo-input" id="demoForm">
+      <input type="text" id="demoText" placeholder="Mesajınızı yazın..." autocomplete="off">
+      <button type="submit" class="btn blue" aria-label="Gönder">➤</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  var msgs  = document.getElementById('msgs');
+  var form  = document.getElementById('demoForm');
+  var input = document.getElementById('demoText');
+
+  /* ============ TAKVİM ============ */
+  var GUNLER = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+  var AYLAR  = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+  // Deterministik sözde-rastgele: aynı gün/saat hep aynı durumu versin
+  function hash(s){ var h=0; for(var i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
+
+  /* --- Kliniğin kapalı günleri ---
+     HAFTALIK_IZIN: 0=Pazar, 1=Pazartesi ... 6=Cumartesi
+     OZEL_KAPALI  : 'AA-GG' formatında tarih → sebep (resmi tatil, yıllık izin vb.) */
+  var HAFTALIK_IZIN = [0];                    // Pazar haftalık izin
+  var OZEL_KAPALI = {
+    '01-01':'Yılbaşı',
+    '04-23':'23 Nisan Ulusal Egemenlik ve Çocuk Bayramı',
+    '05-01':'1 Mayıs Emek ve Dayanışma Günü',
+    '05-19':'19 Mayıs Atatürk\'ü Anma, Gençlik ve Spor Bayramı',
+    '07-15':'15 Temmuz Demokrasi ve Millî Birlik Günü',
+    '08-30':'30 Ağustos Zafer Bayramı',
+    '10-29':'29 Ekim Cumhuriyet Bayramı'
+  };
+  function tatilSebebi(d){
+    var k = String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    if(OZEL_KAPALI[k]) return OZEL_KAPALI[k];
+    if(HAFTALIK_IZIN.indexOf(d.getDay())>=0) return 'Haftalık izin günümüz';
+    return null;
+  }
+
+  function buildCalendar(){
+    var days=[], today=new Date();
+    for(var i=0;i<8;i++){
+      var d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+i);
+      var wd=d.getDay();
+      var kapali = tatilSebebi(d);
+      var open = [9,20];
+      var slots=[];
+      if(!kapali){
+        for(var h=open[0]; h<open[1]; h++){
+          var t=String(h).padStart(2,'0')+':00';
+          var key=d.toDateString()+t;
+          var busy = hash(key)%10 < 4;
+          var past = (i===0 && h <= today.getHours());
+          slots.push({t:t, hour:h, busy:busy, past:past});
+        }
+      }
+      days.push({
+        idx:i, date:d, wd:wd,
+        name:GUNLER[wd],
+        kapali:kapali,
+        label: (i===0 ? 'Bugün · ' : (i===1 ? 'Yarın · ' : '')) + GUNLER[wd] + ', ' + d.getDate() + ' ' + AYLAR[d.getMonth()] + ' ' + d.getFullYear(),
+        open:open, slots:slots
+      });
+    }
+    return days;
+  }
+  var CAL = buildCalendar();
+
+  function findDay(name){
+    var n=name.toLocaleLowerCase('tr');
+    if(n==='bugün') return CAL[0];
+    if(n==='yarın') return CAL[1];
+    // Aynı isimde birden fazla gün olabilir (bugün Cumartesi + haftaya Cumartesi).
+    // Önce müsait saati olanı seç; yoksa ilk eşleşeni döndür.
+    var eslesen=[];
+    for(var i=0;i<CAL.length;i++){
+      if(CAL[i].name.toLocaleLowerCase('tr')===n) eslesen.push(CAL[i]);
+    }
+    if(eslesen.length===0) return null;
+    for(var j=0;j<eslesen.length;j++){
+      if(!eslesen[j].kapali && freeSlots(eslesen[j]).length>0) return eslesen[j];
+    }
+    return eslesen[0];
+  }
+  function slotOf(day,t){
+    for(var i=0;i<day.slots.length;i++){ if(day.slots[i].t===t) return day.slots[i]; }
+    return null;
+  }
+  function freeSlots(day){ return day.slots.filter(function(s){ return !s.busy && !s.past; }); }
+
+  /* ============ DOĞAL DİL AYRIŞTIRMA ============ */
+  var SAYILAR = {
+    'bir':1,'iki':2,'üç':3,'uc':3,'dört':4,'dort':4,'beş':5,'bes':5,'altı':6,'alti':6,
+    'yedi':7,'sekiz':8,'dokuz':9,'on':10,'onbir':11,'oniki':12,'onüç':13,'onuc':13,
+    'ondört':14,'ondort':14,'onbeş':15,'onbes':15,'onaltı':16,'onalti':16,
+    'onyedi':17,'onsekiz':18,'ondokuz':19,'yirmi':20
+  };
+
+  function parseDays(e){
+    // Sıra kritik: "pazartesi" içinde "pazar", "cumartesi" içinde "cuma" geçiyor
+    var found=[], tmp=e;
+    var order=[['pazartesi','Pazartesi'],['cumartesi','Cumartesi'],['çarşamba','Çarşamba'],
+               ['carsamba','Çarşamba'],['perşembe','Perşembe'],['persembe','Perşembe'],
+               ['pazar','Pazar'],['cuma','Cuma'],['salı','Salı'],['sali','Salı'],
+               ['yarın','yarın'],['yarin','yarın'],['bugün','bugün'],['bugun','bugün']];
+    for(var i=0;i<order.length;i++){
+      if(tmp.indexOf(order[i][0])>=0){
+        if(found.indexOf(order[i][1])<0) found.push(order[i][1]);
+        tmp = tmp.split(order[i][0]).join(' '); // tekrar eşleşmesin
+      }
+    }
+    return found;
+  }
+
+  function parseTime(e){
+    var h=null, m=0;
+
+    // 1) 14:30 / 14.30 formatı
+    var mm = e.match(/(\d{1,2})\s*[:.]\s*(\d{2})/);
+    if(mm){ h=parseInt(mm[1],10); m=parseInt(mm[2],10); }
+
+    // 2) "saat 14", "14te", "14 de", tek başına sayı
+    if(h===null){
+      var m2 = e.match(/(?:saat\s*)?(\d{1,2})\s*(?:'?[dt][ae]|'?[dt]en|civar)?(?:\s|$)/);
+      if(m2){ h=parseInt(m2[1],10); }
+    }
+
+    // 3) Yazıyla: "sekiz", "on bir", "on buçuk"
+    if(h===null){
+      var words=e.replace(/[^a-zçğıöşü ]/g,' ').split(/\s+/).filter(Boolean);
+      for(var i=0;i<words.length;i++){
+        // "on bir" gibi bitişik olmayan ikilileri dene
+        if(words[i]==='on' && i+1<words.length && SAYILAR[words[i+1]] && SAYILAR[words[i+1]]<=10){
+          h = 10 + SAYILAR[words[i+1]];
+          if(h>12) h = SAYILAR['on'];
+          break;
+        }
+        if(SAYILAR[words[i]] !== undefined){ h = SAYILAR[words[i]]; break; }
+      }
+    }
+    if(h===null) return null;
+
+    // "buçuk" / "yarım"
+    if(/buçuk|bucuk/.test(e)) m = 30;
+
+    // Sabah/akşam ipuçları
+    var sabah = /sabah|öğlen|oglen|öğle|ogle/.test(e);
+    var aksam = /akşam|aksam|öğleden sonra|ogleden sonra|gece/.test(e);
+
+    if(h>=1 && h<=8){
+      if(sabah) { /* olduğu gibi */ }
+      else h += 12;              // "altı" → 18:00 (klinik 09-20 arası)
+    }
+    if(aksam && h<12) h += 12;
+    if(h>23) return null;
+    return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  }
+
+  /* ============ MESAJ ARAYÜZÜ ============ */
+  function now(){ var t=new Date(); return String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'); }
+
+  function add(text, who){
+    var d=document.createElement('div');
+    d.className='bubble '+who;
+    d.textContent=text;
+    var tm=document.createElement('time'); tm.textContent=now(); d.appendChild(tm);
+    msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+    return d;
+  }
+
+  // Tıklanabilir slot tablosu
+  function addSlots(days, title, sub){
+    var wrap=document.createElement('div');
+    wrap.className='bubble in';
+    wrap.style.maxWidth='100%';
+
+    var box=document.createElement('div'); box.className='slots-wrap';
+    var t=document.createElement('div'); t.className='slots-title'; t.textContent=title; box.appendChild(t);
+    if(sub){ var s=document.createElement('div'); s.className='slots-sub'; s.textContent=sub; box.appendChild(s); }
+
+    days.forEach(function(day){
+      var db=document.createElement('div'); db.className='day-block';
+      var dn=document.createElement('div'); dn.className='day-name';
+      dn.textContent=day.label;
+
+      if(day.kapali){
+        var kb=document.createElement('span'); kb.className='kapali-rozet';
+        kb.textContent='🚫 Kapalı';
+        dn.appendChild(kb);
+        db.appendChild(dn);
+        var kn=document.createElement('div'); kn.className='kapali-not';
+        kn.textContent=day.kapali;
+        db.appendChild(kn);
+        box.appendChild(db);
+        return;
+      }
+
+      var free=freeSlots(day);
+      if(free.length===0){
+        var c=document.createElement('span'); c.className='closed'; c.textContent='— müsait saat yok';
+        dn.appendChild(c);
+      }
+      db.appendChild(dn);
+
+      var row=document.createElement('div'); row.className='slot-row';
+      day.slots.forEach(function(sl){
+        var b=document.createElement('button');
+        b.type='button';
+        b.textContent=sl.t;
+        if(sl.past){ b.className='slot past'; b.disabled=true; b.title='Geçmiş saat'; }
+        else if(sl.busy){ b.className='slot busy'; b.disabled=true; b.title='Dolu'; }
+        else{
+          b.className='slot free'; b.title='Seçmek için tıklayın';
+          b.addEventListener('click', function(){ bookDirect(day, sl.t); });
+        }
+        row.appendChild(b);
+      });
+      db.appendChild(row);
+      box.appendChild(db);
+    });
+
+    var lg=document.createElement('div'); lg.className='slots-legend';
+    lg.innerHTML='<span><i class="dot-l g"></i>Müsait</span><span><i class="dot-l r"></i>Dolu</span><span><i class="dot-l x"></i>Geçti</span><span><i class="dot-l k"></i>Kapalı</span>';
+    box.appendChild(lg);
+
+    wrap.appendChild(box);
+    var tm=document.createElement('time'); tm.textContent=now(); wrap.appendChild(tm);
+    msgs.appendChild(wrap); msgs.scrollTop=msgs.scrollHeight;
+  }
+
+  function typing(on){
+    var t=document.getElementById('typingInd');
+    if(on){ if(t)return;
+      var d=document.createElement('div'); d.id='typingInd'; d.className='bubble in typing';
+      d.innerHTML='<i></i><i></i><i></i>'; msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+    } else if(t) t.remove();
+  }
+
+  /* ============ CEVAPLAR ============ */
+  var R = {
+    greeting:"Merhaba! 🌟 Hoş geldiniz! Ben Atlas Asistan, kliniğimizin yapay zeka asistanıyım. Size nasıl yardımcı olabilirim?\n\n• Randevu almak\n• Fiyat bilgisi\n• Hizmetlerimiz\n• Kampanyalar\n\nHerhangi birini seçebilir veya doğrudan sorunuzu yazabilirsiniz.",
+    fiyat:"İşte güncel fiyat listemiz 💰\n\n• Tüm Vücut Lazer Epilasyon: 2.500₺\n• Yüz Bölgesi Lazer: 800₺\n• Cilt Bakımı (Hydrafacial): 1.200₺\n• Botox (Bölge): 3.500₺\n• Dolgu (ml): 4.000₺\n• Saç Mezoterapisi: 2.000₺\n\nHangi hizmet için randevu almak istersiniz?",
+    lazer:"Lazer epilasyon hizmetimiz hakkında bilgi 💫\n\n• Tüm Vücut: 2.500₺\n• Yarım Vücut: 1.500₺\n• Yüz Bölgesi: 800₺\n• Koltuk Altı: 500₺\n• Bikini: 600₺\n\nSon teknoloji Alexandrite lazer cihazımız ile ağrısız ve etkili sonuçlar. Randevu almak ister misiniz?",
+    kampanya:"Güncel kampanyalarımız 🎉\n\n🔥 Bu Hafta Özel:\n• 3 seans lazer al, 1 seans hediye!\n• İlk cilt bakımında %20 indirim\n• Arkadaşını getir, ikisine de %15 indirim\n\n⏰ Kampanyalar sınırlı süreli. Hemen randevu almak ister misiniz?",
+    saat:"Çalışma saatlerimiz ⏰\n\n• Pazartesi - Cumartesi: 09:00 - 20:00\n• Pazar: Kapalı (haftalık izin günümüz)\n\nResmi tatillerde de kapalıyız — takvimde işaretli olarak görebilirsiniz.\n\n📍 Adres: Bağdat Cad. No:45, Kadıköy, İstanbul\n📞 Tel: 0534 468 27 69\n\nRandevu almak ister misiniz?",
+    adres:"Klinik adresimiz 📍\n\nBağdat Cad. No:45, Kadıköy, İstanbul\n\n🚇 Metro: Bostancı İstasyonu (5 dk yürüme)\n🚌 Otobüs: 4, 14, 222 hatları\n🅿️ Otopark: Bina altı otopark mevcut\n\nYol tarifi için Google Maps linki gönderebilirim. İster misiniz?",
+    tesekkur:"Rica ederim! 😊 Size yardımcı olabildiysem ne mutlu. Başka bir sorunuz olursa her zaman yazabilirsiniz. İyi günler dilerim! 🌸",
+    fallback:"Anlıyorum! Bu konuda size yardımcı olabilirim. Şunlardan birini deneyebilirsiniz:\n\n• \"Fiyat\" — Hizmet fiyatları\n• \"Randevu\" — Müsait saatleri görün\n• \"Kampanya\" — Güncel kampanyalar\n• \"Adres\" — Klinik konumu\n• \"Saat\" — Çalışma saatleri\n\nRandevu için gün ve saat de yazabilirsiniz: \"salı 14:00\", \"perşembe üç\", \"yarın on buçuk\" gibi."
+  };
+
+  var pendingDay=null;
+
+  function confirmMsg(day,t){
+    var d=day.date;
+    var tarih = d.getDate()+' '+AYLAR[d.getMonth()]+' '+d.getFullYear();
+    return "Mükemmel! ✅ Randevunuz oluşturuldu:\n\n📅 "+day.name+", "+tarih+" — "+t+"\n📍 Bağdat Cad. No:45, Kadıköy\n💆 Hizmet: Belirtilecek\n\nRandevu hatırlatması bir gün önce WhatsApp'tan gönderilecektir. Başka bir sorunuz var mı?";
+  }
+
+  /* ============ RANDEVU AKIŞI ============ */
+  // Dönüş: {text:...} veya {slots:[günler], title, sub} veya null
+  function booking(e){
+    var dayNames = parseDays(e);
+    var time     = parseTime(e);
+    if(dayNames.length===0 && time===null) return null;
+
+    // Birden fazla gün yazılmışsa hepsini göster
+    if(dayNames.length>1 && time===null){
+      var ds = dayNames.map(findDay).filter(Boolean);
+      if(ds.length===0) return null;
+      pendingDay=null;
+      return {slots:ds, title:'Sorduğunuz günler için durum', sub:'Yeşil saatler müsait — tıklayarak seçebilirsiniz.'};
+    }
+
+    var day = dayNames.length ? findDay(dayNames[0]) : (pendingDay ? findDay(pendingDay) : null);
+
+    // Kapalı gün: saat yazılmış olsa bile önce bunu söyle
+    if(day && day.kapali){
+      pendingDay=null;
+      var acikGunler = CAL.filter(function(d){ return !d.kapali && freeSlots(d).length>0; });
+      return {text:"🚫 "+day.label+" günü kapalıyız.\n\nSebep: "+day.kapali+"\n\nSizi en yakın müsait güne alalım — aşağıdaki yeşil saatlerden birine tıklamanız yeterli.",
+              slots:acikGunler, title:'Açık olduğumuz günler', sub:'Yeşil saatlere tıklayarak randevunuzu oluşturabilirsiniz.'};
+    }
+
+    // Sadece gün yazıldı
+    if(day && time===null){
+      pendingDay=day.name;
+      var fr=freeSlots(day);
+      if(fr.length===0){
+        var alt=CAL.filter(function(d){ return freeSlots(d).length>0; });
+        return {slots:alt, title:day.label+' için müsait saatimiz kalmadı 😔', sub:'En yakın müsait günler aşağıda — tıklayarak seçebilirsiniz.'};
+      }
+      return {slots:[day], title:day.label+' için müsait saatler', sub:'Yeşil saatlere tıklayarak randevunuzu oluşturabilirsiniz.'};
+    }
+
+    // Saat var
+    if(time){
+      if(!day){
+        // Gün belli değil: o saatin müsait olduğu günleri göster
+        var uygun=CAL.filter(function(d){ var s=slotOf(d,time); return s && !s.busy && !s.past; });
+        if(uygun.length===0){
+          return {slots:CAL.filter(function(d){return freeSlots(d).length>0;}),
+                  title:'Saat '+time+' için yakın günlerde müsaitlik bulamadım',
+                  sub:'Alternatif saatler aşağıda — tıklayarak seçebilirsiniz.'};
+        }
+        return {slots:uygun, title:'Saat '+time+' hangi gün olsun?', sub:'Aşağıdaki yeşil saatlerden birine tıklayın.'};
+      }
+
+      var h=parseInt(time.split(':')[0],10);
+      // Klinik kapalı mı?
+      if(h < day.open[0] || h >= day.open[1]){
+        return {text:"⏰ "+day.label+" günü saat "+time+" çalışma saatlerimizin dışında.\n\n"+
+                     day.name+" çalışma saatlerimiz: "+String(day.open[0]).padStart(2,'0')+":00 - "+String(day.open[1]).padStart(2,'0')+":00\n\n"+
+                     "Aşağıdaki müsait saatlerden birini seçebilirsiniz.",
+                slots:[day], title:day.label+' — müsait saatler', sub:'Yeşil saatlere tıklayarak seçin.'};
+      }
+
+      var sl=slotOf(day,time);
+      if(!sl){
+        var yakin = slotOf(day, String(h).padStart(2,'0')+':00');
+        var ek = (yakin && !yakin.busy && !yakin.past) ? ' Saat '+yakin.t+' müsait, ister misiniz?' : '';
+        return {slots:[day], title:'Randevularımız tam saatlerde başlıyor ⏱️',
+                sub:'Saat '+time+' yerine aşağıdaki saatlerden birini seçebilirsiniz.'+ek};
+      }
+      if(sl.past){
+        return {slots:CAL.filter(function(d){return freeSlots(d).length>0;}),
+                title:'Saat '+time+' bugün için geçti ⏳', sub:'En yakın müsait saatler aşağıda.'};
+      }
+      if(sl.busy){
+        return {slots:[day], title:day.label+' saat '+time+' maalesef dolu 😔', sub:'Aynı gün için müsait olan yeşil saatlere tıklayabilirsiniz.'};
+      }
+      pendingDay=null;
+      return {text:confirmMsg(day,time)};
+    }
+    return null;
+  }
+
+  function respond(userText){
+    var e=userText.toLocaleLowerCase('tr');
+
+    if(/(teşekkür|tesekkur|sağol|sagol|eyvallah)/.test(e)) return {text:R.tesekkur};
+    if(/(lazer|epilasyon)/.test(e)) return {text:R.lazer};
+    if(/(fiyat|ücret|ucret|kaç para|kac para|liste)/.test(e)) return {text:R.fiyat};
+    if(/(kampanya|indirim|promosyon)/.test(e)) return {text:R.kampanya};
+    if(/(adres|konum|nerede|yol tarifi)/.test(e)) return {text:R.adres};
+
+    var b=booking(e);
+    if(b) return b;
+
+    if(/randevu|müsait|musait|boş|bos|takvim/.test(e)){
+      pendingDay=null;
+      return {slots:CAL.filter(function(d){ return d.kapali || freeSlots(d).length>0; }),
+              title:'Önümüzdeki günlerin randevu takvimi 📅',
+              sub:'Yeşil saatlere tıklayarak randevunuzu hemen oluşturabilirsiniz. Kapalı günlerimiz ayrıca belirtilmiştir.'};
+    }
+    if(/(çalışma saat|calisma saat|kaçta açıl|kacta acil|kaça kadar|kapanış|kapanis|açık mısınız|acik misiniz)/.test(e)) return {text:R.saat};
+    if(/saat/.test(e)) return {text:R.saat};
+    if(/(merhaba|selam|iyi günler|iyi gunler|hey|günaydın|gunaydin)/.test(e)) return {text:R.greeting};
+    return {text:R.fallback};
+  }
+
+  // Takvimden tıklanan slot: metin ayrıştırmasına girmeden doğrudan o güne yazılır
+  function bookDirect(day, t){
+    var d=day.date;
+    add(day.name + ', ' + d.getDate() + ' ' + AYLAR[d.getMonth()] + ' — ' + t, 'out');
+    pendingDay=null;
+    typing(true);
+    setTimeout(function(){
+      typing(false);
+      var sl=slotOf(day,t);
+      if(day.kapali || !sl || sl.busy || sl.past){
+        add('Bu saat az önce dolmuş görünüyor 😔 Aşağıdaki müsait saatlerden birini seçebilirsiniz.','in');
+        addSlots(CAL.filter(function(x){ return !x.kapali && freeSlots(x).length>0; }),
+                 'Güncel müsait saatler', 'Yeşil saatlere tıklayarak seçebilirsiniz.');
+        return;
+      }
+      add(confirmMsg(day,t),'in');
+    }, 500+Math.random()*400);
+  }
+
+  function send(text){
+    if(!text.trim()) return;
+    add(text,'out');
+    input.value='';
+    typing(true);
+    setTimeout(function(){
+      typing(false);
+      var r=respond(text);
+      if(r.text) add(r.text,'in');
+      if(r.slots && r.slots.length) addSlots(r.slots, r.title, r.sub);
+    }, 600+Math.random()*500);
+  }
+
+  form.addEventListener('submit', function(ev){ ev.preventDefault(); send(input.value); });
+  document.querySelectorAll('.chip').forEach(function(c){
+    c.addEventListener('click', function(){ send(c.getAttribute('data-q')); });
+  });
+
+  setTimeout(function(){ add(R.greeting,'in'); }, 400);
+})();
+</script>
+</body>
+</html>

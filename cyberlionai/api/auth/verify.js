@@ -18,6 +18,7 @@ const auth = require('../_lib/auth.js');
 const { guard } = require('../_lib/authguard.js');
 const { resolveSession } = require('../_lib/session.js');
 const { claimForUser } = require('../_lib/claim.js');
+const tg = require('../_lib/telegram.js');
 
 const TYPES = ['signup', 'recovery', 'magiclink', 'email_change', 'invite'];
 
@@ -43,7 +44,15 @@ module.exports = async function handler(req, res) {
 
   if (!r.ok || !r.body || !r.body.access_token) {
     const code = auth.mapError(r.status, r.body, 'signup');
-    auth.logFailure('verify', r.status, r.body, code);
+    /* Bağlantı türü de günlüğe: kayıt onayı mı, şifre sıfırlama mı, magic
+       link mi — "süresi dolmuş" şikâyetinde hangi şablonun sorunlu olduğu
+       buradan okunuyor. Token ve e-posta YAZILMAZ. */
+    auth.logFailure('verify(' + type + ')', r.status, r.body, code);
+    const gotrue = (r.body && (r.body.error_code || r.body.code)) || 'unknown';
+    if (await tg.tekSefer('authfail:' + type + ':' + gotrue, 600)) {
+      await tg.sendTelegram(tg.mesaj.hata('/api/auth/verify', r.status,
+        'auth fail type=' + type + ' gotrue=' + gotrue), { type: 'alert' });
+    }
     return res.status(400).json({ error: { code: code } });
   }
 

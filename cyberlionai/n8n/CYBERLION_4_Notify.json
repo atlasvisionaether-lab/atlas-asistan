@@ -1,0 +1,128 @@
+{
+  "name": "CYBERLION_4_Notify",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cl-notify",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-cl-notify",
+      "name": "Webhook: notify",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ],
+      "webhookId": "cl-notify",
+      "notes": "Govde: { jobId }. WORKFLOW 2 ya da 3 cagiriyor.\nGerekli degiskenler: N8N_API_BASE, CL_CRON_SECRET. BASKA HICBIR SIR YOK.\n\nESKI HALI SUPABASE_SERVICE_KEY ve FCM_ACCESS_TOKEN tasiyordu. Servis rolu anahtari RLS'i tamamen atlar: n8n'i ele geciren biri tum musteri verisini okuyabilirdi. Ikisi de kaldirildi."
+    },
+    {
+      "parameters": {
+        "jsCode": "const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst g = $input.first().json.body || $input.first().json;\nconst jobId = String(g.jobId || '');\nif (!UUID.test(jobId)) throw new Error('gecersiz jobId');\nreturn [{ json: { jobId } }];"
+      },
+      "id": "c-Girdiyi doğrula",
+      "name": "Girdiyi doğrula",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "notes": "jobId GOVDEDEN geliyor ama kime bildirim gidecegini BELIRLEMIYOR: sahip, isin kendi satirindan okunuyor. Govdeye userId koymanin bir anlami yok ve uc zaten kabul etmiyor."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_API_BASE }}/api/cron/notify?jobId={{ $json.jobId }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.CL_CRON_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "h-Bildirimi gonder",
+      "name": "Bildirimi gönder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "UC HEM JETONLARI OKUYOR HEM FCM'E GONDERIYOR.\n\nNEDEN n8n JETONLARI ALMIYOR: bir FCM kayit jetonu, o cihaza bildirim gonderme YETKISIDIR. Servis rolu anahtarini n8n'den cikarip yerine musterilerin cihaz jetonlarini koymak ayni yuzeyi geri acardi -- ustelik bu n8n bir dizustunde localhost:5678'de calisiyor. Jetonlar veritabani ile Vercel arasinda kaliyor.\n\nYanit musteri verisi TASIMIYOR: { ok, via, sent, failed, dropped }.\n\nAnonim taramada (user_id null) sent=0, reason='no_devices' doner ve bu bir hata DEGILDIR."
+    },
+    {
+      "parameters": {
+        "jsCode": "const y = $input.first().json || {};\nconst durum = y.statusCode || 0;\nconst govde = y.body || {};\nconst jobId = $('Girdiyi doğrula').first().json.jobId;\nif (durum === 200) {\n  return [{ json: { ok: true, jobId, sent: govde.sent, failed: govde.failed, dropped: govde.dropped, reason: govde.reason || null } }];\n}\nconst kod = (govde.error && govde.error.code) || 'bilinmiyor';\nif (durum === 404 && kod === 'no_job') {\n  return [{ json: { ok: false, jobId, beklemede: true, kod } }];\n}\nthrow new Error('bildirim gonderilemedi: ' + durum + ' ' + kod);"
+      },
+      "id": "c-Sonuç",
+      "name": "Sonuç",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Cihazi olmayan kullanici hata degil: sent=0 ile basariyla biter. Gercek hatalar firlatiliyor.\n\nWEB PANOSU ICIN REALTIME EKLENMEDI: tarayicidan wss://*.supabase.co acmak CSP'de connect-src'i dis kokene acar, ayrica anonim taramalarda user_id null oldugu icin RLS o satirlar icin hicbir olay yayinlamaz. Pano mevcut ayni koken yoklamasini surduruyor."
+    }
+  ],
+  "connections": {
+    "Webhook: notify": {
+      "main": [
+        [
+          {
+            "node": "Girdiyi doğrula",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Girdiyi doğrula": {
+      "main": [
+        [
+          {
+            "node": "Bildirimi gönder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bildirimi gönder": {
+      "main": [
+        [
+          {
+            "node": "Sonuç",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    {
+      "name": "cyberlion"
+    }
+  ]
+}

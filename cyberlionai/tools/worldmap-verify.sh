@@ -73,7 +73,28 @@ for alan in generatedAt markers sources ownActivity; do
 done
 check "$(jq -r '.markers | type' "$BODY")" "array" "markers dizi"
 check "$(jq -r '.sources | type' "$BODY")" "array" "sources dizi"
-check "$(jq -r '.ownActivity.available' "$BODY")" "false" "ownActivity şimdilik kapalı"
+# ownActivity'nin KAPALI olma zorunlulugu YOK. Burada bir zamanlar 'false'
+# bekleniyordu; o beklenti katmanin hic verisi yokken yazilmisti ve katman
+# gercekten calismaya basladigi gun gunluk kosuyu kirmiziya cevirdi — yani
+# urunun duzelmesi kontrolu bozdu. Sozlesme su: alan bir boolean; kapaliysa
+# SEBEBI yazili olmali (katman sessizce kapanmasin); aciksa ulke kodlari ISO-2.
+OA="$(jq -r '.ownActivity.available' "$BODY")"
+case "$OA" in
+  true)
+    pass "ownActivity açık"
+    KOTU_OA="$(jq '[.ownActivity.countries[]? | select((.country // "") | test("^[A-Z]{2}$") | not)] | length' "$BODY" 2>/dev/null || echo 1)"
+    check "${KOTU_OA:-1}" "0" "ownActivity ülke kodları ISO-2"
+    ;;
+  false)
+    OA_SEBEP="$(jq -r '.ownActivity.reason // ""' "$BODY")"
+    if [ -n "$OA_SEBEP" ]
+      then pass "ownActivity kapalı, sebebi yazılı ($OA_SEBEP)"
+      else fail "ownActivity kapalı ama SEBEP yok — katman sessizce kapanmış"; fi
+    ;;
+  *)
+    fail "ownActivity.available boolean değil (gelen: '$OA')"
+    ;;
+esac
 
 head1 "3. Bütün kaynaklar bildiriliyor"
 # Beklenen kaynak listesi KODUN KENDISINDEN okunuyor. Elle yazilmis liste

@@ -71,7 +71,7 @@ Alan adı bağlandığında yapılacaklar:
 2. `localStorage.preferredLang` (kullanıcının önceki tercihi)
 3. `/tr/` veya `/en/` klasör yolu
 4. Tarayıcı dili (`navigator.language`)
-5. **Geo-IP** (`ipapi.co`) — yalnızca 1–3 yoksa, sayfa yüklendikten sonra asenkron çalışır;
+5. **Ülke** (`/api/geo`, Vercel'in `x-vercel-ip-country` başlığı; IP üçüncü tarafa gitmez) — yalnızca 1–3 yoksa, sayfa yüklendikten sonra asenkron çalışır;
    ülke `TR` ise Türkçeye geçer. İstek 2 saniyede zaman aşımına uğrar ve başarısız olursa
    tarayıcı dili geçerli kalır (sayfa hiçbir durumda beklemez).
 
@@ -324,7 +324,7 @@ sayacı olur ve istemci farklı örneklere düşerek sınırı kolayca aşar.
 | Sınır | Anahtar | Değer |
 |---|---|---|
 | IP hız sınırı | IP'nin SHA-256 özeti | 10 dakikada 12 tarama |
-| Ücretsiz kota | Sunucunun verdiği oturum kimliği | 5 tarama |
+| Ücretsiz kota | Sunucunun verdiği oturum kimliği | 3 tarama |
 
 **Atomiklik:** kontrol ve artırma tek bir Lua script'inde yapılır. Ayrı GET +
 INCR çağrıları yarış koşuluna açıktır; eşzamanlı iki istek son hakkı iki kez
@@ -397,6 +397,17 @@ satırdan üretilir; istemciden gelen skora güvenilmez. Dosya adı
 `cyberlionai-security-report-<host>-<YYYY-MM-DD>.pdf`.
 
 Ayrıntılı uç sözleşmeleri: `docs/api.md`.
+
+## Mobil bildirim
+
+Tarama bitip rapor üretildiğinde işin sahibinin cihazlarına FCM bildirimi
+gidiyor. Mobil uygulama açılışta `POST /api/device-token`, çıkışta `DELETE`
+çağırıyor; oturum çerezle ya da `Authorization: Bearer <supabase
+access_token>` ile taşınıyor. İstemci parçası (bir uygulama değil, kopyalanacak
+iki dosya) `mobile/flutter/` altında.
+
+Akış, Dart ve curl örnekleri, Bearer yolunun sınırları ve üretim doğrulaması:
+**[docs/notifications.md](docs/notifications.md)**.
 
 ### Supabase yoksa
 

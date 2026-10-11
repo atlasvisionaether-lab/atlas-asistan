@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ankara Güzellik Merkezi Asistanı | Atlas Asistan</title>
+
+<link rel="icon" type="image/png" sizes="32x32" href="../public/icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="../public/icon.png">
+<link rel="shortcut icon" href="../public/favicon.ico">
+<link rel="apple-touch-icon" href="../public/apple-touch-icon.png">
+  <meta name="description" content="Ankara güzellik merkezleri için 7/24 WhatsApp ve Instagram asistanı. Mesai dışı mesajları yanıtlayın, randevu kaçırmayın.">
+  <meta property="og:title" content="Ankara Güzellik Merkezi Asistanı | Atlas Asistan">
+  <meta property="og:description" content="Ankara güzellik merkezleri için 7/24 WhatsApp ve Instagram asistanı. Mesai dışı mesajları yanıtlayın, randevu kaçırmayın.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="tr_TR">
+  <meta property="og:image" content="/public/logo/atlas_kurt_yilan_creative.png">
+<style>
+/* Atlas Asistan — atlasasistan.com */
+:root{
+  --bg: hsl(240 20% 4%);
+  --fg: hsl(214 32% 91%);
+  --card: hsl(240 15% 8%);
+  --secondary: hsl(240 10% 14%);
+  --muted: hsl(215 20% 55%);
+  --border: hsl(240 10% 16%);
+  --blue: var(--primary-solid);
+  --blue-btn: var(--primary-solid);
+  --blue-btn-h: #1A6DFF;
+  --emerald: #34d399;
+  --emerald-btn: #059669;
+  --emerald-btn-h: #047857;
+  --orange: #fb923c;
+  --pink: #f472b6;
+  --yellow: #facc15;
+  --radius: .75rem;
+  --primary-gradient:linear-gradient(135deg,#00D1B2 0%,#2F80FF 50%,#8B5CF6 100%);
+  --primary-solid:#2F80FF;
+  --primary-turquoise:#00D1B2;
+  --primary-purple:#8B5CF6;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img,svg{display:block}
+button{font:inherit;cursor:pointer}
+input,textarea{font:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+
+.container{max-width:80rem;margin:0 auto;padding:0 1rem}
+.narrow{max-width:48rem}
+.mid{max-width:56rem}
+
+/* ---- Nav ---- */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;background:hsl(240 20% 4% / .8);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:4rem}
+.brand{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:1.05rem}
+.brand .bot{width:1.75rem;height:1.75rem;color:var(--blue)}
+.badge{display:inline-block;font-size:.7rem;padding:.1rem .5rem;border-radius:999px;border:1px solid hsl(217 91% 60% / .3);color:#2F80FF}
+.nav-links{display:none;align-items:center;gap:1.4rem}
+.nav-links a.plain{font-size:.875rem;color:var(--muted);transition:color .2s}
+.nav-links a.plain:hover{color:var(--fg)}
+.hamb{display:inline-flex;background:none;border:1px solid var(--border);border-radius:.5rem;padding:.4rem .55rem;color:var(--fg)}
+@media(min-width:768px){.nav-links{display:flex}.hamb{display:none}}
+.mobile-menu{display:none;flex-direction:column;gap:.75rem;padding:1rem;border-top:1px solid var(--border);background:var(--bg)}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:.95rem;color:var(--muted)}
+
+/* ---- Buttons ---- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-size:.875rem;font-weight:500;border-radius:.6rem;padding:.55rem 1rem;border:1px solid transparent;transition:background .2s,border-color .2s,color .2s}
+.btn.lg{padding:.75rem 1.4rem;font-size:.95rem}
+.btn.blue{background:linear-gradient(90deg,var(--primary-turquoise),var(--primary-solid));color:#fff}
+.btn.blue:hover{background:linear-gradient(90deg,#00BFA6,#1A6DFF)}
+.btn.green{background:var(--emerald-btn);color:#fff}
+.btn.green:hover{background:var(--emerald-btn-h)}
+.btn.outline-blue{border-color:hsl(217 91% 60% / .5);color:#2F80FF;background:transparent}
+.btn.outline-blue:hover{background:hsl(217 91% 60% / .1)}
+.btn.outline-green{border-color:hsl(160 84% 39% / .5);color:var(--emerald);background:transparent}
+.btn.outline-green:hover{background:hsl(160 84% 39% / .1)}
+.btn.gray{background:var(--secondary);color:var(--fg)}
+.btn.gray:hover{background:hsl(240 10% 18%)}
+.btn.block{width:100%}
+
+/* ---- Sections ---- */
+.section{padding:5rem 1rem}
+.section.alt{background:hsl(240 10% 14% / .3)}
+.sec-head{text-align:center;margin-bottom:3rem}
+.sec-head h2{font-size:clamp(1.75rem,4vw,2.25rem);font-weight:700;margin-bottom:1rem}
+.sec-head p{color:var(--muted);max-width:42rem;margin:0 auto}
+.eyebrow{display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.03em;padding:.25rem .75rem;border-radius:999px;margin-bottom:1rem;background:hsl(25 95% 53% / .1);color:var(--orange);border:1px solid hsl(25 95% 53% / .2)}
+
+/* ---- Hero ---- */
+.hero{padding:8rem 1rem 5rem;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60rem 30rem at 20% 0%,rgba(0,209,178,.14),transparent 60%),radial-gradient(50rem 26rem at 90% 20%,rgba(139,92,246,.12),transparent 60%);pointer-events:none}
+.hero-grid{position:relative;display:grid;gap:3rem;align-items:center}
+@media(min-width:1024px){.hero-grid{grid-template-columns:1.1fr .9fr}}
+.hero h1{font-size:clamp(2.25rem,5.5vw,3.6rem);font-weight:700;line-height:1.15}
+.text-gradient{background:linear-gradient(to right,#60a5fa,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{margin-top:1.5rem;font-size:1.1rem;color:var(--muted);max-width:36rem}
+.hero-ctas{display:flex;flex-direction:column;gap:1rem;margin-top:2rem}
+@media(min-width:640px){.hero-ctas{flex-direction:row}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2.5rem;max-width:26rem}
+.stat{text-align:center}
+.stat b{display:block;font-size:1.5rem;font-weight:700}
+.stat span{font-size:.75rem;color:var(--muted)}
+.c-blue{color:#2F80FF}.c-green{color:var(--emerald)}.c-orange{color:var(--orange)}
+
+/* Chat mockup */
+.glass-card{border-radius:var(--radius);border:1px solid #ffffff1a;background:#ffffff0d;backdrop-filter:blur(4px);padding:1.5rem;max-width:24rem;margin:0 auto;width:100%}
+.chat-head{background:linear-gradient(90deg,#0B1220,#2F80FF);display:flex;align-items:center;gap:.75rem;padding-bottom:.85rem;margin-bottom:1rem;border-bottom:1px solid #ffffff1a}
+.chat-avatar{width:2.5rem;height:2.5rem;border-radius:999px;background:linear-gradient(135deg,rgba(0,209,178,.2),rgba(47,128,255,.2));border:1px solid rgba(47,128,255,.3);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.chat-head .who b{display:block;font-size:.9rem}
+.chat-head .who span{font-size:.75rem;color:var(--emerald)}
+.chat-head .tag{margin-left:auto;font-size:.7rem;padding:.15rem .5rem;border-radius:999px;background:hsl(160 84% 39% / .2);color:var(--emerald)}
+.bubble{max-width:85%;padding:.6rem .8rem;border-radius:.9rem;font-size:.83rem;margin-bottom:.6rem;white-space:pre-line}
+.bubble.in{background:var(--secondary);border-bottom-left-radius:.25rem}
+.bubble.out{background:linear-gradient(90deg,#00D1B2,#2F80FF);color:#fff;margin-left:auto;border-bottom-right-radius:.25rem}
+.bubble time{display:block;font-size:.65rem;opacity:.6;margin-top:.25rem;text-align:right}
+
+/* ---- Cards ---- */
+.grid-3{display:grid;gap:1.5rem}
+@media(min-width:768px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+.grid-2{display:grid;gap:2rem}
+@media(min-width:768px){.grid-2{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;transition:border-color .2s}
+.card:hover.hov-blue{border-color:hsl(217 91% 60% / .3)}
+.card:hover.hov-green{border-color:hsl(160 84% 39% / .3)}
+.card:hover.hov-orange{border-color:hsl(25 95% 53% / .3)}
+.icon-box{width:3rem;height:3rem;border-radius:.6rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem}
+.icon-box.blue{background:linear-gradient(135deg,rgba(0,209,178,.2),rgba(47,128,255,.2));border:1px solid rgba(47,128,255,.3);color:#00D1B2}
+.icon-box.green{background:hsl(160 84% 39% / .1);color:var(--emerald)}
+.icon-box.orange{background:hsl(25 95% 53% / .1);color:var(--orange)}
+.metric{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
+.card h3{font-size:1.05rem;font-weight:600;margin-bottom:.5rem}
+.card p{font-size:.875rem;color:var(--muted)}
+
+/* ---- Pricing ---- */
+.plans{display:grid;gap:2rem;max-width:56rem;margin:3rem auto 0}
+@media(min-width:768px){.plans{grid-template-columns:repeat(2,1fr)}}
+.plan{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:1.5rem}
+.plan.featured{border-color:hsl(217 91% 60% / .3)}
+.ribbon{position:absolute;top:0;right:0;background:linear-gradient(90deg,#00D1B2,#2F80FF);color:#fff;font-size:.7rem;font-weight:500;padding:.25rem .75rem;border-bottom-left-radius:.6rem}
+.pop{position:absolute;top:-0.8rem;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#00D1B2,#2F80FF);color:#fff;font-size:.7rem;font-weight:600;padding:.25rem .8rem;border-radius:999px}
+.plan h3{font-size:1.2rem;font-weight:700}
+.plan .sub{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+.price b{font-size:1.9rem;font-weight:700}
+.price .per{color:var(--muted);font-size:.95rem}
+.price .note{display:block;font-size:.78rem;color:#2F80FF;margin-top:.15rem}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:.7rem;flex:1}
+.plan li{display:flex;align-items:center;gap:.5rem;font-size:.875rem}
+.check{color:var(--emerald);flex-shrink:0}
+.plan-cta{display:flex;gap:.5rem}
+.plan-cta .btn{flex:1}
+
+/* ---- Testimonials ---- */
+.t-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+.starrow{display:flex;gap:.2rem;color:var(--yellow)}
+.t-card blockquote{font-size:.875rem;color:var(--muted);font-style:italic}
+.t-card .who{padding-top:.75rem;border-top:1px solid var(--border)}
+.t-card .who b{font-size:.875rem;display:block}
+.t-card .who span{font-size:.75rem;color:var(--muted)}
+
+/* ---- FAQ ---- */
+.faq{display:flex;flex-direction:column;gap:.75rem;max-width:48rem;margin:0 auto}
+.faq details{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:0 1rem}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 0;font-size:.9rem;font-weight:500}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:1.2rem;color:var(--muted);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq .a{padding:0 0 1rem;font-size:.875rem;color:var(--muted)}
+
+/* ---- Contact ---- */
+.contact-grid{display:grid;gap:3rem;align-items:center}
+@media(min-width:768px){.contact-grid{grid-template-columns:1fr 1fr}}
+.contact-info h2{font-size:clamp(1.75rem,4vw,2.25rem);font-weight:700;margin-bottom:1.25rem}
+.contact-info>p{color:var(--muted);margin-bottom:1.5rem}
+.contact-line{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;color:var(--fg);transition:color .2s}
+.contact-line:hover{color:#00D1B2}
+.contact-line svg{color:#2F80FF;flex-shrink:0}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.85rem;font-weight:500;margin-bottom:.35rem}
+.field input{width:100%;background:var(--secondary);border:1px solid var(--border);border-radius:.5rem;padding:.6rem .8rem;color:var(--fg)}
+.field input::placeholder{color:hsl(215 20% 45%)}
+.field input:focus{outline:none;border-color:var(--blue)}
+
+/* ---- Footer ---- */
+footer{padding:3rem 1rem;border-top:1px solid var(--border)}
+.foot-grid{display:grid;gap:2rem;margin-bottom:2rem}
+@media(min-width:768px){.foot-grid{grid-template-columns:repeat(4,1fr)}}
+.foot-brand p{font-size:.875rem;color:var(--muted);margin:1rem 0}
+.socials{display:flex;gap:.75rem}
+.soc{width:2rem;height:2rem;border-radius:999px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.soc.wa{background:hsl(160 84% 39% / .1);color:var(--emerald)}
+.soc.wa:hover{background:hsl(160 84% 39% / .2)}
+.soc.ig{background:hsl(330 81% 60% / .1);color:var(--pink)}
+.soc.ig:hover{background:hsl(330 81% 60% / .2)}
+footer h4{font-size:.875rem;font-weight:600;margin-bottom:.9rem}
+footer ul{list-style:none;display:flex;flex-direction:column;gap:.55rem}
+footer ul a{font-size:.875rem;color:var(--muted);transition:color .2s}
+footer ul a:hover{color:var(--fg)}
+.foot-bottom{border-top:1px solid var(--border);padding-top:1.5rem;text-align:center;font-size:.8rem;color:var(--muted)}
+
+/* ---- Legal pages ---- */
+.legal{padding:7rem 1rem 5rem;max-width:48rem;margin:0 auto}
+.legal h1{font-size:2rem;font-weight:700;margin-bottom:.5rem}
+.legal .updated{font-size:.85rem;color:var(--muted);margin-bottom:2.5rem}
+.legal h2{font-size:1.2rem;font-weight:600;margin:2rem 0 .75rem}
+.legal p,.legal li{font-size:.93rem;color:var(--muted);margin-bottom:.9rem}
+.legal ul{padding-left:1.4rem;margin-bottom:1rem}
+.legal a{color:#2F80FF}
+.legal a:hover{color:#00D1B1}
+.legal a:hover{text-decoration:underline}
+.back-link{display:inline-flex;align-items:center;gap:.4rem;font-size:.875rem;color:var(--muted);margin-bottom:2rem;transition:color .2s}
+.back-link:hover{color:var(--fg)}
+
+/* ---- Demo page ---- */
+.demo-wrap{max-width:44rem;margin:0 auto;padding:5.5rem 1rem 2rem;display:flex;flex-direction:column;min-height:100dvh}
+.demo-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;flex:1;overflow:hidden}
+.demo-note{background:hsl(217 91% 60% / .08);border-bottom:1px solid hsl(217 91% 60% / .2);color:#93c5fd;font-size:.8rem;padding:.6rem 1rem;text-align:center}
+.demo-msgs{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column}
+.chip-row{display:flex;flex-wrap:wrap;gap:.5rem;padding:.75rem 1rem;border-top:1px solid var(--border)}
+.chip{background:var(--secondary);border:1px solid var(--border);color:var(--fg);font-size:.78rem;padding:.35rem .8rem;border-radius:999px;transition:border-color .2s}
+.chip:hover{border-color:var(--blue)}
+.demo-input{display:flex;gap:.6rem;padding:.85rem 1rem;border-top:1px solid var(--border)}
+.demo-input input{flex:1;background:var(--secondary);border:1px solid var(--border);border-radius:.6rem;padding:.6rem .9rem;color:var(--fg)}
+.demo-input input:focus{outline:none;border-color:var(--blue)}
+.typing{display:inline-flex;gap:.25rem;padding:.7rem .9rem}
+.typing i{width:.4rem;height:.4rem;border-radius:999px;background:var(--muted);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}
+.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* ---- Checkout ---- */
+.co-wrap{max-width:56rem;margin:0 auto;padding:6.5rem 1rem 4rem}
+.co-grid{display:grid;gap:2.5rem}
+@media(min-width:768px){.co-grid{grid-template-columns:1fr 1fr}}
+.notice{display:flex;gap:.75rem;align-items:flex-start;background:hsl(160 84% 39% / .05);border:1px solid hsl(160 84% 39% / .2);border-radius:.6rem;padding:1rem;margin-top:1.25rem}
+.notice svg{color:var(--emerald);flex-shrink:0;margin-top:.1rem}
+.notice b{display:block;font-size:.875rem}
+.notice span{font-size:.78rem;color:var(--muted)}
+.tagline{font-size:.7rem;padding:.15rem .6rem;border-radius:999px;background:hsl(217 91% 60% / .1);color:#2F80FF;border:1px solid hsl(217 91% 60% / .2)}
+
+</style>
+<style>.sec-title{text-align:center;margin-bottom:2.25rem}.sec-title h1{font-size:1.8rem;font-weight:700;line-height:1.25}.sec-title p{color:var(--muted);font-size:.95rem;margin-top:.5rem}.blog-post h2{font-size:1.2rem;font-weight:600;margin:2rem 0 .6rem}.blog-post p{color:var(--muted);line-height:1.8;font-size:.93rem;margin-bottom:1rem}.blog-post ul{color:var(--muted);line-height:1.8;font-size:.93rem;padding-left:1.4rem;margin-bottom:1rem}.blog-post li{margin-bottom:.35rem}.faq details{background:var(--card);border:1px solid var(--border);border-radius:.6rem;padding:0 1rem;margin-bottom:.6rem}.faq details summary{cursor:pointer;font-weight:500;padding:.85rem 0;font-size:.92rem}.faq details .a{color:var(--muted);font-size:.88rem;line-height:1.7;padding-bottom:.9rem}a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #60a5fa;outline-offset:2px}</style>
+<link rel="stylesheet" href="../premium.css"></head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<body>
+<nav class="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="../index.html" class="brand" style="display:flex;align-items:center;gap:.6rem">
+        <img src="../public/logo/atlas_kurt_emblem_80.png" alt="Atlas Asistan AI" style="height:40px;width:40px;object-fit:contain;border-radius:999px"><span style="font-weight:800;line-height:1.1;color:#08111F">ATLAS<br><span style="font-weight:400;font-size:.7em">ASISTAN AI</span></span>
+        ATLAS ASİSTAN <span class="badge">AI</span>
+      </a>
+      <div class="nav-links">
+        <a class="plain" href="../index.html#cozum">Çözüm</a>
+        <a class="plain" href="../index.html#moduller">Modüller</a>
+        <a class="plain" href="../index.html#fiyatlar">Paketler</a>
+        <a class="plain" href="../index.html#sss">SSS</a>
+        <a href="../index.html" class="btn outline-blue">▶ Canlı Demo</a>
+        <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click" class="btn green">WhatsApp</a>
+      </div>
+      <button class="hamb" aria-label="Menüyü aç" onclick="document.getElementById('mmenu').classList.toggle('open')">☰</button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mmenu">
+    <a href="../index.html#cozum">Çözüm</a>
+    <a href="../index.html#moduller">Modüller</a>
+    <a href="../index.html#fiyatlar">Paketler</a>
+    <a href="../index.html#sss">SSS</a>
+    <a href="../index.html">Canlı Demo</a>
+    <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click">WhatsApp</a>
+  </div>
+</nav>
+<section class="section"><div class="container"><div class="sec-title"><h1>Ankara Güzellik Merkezleri için 7/24 WhatsApp Asistanı</h1><p>Ankara'daki güzellik ve estetik merkezlerine özel yapay zeka asistan çözümleri.</p></div><div class="blog-post" style="max-width:44rem;margin:0 auto;text-align:left">
+<p>Ankara, güzellik ve estetik hizmetlerine talebin yoğun olduğu, merkez ilçelerde kliniklerin sıkça bir arada bulunduğu bir pazardır. Müşteriler, randevu ve fiyat bilgisini çoğunlukla mesajlaşma kanallarından alır; akşam saatlerinde gelen sorular ise ertesi güne kalır. Atlas Asistan, bu boşluğu kapatır.</p>
+<h2>Ankara'da müşteri iletişimi nasıl değişiyor?</h2>
+<p>Mesai bitiminde gelen "yarın müsait misiniz?" mesajı, yanıtlanmadığında müşterinin başka bir merkezi denemesine yol açabilir. WhatsApp asistanı, bu mesaja gece yanıt verir ve randevuyu takviminize ekler. Sabah mesaiye başladığınızda, günün randevularının önemli bir kısmı çoktan planlanmış olur.</p>
+<h2>Atlas Asistan hangi hizmetleri kapsar?</h2>
+<ul><li>WhatsApp asistanı: gelen mesajları 7/24 yanıtlar, randevu oluşturur.</li><li>Instagram DM ve yorum yönetimi: taleplere hızlı dönüş yapar.</li><li>Randevu yönetimi: müsaitlik ve tercih doğrultusunda randevu kaydı.</li><li>Fiyat ve çalışma saati bilgilendirmesi: yalnızca sizin tanımladığınız bilgilerle.</li></ul>
+<h2>Kurulum süreci</h2>
+<p>Hizmet listeniz ve kurallarınız netleştirildikten sonra asistan yapılandırılır. Standart kurulum genellikle birkaç iş günü sürer. Kurulum sonrası asistan yanıtlarını dilediğiniz zaman güncelleyebilirsiniz.</p>
+<h2>Sıkça Sorulan Sorular</h2><div class="faq">
+<details>
+<summary>Ankara'daki kliniğim için hangi paket uygun?</summary>
+<div class="a">İhtiyacınıza bağlıdır: yalnızca WhatsApp asistanı için Standart paket, WhatsApp ve Instagram birlikte kullanılacaksa Pro paket değerlendirilir. Detaylı bilgi için görüşme talebi oluşturabilirsiniz.</div>
+</details>
+<details>
+<summary>Mevcut numaram ile kullanabilir miyim?</summary>
+<div class="a">Evet, mevcut işletme WhatsApp numaranız ile entegre edilir; müşterileriniz aynı numaradan yazmaya devam eder.</div>
+</details>
+<details>
+<summary>Asistan yanlış bilgi verir mi?</summary>
+<div class="a">Asistan yalnızca sizin belirlediğiniz bilgileri paylaşır. Emin olmadığı sorularda müşteriyi size yönlendirir.</div>
+</details>
+<details>
+<summary>Ödeme nasıl yapılır?</summary>
+<div class="a">Kredi veya banka kartı ile güvenli ödeme yapılır; iyzico altyapısı kullanılır. Taksit seçenekleri mevcuttur.</div>
+</details>
+</div>
+<h2>Fiyatlandırma ve abonelik</h2>
+<p>Atlas Asistan aylık abonelik modeliyle çalışır; taahhüt yoktur ve dilediğiniz zaman sonraki ay için iptal edebilirsiniz. Asistan paketlerine ilişkin güncel fiyat bilgisi, görüşme talebinizin ardından paylaşılır. Yalnızca asistan mı, web sitesi + asistan kombinasyonu mu gerektiği, mevcut dijital altyapınıza göre birlikte netleştirilir.</p>
+<h2>Neden şimdi?</h2>
+<p>Ankara'da merkez ilçelerde hizmet veren kliniklerin sayısı ve müşteri seçenekleri her geçen dönem artıyor. Mesajlara yanıt verme hızını otomatikleştirmek, bu rekabette öne geçmenin düşük maliyetli yollarından biridir. Kurulum kısa sürer; küçük bir deneme dönemiyle başlayıp ilk yanıt sürelerinizi ölçerek devam edebilirsiniz.</p>
+<div class="card" style="text-align:center;margin-top:2.5rem">
+<h3>Kliniğiniz için asistan kurulumunu konuşalım</h3>
+<p style="margin-bottom:1rem">Görüşme talebi oluşturun; ihtiyaçlarınıza uygun kurulumu birlikte planlayalım.</p>
+<a href="../iletisim.html#contactForm" class="btn blue block">Görüşme Talep Et →</a>
+</div>
+</div></div></section>
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a style="display:flex;align-items:center;gap:.6rem" href="../index.html" class="brand">
+          <img src="../public/logo/atlas_kurt_yilan_creative.png" alt="Atlas Asistan AI" style="width:96px;height:auto;object-fit:contain">
+          <span style="font-weight:800;line-height:1.1;color:#fff">ATLAS<br><span style="font-weight:400;font-size:.7em">ASISTAN AI</span></span>
+        </a>
+        <p>Klinikler için 7/24 yapay zeka asistanı SaaS yazılımı.</p>
+        <p style="font-size:.8rem;color:var(--muted);margin:.5rem 0 0">Şirket Unvanı: <span class="legal-entity-name">Ali Kotan</span><br>Vergi No: <span class="legal-entity-taxno">5810910912</span><br>Adres: <span class="legal-entity-address">Cevizli Mahallesi, Zuhal Caddesi No: 46, İç Kapı No: 50, Maltepe / İstanbul (Ritm AVM)</span></p>
+        <div class="socials">
+          <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" class="soc wa" data-track="whatsapp_click" aria-label="WhatsApp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+          <a href="https://www.instagram.com/atlasasistan.ai/" target="_blank" rel="noopener noreferrer" class="soc ig" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h4>Hizmetler</h4>
+        <ul>
+          <li><a href="../index.html#cozum">AI Asistan Çözümü</a></li>
+          <li><a href="../index.html#moduller">Modüller</a></li>
+          <li><a href="../index.html#fiyatlar">Paketler</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Yasal</h4>
+        <ul>
+          <li><a href="../pages/gizlilik-politikasi.html">Gizlilik Politikası</a></li>
+          <li><a href="../pages/hakkimizda.html">Hakkımızda</a></li>
+          <li><a href="../pages/kvkk-aydinlatma-metni.html">KVKK Aydınlatma Metni</a></li>
+          <li><a href="../pages/mesafeli-satis-sozlesmesi.html">Mesafeli Satış Sözleşmesi</a></li>
+          <li><a href="../pages/teslimat-ve-iade-sartlari.html">Teslimat ve İade Şartları</a></li>
+          <li><a href="../pages/kullanim-sartlari.html">Kullanım Şartları</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>İletişim</h4>
+        <ul>
+          <li><a href="tel:+905344682769">0534 468 27 69</a></li>
+          <li><a href="mailto:merhaba@atlasasistan.com" data-track="email_click">merhaba@atlasasistan.com</a></li>
+          <li><a href="../iletisim.html">İletişim Formu</a></li>
+          <li><span class="legal-entity-address" style="color:var(--muted)">Cevizli Mahallesi, Zuhal Caddesi No: 46, İç Kapı No: 50, Maltepe / İstanbul (Ritm AVM)</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">© Atlas Asistan AI — <a href="mailto:destek@atlasasistan.com" data-track="email_click">destek@atlasasistan.com</a> — <a href="https://atlasasistan.com">https://atlasasistan.com</a></div>
+  </div>
+</footer>
+<script>
+(function () {
+  var GA4_ID = null;   /* TODO: GA4_MEASUREMENT_ID — ör. 'G-XXXXXXXXXX' */
+  var PIXEL_ID = null; /* TODO: META_PIXEL_ID — ör. '1234567890' */
+  window.ATLAS_ANALYTICS = {
+    send: function (event, params) {
+      if (GA4_ID && typeof window.gtag === 'function') { window.gtag('event', event, params || {}); }
+      if (PIXEL_ID && typeof window.fbq === 'function') { window.fbq('trackCustom', event, params || {}); }
+      if (!GA4_ID && !PIXEL_ID) { console.log('[analytics-placeholder]', event, params || {}); }
+    }
+  };
+  if (GA4_ID) {
+    var s = document.createElement('script'); s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date()); window.gtag('config', GA4_ID);
+  }
+  if (PIXEL_ID) {
+    !function (f, b, e, v) {
+      if (f.fbq) return; var n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
+      var t = b.createElement(e); t.async = !0; t.src = v; var s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s);
+    }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    window.fbq('init', PIXEL_ID); window.fbq('track', 'PageView');
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-track]') : null;
+    if (!el) return;
+    window.ATLAS_ANALYTICS.send(el.getAttribute('data-track'), { link: el.getAttribute('href') });
+  });
+})();
+</script>
+<script src="../premium.js" defer></script>
+</body>
+</html>

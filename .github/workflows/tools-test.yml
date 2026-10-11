@@ -61,10 +61,10 @@ jobs:
       - name: E-posta kimlik kayıtları
         run: node cyberlionai/tools/mail-test.js
 
-      # CAA ve DNSSEC degerlendiricileri. Olcut DS kaydinin VARLIGI; AD biti
-      # tek basina yaniltici (imzali OLUMSUZ yanitta da gelebiliyor).
-      - name: CAA ve DNSSEC
-        run: node cyberlionai/tools/dnszone-test.js
+      # CAA degerlendiricisi. DNSSEC main'de ayri bir modulde (_lib/dnssec.js,
+      # DoH ile); burada yalnizca CAA var. Yokluk 'uygulanmamis' sayiliyor.
+            - name: CAA kaydı
+        run: node cyberlionai/tools/caa-test.js
 
       # "Puan disi" etiketleri ve cevirilerin eksiksizligi. Bir musteri
       # raporunda ham anahtar ("scan_note_not_implemented") gorundugu icin var.
@@ -74,6 +74,163 @@ jobs:
       # Puanlama kalibrasyonu: bantlar ve beyan edilen onem dereceleri.
       - name: Puanlama kalibrasyonu
         run: node cyberlionai/tools/calibration-test.js
+
+      # Ana sayfa sayaci NEYI sayiyor. scan_jobs tablosu Cloudflare duzeltme
+      # denetim izini de tutuyor; ayiklanmazsa "taranan site" sayisi her
+      # duzeltmede sisiyor ve ziyaretciye yanlis sayi gosteriliyor.
+      - name: Ana sayfa sayacı
+        run: node cyberlionai/tools/stats-test.js
+
+      # Panel sorgulari: sahiplik filtresi sorgunun ICINDE mi, baskasinin is
+      # kimligi bulgulari aciyor mu, bulgular OWASP'e gore gruplaniyor mu.
+      # Buradaki hatanin bedeli yanlis bir sayi degil, baska musterinin verisi.
+      - name: Panel sorguları ve sahiplik
+        run: node cyberlionai/tools/panel-test.js
+
+      # OWASP PDF raporu ve kanit maskeleme. Rapor musterinin eline giden bir
+      # dosya; IP maskelemesi ne eksik ne fazla hevesli olmali.
+      - name: OWASP raporu ve maskeleme
+        run: node cyberlionai/tools/owasp-report-test.js
+
+      # Haftalik tarama ucunun imza dogrulamasi. Yanlissa ucuncu biri bizim
+      # altyapimizi baska sitelere istek atmak icin kullanabilir.
+      - name: QStash imza doğrulaması
+        run: node cyberlionai/tools/qstash-test.js
+
+      # Fiyat tutarliligi: ayni plan uc yerde yaziyor ve bir kez ayristi
+      # (ana sayfa Pro icin "SINIRSIZ" diyordu, sinirsiz olan Enterprise'di).
+      # Fiyat sayfasinda yazan sey bir taahhut; iki sayfanin iki farkli sey
+      # soylemesi musteriye yanlis soz vermek olur.
+      - name: Fiyatlandırma tutarlılığı ve ödeme ucu
+        run: node cyberlionai/tools/pricing-test.js
+
+      - name: iyzico abonelik entegrasyonu (imza test vektörleri)
+        run: node cyberlionai/tools/iyzico-test.js
+
+      - name: Şifre sıfırlama modalının durumu
+        run: node cyberlionai/tools/authmodal-test.js
+
+      - name: Pro'ya Geç düğmelerinin oturum davranışı
+        run: node cyberlionai/tools/procta-test.js
+
+      # AWS SigV4: imza elle yazilmis bir beklentiye karsi degil, AWS'in
+      # YAYINLADIGI get-vanilla ve post-x-www-form-urlencoded vektorlerine
+      # karsi dogrulaniyor. Kendi urettigimizi kendimize dogrulatmak hicbir
+      # sey kanitlamaz; imza bozulursa SQS 403 doner ve tarama hic baslamaz.
+      - name: AWS SigV4 imzası (resmî test vektörleri)
+        run: node cyberlionai/tools/sigv4-test.js
+
+      # Kuyruk yolu: bayrak kapaliyken esizamanli taramanin bozulmadigi,
+      # her hata cikisinda ucretsiz hakkin iade edildigi ve CSP'ye yeni bir
+      # connect-src hedefi eklenmedigi burada sabitleniyor.
+      - name: Asenkron tarama kuyruğu (SQS/Lambda yolu)
+        run: node cyberlionai/tools/scanqueue-test.js
+
+      # /api/scan ucunu GERCEKTEN cagiran sinama. Metin eslestiren sinamalar
+      # `const db = require(...)` satirinin silindigini YAKALAMADI: metin
+      # yerindeydi, eksik olan bildirimdi ve yayinda her tarama 500 dondu.
+      # Bu adim handler'i calistirip durum kodunu okuyor.
+      - name: Tarama ucu gerçekten çağrılıyor (senkron + kuyruk yolu)
+        run: node cyberlionai/tools/scanhandler-test.js
+
+      # Ilerleme cubugu: yayinda tarama %85'te sonsuza kadar donuyordu, cunku
+      # kuyruk ucu 404 dondugunde esizamanli yola duserken IKINCI bir sayac
+      # baslatiliyor ve ilki hic durdurulmuyordu. Kacak sayac, sonuc gelip
+      # cubuk %100 yazildiktan sonra ustune tekrar %85 yaziyordu. Bu adim
+      # index.html'den sokulen kodu sahte saatle CALISTIRIYOR.
+      - name: Tarama ilerleme çubuğu (kaçak sayaç yok)
+        run: node cyberlionai/tools/scanprogress-test.js
+      # /api/verify-dns: p=none'un KIRMIZI sayilmasi, SPF'te `found`un varlik
+      # degil koruma anlamina gelmesi ve POST'un hicbir hata yolunda 404
+      # donmemesi (ekran onu "uc yayinda degil" diye okuyor) burada sabit.
+      - name: Alan adı doğrulama ucu (SPF/DMARC)
+        run: node cyberlionai/tools/verifydns-test.js
+
+      # Telegram bildirimleri. En onemlisi: belirtec ADRESIN icinde oldugu
+      # icin siradan bir hata logu onu sizdirir. Bu adim logda belirtecin
+      # tamamini, yalniz sir kismini ve api.telegram.org dizgesini ariyor.
+      - name: Telegram bildirimleri (belirteç sızmıyor)
+        run: node cyberlionai/tools/telegram-test.js
+
+      # AI analist. Buradaki tek gercek risk gizlilik: tarama GOVDESI
+      # (ham baslik degerleri, Set-Cookie, IP, e-posta) bir dis modele
+      # gidemez. Sinama ozetleyicinin yalnizca id/severity/status tasidigini
+      # ve anahtarin loga girmedigini dogruluyor.
+      - name: AI analist (tarama gövdesi modele gitmiyor)
+        run: node cyberlionai/tools/aianalyst-test.js
+
+      # Rapor ucu. Sahiplik filtresi sorgunun icinde; sahipsiz bir okumaya
+      # cevrilirse baska hesabin tarama anlatimi sizar ve hicbir yanit bunu
+      # gostermez. Gosterilen puanin MOTORUN puani oldugu da burada kilitli.
+      - name: AI rapor ucu (sahiplik + motor puanı)
+        run: node cyberlionai/tools/ai-report-test.js
+      # Faz 5.5: imzali rapor indirme ve cl_scans kaydi. Presign GERCEKTEN
+      # kosturuluyor; kanonik istegin bicimi, parametre siralamasi ve imzanin
+      # nesneye baglandigi dogrulaniyor. Ayrica report_key'in istemciden
+      # ALINMADIGI ve haritaya ham baslik degeri yazilmadigi sabitleniyor.
+      - name: İmzalı rapor indirme ve harita kaydı
+        run: node cyberlionai/tools/reportsign-test.js
+
+      # WORKFLOW 3: AI raporunun PDF'i ve onu gizli kovaya koyan cron'lu uc.
+      # Burada kilitli olanlar: ucun cronauth ile kapandigi, kova yolunun
+      # ISTEMCIDEN alinmadigi, yanitin musteri verisi tasimadigi ve PDF'e
+      # MOTORUN puaninin (scanner_score) basildigi.
+      - name: AI rapor PDF'i ve Storage yüklemesi
+        run: node cyberlionai/tools/aireportpdf-test.js
+
+      # WORKFLOW 4: FCM bildirimi, cihaz jetonu kaydi ve iki cron ucu.
+      # Burada kilitli olanlar: hicbir yanit CIHAZ JETONU tasimiyor, jetonun
+      # sahibi OTURUMDAN geliyor (govdeden degil), anonim taramada (user_id
+      # null) hic jeton donmuyor, cron uclari sirsiz acilmiyor ve bildirim
+      # metninde alan adi yok (kilit ekraninda gorunur).
+      - name: Bildirim katmanı (FCM, cihaz jetonu sızmıyor)
+        run: node cyberlionai/tools/notify-test.js
+
+      # Mobil istemci ile /api/device-token ayni sozlesmeyi konusuyor mu, ve
+      # Bearer yolu bir atlatma mi? Dart kodu bu kapta derlenemiyor (SDK yok),
+      # ama istek sozlesmesi derlemeye bagli degil: adres/baslik/govde Dart
+      # kaynagindan okunup GERCEK handler'a geciriliyor. _lib/auth.js burada
+      # SAPLANMIYOR, sahte bir GoTrue'ya karsi kosuyor.
+      - name: Mobil cihaz jetonu (Bearer yolu, sözleşme)
+        run: node cyberlionai/tools/devicetoken-mobile-test.js
+
+      # --------------------------------------------------------------------
+      # Asagidaki on sinama dosyasi depoda vardi ama HICBIR CI adiminda
+      # kosmuyordu (2026-10-08 denetiminde bulundu): yazilmis ama kimsenin
+      # kosturmadigi bir sinama, gerilemeyi yakalamayan bir sinamadir.
+      # --------------------------------------------------------------------
+      - name: Asistan (bilgi tabanı yanıtları)
+        run: node cyberlionai/tools/assistant-test.js
+
+      - name: Auth hata eşlemesi (Supabase hatası sızmıyor)
+        run: node cyberlionai/tools/auth-maperror-test.js
+
+      - name: Güven rozeti
+        run: node cyberlionai/tools/badge-test.js
+
+      - name: Tarama motorları
+        run: node cyberlionai/tools/engines-test.js
+
+      - name: Abonelik hak kontrolü
+        run: node cyberlionai/tools/entitlement-test.js
+
+      - name: Cloudflare 1-tık düzeltme
+        run: node cyberlionai/tools/fix-test.js
+
+      - name: Hukuki metinler
+        run: node cyberlionai/tools/legal-md-test.js
+
+      - name: İzleme (monitor)
+        run: node cyberlionai/tools/monitor-test.js
+
+      - name: Alan adı sahipliği doğrulaması
+        run: node cyberlionai/tools/ownership-test.js
+
+      - name: Güven kontrolü (trustcheck)
+        run: node cyberlionai/tools/trust-test.js
+
+      - name: Lambda paketi üretilebiliyor
+        run: cyberlionai/aws/lambda-scanner/build.sh
 
       - name: Kabuk betiklerinin sözdizimi
         run: |

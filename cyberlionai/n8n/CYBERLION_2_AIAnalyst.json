@@ -1,0 +1,154 @@
+{
+  "name": "CYBERLION_2_AIAnalyst",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cl-scan-done",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-cl-scan-done",
+      "name": "Webhook: scan-done",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        0
+      ],
+      "webhookId": "cl-scan-done",
+      "notes": "WORKFLOW 1 tarama bitince buraya POST ediyor. Govde: { jobId }.\nTUM HTTP DUGUMLERI ETKIN. Adresler $env ile okunuyor: n8n'i N8N_API_BASE ve CL_CRON_SECRET ortam degiskenleriyle baslatin (bkz. docker-compose.yml). Sir dugum govdesine YAZILMAZ."
+    },
+    {
+      "parameters": {
+        "jsCode": "/* jobId gelmediyse ya da UUID degilse akis BURADA duruyor.\n   Sebebi: asagidaki HTTP dugumu bir cron ucunu cagiriyor ve gecersiz\n   girdiyle bos bir kosu tetiklemek NVIDIA kotasi harcamak demek. */\nconst UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst g = $input.first().json.body || $input.first().json;\nconst jobId = String(g.jobId || '');\nif (!UUID.test(jobId)) {\n  throw new Error('gecersiz jobId: ' + jobId.slice(0, 40));\n}\nreturn [{ json: { jobId } }];"
+      },
+      "id": "guard",
+      "name": "jobId doğrula",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "notes": ""
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.N8N_API_BASE }}/api/cron/ai-reports",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.CL_CRON_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "ai",
+      "name": "AI raporu üret",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "NVIDIA'YI DOGRUDAN CAGIRMIYOR. Anahtar yalnizca Vercel'de duruyor; n8n'de de durmasi ikinci bir sizinti yuzeyi olurdu. Ayrica bu n8n kullanicinin Windows makinesinde calisiyor ve uretimi karsilayamaz.\n\n403/401 aliyorsaniz CL_CRON_SECRET, Vercel'deki CRON_SECRET ile ayni degil."
+    },
+    {
+      "parameters": {
+        "jsCode": "/* Uc musteri verisi dondurmuyor: yalnizca sayilar. WORKFLOW 4'e\n   gidecek olan da bu. */\nconst r = $input.first().json;\nreturn [{ json: {\n  ok: r.ok === true,\n  jobId: $('jobId doğrula').first().json.jobId,\n  generated: r.generated || 0,\n  errors: r.errors || {}\n} }];"
+      },
+      "id": "sonra",
+      "name": "Sonucu özetle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": ""
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE }}/webhook/cl-report-pdf",
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ jobId: $json.jobId }) }}"
+      },
+      "id": "wf3",
+      "name": "WORKFLOW 3: PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "notes": "PDF uretimi ayri akis: basarisiz olursa rapor yine duruyor."
+    }
+  ],
+  "connections": {
+    "Webhook: scan-done": {
+      "main": [
+        [
+          {
+            "node": "jobId doğrula",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jobId doğrula": {
+      "main": [
+        [
+          {
+            "node": "AI raporu üret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI raporu üret": {
+      "main": [
+        [
+          {
+            "node": "Sonucu özetle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sonucu özetle": {
+      "main": [
+        [
+          {
+            "node": "WORKFLOW 3: PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [
+    {
+      "name": "cyberlion"
+    }
+  ]
+}

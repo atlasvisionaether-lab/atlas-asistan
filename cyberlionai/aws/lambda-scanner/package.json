@@ -1,0 +1,9 @@
+{
+  "name": "cyberlionai-lambda-scanner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SQS tuketicisi tarama iscisi. Bagimlilik YOK: AWS imzasi node:crypto ile atiliyor.",
+  "main": "index.js",
+  "engines": { "node": ">=20" },
+  "dependencies": {}
+}
