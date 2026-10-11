@@ -89,14 +89,37 @@ async function istek(url) {
   }
 }
 
-/** Location başkasına mı gidiyor? Asıl ölçüt bu, 30x'in kendisi değil. */
-function disariMi(location, taban) {
+/**
+ * Yönlendirme GERÇEKTEN payload'ın hedefine mi gidiyor?
+ *
+ * İLK SÜRÜM YANLIŞTI ve ölçüm bunu yakaladı (koşu 38180366491): ölçüt
+ * "Location host'u taban host'undan FARKLI" idi ve apex → www yönlendirmesini
+ * (308 → https://www.cyberlionai.com/?next=...) açık sandı. Oysa orada
+ * example.com yalnızca SORGU DİZESİNİN İÇİNDE taşınıyordu; yönlendirme kendi
+ * sitemize gidiyordu. 16 satır yanlış pozitif üretti.
+ *
+ * Doğru ölçüt: Location'ın HOST'U payload'ın host'una eşit mi. Sorgu dizesinde
+ * geçmesi bir kanıt DEĞİL — sunucu parametreyi yalnızca taşıyor demektir.
+ */
+function hedefeMiGidiyor(location, taban) {
   if (!location) return false;
   try {
     const hedef = new URL(location, taban);
-    return hedef.host !== new URL(taban).host;
+    return hedef.host === new URL(HEDEF).host;
   } catch (e) {
     return false;   /* ayrıştırılamayan Location bir yönlendirme kanıtı değil */
+  }
+}
+
+/** Aynı site mi (apex ↔ www)? Bilgi amaçlı; açık DEĞİL. */
+function ayniSite(location, taban) {
+  if (!location) return false;
+  try {
+    const a = new URL(location, taban).host.replace(/^www\./, '');
+    const b = new URL(taban).host.replace(/^www\./, '');
+    return a === b;
+  } catch (e) {
+    return false;
   }
 }
 
@@ -113,10 +136,12 @@ async function olc(taban) {
     const url = taban + (taban.indexOf('?') === -1 ? '?' : '&') + p + '=' + encodeURIComponent(HEDEF);
     const y = await istek(url);
     if (!y.ok) { yaz('?' + p, 'ÖLÇÜLEMEDİ (' + y.hata + ')'); continue; }
-    const disari = disariMi(y.location, taban);
+    const acik = hedefeMiGidiyor(y.location, taban);
+    const ayni = ayniSite(y.location, taban);
     yaz('?' + p, y.status
       + (y.location ? '  Location: ' + y.location : '  (Location yok)')
-      + (disari ? '   ** DIŞARIYA **' : ''));
+      + (acik ? '   ** AÇIK YÖNLENDİRME **' : '')
+      + (!acik && y.location && ayni ? '   (aynı site — açık değil)' : ''));
   }
 
   /* --- C: .git ifşası --- */
@@ -147,11 +172,13 @@ async function olc(taban) {
   }
 
   process.stdout.write('\n' + KALIN + 'Okunacak sorular' + SIFIRLA + '\n');
-  process.stdout.write('1. Hiçbir parametre "** DIŞARIYA **" üretmediyse: bu site statik ve\n');
+  process.stdout.write('1. Hiçbir parametre "** AÇIK YÖNLENDİRME **" üretmediyse: bu site statik ve\n');
   process.stdout.write('   bir open redirect kontrolü burada her zaman "geçti" der. O zaman\n');
   process.stdout.write('   kontrol bir şey ÖLÇMÜYOR, yalnızca rapora satır ekliyor demektir.\n');
-  process.stdout.write('2. 30x gören her yer açık DEĞİL: apex -> www de 301 verir. Ölçüt\n');
-  process.stdout.write('   Location başlığının BAŞKA bir ana bilgisayara gitmesi.\n');
+  process.stdout.write('2. 30x gören her yer açık DEĞİL: apex -> www de 308 verir ve\n');
+  process.stdout.write('   parametreyi sorgu dizesinde TAŞIR. Ölçüt, Location HOST\'unun\n');
+  process.stdout.write('   payload hedefine (example.com) eşit olması — farklı olması değil.\n');
+  process.stdout.write('   (İlk sürüm bunu yanlış kurdu ve 16 yanlış pozitif üretti.)\n');
   process.stdout.write('3. .git/HEAD 200 + text/html dönüyorsa bu SPA yakalamasıdır, ifşa\n');
   process.stdout.write('   değil — owasp.js bu ayrımı zaten yapıyor (içerik tipi HTML ise geçti).\n');
 })();
