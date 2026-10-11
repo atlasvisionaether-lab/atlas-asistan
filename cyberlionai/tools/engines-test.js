@@ -14,7 +14,14 @@ let gecti = 0; const hatalar = [];
 function esit(ad, b, e) { if (b === e) { gecti += 1; return; } hatalar.push(ad + ' (beklenen ' + JSON.stringify(e) + ', bulunan ' + JSON.stringify(b) + ')'); }
 function dogru(ad, k) { if (k) { gecti += 1; return; } hatalar.push(ad); }
 
-const ONCEKI_OZET = 'fe97a1185dc5da8c5dc98ca977db3a3299264f238d0b29ba7d127ad3404657fb';
+/* Özet BİLEREK güncellendi (11.10.2026). 400 durumun 69'unda `tls_cert`
+   notu değişti ve değişen TEK ŞEY o not: fikstür ham bir OpenSSL kodu
+   ('SELF') taşıyordu, artık çevirisi olan 'untrusted' yazılıyor. Farkı
+   satır satır karşılaştırdım: hiçbir durumda SKOR, durum (pass/fail/
+   skipped) ya da kontrol sayısı değişmedi — yalnızca kullanıcıya görünen
+   not. Fikstürün ham kod taşıması, düzeltilen kusurun kendisinin kanıtı.
+   Önceki özet: fe97a1185dc5da8c5dc98ca977db3a3299264f238d0b29ba7d127ad3404657fb */
+const ONCEKI_OZET = '98038389745a72224cf2370cbafe0793cb959f89dc902bf6caf376cb39de391f';
 const cikti = require('./engines-golden-fixture.js');
 esit('400 durumda çıktı bölmeden önceki kodla birebir', crypto.createHash('sha256').update(cikti).digest('hex'), ONCEKI_OZET);
 

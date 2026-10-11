@@ -13,6 +13,39 @@
 const { check, parseMaxAge, getSetCookies } = require('./common.js');
 const { fixCodeFor } = require('./fixes.js');
 
+/* OpenSSL hata kodundan SEBEP. Önceki davranış kodu notun kendisi olarak
+   geçiriyordu; sözlükte karşılığı olmadığı için müşteri raporunda
+   "UNABLE_TO_VERIFY_LEAF_SIGNATURE" gibi ham bir dize görünüyordu. Her sebebin
+   düzeltmesi FARKLI olduğu için ayrım yalnızca çeviri meselesi değil:
+   eksik ara sertifikanın çözümü yenileme değil, zinciri tam göndermektir.
+
+   Eşleme ölçümle yazıldı (koşu 38167648017):
+     incomplete-chain.badssl.com → UNABLE_TO_VERIFY_LEAF_SIGNATURE, zincir 1
+     expired.badssl.com          → CERT_HAS_EXPIRED, zincir 3
+   Diğer kodlar OpenSSL'in X509 doğrulama hata adlarıdır. */
+const SEBEP = {
+  CERT_HAS_EXPIRED: 'expired',
+  UNABLE_TO_VERIFY_LEAF_SIGNATURE: 'chain_incomplete',
+  UNABLE_TO_GET_ISSUER_CERT: 'chain_incomplete',
+  UNABLE_TO_GET_ISSUER_CERT_LOCALLY: 'chain_incomplete',
+  DEPTH_ZERO_SELF_SIGNED_CERT: 'self_signed',
+  SELF_SIGNED_CERT_IN_CHAIN: 'self_signed',
+  ERR_TLS_CERT_ALTNAME_INVALID: 'hostname_mismatch',
+  CERT_REVOKED: 'revoked'
+};
+
+function certSebebi(t) {
+  const kod = t.authorizationError ? String(t.authorizationError) : '';
+  const bilinen = SEBEP[kod];
+  if (bilinen) return bilinen;
+  /* Kod tanınmadı: zincirin tek halkadan oluşması ara sertifikanın hiç
+     gönderilmediğini gösteriyor. Ölçülmüş bir gösterge, tahmin değil. */
+  if (t.chainLength === 1) return 'chain_incomplete';
+  /* Son çare: eskiden olduğu gibi "doğrulanamadı" — ama artık ham OpenSSL
+     kodu DEĞİL, çevirisi olan bir not. */
+  return 'untrusted';
+}
+
 function analyze(context, lang) {
   const h = context.headers;
   const checks = [];
@@ -29,7 +62,7 @@ function analyze(context, lang) {
 
     let certStatus = 'pass';
     let certNote = null;
-    if (!t.authorized) { certStatus = 'fail'; certNote = t.authorizationError || 'untrusted'; }
+    if (!t.authorized) { certStatus = 'fail'; certNote = certSebebi(t); }
     else if (t.daysLeft !== null && t.daysLeft < 0) { certStatus = 'fail'; certNote = 'expired'; }
     else if (t.daysLeft !== null && t.daysLeft < 15) { certStatus = 'fail'; certNote = 'expiring_soon'; }
     checks.push(check('tls_cert', 'high', certStatus,

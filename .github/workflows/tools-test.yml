@@ -61,6 +61,12 @@ jobs:
       - name: E-posta kimlik kayıtları
         run: node cyberlionai/tools/mail-test.js
 
+      # Sertifika basarisizliginin SEBEBI. Onceden ham OpenSSL kodu
+      # ("UNABLE_TO_VERIFY_LEAF_SIGNATURE") nota yaziliyordu; sinama kodun
+      # sizmadigini ve her sebebin ayri duzeltmesi oldugunu tutuyor.
+      - name: Sertifika başarısızlığının sebebi
+        run: node cyberlionai/tools/certcause-test.js
+
       # CAA degerlendiricisi. DNSSEC main'de ayri bir modulde (_lib/dnssec.js,
       # DoH ile); burada yalnizca CAA var. Yokluk 'uygulanmamis' sayiliyor.
       - name: CAA kaydı

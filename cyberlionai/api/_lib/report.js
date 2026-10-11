@@ -110,6 +110,29 @@ const T = {
 };
 
 /* Kontrol adları ve düzeltmeleri — ön yüzdeki metinlerle aynı kaynak bilgi. */
+/* Sebebe özel düzeltme metni. Arayüzdeki `notefix` sözlüğünün PDF karşılığı;
+   ikisi aynı şeyi söylemeli, yoksa aynı tarama iki farklı yerde iki farklı
+   tavsiye verir. Genel "sertifikayı yenileyin" metni eksik ara sertifika için
+   yanlış yönlendirme: yenileme sorunu çözmez, zinciri tam göndermek çözer. */
+const NOTE_FIX = {
+  tr: {
+    chain_incomplete: 'Sunucuya yalnızca site sertifikasını değil, ara sertifikaları da içeren zinciri verin. Nginx: ssl_certificate /etc/letsencrypt/live/ALANADI/fullchain.pem;  (cert.pem DEĞİL). Apache: SSLCertificateFile .../fullchain.pem. Doğrulama: openssl s_client -connect ALANADI:443 -servername ALANADI',
+    self_signed: 'Kendinden imzalı sertifikayı tanınan bir makamın kestiği sertifikayla değiştirin (ör. Let\'s Encrypt / certbot). Tarayıcılar kendinden imzalı sertifikada atlanamayan bir uyarı gösterir.',
+    hostname_mismatch: 'Sertifikanın alan adı listesine (SAN) bu adı ekleyin; apex ve www birlikte kullanılıyorsa ikisi de yazılmalı. Ters vekil varsa sunucu adının (SNI) doğru sertifikaya eşlendiğini denetleyin.',
+    revoked: 'İptal edilmiş sertifikayı hemen değiştirin. İptal sebebi anahtarın sızması olabilir: yeni sertifikayı yeni bir özel anahtarla üretin.',
+    expired: 'Sertifikayı yenileyin ve yenilemeyi otomatikleştirin (zamanlanmış certbot renew). Süresi geçmiş sertifikada tarayıcı sayfayı hiç göstermez.',
+    expiring_soon: 'Yenilemeyi beklemeyin: otomatik yenileme kurulu değilse elle yenileyin, kuruluysa son koşunun neden başarısız olduğunu denetleyin.'
+  },
+  en: {
+    chain_incomplete: 'Serve the full chain, not just the leaf certificate. Nginx: ssl_certificate /etc/letsencrypt/live/DOMAIN/fullchain.pem;  (NOT cert.pem). Apache: SSLCertificateFile .../fullchain.pem. Verify: openssl s_client -connect DOMAIN:443 -servername DOMAIN',
+    self_signed: 'Replace the self-signed certificate with one issued by a recognised authority (e.g. Let\'s Encrypt / certbot). Browsers show a warning that cannot be dismissed silently.',
+    hostname_mismatch: 'Add this name to the certificate\'s SAN list; if both apex and www are in use, include both. Behind a reverse proxy, check that the server name (SNI) maps to the right certificate.',
+    revoked: 'Replace the revoked certificate immediately. Revocation may mean the key leaked: issue the new certificate with a new private key.',
+    expired: 'Renew the certificate and automate renewal (a scheduled certbot renew). With an expired certificate the browser will not show the page at all.',
+    expiring_soon: 'Do not wait for the expiry: renew manually if automatic renewal is not set up, or check why the last run failed if it is.'
+  }
+};
+
 const CHECKS = {
   tr: {
     https: ['HTTPS kullanımı', 'Trafiğin şifrelenmemesi, araya giren birinin veriyi okumasına ve değiştirmesine izin verir.', 'Tüm trafiği HTTPS üzerinden sunun; HTTP isteklerini 301 ile HTTPS\'e yönlendirin.'],
@@ -317,10 +340,13 @@ function buildReport(scan, lang) {
     y += 20;
   }
 
+  const NF = NOTE_FIX[lang] || NOTE_FIX.tr;
+
   for (const item of failed) {
     const meta = C[item.id] || [item.id, '', ''];
     const impactLines = doc.wrap(meta[1], 9, CONTENT_W - 16);
-    const fixLines = doc.wrap(meta[2], 8.5, CONTENT_W - 32);
+    /* Sebebi bilinen bir başarısızlıkta sebebe özel metin; yoksa genel metin. */
+    const fixLines = doc.wrap((item.note && NF[item.note]) || meta[2], 8.5, CONTENT_W - 32);
     const blockHeight = 34 + impactLines.length * 12 + 18 + fixLines.length * 12 + 16;
 
     if (y + blockHeight > A4.height - 60) { doc.addPage(); y = M + 10; }
