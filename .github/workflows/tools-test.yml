@@ -63,7 +63,7 @@ jobs:
 
       # CAA degerlendiricisi. DNSSEC main'de ayri bir modulde (_lib/dnssec.js,
       # DoH ile); burada yalnizca CAA var. Yokluk 'uygulanmamis' sayiliyor.
-            - name: CAA kaydı
+      - name: CAA kaydı
         run: node cyberlionai/tools/caa-test.js
 
       # "Puan disi" etiketleri ve cevirilerin eksiksizligi. Bir musteri
