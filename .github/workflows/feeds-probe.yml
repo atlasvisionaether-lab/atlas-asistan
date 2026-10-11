@@ -41,6 +41,10 @@ on:
         description: "CAA ve DNSSEC ölç (UDP/53 gerekiyor)"
         type: boolean
         default: false
+      cert_issuer:
+        description: "Sertifika makamını ölç (CAA kaydı yazmadan önce ZORUNLU)"
+        type: boolean
+        default: false
       dns_domains:
         description: "Hangi alan adları ölçülsün (boşlukla ayrılmış; boş = varsayılan liste)"
         required: false
@@ -105,6 +109,14 @@ jobs:
       - name: CAA ve DNSSEC ölç
         if: inputs.dns_caa
         run: node cyberlionai/tools/dns-caa-probe.js ${{ inputs.dns_domains }}
+
+      # Sertifika makami. CAA kaydina yanlis makam yazmak bir sonraki
+      # yenilemeyi kirar; Vercel API'si makami DONDURMUYOR (/v7/certs/<id>
+      # yalnizca cns/expiresAt/autoRenew veriyor), bu yuzden TLS el sikismasi
+      # gerekiyor ve o da yalnizca burada yapilabiliyor.
+      - name: Sertifika makamını ölç
+        if: inputs.cert_issuer
+        run: bash cyberlionai/tools/cert-issuer-probe.sh ${{ inputs.dns_domains }}
 
       - name: PhishTank erişim durumunu ölç
         if: inputs.phishtank_access
