@@ -61,6 +61,12 @@ jobs:
       - name: E-posta kimlik kayıtları
         run: node cyberlionai/tools/mail-test.js
 
+      # Veri katalogu <-> kod <-> gizlilik politikasi. FCM cihaz jetonu kodda
+      # saklaniyordu ama politikada HIC gecmiyordu; Play'in Data Safety formu
+      # onu "Device or other IDs" olarak beyan etmeyi sart kosuyor.
+      - name: Veri kataloğu ve Data Safety kaynağı
+        run: node cyberlionai/tools/data-catalog-test.js
+
       # Elle yazilmis yasal sayfalar (on bilgilendirme, cerez) legal/*.md
       # hattinin DISINDA; kimlik ve fiyat orada bayatlasa hicbir sinama
       # dusmuyordu. iyzico altbilgi listesi de burada kilitli.

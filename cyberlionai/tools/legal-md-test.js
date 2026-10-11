@@ -37,7 +37,14 @@ SAYFALAR.forEach(function (p) {
   sina(p.slug + ': <title>', html.indexOf('<title>' + p.title + ' | Cyber Lion AI</title>') !== -1, true);
   sina(p.slug + ': meta description', /<meta name="description" content="[^"]{50,}"/.test(html), true);
   sina(p.slug + ': tek h1', (html.match(/<h1>/g) || []).length, 1);
-  sina(p.slug + ': güncelleme tarihi', html.indexOf('Son güncelleme:</strong> 05.10.2026') !== -1, true);
+  /* Tarih artık SAYFANIN KENDİ md'sinden geliyor (önce tek bir sabitten
+     geliyordu; o zaman bir belgeyi güncellemek ötekileri de o gün
+     güncellenmiş gibi gösterirdi). Sınama da sabit beklemiyor: md ne
+     diyorsa HTML onu yazmalı. */
+  const tarih = (/^Son Güncelleme:\s*(.+)$/im.exec(md) || [])[1];
+  sina(p.slug + ': md\'de güncelleme tarihi var', !!tarih, true);
+  sina(p.slug + ': HTML tarihi md ile aynı',
+    html.indexOf('Son güncelleme:</strong> ' + (tarih || '').trim()) !== -1, true);
   sina(p.slug + ': ünvan legal-data.js\'ten', html.indexOf(isletme.unvan + ' – ' + isletme.isletmeTuru) !== -1, true);
   sina(p.slug + ': adres ve VKN', html.indexOf(isletme.adresKisa) !== -1 && html.indexOf('VKN ' + isletme.vkn) !== -1, true);
   sina(p.slug + ': satır içi betik yok', /<script(?![^>]*\ssrc=)/.test(html), false);

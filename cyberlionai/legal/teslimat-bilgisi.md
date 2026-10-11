@@ -1,4 +1,5 @@
 # TESLİMAT VE KARGO BİLGİLENDİRMESİ
+Son Güncelleme: 05.10.2026
 
 
 SATICI BİLGİLERİ:

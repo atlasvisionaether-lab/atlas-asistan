@@ -29,6 +29,7 @@ const { isletme } = require('../legal-data.js');
 
 const ROOT = path.join(__dirname, '..');
 const SRC = path.join(ROOT, 'legal');
+/* md'sinde "Son Güncelleme" satırı olmayan bir belge için yedek. */
 const GUNCELLEME_TARIHI = '05.10.2026';
 const SITE = 'https://www.cyberlionai.com';
 
@@ -72,18 +73,24 @@ function inline(text) {
 function parse(md) {
   const lines = md.replace(/\r\n/g, '\n').split('\n');
   let h1 = null;
+  let tarih = null;
   const body = [];
   let inSeller = false;
   for (const raw of lines) {
     const line = raw.replace(/\s+$/, '');
     if (h1 === null && /^# /.test(line)) { h1 = line.slice(2).trim(); continue; }
-    if (/^Son Güncelleme:/i.test(line)) continue;
+    if (/^Son Güncelleme:/i.test(line)) { tarih = line.split(':').slice(1).join(':').trim(); continue; }
     if (/^SATICI BİLGİLERİ:?$/i.test(line)) { inSeller = true; continue; }
     if (inSeller) { if (line === '') inSeller = false; continue; }
     body.push(line);
   }
   if (!h1) throw new Error('h1 yok');
-  return { h1: h1, html: blocks(body) };
+  /* Tarih SAYFANIN KENDİ md'sinden. Önceden tek bir sabitten geliyordu; o
+     zaman bir belgeyi güncellemek ÖTEKİ BEŞİNİ de o gün güncellenmiş gibi
+     gösteriyordu ya da (bu sefer olduğu gibi) md'deki tarih değişmesine
+     rağmen sayfada eski tarih kalıyordu. İkisi de yanlış; tarih belgenin
+     kendisine ait. */
+  return { h1: h1, html: blocks(body), tarih: tarih || GUNCELLEME_TARIHI };
 }
 
 function blocks(lines) {
@@ -209,7 +216,7 @@ ${parsed.html.split('\n').map(function (l) { return '      ' + l; }).join('\n')}
     </article>
 
     <aside class="legal-meta" aria-label="Belge bilgileri">
-      <p><strong>Son güncelleme:</strong> ${GUNCELLEME_TARIHI}</p>
+      <p><strong>Son güncelleme:</strong> ${parsed.tarih}</p>
       <p><strong>${esc(isletme.unvan)} – ${esc(isletme.isletmeTuru)} (Cyber Lion AI)</strong><br />
         ${esc(isletme.adresKisa)}<br />
         VKN ${esc(isletme.vkn)} · ${esc(isletme.vergiDairesi)}<br />
