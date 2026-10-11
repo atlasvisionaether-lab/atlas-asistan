@@ -49,6 +49,10 @@ on:
         description: "Sertifika detayı ölç (OCSP stapling, zincir, anahtar gücü)"
         type: boolean
         default: false
+      redirect_git:
+        description: "Open redirect ve .git ifşası ölç (yalnızca kendi alan adlarımız)"
+        type: boolean
+        default: false
       dns_domains:
         description: "Hangi alan adları ölçülsün (boşlukla ayrılmış; boş = varsayılan liste)"
         required: false
@@ -133,6 +137,20 @@ jobs:
       - name: Sertifika detayını ölç
         if: inputs.cert_detail
         run: node cyberlionai/tools/cert-detail-probe.js ${{ inputs.dns_domains }}
+
+      # Open redirect ve .git ifsasi. Kontrol YAZILMADAN once olcum:
+      # .git/HEAD ZATEN var (owasp.js SENSITIVE_PATHS) ve uretimde SKIP
+      # gorunmesinin sebebi eksik degil, kapi: aktif yollar yalnizca
+      # consent && verified ile deneniyor (scan-levels.js). Open redirect
+      # kontrolu ise HIC yok. Olculen sorular: statik bir sitede ?next=
+      # gibi bir parametre hic yonlendirme uretiyor mu (uretmiyorsa kontrol
+      # her statik sitede sessizce "gecti" der), ve olcut ne olmali (30x
+      # yetmez: apex -> www de 301 verir; olcut Location'in BASKA bir ana
+      # bilgisayara gitmesi). Yalnizca KENDI alan adlarimiz, payload yok,
+      # yonlendirme takip edilmiyor, zamanlamaya bagli DEGIL.
+      - name: Open redirect ve .git ifşasını ölç
+        if: inputs.redirect_git
+        run: node cyberlionai/tools/redirect-git-probe.js ${{ inputs.dns_domains }}
 
       - name: PhishTank erişim durumunu ölç
         if: inputs.phishtank_access
