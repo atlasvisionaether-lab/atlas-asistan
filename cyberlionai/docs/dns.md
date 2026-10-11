@@ -24,8 +24,11 @@ aynı skoru veriyor).
 Eklenecek kayıt, **tek satır**:
 
 ```
-Type: CAA   Name: @   Value: 0 issue "<makamın CAA kimliği>"
+Type: CAA   Name: @   Value: 0 issue "letsencrypt.org"
 ```
+
+Makam **ölçüldü** (koşu `38162493841`, 11.10.2026): apex ve `www` için
+sertifikayı Let's Encrypt kesiyor.
 
 `iodef` satırı **şimdilik eklenmiyor**. İki sebep:
 
@@ -37,12 +40,31 @@ Type: CAA   Name: @   Value: 0 issue "<makamın CAA kimliği>"
 2. `iodef` **yetki vermiyor**: yalnızca `issue` ve `issuewild` bir makamı
    yetkilendirir. Yani `iodef`'in gecikmesi korumayı geciktirmiyor.
 
-### Makam adı ölçülmeden yazılmaz
+### Makam adı ölçüldü, tahmin edilmedi
 
-`<makamın CAA kimliği>` yukarıda bilinçli olarak **boş**. Yanlış makamı
-yazmak, Vercel'in otomatik yenilemesini kırar ve site sertifikasız kalır.
-"Vercel genelde Let's Encrypt veriyor" bir tahmindir ve CAA kaydı tahminle
-yazılmaz.
+Yanlış makamı yazmak Vercel'in otomatik yenilemesini kırar ve site
+sertifikasız kalır; bu yüzden ad, kayıt önerilmeden önce ölçüldü.
+"Vercel genelde Let's Encrypt veriyor" bir tahmindi — ölçüm onu doğruladı
+ama kayıt tahmine değil bu çıktıya dayanıyor:
+
+```
+== cyberlionai.com
+   issuer=C = US, O = Let's Encrypt, CN = YR1
+   subject=CN = cyberlionai.com
+   notBefore=Sep  9 10:26:33 2026 GMT
+   notAfter=Dec  8 10:26:32 2026 GMT
+
+== www.cyberlionai.com
+   issuer=C = US, O = Let's Encrypt, CN = YR1
+   subject=CN = www.cyberlionai.com
+```
+
+`CN = YR1` bir Let's Encrypt ara sertifikası; CAA'ya yazılan ad ise kuruluşun
+CAA kimliği, yani `letsencrypt.org`.
+
+**Makam değişirse bu kayıt da değişmeli.** Vercel sertifika sağlayıcısını
+değiştirirse (ör. Google Trust Services'e geçerse) `letsencrypt.org` yazan bir
+CAA kaydı yenilemeyi engeller. Ölçüm tekrarlanabilir:
 
 Vercel API'si makamı **döndürmüyor** (`/v5/certs`, `/v7/certs/<id>` → yalnızca
 `cns`, `createdAt`, `expiresAt`, `autoRenew`; 11.10.2026'da bakıldı), bu yüzden
