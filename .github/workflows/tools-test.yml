@@ -61,6 +61,12 @@ jobs:
       - name: E-posta kimlik kayıtları
         run: node cyberlionai/tools/mail-test.js
 
+      # Elle yazilmis yasal sayfalar (on bilgilendirme, cerez) legal/*.md
+      # hattinin DISINDA; kimlik ve fiyat orada bayatlasa hicbir sinama
+      # dusmuyordu. iyzico altbilgi listesi de burada kilitli.
+      - name: Yasal kimlik ve iyzico altbilgisi
+        run: node cyberlionai/tools/legal-identity-test.js
+
       # Sertifika basarisizliginin SEBEBI. Onceden ham OpenSSL kodu
       # ("UNABLE_TO_VERIFY_LEAF_SIGNATURE") nota yaziliyordu; sinama kodun
       # sizmadigini ve her sebebin ayri duzeltmesi oldugunu tutuyor.
