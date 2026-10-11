@@ -360,6 +360,15 @@ const mesaj = {
       + '\nSon 30 günde bu alan adına tarama: ' + Number(sonTaramaSayisi || 0)
       + '\nGerekçe: ' + serbestMetin(gerekce, 600);
   },
+  /* Hesap silme denetim izi: e-posta MASKELİ, yalnızca satır SAYILARI.
+     Silinen verinin kendisi (alan adları, bulgular) gönderilmez. */
+  hesapSilindi: function (eposta, sayac) {
+    const toplam = Object.keys(sayac || {}).map(function (k) {
+      return k + '=' + Number((sayac || {})[k] || 0);
+    }).join(' ');
+    return ONEK + ' 🗑️ Hesap silindi: ' + maskEmail(eposta)
+      + (toplam ? '\n' + toplam : '');
+  },
   test: function (metin) {
     return ONEK + ' 🦁 ' + (metin || 'test');
   },

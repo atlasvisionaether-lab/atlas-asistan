@@ -975,6 +975,117 @@ async function jobsPendingNotify(limit) {
   return list.filter(function (j) { return var_.has(j.id); }).slice(0, n);
 }
 
+/* ============================================================
+   HESAP SİLME (geri alınamaz)
+   ============================================================
+
+   NEDEN KISITLARA GÜVENİLMİYOR
+
+   Göç dosyaları ölçüldü (11.10.2026) ve yabancı anahtarlar TEK TİP DEĞİL:
+
+     cl_scans, cl_subscriptions, cl_device_tokens,
+     verified_domains, monitor_alerts   → ON DELETE CASCADE
+     scan_jobs, scan_logs               → ON DELETE SET NULL
+     cl_waitlist                        → user_id sütunu YOK (yalnızca e-posta)
+
+   Yani yalnızca `auth.users` satırını silmek, `scan_jobs` satırlarını SİLMEZ:
+   kullanıcı kimliğini NULL'a çeker ve taranan alan adları, bulgular ve AI
+   raporları sahipsiz satırlar olarak tabloda KALIR. Play'in "hesabı ve
+   verileri sil" beklentisi de KVKK'daki silme talebi de bunu karşılamaz.
+   Bu yüzden silme burada AÇIKÇA yapılıyor ve sayılar geri döndürülüyor.
+
+   İKİ TABLO SİLİNMİYOR, ANONİMLEŞTİRİLİYOR — ikisi de yasal yükümlülük:
+
+     scan_logs   Tarama günlüğü, tablo yorumunda yazdığı gibi hukuki ispat
+                 için 12 ay saklanıyor (üçüncü bir siteyi kimin taradığı
+                 sorusunun cevabı).
+     fix_orders  Ücretli düzeltme siparişi; tutar ve ödeme zamanı taşıyor,
+                 yani fatura/vergi kaydı.
+
+   Satır silinmiyor, KİŞİYE BAĞI kesiliyor: `user_id` NULL'a çekiliyor.
+   KVKK'da yasal yükümlülük bir istisna; kaydı tutmak ile kişiyle
+   ilişkilendirmemek bir arada mümkün.
+
+   Tablo YOKSA (PostgREST 404) işlem durmaz: o göç uygulanmamış demektir,
+   silinecek veri de yoktur. Hangi tablonun atlandığı dönüşte yazılı —
+   sessizce "silindi" demiyor.  */
+
+/* Silinmeyen, yalnızca kişiye bağı kesilen tablolar (yukarıdaki gerekçe). */
+const ANONIMLESTIRILEN = ['scan_logs', 'fix_orders'];
+
+/** Sahibi bu hesap olan satırları siler; dönüş silinen satır sayısı. */
+async function sil(tablo, sorgu) {
+  const rows = await request(tablo + '?' + sorgu + '&select=id', {
+    method: 'DELETE',
+    headers: { 'Prefer': 'return=representation' }
+  });
+  return rows ? rows.length : 0;
+}
+
+/**
+ * Hesabın TÜM verisini siler. `auth.users` satırını SİLMEZ — onu çağıran
+ * (api/panel/account.js) `auth.adminDeleteUser` ile en sonda siler, veri
+ * gitmeden hesap kapanmasın diye.
+ *
+ * Sıra önemli: `scan_jobs` ilk, çünkü `scan_findings` ve `ai_reports` ona
+ * `on delete cascade` ile bağlı — iş silinince ikisi de gider.
+ *
+ * Dönüş: { silinen: {...}, anonimlestirilen: {...}, atlanan: [tablo...] }
+ */
+async function deleteAccountData(userId, email) {
+  if (!UUID_RE.test(String(userId || ''))) throw new Error('invalid_user_id');
+
+  const kullanici = 'user_id=eq.' + encodeURIComponent(userId);
+  const isler = [
+    ['scan_jobs', kullanici],            /* scan_findings + ai_reports cascade */
+    [TABLE, kullanici],                  /* cl_scans */
+    ['cl_subscriptions', kullanici],
+    ['cl_device_tokens', kullanici],
+    ['verified_domains', kullanici],
+    ['monitor_alerts', kullanici]
+  ];
+
+  const silinen = {};
+  const atlanan = [];
+
+  for (const [tablo, sorgu] of isler) {
+    try {
+      silinen[tablo] = await sil(tablo, sorgu);
+    } catch (err) {
+      if (/db_error_404/.test(err.message)) { atlanan.push(tablo); continue; }
+      throw err;
+    }
+  }
+
+  /* Bekleme listesinin hesapla bağı yok: kayıt e-posta ile yapılıyor. */
+  if (email) {
+    try {
+      silinen.cl_waitlist = await sil('cl_waitlist', 'email=eq.' + encodeURIComponent(email));
+    } catch (err) {
+      if (/db_error_404/.test(err.message)) atlanan.push('cl_waitlist');
+      else throw err;
+    }
+  }
+
+  /* Yasal yükümlülüğü olan kayıtlar: satır KALIYOR, kişiyle bağı kesiliyor. */
+  const anonimlestirilen = {};
+  for (const tablo of ANONIMLESTIRILEN) {
+    try {
+      const rows = await request(tablo + '?' + kullanici + '&select=id', {
+        method: 'PATCH',
+        body: { user_id: null },
+        headers: { 'Prefer': 'return=representation' }
+      });
+      anonimlestirilen[tablo] = rows ? rows.length : 0;
+    } catch (err) {
+      if (/db_error_404/.test(err.message)) atlanan.push(tablo);
+      else throw err;
+    }
+  }
+
+  return { silinen: silinen, anonimlestirilen: anonimlestirilen, atlanan: atlanan };
+}
+
 module.exports = {
   saveDeviceToken, deleteDeviceToken, deviceTokensForJob, dropDeviceToken,
   jobsPendingNotify,
@@ -987,5 +1098,6 @@ module.exports = {
   enterpriseScanTargets,
   createPendingJob, markJobQueued, markJobFailed, getJobStatus,
   listSubscriptions, upsertIyzicoSubscription,
+  deleteAccountData,
   findSubscriptionByRef, updateSubscriptionStatusByRef
 };

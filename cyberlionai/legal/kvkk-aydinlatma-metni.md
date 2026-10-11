@@ -1,4 +1,5 @@
 # KVKK AYDINLATMA METNİ
+Son Güncelleme: 05.10.2026
 
 
 SATICI BİLGİLERİ:

@@ -40,6 +40,13 @@
         <li>Tarama verileri: Taranan domain, tarama sonuçları (kişisel veri içermez)</li>
         <li>Ödeme verileri: Kart bilgileriniz tarafımızda saklanmaz, doğrudan iyzico&#39;ya iletilir</li>
         <li>Çerezler: Zorunlu çerezler dışında izleme çerezi kullanmıyoruz (KVKK Uyumlu)</li>
+        <li>Bildirim cihaz jetonu: Mobil uygulamada bildirime izin verirseniz, cihazınızın bildirim jetonu (Firebase Cloud Messaging) hesabınıza bağlanır. Yalnızca size bildirim göndermek için kullanılır, reklam kimliği değildir ve uygulamadan çıkışta silinir</li>
+        <li>Hız sınırı: Kötüye kullanımı önlemek için IP adresinizin kısaltılmış bir özeti süreli bir sayaç olarak tutulur; IP adresi HAM hâliyle saklanmaz ve süresi dolunca sayaç kendiliğinden silinir</li>
+        <li>Bekleme listesi: Bir plan için bekleme listesine yazıldıysanız e-posta adresiniz, plan ve (verdiyseniz) alan adınız kaydedilir</li>
+        <li>Doğrulanmış alan adları: Sahipliğini kanıtladığınız alan adları hesabınıza kaydedilir; aktif tarama ve Cloudflare düzeltmesi yalnızca bu alan adlarında çalışır</li>
+        <li>İzleme uyarıları: Ücretli planlarda günlük izleme bir sorun bulduğunda (skor düşüşü, sertifika bitişi, kara liste) uyarı kaydı hesabınıza yazılır</li>
+        <li>Tarama günlüğü: Her tarama; alan adı, tarama seviyesi, doğrulama durumu ve zamanla kaydedilir ve hukuki ispat için 12 ay saklanır. İzinsiz tarama şüphesinde bu kayıt incelenir</li>
+        <li>Düzeltme siparişleri: Ücretli bir düzeltme satın aldıysanız sipariş kaydı (alan adı, tutar, ödeme zamanı) fatura ve vergi yükümlülüğü için saklanır</li>
       </ul>
       <p><strong>Veri Kullanımı:</strong></p>
       <ul>
@@ -52,14 +59,23 @@
         <li>Altyapı: Vercel (barındırma), Cloudflare (ağ), Supabase (veritabanı ve kimlik doğrulama)</li>
         <li>Dil/ülke tespiti: Barındırma sağlayıcımız Vercel&#39;in her isteğe eklediği ülke bilgisi kullanılır; IP adresiniz bu amaçla başka bir üçüncü tarafa iletilmez</li>
         <li>İç bildirimler: Telegram (e-posta adresi maskelenmiş olarak)</li>
+        <li>Bildirim: Google / Firebase Cloud Messaging (yalnızca cihaz jetonu ve bildirim içeriği)</li>
+        <li>Hız sınırı sayaçları: Upstash (yalnızca IP özetinden türetilmiş süreli anahtar)</li>
         <li>Verileriniz satılmaz. Altyapı sağlayıcılarımızın sunucuları yurt dışında bulunabilir; bu nedenle verileriniz yurt dışındaki sunucularda işlenebilir. Ayrıntı için KVKK Aydınlatma Metni&#39;ne bakınız.</li>
       </ul>
+      <p><strong>Hesabınızı ve Verilerinizi Silme:</strong> Hesabınızı ve hesaba bağlı tüm verileri kendiniz silebilirsiniz; bekleme süresi yoktur.</p>
+      <ul>
+        <li>Panelden: Panelim → Güvenlik Ayarları → Hesabı Sil</li>
+        <li>Web üzerinden: <a href="https://www.cyberlionai.com/hesap-silme">www.cyberlionai.com/hesap-silme</a></li>
+      </ul>
+      <p>Silinenler: hesabınız (e-posta ve giriş bilgileri), tarama geçmişiniz ve bulgularınız, yapay zekâ rapor özetleri, aboneliğiniz ve iyzico referansları, bildirim cihaz jetonunuz, doğruladığınız alan adları, izleme uyarılarınız ve bekleme listesi kaydınız.</p>
+      <p>Silinmeyenler ve sebebi: tarama günlüğü ile düzeltme siparişi kayıtları yasal yükümlülük (hukuki ispat ve vergi mevzuatı) gereği saklanır; bu satırlar silinmez ama <strong>kimliğinizle bağı kesilir</strong>. Ödeme ve fatura kayıtları yasal saklama süresince iyzico tarafında kalır; kart bilgileriniz bizde hiç tutulmaz.</p>
       <p><strong>Haklarınız:</strong> KVKK Madde 11 kapsamındaki haklarınız için <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a> adresine yazabilirsiniz.</p>
       <p>Çerez ayarlarınızı tarayıcınızdan yönetebilirsiniz. Sitemizde pazarlama çerezi yoktur.</p>
     </article>
 
     <aside class="legal-meta" aria-label="Belge bilgileri">
-      <p><strong>Son güncelleme:</strong> 05.10.2026</p>
+      <p><strong>Son güncelleme:</strong> 11.10.2026</p>
       <p><strong>Ali Kotan – Şahıs İşletmesi (Cyber Lion AI)</strong><br />
         Ritim AVM, Cevizli Mah. Zuhal Cad. No:46/50 Maltepe/İstanbul<br />
         VKN 5810910912 · Kartal Vergi Dairesi<br />

@@ -419,11 +419,72 @@ function siteUrl() {
   return (process.env.PUBLIC_SITE_URL || 'https://www.cyberlionai.com').replace(/\/+$/, '');
 }
 
+/* ------------------------------------------------------------------
+   Yönetici yetkisi: hesabı SİLME
+   ------------------------------------------------------------------ */
+
+/**
+ * GoTrue'nun yönetici ucu ANON anahtarıyla çalışmaz; servis rolü ister.
+ * `config()` anon anahtarını okuduğu için ayrı bir yapılandırma var — ve
+ * ayrı olması iyi: servis rolü anahtarı yalnızca bu tek işlemde kullanılıyor,
+ * oturum uçlarının hiçbiri onu görmüyor.
+ */
+function adminConfig() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return url && key ? { url: url.replace(/\/+$/, ''), key: key } : null;
+}
+
+function adminConfigured() { return adminConfig() !== null; }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Hesabı KALICI olarak siler (geri alınamaz).
+ *
+ * Yalnızca `api/panel/account.js` çağırır ve orada kimlik oturumdan çözülür:
+ * çağıran kendi kimliğinden başkasını veremez. Buradaki UUID sınaması ikinci
+ * katman — yol parçasına kimlik dışında bir şey girmesin.
+ *
+ * 404, "böyle bir kullanıcı yok" demek: silme işi zaten olmuş sayılır, çağıran
+ * bunu başarısızlık olarak göstermez (tekrar denenebilir olması gerekiyor).
+ *
+ * Dönüş: { ok, status }.
+ */
+async function adminDeleteUser(userId) {
+  const cfg = adminConfig();
+  if (!cfg) throw new Error('admin_not_configured');
+  if (!UUID_RE.test(String(userId || ''))) throw new Error('invalid_user_id');
+
+  const controller = new AbortController();
+  const timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
+
+  let response;
+  try {
+    response = await fetch(cfg.url + '/auth/v1/admin/users/' + encodeURIComponent(userId), {
+      method: 'DELETE',
+      signal: controller.signal,
+      headers: {
+        'apikey': cfg.key,
+        'Authorization': 'Bearer ' + cfg.key,
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    throw new Error('auth_unreachable');
+  }
+  clearTimeout(timer);
+
+  return { ok: response.ok || response.status === 404, status: response.status };
+}
+
 module.exports = {
   isConfigured, call,
   validEmail, passwordProblem, mapError, logFailure, siteUrl, PASSWORD_MIN, PASSWORD_MAX,
   signUp, signInPassword, signInMagicLink, recover, verifyOtp,
   refresh, getUser, updatePassword, logout,
+  adminConfigured, adminDeleteUser,
   setSessionCookies, clearSessionCookies, readTokens, resolveUser,
   AT_COOKIE, RT_COOKIE
 };
