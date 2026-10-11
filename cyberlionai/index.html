@@ -2580,7 +2580,22 @@
             query_failed: 'DNS sorgusu yanıt vermedi',
             expired: 'sertifika süresi dolmuş',
             expiring_soon: 'sertifikanın süresi dolmak üzere',
-            untrusted: 'sertifika doğrulanamadı'
+            untrusted: 'sertifika doğrulanamadı',
+            chain_incomplete: 'ara sertifika eksik; sunucu zinciri tam göndermiyor',
+            self_signed: 'sertifika kendinden imzalı; tanınan bir makam kesmemiş',
+            hostname_mismatch: 'sertifika bu alan adı için düzenlenmemiş',
+            revoked: 'sertifika iptal edilmiş'
+          },
+          /* Sebebe özel düzeltme. Genel "sertifikayı yenileyin" metni eksik
+             ara sertifika için YANLIŞ yönlendirme: yenileme sorunu çözmez,
+             zinciri tam göndermek çözer. */
+          notefix: {
+            chain_incomplete: 'Sunucuya yalnızca site sertifikasını değil, ara sertifikaları da içeren zinciri verin.\nNginx: ssl_certificate /etc/letsencrypt/live/ALANADI/fullchain.pem;   (cert.pem DEĞİL)\nApache: SSLCertificateFile .../fullchain.pem   ·   Doğrulama: openssl s_client -connect ALANADI:443 -servername ALANADI',
+            self_signed: 'Kendinden imzalı sertifikayı tanınan bir makamın kestiği sertifikayla değiştirin (ör. Let\'s Encrypt / certbot). Tarayıcılar kendinden imzalı sertifikada uyarı gösterir ve bu uyarı atlanamaz.',
+            hostname_mismatch: 'Sertifikanın alan adı listesine (SAN) bu adı ekleyin; apex ve www birlikte kullanılıyorsa ikisi de yazılmalı. Ters vekil varsa sunucu adının (SNI) doğru sertifikaya eşlendiğini denetleyin.',
+            revoked: 'İptal edilmiş sertifikayı HEMEN değiştirin. İptal sebebi anahtarın sızması olabilir: yeni sertifikayı YENİ bir özel anahtarla üretin, eskisini kullanmayın.',
+            expired: 'Sertifikayı yenileyin ve yenilemeyi otomatikleştirin (certbot renew zamanlanmış görev). Süresi geçmiş sertifikada tarayıcı sayfayı hiç göstermez.',
+            expiring_soon: 'Yenilemeyi beklemeyin: otomatik yenileme kurulu değilse elle yenileyin, kuruluysa son koşunun neden başarısız olduğunu denetleyin.'
           },
           checks: {
             https:         { name: 'HTTPS kullanımı', fix: 'Tüm trafiği HTTPS üzerinden sunun ve HTTP isteklerini 301 ile HTTPS\'e yönlendirin.' },
@@ -3016,7 +3031,19 @@
             query_failed: 'the DNS query did not answer',
             expired: 'the certificate has expired',
             expiring_soon: 'the certificate expires soon',
-            untrusted: 'the certificate could not be validated'
+            untrusted: 'the certificate could not be validated',
+            chain_incomplete: 'intermediate certificate missing; the server is not sending the full chain',
+            self_signed: 'the certificate is self-signed; no recognised authority issued it',
+            hostname_mismatch: 'the certificate was not issued for this domain',
+            revoked: 'the certificate has been revoked'
+          },
+          notefix: {
+            chain_incomplete: 'Serve the full chain, not just the leaf certificate.\nNginx: ssl_certificate /etc/letsencrypt/live/DOMAIN/fullchain.pem;   (NOT cert.pem)\nApache: SSLCertificateFile .../fullchain.pem   ·   Verify: openssl s_client -connect DOMAIN:443 -servername DOMAIN',
+            self_signed: 'Replace the self-signed certificate with one issued by a recognised authority (e.g. Let\'s Encrypt / certbot). Browsers warn on self-signed certificates and the warning cannot be dismissed silently.',
+            hostname_mismatch: 'Add this name to the certificate\'s SAN list; if both apex and www are in use, include both. Behind a reverse proxy, check that the server name (SNI) maps to the right certificate.',
+            revoked: 'Replace the revoked certificate NOW. Revocation may mean the key leaked: issue the new certificate with a NEW private key, do not reuse the old one.',
+            expired: 'Renew the certificate and automate renewal (a scheduled certbot renew). With an expired certificate the browser will not show the page at all.',
+            expiring_soon: 'Do not wait for the expiry: renew manually if automatic renewal is not set up, or check why the last run failed if it is.'
           },
           checks: {
             https:         { name: 'HTTPS in use', fix: 'Serve all traffic over HTTPS and 301-redirect HTTP requests to HTTPS.' },
@@ -4569,7 +4596,15 @@
         fix.style.color = 'var(--gold-primary)';
         fix.style.whiteSpace = 'pre-wrap';
         fix.style.overflowWrap = 'anywhere';
-        fix.textContent = t('scan.checks.' + item.id + '.fix');
+        /* Sebebi bilinen bir başarısızlıkta sebebe özel metin; yoksa kontrolün
+           genel metni. Eşleme AÇIK tutuluyor: t()'nin eksik anahtarda
+           anahtarın kendisini döndürmesine güvenmek, raporda ham bir dize
+           görünmesi demek olurdu (bu kusur bir kez yaşandı). */
+        var NOTE_FIX = ['chain_incomplete', 'self_signed', 'hostname_mismatch',
+                        'revoked', 'expired', 'expiring_soon'];
+        fix.textContent = (item.note && NOTE_FIX.indexOf(item.note) !== -1)
+          ? t('scan.notefix.' + item.note)
+          : t('scan.checks.' + item.id + '.fix');
         body.appendChild(fix);
         body.appendChild(howToFixBlock(item));
         var cf = cloudflareBlock(item);

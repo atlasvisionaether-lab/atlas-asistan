@@ -117,6 +117,22 @@ async function readBodyCapped(response) {
  * TLS incelemesi: görüşülen protokol, sertifika geçerlilik süresi ve
  * eski protokollerin (TLS 1.0/1.1) hâlâ kabul edilip edilmediği.
  */
+/**
+ * Sunucunun GÖNDERDİĞİ zincirin uzunluğu. Kök kendisine işaret ederek zinciri
+ * kapattığı için parmak iziyle döngü kırılıyor.
+ */
+function chainLength(cert) {
+  let n = 0;
+  let c = cert;
+  const gorulen = new Set();
+  while (c && c.fingerprint256 && !gorulen.has(c.fingerprint256)) {
+    gorulen.add(c.fingerprint256);
+    n += 1;
+    c = c.issuerCertificate;
+  }
+  return n;
+}
+
 function inspectTls(host, port) {
   return new Promise(function (resolve) {
     const socket = tls.connect({
@@ -134,7 +150,13 @@ function inspectTls(host, port) {
     socket.on('error', function (err) { done({ ok: false, reason: (err && err.code) || 'error' }); });
 
     socket.on('secureConnect', function () {
-      const cert = socket.getPeerCertificate();
+      /* true: zinciri de ver. Zincir uzunluğu, "sertifika doğrulanamadı"nın
+         SEBEBİNİ adlandırmak için gerekiyor; ara sertifika göndermeyen bir
+         sunucuda 1, sağlıklı sunucularda 3-5 çıkıyor (ölçüm: koşu
+         38167648017 — incomplete-chain.badssl.com 1, kendi sitemiz 4,
+         atlasasistan.com 5, google.com 3). Node zinciri yerel kök
+         deposundan TAMAMLAMIYOR; ölçüm bunu doğruladı. */
+      const cert = socket.getPeerCertificate(true);
       const expiry = cert && cert.valid_to ? new Date(cert.valid_to) : null;
       done({
         ok: true,
@@ -143,7 +165,8 @@ function inspectTls(host, port) {
         authorizationError: socket.authorizationError ? String(socket.authorizationError) : null,
         issuer: cert && cert.issuer ? (cert.issuer.O || cert.issuer.CN || null) : null,
         validTo: expiry && !isNaN(expiry) ? expiry.toISOString() : null,
-        daysLeft: expiry && !isNaN(expiry) ? Math.floor((expiry - Date.now()) / 86400000) : null
+        daysLeft: expiry && !isNaN(expiry) ? Math.floor((expiry - Date.now()) / 86400000) : null,
+        chainLength: chainLength(cert)
       });
     });
   });

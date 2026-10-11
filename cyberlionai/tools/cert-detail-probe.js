@@ -102,11 +102,14 @@ function olc(host) {
     socket.setTimeout(ZAMAN_ASIMI, function () { bitir({ ok: false, hata: 'timeout' }); });
     socket.on('error', function (e) { bitir({ ok: false, hata: (e && e.code) || 'error' }); });
 
-    /* Bu olay stapling'in TEK kanıtı. Gelmezse "yok" demek için önce
-       geldiği bir sunucu görmek gerekiyor — listedeki karşılaştırma bu. */
+    /* ÖLÇÜLDÜ (koşu 38167648017): bu olay stapling OLMADIĞINDA DA tetikleniyor,
+       yalnızca gövdesi 0 bayt oluyor. Yani ölçüt olayın gelmesi DEĞİL,
+       gövdenin uzunluğu. İlk sürüm boolean'a bakıyordu ve stapling yapmayan
+       beş sunucuya "VAR" diyordu; DigiCert'in 471 baytlık gerçek yanıtıyla
+       karşılaştırma bu kusuru ortaya çıkardı. */
     socket.on('OCSPResponse', function (yanit) {
-      ocsp = true;
       ocspBoyut = yanit ? yanit.length : 0;
+      ocsp = ocspBoyut > 0;
     });
 
     socket.on('secureConnect', function () {
@@ -151,7 +154,9 @@ function olc(host) {
 
     yaz('protokol', s.protocol);
     yaz('doğrulandı', s.authorized + (s.authorizationError ? '  (' + s.authorizationError + ')' : ''));
-    yaz('OCSP stapling', s.ocsp ? 'VAR (' + s.ocspBoyut + ' bayt)' : 'YOK');
+    yaz('OCSP stapling', s.ocsp
+      ? 'VAR (' + s.ocspBoyut + ' bayt)'
+      : 'YOK' + (s.ocspBoyut === 0 ? '  (olay geldi, gövde boş)' : ''));
     yaz('son kullanma', s.validTo + '  (' + s.gunKaldi + ' gün)');
     yaz('imza algoritması', s.sigalg || '(Node vermiyor)');
     yaz('zincir uzunluğu', s.zincir.length);
@@ -164,7 +169,10 @@ function olc(host) {
 
   process.stdout.write('\n' + KALIN + 'Okunacak sorular' + SIFIRLA + '\n');
   process.stdout.write('1. Hiçbir sunucuda stapling "VAR" çıkmadıysa ölçüm bozuk; kontrol YAZILMAZ.\n');
+  process.stdout.write('   (11.10.2026 ölçümü: digicert.com 471 bayt VAR — ölçüm çalışıyor.)\n');
   process.stdout.write('2. Yalnızca Let\'s Encrypt\'te "YOK" ise bu LE kararı, sitenin kusuru değil.\n');
+  process.stdout.write('   (11.10.2026 ölçümü: LE *ve* Google Trust Services stapling YAPMIYOR —\n');
+  process.stdout.write('   bu yüzden OCSP kontrolü YAZILMADI; gerekçe docs/scanner-tls.md\'de.)\n');
   process.stdout.write('3. incomplete-chain zincir uzunluğu diğerlerinden KISA mı? Değilse Node\n');
   process.stdout.write('   zinciri yerel depodan tamamlıyor ve eksiklik bu yolla ÖLÇÜLEMEZ.\n');
 })();
