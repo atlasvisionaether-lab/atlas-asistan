@@ -77,9 +77,14 @@ ağ çıkışı kapalı olduğu için `ÖLÇÜLEMEDİ` der; `iyzico-verify.yml` 
 | `?plan=pro&declaration=1` | 400 `agreements_required` — ön bilgilendirme + sözleşme onayı şart (Mesafeli Sözleşmeler Yönetmeliği) |
 | her kapı geçildi, oturum yok | makine isteği 401 `auth_required`; tarayıcı 303 → `/panel?checkout=pro` |
 | ödeme kapalıyken aynı istek | 503 `checkout_unconfigured`; tarayıcı 303 → `/pricing?checkout=unavailable` |
-| `/api/checkout-return` jeton yok / biçimsiz jeton | 303 → `/panel?checkout=invalid` (abonelik **yazılmaz**) |
-| `POST /api/webhooks/iyzico` imzasız / yanlış imzalı | 401, hiçbir şey yazılmaz |
+| `/api/checkout-return` jeton yok / biçimsiz jeton | ödeme açıkken 303 → `/panel?checkout=invalid`; **ödeme kapalıyken** `…=unavailable` (uç jetona bakmadan dönüyor) — her iki hâlde abonelik **yazılmaz** |
+| `POST /api/webhooks/iyzico` imzasız / yanlış imzalı | ödeme açıkken 401; **ödeme kapalıyken** 503 `webhook_unconfigured` (anahtar yoksa imza doğrulanamaz) — her iki hâlde hiçbir şey yazılmaz |
 | `GET /api/webhooks/iyzico` | 405 + `Allow: POST` |
+
+Beklenen değerlerin bir kısmı **ödemenin açık olup olmamasına göre değişiyor**;
+betik `?mode` cevabındaki `enabled` değerine bakıp hangisini bekleyeceğine
+karar veriyor. İlk sürüm bunu atlamıştı ve ilk canlı koşu (`38186662506`)
+kendi beklentisini düzeltti: uçlar doğru davranıyordu, yanlış olan ölçüttü.
 
 Bu liste, "ödeme hazır" cümlesini tahmin değil ölçüm yapan kısım. Hiçbir
 abonelik başlatmıyor, hiçbir satır yazmıyor, hesap açmıyor.

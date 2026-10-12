@@ -69,7 +69,8 @@ process.stdout.write(KALIN + 'Doğrulama betiğinin beklediği kodlar uçlarda v
 /* Betiğin metninde geçen kodlar DEĞİL, karşılaştırdığı kodlar: tek tırnaklı
    dizgelerden süzülüyor ve bilinen kod adlarıyla sınırlanıyor. */
 const BEKLENEN = ['missing_plan', 'invalid_plan', 'declaration_required',
-  'agreements_required', 'auth_required', 'checkout_unconfigured', 'method_not_allowed'];
+  'agreements_required', 'auth_required', 'checkout_unconfigured', 'method_not_allowed',
+  'webhook_unconfigured'];
 
 BEKLENEN.forEach(function (k) {
   dene('"' + k + '" hem doğrulama betiğinde hem uçlarda', function () {
@@ -86,6 +87,21 @@ dene('yönlendirme hedefleri uçlarla aynı', function () {
   assert.ok(/\/panel\\\?checkout=pro/.test(VERIFY) || VERIFY.indexOf('/panel?checkout=pro') !== -1,
     'doğrulama betiği giriş yönlendirmesini ölçmüyor');
   assert.ok(RETURN.indexOf("'/panel?checkout='") !== -1, 'dönüş ucu panele yönlendirmiyor');
+});
+
+/* İlk canlı koşu (38186662506) üç satırda "KALDI" dedi ve üçü de ucun
+   değil ÖLÇÜTÜN hatasıydı: anahtar yokken checkout-return jetona bakmadan
+   `unavailable` ile dönüyor, webhook ise imzayı doğrulayamadığı için 401
+   değil 503 `webhook_unconfigured` veriyor. Beklenti artık ödemenin açık
+   olup olmamasına göre dallanıyor; bu sınama o dallanmanın silinmemesini
+   tutuyor. */
+dene('beklentiler ödeme kapalı durumunu da biliyor', function () {
+  assert.ok(/webhook_unconfigured/.test(VERIFY), 'webhook kapalı durumu ölçülmüyor');
+  assert.ok(/donusDurumu/.test(VERIFY) && /unavailable/.test(VERIFY),
+    'dönüş ucunun kapalı durumu ölçülmüyor');
+  assert.ok(/backToPanel\(res, 'unavailable'\)/.test(RETURN),
+    'dönüş ucu artık başka bir durum dönüyor — ölçüt güncellenmeli');
+  assert.ok(/webhook_unconfigured/.test(WEBHOOK), 'webhook kodu değişmiş');
 });
 
 dene('webhook imzasız isteği reddediyor (ölçülen 401 gerçek)', function () {
