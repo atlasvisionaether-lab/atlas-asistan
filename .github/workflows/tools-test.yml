@@ -76,6 +76,15 @@ jobs:
       - name: Hesap silme yolu (kapsam, yetki, arayüz)
         run: node cyberlionai/tools/account-delete-test.js
 
+      # Odeme kontrol listesi: tools/iyzico-verify.js URETIMDEKI ucun
+      # kapilarini HATA KODLARINI bekleyerek olcuyor. Bir kod yeniden
+      # adlandirilirsa dogrulama betigi yanlis yerde "KALDI" der ve bunu
+      # ancak canli kosuda, yanlis teshisle gorurduk. Bu adim kodlari,
+      # IYZICO_* degiskenlerinin belgedeki listesini ve fiyatin plans.js'ten
+      # okundugunu kilitliyor.
+      - name: iyzico kontrol listesi (kod ↔ belge ↔ doğrulama betiği)
+        run: node cyberlionai/tools/iyzico-checklist-test.js
+
       # Elle yazilmis yasal sayfalar (on bilgilendirme, cerez) legal/*.md
       # hattinin DISINDA; kimlik ve fiyat orada bayatlasa hicbir sinama
       # dusmuyordu. iyzico altbilgi listesi de burada kilitli.
