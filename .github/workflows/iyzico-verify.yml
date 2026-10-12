@@ -1,0 +1,41 @@
+name: Ödeme akışı doğrulaması (kart gerekmez)
+
+# /api/checkout, /api/checkout-return ve /api/webhooks/iyzico uclarinin
+# KAPILARINI olcer: anahtarlar girildi mi, plan referansi tanimli mi, beyan /
+# sozlesme onayi / giris kapilari tutuyor mu, webhook imzasiz POST'u
+# reddediyor mu.
+#
+# HICBIR ABONELIK BASLATMAZ, hicbir satir yazmaz, hesap acmaz, kart
+# gerektirmez. Bu yuzden onay istemiyor.
+#
+# Kart girilen adim (barindirilan form -> checkout-return -> webhook ->
+# cl_subscriptions) buradan olculemiyor; elle adimlar
+# cyberlionai/docs/iyzico-sandbox.md icinde.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Hedef adres (sonunda / olmadan)
+        required: true
+        default: https://www.cyberlionai.com
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Ödeme kapılarını ölç
+        env:
+          BASE: ${{ inputs.base }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: node cyberlionai/tools/iyzico-verify.js
