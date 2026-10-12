@@ -173,14 +173,23 @@ function kod(y) { return y.govde && y.govde.error ? y.govde.error.code : null; }
   /* ----------------------------------------------- 3. Ödeme dönüş ucu */
   process.stdout.write('\n' + KALIN + '3. Ödeme dönüşü (/api/checkout-return)' + SIFIRLA + '\n');
 
+  /* Beklenen durum ödemenin AÇIK olup olmamasına göre değişiyor; ilk sürüm
+     bunu atladı ve ölçüm (koşu 38186662506) kendi beklentisini düzeltti:
+     anahtar yokken uç daha jetona bakmadan `unavailable` ile panele dönüyor
+     (`if (!iyzico.isConfigured() || !db… ) backToPanel('unavailable')`).
+     Yani "invalid" beklemek, ucun doğru davranışını KALDI göstermekti. */
+  const donusDurumu = acik ? 'invalid' : 'unavailable';
+
   const jetonsuz = await istek('/api/checkout-return', { headers: { 'Accept': 'text/html' } });
-  sonuc(jetonsuz.status === 303 && /\/panel\?checkout=invalid/.test(jetonsuz.location || ''),
-    'jeton yoksa panele "invalid" ile dönüyor',
+  sonuc(jetonsuz.status === 303
+      && new RegExp('/panel\\?checkout=' + donusDurumu).test(jetonsuz.location || ''),
+    'jeton yoksa panele "' + donusDurumu + '" ile dönüyor (abonelik yazılmıyor)',
     'HTTP ' + jetonsuz.status + ' → ' + (jetonsuz.location || '(Location yok)'));
 
   const bozukJeton = await istek('/api/checkout-return?token=bu-jeton-gecersiz',
     { headers: { 'Accept': 'text/html' } });
-  sonuc(bozukJeton.status === 303 && /\/panel\?checkout=/.test(bozukJeton.location || ''),
+  sonuc(bozukJeton.status === 303
+      && new RegExp('/panel\\?checkout=' + donusDurumu).test(bozukJeton.location || ''),
     'biçimsiz jeton kabul edilmiyor (abonelik yazılmıyor)',
     'HTTP ' + bozukJeton.status + ' → ' + (bozukJeton.location || '(Location yok)'));
 
@@ -196,13 +205,21 @@ function kod(y) { return y.govde && y.govde.error ? y.govde.error.code : null; }
     'GET → 405 + Allow: POST + method_not_allowed',
     'HTTP ' + getWebhook.status + ' Allow=' + getWebhook.allow + ' ' + kod(getWebhook));
 
+  /* Aynı ayrım burada da var ve aynı ölçümde yakalandı: anahtar yokken
+     webhook imzayı DOĞRULAYAMAZ, bu yüzden 401 değil 503
+     `webhook_unconfigured` dönüyor. İkisi de "yazmıyor" demek; hangisinin
+     beklendiği ödemenin açık olmasına bağlı. */
+  const imzaRed = acik
+    ? { status: 401, ad: '401 unauthorized' }
+    : { status: 503, ad: '503 webhook_unconfigured' };
+
   const imzasiz = await istek('/api/webhooks/iyzico', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ subscriptionReferenceCode: 'uydurma-referans', status: 'ACTIVE' })
   });
-  sonuc(imzasiz.status === 401,
-    'imzasız POST reddediliyor (durum uydurulamıyor)',
+  sonuc(imzasiz.status === imzaRed.status,
+    'imzasız POST reddediliyor — beklenen ' + imzaRed.ad + ' (durum uydurulamıyor)',
     'HTTP ' + imzasiz.status + ' ' + kod(imzasiz));
 
   const bozukImza = await istek('/api/webhooks/iyzico', {
@@ -210,8 +227,8 @@ function kod(y) { return y.govde && y.govde.error ? y.govde.error.code : null; }
     headers: { 'Content-Type': 'application/json', 'X-Iyz-Signature-V3': 'a'.repeat(64) },
     body: JSON.stringify({ subscriptionReferenceCode: 'uydurma-referans', status: 'ACTIVE' })
   });
-  sonuc(bozukImza.status === 401,
-    'yanlış imzalı POST reddediliyor',
+  sonuc(bozukImza.status === imzaRed.status,
+    'yanlış imzalı POST reddediliyor — beklenen ' + imzaRed.ad,
     'HTTP ' + bozukImza.status + ' ' + kod(bozukImza));
 
   /* --------------------------------------------------- 5. Kalan adım */
