@@ -85,6 +85,14 @@ jobs:
       - name: iyzico kontrol listesi (kod ↔ belge ↔ doğrulama betiği)
         run: node cyberlionai/tools/iyzico-checklist-test.js
 
+      # iyzico canli basvurusu Visa/Mastercard logolarinin sitede GORUNMESINI
+      # sart kostu. Bir arayuz duzenlemesi <img> satirini sessizce silerse ya da
+      # dosya adi degisirse basvuru yeniden eksik duruma duser; bu adim logolarin
+      # uc odeme yuzeyinde durdugunu, alt metinlerinin kartlari saydigini ve
+      # yollarin bir dosyaya ciktigini tutuyor.
+      - name: iyzico ödeme logoları (üç yüzeyde görünür)
+        run: node cyberlionai/tools/iyzico-logo-test.js
+
       # Elle yazilmis yasal sayfalar (on bilgilendirme, cerez) legal/*.md
       # hattinin DISINDA; kimlik ve fiyat orada bayatlasa hicbir sinama
       # dusmuyordu. iyzico altbilgi listesi de burada kilitli.

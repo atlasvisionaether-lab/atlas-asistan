@@ -826,9 +826,8 @@
   .footer__copyright { font-size: 0.8rem; margin: 0; }
   .footer__title--sub { margin-top: 26px; }
   .footer__pay { color: var(--text-gray); font-size: 0.9rem; margin: 0 0 14px; }
-  .iyz-badge { display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 10px;
-    border: 1px solid var(--hairline); background: rgba(255,255,255,.04); color: var(--text-gray); font-size: 0.8rem; }
-  .iyz-badge__mark { font-weight: 600; font-size: 1.02rem; color: #1e64ff; background: #fff; padding: 2px 10px; border-radius: 6px; }
+  /* iyzico bandı: yüksekliği sabit, genişliği oranla; küçük ekranda taşmasın. */
+  .iyz-band { display: block; width: 456px; max-width: 100%; height: auto; }
   .footer__list li { overflow-wrap: anywhere; }
   .footer__list li i { color: var(--gold-primary); width: 1.1em; text-align: center; }
   .footer__bottom {
@@ -2097,9 +2096,15 @@
         <div>
           <h4 class="footer__title" data-i18n="footer.payTitle">Güvenli Ödeme</h4>
           <p class="footer__pay" data-i18n="footer.payText">Ödemeler iyzico güvencesi ile alınmaktadır.</p>
-          <!-- iyzico logo alanı: resmî logo iyzico marka kitinden alınıp
-               /images/iyzico/ altına konunca bu kutu <img> ile değişir. -->
-          <div class="iyz-badge" aria-label="iyzico ile öde"><span class="iyz-badge__mark">iyzico</span><span data-i18n="footer.payWith">ile Öde</span></div>
+          <!-- iyzico'nun RESMÎ altbilgi bandı (marka kiti: footer_iyzico_ile_ode/White).
+               Tek dosya; iyzico ile Öde + Mastercard + Visa + American Express + troy
+               birlikte geliyor — pakette ayrı Visa/Mastercard dosyası YOK. Beyaz sürüm,
+               çünkü altbilgi zemini koyu. Bağlantı verilmiyor: iyzico yalnızca
+               GÖRÜNÜRLÜK istiyor. -->
+          <img class="iyz-band" src="/images/iyzico/logo-band-white.svg" width="456" height="32"
+               loading="lazy" decoding="async"
+               data-i18n-alt="footer.payWith"
+               alt="iyzico ile Öde - Mastercard, Visa, American Express ve troy kartlar kabul edilir" />
         </div>
       </div>
 
@@ -2734,7 +2739,8 @@
           about: 'SSL ve güvenlik başlıklarınızı saniyeler içinde analiz eden hızlı güvenlik taraması.',
           quick: 'Hızlı Linkler', contact: 'İletişim',
           company: 'Şirket Bilgileri', legal: 'Yasal', product: 'Ürün', features: 'Özellikler', tel: 'Tel',
-          payTitle: 'Güvenli Ödeme', payText: 'Ödemeler iyzico güvencesi ile alınmaktadır.', payWith: 'ile Öde',
+          payTitle: 'Güvenli Ödeme', payText: 'Ödemeler iyzico güvencesi ile alınmaktadır.',
+          payWith: 'iyzico ile Öde - Mastercard, Visa, American Express ve troy kartlar kabul edilir',
           delivery: 'Teslimat Bilgisi',
           kvkk: 'KVKK Aydınlatma Metni', dist: 'Mesafeli Satış Sözleşmesi',
           predisclosure: 'Ön Bilgilendirme Formu', refund: 'İade ve İptal Politikası', scanAuth: 'Tarama Yetkisi', contactPage: 'İletişim',
@@ -3182,7 +3188,8 @@
           about: 'Fast security scanning that analyzes your SSL and security headers in seconds.',
           quick: 'Quick Links', contact: 'Contact',
           company: 'Company Information', legal: 'Legal', product: 'Product', features: 'Features', tel: 'Phone',
-          payTitle: 'Secure Payment', payText: 'Payments are processed securely by iyzico.', payWith: 'checkout',
+          payTitle: 'Secure Payment', payText: 'Payments are processed securely by iyzico.',
+          payWith: 'Pay with iyzico - Mastercard, Visa, American Express and troy cards accepted',
           delivery: 'Delivery Information',
           kvkk: 'KVKK Privacy Notice', dist: 'Distance Sales Agreement',
           predisclosure: 'Pre-Contractual Information Form', refund: 'Refund & Cancellation Policy', scanAuth: 'Scan Authorisation', contactPage: 'Contact',
@@ -3339,6 +3346,11 @@
       var ar = document.querySelectorAll('[data-i18n-aria]');
       for (var k = 0; k < ar.length; k++) {
         ar[k].setAttribute('aria-label', t(ar[k].getAttribute('data-i18n-aria')));
+      }
+      // Görsel alt metinleri (iyzico ödeme bandı): ekran okuyucu dili takip etsin.
+      var al = document.querySelectorAll('[data-i18n-alt]');
+      for (var m = 0; m < al.length; m++) {
+        al[m].setAttribute('alt', t(al[m].getAttribute('data-i18n-alt')));
       }
 
       // Dil değişince JS'in yazdığı metinler de yenilenmeli: data-i18n ile

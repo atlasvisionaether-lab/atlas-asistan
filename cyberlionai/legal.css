@@ -61,7 +61,10 @@ a{color:inherit}
 .fgrid a{text-decoration:none}
 .fgrid a:hover{color:var(--gold)}
 .fgrid p{margin:0 0 12px}
-.iyz{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:.8rem}
-.iyz__mark{font-weight:600;font-size:1.02rem;color:#1e64ff;background:#fff;padding:2px 10px;border-radius:6px}
 .fcopy{margin:28px 0 0;padding-top:18px;border-top:1px solid var(--line);font-size:.78rem;text-align:center}
 @media(max-width:400px){.logo span{display:none}}
+
+/* iyzico ödeme bandı (resmî marka kiti). Genişlik verilir, yükseklik oranla:
+   dar ekranda yükseklik sabit kalsaydı logo ezilirdi. */
+.pay-band { margin: 0; }
+.pay-band img { display: block; width: 456px; max-width: 100%; height: auto; }
