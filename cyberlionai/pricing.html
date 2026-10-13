@@ -108,6 +108,8 @@
   .cta--muted{color:var(--text-white);border:1px solid var(--glass-border);background:rgba(255,255,255,.03)}
   .cta--muted:hover{border-color:var(--gold-primary);color:var(--gold-primary)}
   .foot-note{margin-top:34px;padding-top:24px;border-top:1px solid var(--hairline);font-size:.86rem}
+  .pay-band{margin:22px 0 0}
+  .pay-band img{display:block;width:456px;max-width:100%;height:auto}
   footer{border-top:1px solid var(--glass-border);background:var(--secondary-black);padding:40px 0 26px;
     color:var(--text-gray);font-size:.86rem}
   .fgrid{display:grid;gap:26px;grid-template-columns:1fr}
@@ -118,9 +120,7 @@
   .fgrid ul{list-style:none;margin:0;padding:0}
   .fgrid li{margin-bottom:8px;overflow-wrap:anywhere}
   .fgrid a:hover{color:var(--gold-primary)}
-  .iyz{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:10px;
-    border:1px solid var(--hairline);background:rgba(255,255,255,.04);font-size:.8rem}
-  .iyz__mark{font-weight:600;font-size:1.02rem;color:#1e64ff;background:#fff;padding:2px 10px;border-radius:6px}
+  /* .pay-band stilleri yukarida */
   .fcopy{margin-top:28px;padding-top:18px;border-top:1px solid var(--hairline);font-size:.78rem;text-align:center}
   @media(max-width:400px){.logo span{display:none}}
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition-duration:.001ms!important}}
@@ -237,6 +237,16 @@
       <p class="foot-note"
          data-t-tr="Liste fiyatları KDV hariçtir; %20 KDV dahil toplam her planın altında yazar. Ödeme iyzico üzerinden alınır; kart bilgileriniz bize hiç gelmez. Abonelik iptali, teslimat ve iade koşulları için Mesafeli Satış Sözleşmesi ile Teslimat ve İade Şartları sayfalarına bakın."
          data-t-en="List prices exclude VAT; the total including 20% VAT is shown under each plan. Payments are taken through iyzico; your card details never reach us. For cancellation, delivery and refund terms see the Distance Sales Agreement and the Delivery &amp; Returns pages.">Liste fiyatları KDV hariçtir; %20 KDV dahil toplam her planın altında yazar.</p>
+
+      <!-- iyzico'nun RESMÎ bandı (marka kiti: footer_iyzico_ile_ode/White). Ödeme
+           düğmelerinin hemen altında: iyzico kabul edilen kartların ödeme adımında
+           GÖRÜNMESİNİ istiyor. Bağlantı yok, yalnızca görsel. -->
+      <p class="pay-band">
+        <img src="/images/iyzico/logo-band-white.svg" width="456" height="32"
+             loading="lazy" decoding="async"
+             data-t-alt-tr="iyzico ile Öde - Mastercard, Visa, American Express ve troy kartlar kabul edilir" data-t-alt-en="Pay with iyzico - Mastercard, Visa, American Express and troy cards accepted"
+             alt="iyzico ile Öde - Mastercard, Visa, American Express ve troy kartlar kabul edilir" />
+      </p>
     </div>
   </main>
  
@@ -276,7 +286,9 @@
         <div>
           <h3 data-t-tr="Güvenli Ödeme" data-t-en="Secure Payment">Güvenli Ödeme</h3>
           <p data-t-tr="Ödemeler iyzico güvencesi ile alınmaktadır." data-t-en="Payments are processed securely by iyzico.">Ödemeler iyzico güvencesi ile alınmaktadır.</p>
-          <div class="iyz"><span class="iyz__mark">iyzico</span><span data-t-tr="ile Öde" data-t-en="checkout">ile Öde</span></div>
+          <p class="pay-band"><img src="/images/iyzico/logo-band-white.svg" width="456" height="32"
+             loading="lazy" decoding="async"
+             data-t-alt-tr="iyzico ile Öde - Mastercard, Visa, American Express ve troy kartlar kabul edilir" data-t-alt-en="Pay with iyzico - Mastercard, Visa, American Express and troy cards accepted" alt="iyzico ile Öde - Mastercard, Visa, American Express ve troy kartlar kabul edilir" /></p>
         </div>
       </div>
       <p class="fcopy" data-t-tr="© 2026 Ali Kotan - Şahıs İşletmesi" data-t-en="© 2026 Ali Kotan - Sole Proprietorship">© 2026 Ali Kotan - Şahıs İşletmesi</p>
@@ -293,6 +305,10 @@
 
     function apply(lang) {
       document.documentElement.setAttribute('lang', lang);
+      var alts = document.querySelectorAll('[data-t-alt-tr]');
+      for (var a = 0; a < alts.length; a++) {
+        alts[a].setAttribute('alt', alts[a].getAttribute('data-t-alt-' + lang));
+      }
       var texts = document.querySelectorAll('[data-t-tr]');
       for (var j = 0; j < texts.length; j++) {
         texts[j].textContent = texts[j].getAttribute('data-t-' + lang);

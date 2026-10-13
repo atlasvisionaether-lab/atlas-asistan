@@ -53,9 +53,10 @@
     line-height:1.2;margin:0;color:var(--gold-primary);text-shadow:0 0 12px rgba(212,175,55,.25)}
   /* iyzico logo alanı. Resmî logo dosyası iyzico marka kitinden alınıp
      /images/iyzico/ altına konduğunda bu kutunun içi <img> ile değişir. */
-  .iyz{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:10px;
-    border:1px solid var(--hairline);background:rgba(255,255,255,.04);font-size:.8rem;color:var(--text-gray)}
-  .iyz__mark{font-weight:600;font-size:1.05rem;letter-spacing:.02em;color:#1e64ff;background:#fff;
+  /* iyzico logosu ve kabul edilen kart bandı: yükseklik sabit, genişlik oranla. */
+  .iyz-logo{display:block;height:40px;width:auto;max-width:100%}
+  .pay-band{margin:16px 0 0}
+  .pay-band img{display:block;width:456px;max-width:100%;height:auto}
     padding:2px 10px;border-radius:6px}
   p{margin:0 0 14px;color:var(--text-gray)}
   strong{color:var(--text-white);font-weight:600}
@@ -132,10 +133,10 @@
     <div class="container">
       <div class="head">
         <h1>Güvenli Ödeme - iyzico ile</h1>
-        <div class="iyz" aria-label="iyzico ile güvenli ödeme">
-          <span class="iyz__mark">iyzico</span>
-          <span>ile Öde</span>
-        </div>
+        <!-- iyzico marka kitinin RESMÎ "iyzico ile Öde" logosu (TR, yatay, beyaz:
+             sayfa zemini koyu). Bağlantı verilmiyor; iyzico görünürlük istiyor. -->
+        <img class="iyz-logo" src="/images/iyzico/iyzico-ile-ode-white.svg"
+             width="200" height="40" decoding="async" alt="iyzico ile Öde" />
       </div>
 
       <div class="layout">
@@ -185,6 +186,13 @@
             <p class="info" id="payClosed" role="status" hidden>Bu plan için çevrimiçi ödeme şu an başlatılamıyor. <a href="/checkout" id="payClosedLink" class="link--underline">Ön kayıt bırakın</a>, ödeme açılınca size ilk biz dönelim; ya da destek@cyberlionai.com adresine yazın.</p>
 
             <button type="submit" class="pay" id="payBtn">Güvenli Öde - iyzico ile</button>
+
+            <!-- Kabul edilen kartlar: iyzico'nun resmî bandı (tek dosya; pakette
+                 ayrı Visa/Mastercard dosyası yok). Ödeme düğmesinin hemen altında. -->
+            <p class="pay-band">
+              <img src="/images/iyzico/logo-band-white.svg" width="456" height="32"
+                   loading="lazy" decoding="async" alt="iyzico ile Öde - Mastercard, Visa, American Express ve troy kartlar kabul edilir" />
+            </p>
           </form>
         </section>
 
@@ -236,7 +244,8 @@
         <div>
           <h3>Güvenli Ödeme</h3>
           <p>Ödemeler iyzico güvencesi ile alınmaktadır.</p>
-          <div class="iyz"><span class="iyz__mark">iyzico</span><span>ile Öde</span></div>
+          <p class="pay-band"><img src="/images/iyzico/logo-band-white.svg" width="456" height="32"
+             loading="lazy" decoding="async" alt="iyzico ile Öde - Mastercard, Visa, American Express ve troy kartlar kabul edilir" /></p>
         </div>
       </div>
       <p class="fcopy">© 2026 Ali Kotan - Şahıs İşletmesi</p>
