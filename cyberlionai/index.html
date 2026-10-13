@@ -2499,6 +2499,7 @@
           svcDiscount: '%{n} indirim',
           cartCount: '{n} bulgu seçildi',
           cartFull: 'Tam paket',
+          cartFullNote: 'Tam paket sınırına ulaştınız, {n} bulgunun tamamı düzeltilecek',
           cartVat: '+ KDV',
           cartAgree1: '',
           cartAgreeLink: 'Mesafeli Satış Sözleşmesi',
@@ -2954,6 +2955,7 @@
           svcDiscount: '{n}% off',
           cartCount: '{n} findings selected',
           cartFull: 'Full package',
+          cartFullNote: 'You have reached the full package limit; all {n} findings will be fixed',
           cartVat: '+ VAT',
           cartAgree1: 'I have read and accept the ',
           cartAgreeLink: 'Distance Sales Agreement',
@@ -4471,11 +4473,15 @@
       var sum = ids.reduce(function (a, id) { return a + fixState.cart[id]; }, 0);
       var full = sum >= p.tiers.full;
       var list = full ? p.tiers.full : sum;
+      /* Tam pakette KAPSAM da katalogun tamamı (bkz. api/_lib/fixpricing.js):
+         müşteri tavan fiyatı ödüyorsa seçmediği bulgular da düzeltiliyor.
+         Sayı sunucudan geliyor, sabit yazılmıyor. */
+      var kapsam = p.fullCoverageCount || Object.keys(p.tierById || {}).length;
 
       var info = document.createElement('p');
       info.className = 'fixcart__info';
       info.textContent = t('scan.cartCount', { n: ids.length }) + ' · '
-        + (full ? t('scan.cartFull') + ' · ' : '');
+        + (full ? t('scan.cartFullNote', { n: kapsam }) + ' · ' : '');
       if (isDiscounted()) {
         var s = document.createElement('s');
         s.textContent = fmtTL(list);

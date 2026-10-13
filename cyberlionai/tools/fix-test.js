@@ -72,6 +72,62 @@ async function cagir(h, req) { const r = res(); await h(Object.assign({ headers:
   esit('geçersiz kimlik atılır', pricing.quote(['<script>', 'hsts', 'hsts'], 'single', 'free').items.length, 1);
   esit('boş sepet', pricing.quote([], 'single', 'free').code, 'no_findings');
 
+  /* ---------- tavanın KAPSAMI ----------
+     Eski kusur: tavan yalnızca FİYATA uygulanıyordu; sipariş `type: 'full'`,
+     `price: 5000` olarak kaydediliyor ama `finding_ids` seçilenleri taşıyordu.
+     Müşteri tam paket öder, iş emri alt küme yazardı. Aşağısı o eşleşmeyi
+     kilitliyor: tavana ulaşan sepetin kapsamı KATALOGUN TAMAMI. */
+  const KATALOG = pricing.ALL_IDS.length;
+  esit('katalog 23 düzeltme taşıyor (okuma doğru çalışıyor)', KATALOG, 23);
+
+  /* 7 → 8 → 9: fiyat artar, tavanda sabitlenir; kapsam tavanda tamamına çıkar. */
+  const sekiz = yedi.concat(['hsts']);              /* 4993 + 499 = 5492 → tavan */
+  const dokuz = sekiz.concat(['coop']);   /* katalogdan, 9. bulgu */
+  esit('7 bulgu: tür single', pricing.quote(yedi, 'single', 'free').type, 'single');
+  esit('7 bulgu: kapsam seçilenler', pricing.quote(yedi, 'single', 'free').items.length, 7);
+  esit('7 bulgu: coversAll false', pricing.quote(yedi, 'single', 'free').coversAll, false);
+  esit('8 bulgu: tavan 5000', pricing.quote(sekiz, 'single', 'free').price, 5000);
+  esit('8 bulgu: kapsam TÜM katalog', pricing.quote(sekiz, 'single', 'free').items.length, KATALOG);
+  esit('8 bulgu: coversAll true', pricing.quote(sekiz, 'single', 'free').coversAll, true);
+  esit('9 bulgu: tavan 5000', pricing.quote(dokuz, 'single', 'free').price, 5000);
+  esit('9 bulgu: kapsam TÜM katalog', pricing.quote(dokuz, 'single', 'free').items.length, KATALOG);
+  esit('7 < 8 fiyat artıyor',
+    pricing.quote(yedi, 'single', 'free').price < pricing.quote(sekiz, 'single', 'free').price, true);
+  esit('8 ile 9 aynı fiyat ama ikisi de tam paket',
+    [pricing.quote(sekiz, 'single', 'free').type, pricing.quote(dokuz, 'single', 'free').type],
+    ['full', 'full']);
+  esit('tavanda indirim yalnızca Pro/Enterprise',
+    [pricing.quote(sekiz, 'single', 'free').priceDiscounted,
+     pricing.quote(sekiz, 'single', 'pro').priceDiscounted,
+     pricing.quote(sekiz, 'single', 'enterprise').priceDiscounted],
+    [5000, 2500, 2500]);
+
+  /* Seçilen bulgu kapsamdan DÜŞMEMELİ: katalogda olmayan OWASP bulgusu da
+     iş emrinde kalsın (müşteri onu tıkladı). */
+  (function () {
+    const q = pricing.quote(['a03_xss_reflection', 'hsts'], 'single', 'free');
+    esit('OWASP seçimi tam pakete giriyor', [q.type, q.price], ['full', 5000]);
+    esit('kapsam katalog + OWASP', q.items.length, KATALOG + 1);
+    esit('tıklanan OWASP bulgusu kapsamda',
+      q.items.some(function (i) { return i.id === 'a03_xss_reflection'; }), true);
+  })();
+
+  /* Fiyat tablosu arayüze kapsam sayısını veriyor: "23 bulgunun tamamı"
+     metni sabit yazılmasın. */
+  esit('fiyat tablosu fullCoverageCount taşıyor', pricing.table().fullCoverageCount, KATALOG);
+
+  /* Arayüz: sepet çubuğu tavanda ne yazıyor. Müşterinin gördüğü cümle
+     "8 ve 9 aynı fiyat" şaşkınlığını açıklamak zorunda. */
+  (function () {
+    const fs = require('fs');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    esit('sepet metni kapsam sayısını SUNUCUDAN okuyor',
+      /fullCoverageCount/.test(html) && !/23 bulgunun/.test(html.replace(/\{n\} bulgunun/g, '')), true);
+    esit('tavan metni iki dilde', (html.match(/cartFullNote:/g) || []).length, 2);
+    esit('TR metni tamamının düzeltileceğini söylüyor',
+      /cartFullNote: 'Tam paket sınırına ulaştınız, \{n\} bulgunun tamamı düzeltilecek'/.test(html), true);
+  })();
+
   /* ---------- öneri ---------- */
   plan = 'pro';
   let r = await cagir(suggestion, { method: 'POST', body: { domain: 'ornek.com', findingId: 'hsts', lang: 'tr' } });
