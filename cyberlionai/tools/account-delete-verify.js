@@ -17,27 +17,28 @@
  * db.deleteAccountData (cyberlionai/api/_lib/db.js) birebir import ediliyor.
  * Yani burada ölçülen şey, uçta çalışan kodun AYNISI.
  *
- * ÖLÇMEDIĞI ŞEY (bilinçli): DELETE /api/panel/account ucunun HTTP kapıları
- * (oturum zorunluluğu, onay dizgesi). Uç tarafın davranışı
- * tools/account-delete-test.js ve uç kodunun kendisi kapsamında kalıyor;
- * bu betik verinin ve hesabın GERÇEKTEN silindiğini ölçer.
+ * SUPABASE_URL güvenli biçimde KÖKE indirgeniyor: yanlışlıkla sonuna
+ * eklenmiş bir yol ya da /rest/v1 eki istemcide "Invalid path specified in
+ * request URL" hatası veriyordu. Anahtar hiçbir şekilde değişilmez;
+ * process.env.SUPABASE_URL düzeltilerek db.js'nin tembel okuduğu değer de
+ * düzeltilmiş olur.
+ *
+ * ÖLÇMEDIĞI ŞEY (bilinçli): DELETE /api/panel/account ucunun HTTP kapıları.
  *
  * ÜRETİM VERİTABANINA YAZAR. CONFIRM=evet olmadan hiçbir şey yapmaz.
  * Açtığı hesap ve yazdığı satırlar finally temizliğinde KALMAZ.
  *
  * E-posta öneki hep 'kaldir-test+': bu önek YALNIZCA bu betik tarafından
- * açılır; üretimde yanlışlıkla gerçek kullanıcı silinmediği çıktıdan
- * okunabilsin. Koşunun başında aynı önekle açılmış eski artıklar da
- * temizlenir: önceki başarısız koşulardan sızan test hesabı kalmaz.
+ * açılır. Koşunun başında aynı önekle açılmış eski artıklar da temizlenir.
  */
 
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const db = require('../api/_lib/db.js');
 
-const URL_SB = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const CONFIRM = process.env.CONFIRM || '';
+const URL_SB = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+const KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+const CONFIRM = (process.env.CONFIRM || '').trim();
 
 const KALIN = '\x1b[1m';
 const YESIL = '\x1b[32m';
@@ -51,8 +52,7 @@ function sonuc(ok, ad, ek) {
   else {
     kalan++;
     process.stdout.write('  ' + KIRMIZI + 'KALDI' + SIFIRLA + '  ' + ad + (ek ? ' — ' + ek : '') + '\n');
-    /* Hata, Actions ek açıklamalarında da görünsün: log erişimi olmadan
-       teşhis mümkün olsun. */
+    /* Hata, Actions ek açıklamalarında da görünsün. */
     process.stdout.write('::error::KALDI ' + ad + (ek ? ' — ' + ek : '') + '\n');
   }
 }
@@ -86,12 +86,23 @@ function tabloYok(error) {
     process.exit(1);
   }
 
-  const supabase = createClient(URL_SB, KEY, { auth: { persistSession: false } });
+  /* ------------------------------------------ URL'yi köke indirge */
+  let URL_KOK = URL_SB;
+  try {
+    const u = new URL(URL_SB);
+    URL_KOK = u.origin;
+    if (URL_KOK !== URL_SB) process.stdout.write('SUPABASE_URL köke indirgendi (fazladan yol/slash vardı)\n');
+  } catch (e) {
+    process.stdout.write('::error::SUPABASE_URL biçimsiz — şema ve ana makine okunamadı (https://<proje>.supabase.co olmalı)\n');
+    process.exit(2);
+  }
+  /* db.js process.env'i her istekte yeniden okur: düzeltilmiş değer
+     silme iş mantığına da yansır. */
+  process.env.SUPABASE_URL = URL_KOK;
 
-  /* ---------- 0. Önceki başarısız koşulardan sızan test artıkları ------
-     Bu önek yalnızca bu betik tarafından açılır; eşleşen her hesap bu
-     testindir. Erken çıkan koşular hesabı silmeden bırakabilir — burada
-     toplanıp kapatılıyor ki üretimde test artığı kalmasın. */
+  const supabase = createClient(URL_KOK, KEY, { auth: { persistSession: false } });
+
+  /* ---------- 0. Önceki başarısız koşulardan sızan test artıkları ------ */
   try {
     const eskiArtik = [];
     for (let sayfa = 1; sayfa <= 5; sayfa++) {
@@ -121,8 +132,7 @@ function tabloYok(error) {
     email_confirm: true,
     user_metadata: { is_test_account: true, purpose: 'account-delete-verify' }
   });
-  /* supabase-js v2: admin.createUser'ın data'sı DOĞRUDAN kullanıcıdır
-     (v1'deki gibi data.user içinde DEĞİL). İki biçim de destekleniyor. */
+  /* supabase-js v2: admin.createUser'ın data'sı DOĞRUDAN kullanıcıdır. */
   const userId = (yaratilan && (yaratilan.id || (yaratilan.user && yaratilan.user.id))) || null;
   sonuc(!!userId, 'test hesabı açıldı', userId ? testEmail : ('hata: ' + (errYarat && errYarat.message)));
   if (!userId) { process.stdout.write('\nDevam edilemiyor.\n'); process.exit(1); }
