@@ -48,7 +48,13 @@ let gecti = 0;
 let kalan = 0;
 function sonuc(ok, ad, ek) {
   if (ok) { gecti++; process.stdout.write('  ' + YESIL + 'GEÇTİ' + SIFIRLA + '  ' + ad + (ek ? ' — ' + ek : '') + '\n'); }
-  else { kalan++; process.stdout.write('  ' + KIRMIZI + 'KALDI' + SIFIRLA + '  ' + ad + (ek ? ' — ' + ek : '') + '\n'); }
+  else {
+    kalan++;
+    process.stdout.write('  ' + KIRMIZI + 'KALDI' + SIFIRLA + '  ' + ad + (ek ? ' — ' + ek : '') + '\n');
+    /* Hata, Actions ek açıklamalarında da görünsün: log erişimi olmadan
+       teşhis mümkün olsun. */
+    process.stdout.write('::error::KALDI ' + ad + (ek ? ' — ' + ek : '') + '\n');
+  }
 }
 
 /** PostgREST "tablo yok" hatası mı (göç uygulanmamış)? */
@@ -62,12 +68,13 @@ function tabloYok(error) {
   process.stdout.write('Zaman : ' + new Date().toISOString() + '\n\n');
 
   if (!URL_SB || !KEY) {
+    process.stdout.write('::error::ÖLÇÜLEMEDİ — SUPABASE_URL ve SUPABASE_SERVICE_ROLE_KEY gerekli\n');
     process.stdout.write('ÖLÇÜLEMEDİ — SUPABASE_URL ve SUPABASE_SERVICE_ROLE_KEY gerekli.\n');
-    process.stdout.write('Anahtarlar GitHub Actions gizli değişkenlerinden gelir; sohbete yazılmaz.\n');
     process.exit(2);
   }
 
   if (CONFIRM !== 'evet') {
+    process.stdout.write('::error::ONAY YOK (confirm girdisi=\'' + CONFIRM + '\') — hiçbir şey yapılmadı\n');
     process.stdout.write('ONAY YOK — hiçbir şey yapılmadı.\n\n');
     process.stdout.write('Bu betik ÜRETİM veritabanına yazar ve siler:\n');
     process.stdout.write('  1. kaldir-test+<zaman>@cyberlionai.com adında test hesabı açar\n');
