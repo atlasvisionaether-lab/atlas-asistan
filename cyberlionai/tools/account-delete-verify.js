@@ -25,8 +25,10 @@
  * ÜRETİM VERİTABANINA YAZAR. CONFIRM=evet olmadan hiçbir şey yapmaz.
  * Açtığı hesap ve yazdığı satırlar finally temizliğinde KALMAZ.
  *
- * E-posta öneki hep 'kaldir-test+': üretimde yanlışlıkla gerçek kullanıcı
- * silinmediği çıktıdan okunabilsin.
+ * E-posta öneki hep 'kaldir-test+': bu önek YALNIZCA bu betik tarafından
+ * açılır; üretimde yanlışlıkla gerçek kullanıcı silinmediği çıktıdan
+ * okunabilsin. Koşunun başında aynı önekle açılmış eski artıklar da
+ * temizlenir: önceki başarısız koşulardan sızan test hesabı kalmaz.
  */
 
 const crypto = require('crypto');
@@ -68,7 +70,7 @@ function tabloYok(error) {
   if (CONFIRM !== 'evet') {
     process.stdout.write('ONAY YOK — hiçbir şey yapılmadı.\n\n');
     process.stdout.write('Bu betik ÜRETİM veritabanına yazar ve siler:\n');
-    process.stdout.write('  1. kaldır-test+<zaman>@cyberlionai.com adında test hesabı açar\n');
+    process.stdout.write('  1. kaldir-test+<zaman>@cyberlionai.com adında test hesabı açar\n');
     process.stdout.write('  2. o hesaba ait cl_scans / cl_device_tokens / cl_waitlist / scan_logs satırı yazar\n');
     process.stdout.write('  3. GERÇEK silme iş mantığını çağırır (db.deleteAccountData + admin.deleteUser)\n');
     process.stdout.write('  4. satırların gittiğini, scan_logs bağı kesildiğini, hesabın kapandığını okur\n');
@@ -78,6 +80,29 @@ function tabloYok(error) {
   }
 
   const supabase = createClient(URL_SB, KEY, { auth: { persistSession: false } });
+
+  /* ---------- 0. Önceki başarısız koşulardan sızan test artıkları ------
+     Bu önek yalnızca bu betik tarafından açılır; eşleşen her hesap bu
+     testindir. Erken çıkan koşular hesabı silmeden bırakabilir — burada
+     toplanıp kapatılıyor ki üretimde test artığı kalmasın. */
+  try {
+    const eskiArtik = [];
+    for (let sayfa = 1; sayfa <= 5; sayfa++) {
+      const { data: liste } = await supabase.auth.admin.listUsers({ page: sayfa, perPage: 1000 });
+      const kullanicilar = (liste && liste.users) || [];
+      for (const u of kullanicilar) {
+        if (u && typeof u.email === 'string' && u.email.indexOf('kaldir-test+') === 0) eskiArtik.push(u);
+      }
+      if (!liste || !liste.users || liste.users.length < 1000) break;
+    }
+    for (const u of eskiArtik) {
+      await supabase.auth.admin.deleteUser(u.id);
+      await supabase.from('cl_waitlist').delete().eq('email', u.email);
+    }
+    if (eskiArtik.length) process.stdout.write('Eski test artığı temizlendi: ' + eskiArtik.length + ' hesap\n');
+  } catch (e) {
+    process.stdout.write('Eski artık temizliği atlandı: ' + e.message + '\n');
+  }
 
   /* ------------------------------------------------- 1. Test hesabı */
   const testEmail = 'kaldir-test+' + Date.now() + '@cyberlionai.com';
@@ -89,7 +114,9 @@ function tabloYok(error) {
     email_confirm: true,
     user_metadata: { is_test_account: true, purpose: 'account-delete-verify' }
   });
-  const userId = yaratilan && yaratilan.user && yaratilan.user.id;
+  /* supabase-js v2: admin.createUser'ın data'sı DOĞRUDAN kullanıcıdır
+     (v1'deki gibi data.user içinde DEĞİL). İki biçim de destekleniyor. */
+  const userId = (yaratilan && (yaratilan.id || (yaratilan.user && yaratilan.user.id))) || null;
   sonuc(!!userId, 'test hesabı açıldı', userId ? testEmail : ('hata: ' + (errYarat && errYarat.message)));
   if (!userId) { process.stdout.write('\nDevam edilemiyor.\n'); process.exit(1); }
 
