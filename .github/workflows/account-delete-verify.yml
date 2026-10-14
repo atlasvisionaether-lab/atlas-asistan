@@ -1,27 +1,20 @@
 name: Hesap silme doğrulaması (test hesabıyla)
 
-# DELETE /api/panel/account ucunu ÜRETİMDE, kendi açtığı test hesabıyla
-# doğrular. Gerçek bir kullanıcıya DOKUNMAZ.
+# DELETE /api/panel/account ucunun İŞ MANTIĞINI üretim veritabanında,
+# kendi açtığı test hesabıyla doğrular. Gerçek bir kullanıcıya DOKUNMAZ.
 #
-# NEDEN AYRI BİR İŞ AKIŞI: betik üretim veritabanına yazar ve siler. Bu
-# yüzden zamanlamaya bağlı DEĞİL, yalnızca elle çalıştırılır ve ayrıca
-# confirm=evet ister.
+# HTTP uç KULLANILMAZ: Vercel yönlendirmesi/404 riski olmaması için betik
+# doğrudan Supabase admin API'siyle çalışır; silme iş mantığı uçta kullanılan
+# db.deleteAccountData'nın kendisidir (import edilir).
 #
 # GEREKLİ GİZLİ DEĞİŞKENLER (Settings → Secrets and variables → Actions):
 #   SUPABASE_URL                 proje adresi
-#   SUPABASE_SERVICE_ROLE_KEY    servis rolü anahtarı (test hesabını açmak,
-#                                silmenin GERÇEKTEN olduğunu okumak için)
+#   SUPABASE_SERVICE_ROLE_KEY    servis rolü anahtarı
 # İkisi yoksa betik tahmin etmez: "ÖLÇÜLEMEDİ" der ve çıkar.
-#
-# Anahtarlar bu dosyada yazılı DEĞİL ve çıktıya hiç basılmıyor.
 
 on:
   workflow_dispatch:
     inputs:
-      base:
-        description: Hedef adres (sonunda / olmadan)
-        required: true
-        default: https://www.cyberlionai.com
       confirm:
         description: "Üretim veritabanına test satırı yazılacak: onaylıyorsanız 'evet'"
         required: true
@@ -41,11 +34,12 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Bağımlılık kur (@supabase/supabase-js)
+        run: npm install --no-save @supabase/supabase-js
+
       - name: Silme akışını doğrula
         env:
-          BASE: ${{ inputs.base }}
           CONFIRM: ${{ inputs.confirm }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: node cyberlionai/tools/account-delete-verify.js
