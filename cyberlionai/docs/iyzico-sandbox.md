@@ -81,6 +81,30 @@ ağ çıkışı kapalı olduğu için `ÖLÇÜLEMEDİ` der; `iyzico-verify.yml` 
 | `POST /api/webhooks/iyzico` imzasız / yanlış imzalı | ödeme açıkken 401; **ödeme kapalıyken** 503 `webhook_unconfigured` (anahtar yoksa imza doğrulanamaz) — her iki hâlde hiçbir şey yazılmaz |
 | `GET /api/webhooks/iyzico` | 405 + `Allow: POST` |
 
+### Üç durum (16.10.2026 canlı ölçümü, koşu `38983000527`)
+
+`?mode` cevabı iki değil **üç** durumu ayırt ediyor; betik hangisini beklediğine
+buna bakarak karar veriyor:
+
+| durum | `?mode` | `/api/checkout?plan=pro…` | `/odeme` düğmesi |
+| --- | --- | --- | --- |
+| kapalı | `enabled:false` | 503 `checkout_unconfigured` | kapalı |
+| **anahtar var, plan referansı yok** | `enabled:true`, `plans:[]` | **503 `checkout_unconfigured`** | **kapalı** |
+| hazır | `enabled:true`, `plans:["pro"]` | 401 `auth_required` (oturumsuz) | açık |
+
+Ortadaki durum canlıda yaşandı: anahtarlar Production'a girildi, `enabled`
+`true` oldu ama `IYZICO_PRICING_PLAN_PRO` tanımlı olmadığı için `/odeme`
+"çevrimiçi ödeme şu an başlatılamıyor" demeye devam etti. `api/checkout.js`
+sırası **yapılandırma → plan referansı → oturum** olduğu için uç 401'e hiç
+gelmiyor. KODDA OKUNMAYAN ADLAR — yazılsa da etkisi yok, hiçbir yerde OKUNMUYOR:
+`IYZICO_ABONELIK_ETKINLESTIRICI`, `IYZICO_FIYATLANDIRMA_PLANI`. Canlıda bu
+ikisi Production'a girilmişti ve ödeme yine açılmadı; kodun okuduğu adlar
+yalnızca §1'deki tabloda yazanlar.
+
+`/api/checkout-return` de aynı mantıkla üç durumlu: anahtar yokken
+`/panel?checkout=unavailable`, anahtar varken jetonsuz istek
+`/panel?checkout=login` (oturum olmadan abonelik satırı açılamaz).
+
 Beklenen değerlerin bir kısmı **ödemenin açık olup olmamasına göre değişiyor**;
 betik `?mode` cevabındaki `enabled` değerine bakıp hangisini bekleyeceğine
 karar veriyor. İlk sürüm bunu atlamıştı ve ilk canlı koşu (`38186662506`)
