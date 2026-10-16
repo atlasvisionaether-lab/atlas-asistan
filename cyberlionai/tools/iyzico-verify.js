@@ -112,13 +112,30 @@ function kod(y) { return y.govde && y.govde.error ? y.govde.error.code : null; }
     'durum cevabı anahtar/adres/referans sızdırmıyor',
     'alanlar: ' + Object.keys(d).join(','));
 
+  /* ÜÇ DURUM, ikisi değil. İlk sürüm yalnızca "açık / kapalı" biliyordu ve
+     16.10.2026 canlı koşusunda (38983000527) dört satırda yanlış yerde KALDI
+     dedi: anahtarlar girilmiş (`enabled: true`) ama plan referansı yokken
+     (`plans: []`) uç 401 değil 503 döndürüyor — çünkü `api/checkout.js`
+     sırası YAPILANDIRMA → PLAN REFERANSI → OTURUM. O hâli ayrı bir durum
+     olarak adlandırmak gerekiyordu; uç doğru davranıyordu, ölçüt eksikti. */
   const acik = d.enabled === true;
+  const planVar = Array.isArray(d.plans) && d.plans.indexOf('pro') !== -1;
+  const hazir = acik && planVar;      /* ödeme gerçekten başlatılabilir */
+
   if (!acik) {
     process.stdout.write('\n' + SARI + 'Ödeme KAPALI' + SIFIRLA
-      + ' — anahtarlar ya da plan referansları henüz yok (ya da kill switch kapalı).\n');
+      + ' — anahtar yok ya da kill switch kapalı.\n');
     process.stdout.write('Bu bir hata DEĞİL: kapılar aşağıda yine ölçülüyor, yalnızca form\n');
     process.stdout.write('başlatma adımı 503 `checkout_unconfigured` ile duracak.\n');
     process.stdout.write('Eksikleri girme sırası: docs/iyzico-sandbox.md\n');
+  } else if (!planVar) {
+    process.stdout.write('\n' + SARI + 'ANAHTAR VAR, PLAN REFERANSI YOK' + SIFIRLA
+      + ' — `plans: ' + JSON.stringify(d.plans || []) + '`.\n');
+    process.stdout.write('iyzico anahtarları çalışıyor ama IYZICO_PRICING_PLAN_PRO /\n');
+    process.stdout.write('IYZICO_PRICING_PLAN_ENTERPRISE tanımlı değil: /odeme düğmesi kapalı\n');
+    process.stdout.write('kalır ve /api/checkout 503 `checkout_unconfigured` döner.\n');
+    process.stdout.write('Referans kodu iyzico panelinde ürün+plan oluşturularak alınır\n');
+    process.stdout.write('(ya da tools/iyzico-plan-setup.js); ayrıntı: docs/iyzico-sandbox.md\n');
   } else if (d.testMode === true) {
     process.stdout.write('\n' + SARI + 'SANDBOX' + SIFIRLA
       + ' — taban adres sandbox; gerçek para çekilmez.\n');
@@ -156,18 +173,20 @@ function kod(y) { return y.govde && y.govde.error ? y.govde.error.code : null; }
 
   /* Her kapı geçildi, oturum yok: makine isteği 401, tarayıcı /panel'e. */
   const oturumsuz = await istek('/api/checkout?plan=pro&declaration=1&agreements=1');
-  const beklenen = acik ? 401 : 503;
+  const beklenen = hazir ? 401 : 503;
   sonuc(oturumsuz.status === beklenen,
-    acik ? 'oturum yoksa 401 auth_required' : 'ödeme kapalıyken 503 checkout_unconfigured',
+    hazir ? 'oturum yoksa 401 auth_required'
+          : (acik ? 'plan referansı yokken 503 checkout_unconfigured'
+                  : 'ödeme kapalıyken 503 checkout_unconfigured'),
     'HTTP ' + oturumsuz.status + ' ' + kod(oturumsuz));
 
   const tarayici = await istek('/api/checkout?plan=pro&declaration=1&agreements=1',
     { headers: { 'Accept': 'text/html' } });
   const panele = tarayici.status === 303 && /\/panel\?checkout=pro/.test(tarayici.location || '');
   const fiyata = tarayici.status === 303 && /\/pricing\?checkout=/.test(tarayici.location || '');
-  sonuc(acik ? panele : fiyata,
-    acik ? 'tarayıcı girişe yönlendiriliyor (/panel?checkout=pro)'
-         : 'tarayıcı fiyat sayfasına geri gönderiliyor (ödeme kapalı)',
+  sonuc(hazir ? panele : fiyata,
+    hazir ? 'tarayıcı girişe yönlendiriliyor (/panel?checkout=pro)'
+          : 'tarayıcı fiyat sayfasına geri gönderiliyor (ödeme başlatılamıyor)',
     'HTTP ' + tarayici.status + ' → ' + (tarayici.location || '(Location yok)'));
 
   /* ----------------------------------------------- 3. Ödeme dönüş ucu */
@@ -178,7 +197,10 @@ function kod(y) { return y.govde && y.govde.error ? y.govde.error.code : null; }
      anahtar yokken uç daha jetona bakmadan `unavailable` ile panele dönüyor
      (`if (!iyzico.isConfigured() || !db… ) backToPanel('unavailable')`).
      Yani "invalid" beklemek, ucun doğru davranışını KALDI göstermekti. */
-  const donusDurumu = acik ? 'invalid' : 'unavailable';
+  /* Dönüş ucunun sırası: yapılandırma → OTURUM → jeton. Anahtarlar girilince
+     (plan referansı olmasa bile) jetonsuz istek artık `invalid` değil `login`
+     ile dönüyor: oturum olmadan abonelik satırı zaten açılamaz. */
+  const donusDurumu = !acik ? 'unavailable' : 'login';
 
   const jetonsuz = await istek('/api/checkout-return', { headers: { 'Accept': 'text/html' } });
   sonuc(jetonsuz.status === 303

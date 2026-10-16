@@ -129,8 +129,29 @@ KODDAKI.forEach(function (ad) {
 });
 
 dene('belgedeki her IYZICO_* değişkeni kodda da okunuyor', function () {
+  /* Belge, KODDA OKUNMAYAN adları da UYARI olarak yazıyor (canlıda tam o
+     adlar girildi ve ödeme açılmadı). Bu satırlar dışlanıyor; geri kalan her
+     ad kodda gerçekten okunmak zorunda — yoksa "var olmayan bir değişkeni
+     girin" demiş oluruz. */
+  const olu = [];
+  DOC.split('\n').forEach(function (satir, i, hepsi) {
+    if (!/OKUNMUYOR/.test(satir)) return;
+    /* Uyarı iki satıra taşabiliyor: kendi satırı ve bir sonraki. */
+    [satir, hepsi[i + 1] || ''].forEach(function (x) {
+      (x.match(/IYZICO_[A-Z_]+/g) || []).forEach(function (ad) {
+        if (olu.indexOf(ad) === -1) olu.push(ad);
+      });
+    });
+  });
+  assert.ok(olu.length >= 2, 'ölü ad uyarısı belgeden düşmüş: ' + olu.join(', '));
+
   const belgedeki = Array.from(new Set(DOC.match(/IYZICO_[A-Z_]+/g) || []));
   belgedeki.forEach(function (ad) {
+    if (olu.indexOf(ad) !== -1) {
+      assert.ok(KODDAKI.indexOf(ad) === -1,
+        ad + ' "okunmuyor" diye yazılı ama kod onu okuyor — uyarı yanlış');
+      return;
+    }
     assert.ok(KODDAKI.indexOf(ad) !== -1,
       ad + ' belgede var ama kod onu okumuyor — var olmayan bir değişkeni girmek istemiş oluruz');
   });
