@@ -85,6 +85,14 @@ jobs:
       - name: iyzico kontrol listesi (kod ↔ belge ↔ doğrulama betiği)
         run: node cyberlionai/tools/iyzico-checklist-test.js
 
+      # Fiyat plani referans kodunu olusturan yonetici ucu CANLI iyzico
+      # hesabinda urun/plan aciyor: kapisi gevserse (ADMIN_EMAILS atlanirsa,
+      # Bearer kabul edilirse) yabanci biri canli hesapta plan acabilir,
+      # fiyat istekten alinirsa sozlesmedekinden farkli tutarla abonelik
+      # satilabilir. Bu adim o iki seyi ve belgedeki bildirim URL'ini tutuyor.
+      - name: iyzico yönetici plan ucu (kapılar, onay, fiyat kaynağı)
+        run: node cyberlionai/tools/iyzico-admin-test.js
+
       # iyzico canli basvurusu Visa/Mastercard logolarinin sitede GORUNMESINI
       # sart kostu. Bir arayuz duzenlemesi <img> satirini sessizce silerse ya da
       # dosya adi degisirse basvuru yeniden eksik duruma duser; bu adim logolarin

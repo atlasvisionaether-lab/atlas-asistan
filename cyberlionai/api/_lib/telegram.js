@@ -369,6 +369,13 @@ const mesaj = {
     return ONEK + ' 🗑️ Hesap silindi: ' + maskEmail(eposta)
       + (toplam ? '\n' + toplam : '');
   },
+  /* iyzico ürün/plan oluşturuldu: referans KODU gönderilmiyor (Telegram
+     sohbetine plan kimliği düşürmenin bir faydası yok), yalnızca hangi
+     ortamda hangi planların açıldığı. */
+  iyzicoPlanOlusturuldu: function (ortam, urun, planlar) {
+    return ONEK + ' 🧾 iyzico plan oluşturuldu (' + kod(ortam, 'bilinmiyor') + '): '
+      + serbestMetin(urun, 80) + ' — ' + (planlar || []).join(', ');
+  },
   test: function (metin) {
     return ONEK + ' 🦁 ' + (metin || 'test');
   },
