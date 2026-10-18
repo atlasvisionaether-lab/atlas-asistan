@@ -59,6 +59,14 @@
     {
       "source": "/pages/kullanim-sartlari",
       "destination": "/pages/kullanim-sartlari.html"
+    },
+    {
+      "source": "/pages/on-bilgilendirme-formu",
+      "destination": "/pages/on-bilgilendirme-formu.html"
+    },
+    {
+      "source": "/pages/cerez-politikasi",
+      "destination": "/pages/cerez-politikasi.html"
     }
   ],
   "redirects": [
@@ -140,6 +148,21 @@
     {
       "source": "/hakkinda",
       "destination": "/pages/hakkimizda",
+      "permanent": true
+    },
+    {
+      "source": "/mesafeli",
+      "destination": "/pages/mesafeli-satis-sozlesmesi",
+      "permanent": true
+    },
+    {
+      "source": "/on-bilgilendirme",
+      "destination": "/pages/on-bilgilendirme-formu",
+      "permanent": true
+    },
+    {
+      "source": "/cerez",
+      "destination": "/pages/cerez-politikasi",
       "permanent": true
     }
   ]

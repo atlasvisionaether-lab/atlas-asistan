@@ -284,7 +284,7 @@ footer ul a:hover{color:var(--fg)}
           <h3 id="planName" style="font-size:1.1rem">Pro Asistan</h3>
           <span class="tagline">Seçili Plan</span>
         </div>
-        <div class="price" style="margin-bottom:1.25rem"><b id="planPrice">₺7.900</b> <span class="per" id="planPeriod">/ay</span></div>
+        <div class="price" style="margin-bottom:1.25rem"><b id="planPrice">₺7.900</b> <span class="per" id="planPeriod">/ay (KDV dahil)</span></div>
         <div style="border-top:1px solid var(--border);padding-top:1rem">
           <p style="font-size:.875rem;font-weight:500;margin-bottom:.75rem;color:var(--fg)">Dahil olan özellikler:</p>
           <ul id="planFeatures" style="list-style:none;display:flex;flex-direction:column;gap:.55rem"></ul>
@@ -338,21 +338,81 @@ footer ul a:hover{color:var(--fg)}
             <label for="co-email">E-posta</label>
             <input id="co-email" type="email" placeholder="ornek@eposta.com" required>
           </div>
-          <button type="submit" class="btn green block lg">WhatsApp ile Siparişi Tamamla</button>
-          <p style="font-size:.72rem;color:var(--muted);margin-top:.9rem;text-align:center">Siparişi tamamlayarak <a href="pages/kvkk-aydinlatma-metni.html" style="color:#2F80FF">Kullanım Koşulları</a>'nı ve <a href="pages/teslimat-ve-iade-sartlari.html" style="color:#2F80FF">İade Politikası</a>'nı kabul etmiş olursunuz.</p>
+          <label for="co-consent" style="display:flex;gap:.6rem;align-items:flex-start;font-size:.8rem;color:var(--muted);margin-bottom:1rem;cursor:pointer;line-height:1.5">
+            <input id="co-consent" type="checkbox" required style="margin-top:.2rem;width:1rem;height:1rem;flex-shrink:0;accent-color:#2F80FF">
+            <span><a href="pages/on-bilgilendirme-formu.html" target="_blank" rel="noopener" style="color:#2F80FF">Ön Bilgilendirme Formu</a>'nu ve <a href="pages/mesafeli-satis-sozlesmesi.html" target="_blank" rel="noopener" style="color:#2F80FF">Mesafeli Satış Sözleşmesi</a>'ni okudum, onaylıyorum.</span>
+          </label>
+          <p id="co-consent-err" role="alert" style="display:none;font-size:.78rem;color:#f87171;margin:-.5rem 0 1rem">Devam etmek için Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi'ni onaylamanız gerekir.</p>
+          <button type="submit" id="co-submit" class="btn green block lg" disabled style="opacity:.5;cursor:not-allowed">WhatsApp ile Siparişi Tamamla</button>
+          <p style="font-size:.72rem;color:var(--muted);margin-top:.9rem;text-align:center">Siparişi tamamlayarak <a href="pages/kullanim-sartlari.html" style="color:#2F80FF">Kullanım Koşulları</a>'nı ve <a href="pages/teslimat-ve-iade-sartlari.html" style="color:#2F80FF">İade Politikası</a>'nı kabul etmiş olursunuz.</p>
         </form>
       </div>
     </div>
   </div>
 </div>
 
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a style="display:flex;align-items:center;gap:.6rem" href="index.html" class="brand">
+          <img src="public/logo/atlas_kurt_yilan_creative.png" alt="Atlas Asistan AI" style="width:96px;height:auto;object-fit:contain">
+          <span style="font-weight:800;line-height:1.1;color:#fff">ATLAS<br><span style="font-weight:400;font-size:.7em">ASISTAN AI</span></span>
+        </a>
+        <p>Klinikler için 7/24 yapay zeka asistanı SaaS yazılımı.</p>
+        <p style="font-size:.8rem;color:var(--muted);margin:.5rem 0 0">Şirket Unvanı: <span class="legal-entity-name">Ali Kotan</span><br>Vergi No: <span class="legal-entity-taxno">5810910912</span><br>Adres: <span class="legal-entity-address">Cevizli Mahallesi, Zuhal Caddesi No: 46, İç Kapı No: 50, Maltepe / İstanbul (Ritm AVM)</span></p>
+        <div class="socials">
+          <a href="https://wa.me/905344682769" target="_blank" rel="noopener noreferrer" class="soc wa" data-track="whatsapp_click" aria-label="WhatsApp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+          <a href="https://www.instagram.com/atlasasistan.ai/" target="_blank" rel="noopener noreferrer" class="soc ig" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h4>Hizmetler</h4>
+        <ul>
+          <li><a href="index.html#cozum">AI Asistan Çözümü</a></li>
+          <li><a href="index.html#moduller">Modüller</a></li>
+          <li><a href="index.html#fiyatlar">Paketler</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Yasal</h4>
+        <ul>
+          <li><a href="pages/gizlilik-politikasi.html">Gizlilik Politikası</a></li>
+          <li><a href="pages/hakkimizda.html">Hakkımızda</a></li>
+          <li><a href="pages/kvkk-aydinlatma-metni.html">KVKK Aydınlatma Metni</a></li>
+          <li><a href="pages/mesafeli-satis-sozlesmesi.html">Mesafeli Satış Sözleşmesi</a></li>
+          <li><a href="pages/teslimat-ve-iade-sartlari.html">Teslimat ve İade Şartları</a></li>
+          <li><a href="pages/kullanim-sartlari.html">Kullanım Şartları</a></li>
+          <li><a href="pages/on-bilgilendirme-formu.html">Ön Bilgilendirme Formu</a></li>
+          <li><a href="pages/cerez-politikasi.html">Çerez Politikası</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>İletişim</h4>
+        <ul>
+          <li><a href="tel:+905344682769">0534 468 27 69</a></li>
+          <li><a href="mailto:merhaba@atlasasistan.com" data-track="email_click">merhaba@atlasasistan.com</a></li>
+          <li><a href="iletisim.html">İletişim Formu</a></li>
+          <li><span class="legal-entity-address" style="color:var(--muted)">Cevizli Mahallesi, Zuhal Caddesi No: 46, İç Kapı No: 50, Maltepe / İstanbul (Ritm AVM)</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">© Atlas Asistan AI — <a href="mailto:destek@atlasasistan.com" data-track="email_click">destek@atlasasistan.com</a> — <a href="https://atlasasistan.com">https://atlasasistan.com</a></div>
+  </div>
+</footer>
+
 <script>
 (function(){
   var plans = {
-    starter: { name:"Dijital Başlangıç Paketi", price:"₺14.900", period:"tek sefer + ₺1.200/ay", features:["Premium 5 sayfalık site","Mobil uyumlu","WhatsApp widget","Temel asistan","SSL hosting 1 yıl","1-3 iş günü teslim*"] },
-    vip:     { name:"VIP Klinik Dönüşümü", price:"₺24.900", period:"tek sefer + ₺2.400/ay", features:["10+ sayfa + blog","WhatsApp + Instagram FULL","SEO temel kurulumu","Google Business profili","Aylık performans raporu","3-5 iş günü teslim*"] },
-    standart:{ name:"Standart Asistan", price:"₺4.900", period:"/ay", features:["WhatsApp asistanı","Randevu yönetimi","Fiyat bilgilendirme","7/24 otomatik yanıt","Sınırsız yanıt, aylık 500 hatırlatma"] },
-    pro:     { name:"Pro Asistan", price:"₺7.900", period:"/ay", features:["WhatsApp + Instagram","Gelişmiş randevu yönetimi","Kampanya & promosyon","Müşteri takip sistemi","Sınırsız yanıt ve hatırlatma","Öncelikli destek"] }
+    starter: { name:"Dijital Başlangıç Paketi", price:"₺14.900", period:"tek sefer + ₺1.200/ay (KDV dahil)", features:["Premium 5 sayfalık site","Mobil uyumlu","WhatsApp widget","Temel asistan","SSL hosting 1 yıl","1-3 iş günü teslim*"] },
+    vip:     { name:"VIP Klinik Dönüşümü", price:"₺24.900", period:"tek sefer + ₺2.400/ay (KDV dahil)", features:["10+ sayfa + blog","WhatsApp + Instagram FULL","SEO temel kurulumu","Google Business profili","Aylık performans raporu","3-5 iş günü teslim*"] },
+    standart:{ name:"Standart Asistan", price:"₺4.900", period:"/ay (KDV dahil)", features:["WhatsApp asistanı","Randevu yönetimi","Fiyat bilgilendirme","7/24 otomatik yanıt","Sınırsız yanıt, aylık 500 hatırlatma"] },
+    pro:     { name:"Pro Asistan", price:"₺7.900", period:"/ay (KDV dahil)", features:["WhatsApp + Instagram","Gelişmiş randevu yönetimi","Kampanya & promosyon","Müşteri takip sistemi","Sınırsız yanıt ve hatırlatma","Öncelikli destek"] }
   };
   var key = (new URLSearchParams(location.search).get('plan') || 'pro'); if (key === 'standard') { key = 'standart'; }
   var p = plans[key] || plans.pro;
@@ -368,8 +428,19 @@ footer ul a:hover{color:var(--fg)}
     ul.appendChild(li);
   });
 
+  var consent = document.getElementById('co-consent');
+  var submitBtn = document.getElementById('co-submit');
+  var consentErr = document.getElementById('co-consent-err');
+  consent.addEventListener('change', function(){
+    submitBtn.disabled = !consent.checked;
+    submitBtn.style.opacity = consent.checked ? '' : '.5';
+    submitBtn.style.cursor = consent.checked ? '' : 'not-allowed';
+    if (consent.checked) { consentErr.style.display = 'none'; }
+  });
+
   document.getElementById('coForm').addEventListener('submit', function(e){
     e.preventDefault();
+    if (!consent.checked) { consentErr.style.display = 'block'; consent.focus(); return; }
     var name = document.getElementById('co-name').value;
     var clinic = document.getElementById('co-clinic').value;
     var phone = document.getElementById('co-phone').value;
@@ -451,7 +522,7 @@ footer ul a:hover{color:var(--fg)}
   var A={
     hos:"Merhaba! 👋 Ben Atlas Asistan. Paketler, kurulum süreci, WhatsApp entegrasyonu — aklınıza takılan her şeyi sorabilirsiniz.\n\nNe öğrenmek istersiniz?",
 
-    paket:"Dört paketimiz var 💼\n\n🔹 WEB SİTESİ + ASİSTAN\n• Dijital Başlangıç — ₺14.900 tek sefer + ₺1.200/ay\n  5 sayfalık site, WhatsApp widget, temel asistan\n• VIP Klinik Dönüşümü — ₺24.900 tek sefer + ₺2.400/ay\n  10+ sayfa + blog, WhatsApp + Instagram, SEO kurulumu\n\n🔹 SADECE ASİSTAN (siteniz varsa)\n• Standart — ₺4.900/ay — WhatsApp, randevu, sınırsız yanıt\n• Pro — ₺7.900/ay — WhatsApp + Instagram, kampanya yönetimi, müşteri takibi\n\n\"Sayfa\", \"mesaj sınırı\" veya \"teslim süresi\" yazarak detayına bakabilirsiniz. Hangisi size uygun?",
+    paket:"Dört paketimiz var (tüm fiyatlar KDV dahil) 💼\n\n🔹 WEB SİTESİ + ASİSTAN\n• Dijital Başlangıç — ₺14.900 tek sefer + ₺1.200/ay\n  5 sayfalık site, WhatsApp widget, temel asistan\n• VIP Klinik Dönüşümü — ₺24.900 tek sefer + ₺2.400/ay\n  10+ sayfa + blog, WhatsApp + Instagram, SEO kurulumu\n\n🔹 SADECE ASİSTAN (siteniz varsa)\n• Standart — ₺4.900/ay — WhatsApp, randevu, sınırsız yanıt\n• Pro — ₺7.900/ay — WhatsApp + Instagram, kampanya yönetimi, müşteri takibi\n\n\"Sayfa\", \"mesaj sınırı\" veya \"teslim süresi\" yazarak detayına bakabilirsiniz. Hangisi size uygun?",
 
     sayfa:"Sayfa sayıları şöyle 📄\n\n5 SAYFA (Dijital Başlangıç):\n• Ana Sayfa\n• Hizmetler\n• Hakkımızda\n• Galeri (öncesi/sonrası)\n• İletişim\n\n10+ SAYFA (VIP):\nYukarıdakilerin tamamı + her hizmetiniz için ayrı sayfa (lazer epilasyon, botox, cilt bakımı, dolgu...) + Blog + SSS + Ekip + Müşteri Yorumları\n\n💡 Asıl fark şurada: VIP'te her hizmetin kendi sayfası olur. Bu, Google'da \"Kadıköy lazer epilasyon\" gibi aramalarda ayrı ayrı çıkmanızı sağlar.\n\nVIP pakete ayrıca SEO temel kurulumu (başlıklar, açıklamalar, site haritası, Google Search Console kaydı) ve Google Business profili düzenlemesi de dahildir — haritada ve aramalarda görünürlüğünüz artar.",
 
@@ -459,7 +530,7 @@ footer ul a:hover{color:var(--fg)}
 
     teslim:"Teslim sürelerimiz ⏱️\n\n• Dijital Başlangıç: 1-3 iş günü\n• VIP Klinik Dönüşümü: 3-5 iş günü\n• Sadece asistan paketleri: 1-2 iş günü\n\n⚠️ Önemli: Süre, klinik bilgileriniz bize ulaştıktan sonra başlar. Hizmet listeniz, fotoğraflarınız ve çalışma saatleriniz elimize geçtiği andan itibaren sayıyoruz.\n\nSiparişten hemen sonra size kısa bir bilgi formu gönderiyoruz. Formu doldurduğunuz gün süre başlar.",
 
-    fark:"Standart ile Pro arasındaki fark şu 📊\n\nStandart (₺4.900/ay): Sadece WhatsApp kanalı, randevu yönetimi, sınırsız yanıt, ayda 500 hatırlatma.\n\nPro (₺7.900/ay): WhatsApp + Instagram DM, gelişmiş randevu yönetimi, kampanya & promosyon yönetimi, müşteri takip sistemi, sınırsız hatırlatma, öncelikli destek.\n\nAradaki ₺3.000 farkı esas olarak Instagram entegrasyonu, kampanya yönetimi ve müşteri takip sistemi oluşturuyor. Instagram'dan mesaj alıyorsanız Pro kendini kısa sürede amorti eder.",
+    fark:"Standart ile Pro arasındaki fark şu 📊\n\nStandart (₺4.900/ay, KDV dahil): Sadece WhatsApp kanalı, randevu yönetimi, sınırsız yanıt, ayda 500 hatırlatma.\n\nPro (₺7.900/ay, KDV dahil): WhatsApp + Instagram DM, gelişmiş randevu yönetimi, kampanya & promosyon yönetimi, müşteri takip sistemi, sınırsız hatırlatma, öncelikli destek.\n\nAradaki ₺3.000 farkı esas olarak Instagram entegrasyonu, kampanya yönetimi ve müşteri takip sistemi oluşturuyor. Instagram'dan mesaj alıyorsanız Pro kendini kısa sürede amorti eder.",
 
     kurulum:"Kurulum süreci şöyle işliyor ⚙️\n\n1️⃣ Sipariş sonrası sizden klinik bilgilerinizi alıyoruz: hizmet ve fiyat listesi, çalışma saatleri, adres, kampanyalar, sık sorulan sorular.\n\n2️⃣ WhatsApp numaranızı sisteme kaydediyoruz (doğrulama kodu size gelir).\n\n3️⃣ Asistanı sizin bilgilerinizle eğitip test ediyoruz.\n\n⏱️ Süre: Sadece asistan paketlerinde 1-2 iş günü. Dijital Başlangıç 1-3 iş günü, VIP 3-5 iş günü. Süre bilgileriniz bize ulaştıktan sonra başlar.\n\nSizden istediğimiz tek şey bilgileriniz — teknik hiçbir işlem yapmanıza gerek yok.",
 
