@@ -1,0 +1,12 @@
+# Imza anahtari ASLA depoya girmez: yuklendigi an Play hesabinin kimligi
+# baskasinin eline gecer ve Play App Signing ile degistirilemez.
+android.keystore
+*.keystore
+*.jks
+*.aab
+*.apk
+local.properties
+app/
+gradle*/
+build/
+.gradle/

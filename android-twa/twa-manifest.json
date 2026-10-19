@@ -1,0 +1,57 @@
+{
+  "packageId": "com.cyberlionai.app",
+  "host": "www.cyberlionai.com",
+  "name": "Cyber Lion AI",
+  "launcherName": "Cyber Lion",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#0a0a0f",
+  "themeColorDark": "#0a0a0f",
+  "navigationColor": "#0a0a0f",
+  "navigationColorDark": "#0a0a0f",
+  "navigationDividerColor": "#0a0a0f",
+  "navigationDividerColorDark": "#0a0a0f",
+  "backgroundColor": "#0a0a0f",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://www.cyberlionai.com/favicon.png",
+  "maskableIconUrl": "https://www.cyberlionai.com/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "cyberlion"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Yeni tarama",
+      "short_name": "Tara",
+      "url": "/?utm_source=pwa#scan",
+      "chosenIconUrl": "https://www.cyberlionai.com/favicon-192.png"
+    },
+    {
+      "name": "Panelim",
+      "short_name": "Panel",
+      "url": "/panel?utm_source=pwa",
+      "chosenIconUrl": "https://www.cyberlionai.com/favicon-192.png"
+    },
+    {
+      "name": "Hesap silme",
+      "short_name": "Hesap sil",
+      "url": "/hesap-silme",
+      "chosenIconUrl": "https://www.cyberlionai.com/favicon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://www.cyberlionai.com/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://www.cyberlionai.com/",
+  "minSdkVersion": 23,
+  "appVersion": "1.0.0"
+}

@@ -93,6 +93,14 @@ jobs:
       - name: iyzico yönetici plan ucu (kapılar, onay, fiyat kaynağı)
         run: node cyberlionai/tools/iyzico-admin-test.js
 
+      # Play Store'daki uygulamanin adi, ikonu, acilis ekrani ve baslangic
+      # adresi manifest.json'dan geliyor: bir satir sessizce bozulursa
+      # uygulama yeniden derlenene kadar yanlis ad/ikonla yayinda kalir.
+      # Ayrica imza anahtarinin depoya girmedigini ve TWA renklerinin
+      # manifest ile ayni oldugunu tutuyor.
+      - name: PWA manifest ve TWA yapılandırması
+        run: node cyberlionai/tools/pwa-manifest-test.js
+
       # iyzico canli basvurusu Visa/Mastercard logolarinin sitede GORUNMESINI
       # sart kostu. Bir arayuz duzenlemesi <img> satirini sessizce silerse ya da
       # dosya adi degisirse basvuru yeniden eksik duruma duser; bu adim logolarin
