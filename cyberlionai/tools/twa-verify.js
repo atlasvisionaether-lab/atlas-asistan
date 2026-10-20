@@ -41,7 +41,9 @@ const notlar = [];
 function ok(ad, ek) { console.log('  ✓ ' + ad + (ek ? ' — ' + ek : '')); }
 function hata(ad, ek) { kaldi++; console.log('  ✗ ' + ad + (ek ? ' — ' + ek : '')); }
 function bilgi(ad, ek) { console.log('  · ' + ad + (ek ? ' — ' + ek : '')); }
-function bekle(k, ad, ek) { k ? ok(ad, ek) : hata(ad, ek); }
+/* Not yalnızca BAŞARISIZLIKTA yazılıyor: geçen bir denetimin yanına
+   "X ≠ Y" basmak satırı kendi kendini yalanlar hâle getiriyordu. */
+function bekle(k, ad, ek) { k ? ok(ad) : hata(ad, ek); }
 
 /** Tek istek: yönlendirmeyi İZLEMİYOR, çünkü yönlendirmenin kendisi bulgu. */
 function iste(adres, basliklar) {
@@ -205,7 +207,7 @@ async function main() {
       return ((s.target || {}).androidApp || {}).packageName;
     }).filter(Boolean);
     bekle(paketler.indexOf(PAKET) !== -1, 'Google ' + PAKET + ' için bağ görüyor',
-      paketler.length ? 'gördüğü: ' + paketler.join(', ') : 'hiç bağ yok');
+      paketler.length ? 'gördüğü paketler: ' + paketler.join(', ') : 'hiç bağ yok');
     if (j && j.debugString) bilgi('doğrulayıcı notu', String(j.debugString).slice(0, 300).replace(/\s+/g, ' '));
   }
 
@@ -227,14 +229,14 @@ async function main() {
       bilgi('name / short_name', String(m.name) + ' / ' + String(m.short_name));
       bilgi('display', String(m.display));
       const su = new URL(m.start_url || '/', mYol).toString();
-      bekle(ayniKaynak(su, HOST + '/'), 'start_url aynı kaynakta', su);
+      bekle(ayniKaynak(su, HOST + '/'), 'start_url aynı kaynakta: ' + su);
       const sy = await iste(su);
       bekle(!sy.hata && sy.durum === 200, 'start_url açılıyor', su + ' → ' + (sy.hata || sy.durum));
       bekle(m.display === 'standalone' || m.display === 'fullscreen',
-        'display standalone/fullscreen', String(m.display));
+        'display standalone/fullscreen: ' + String(m.display));
       const bs = (m.icons || []).map(function (i) { return i.sizes; });
       bekle(bs.indexOf('192x192') !== -1 && bs.indexOf('512x512') !== -1,
-        '192 ve 512 ikon', bs.join(' '));
+        '192 ve 512 ikon (' + bs.join(' ') + ')');
     }
   }
 
