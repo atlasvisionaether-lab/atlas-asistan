@@ -240,6 +240,46 @@ async function main() {
     }
   }
 
+  /* ---- 6. Flutter web derlemesi tamam mı ---- */
+  console.log('');
+  console.log('6. Flutter web derlemesi');
+  const flutterIzi = /flutter_bootstrap\.js|main\.dart\.js|flutterConfiguration|_flutter/.test(sonGovde)
+    || bulunanSw.indexOf('/flutter_service_worker.js') !== -1;
+  if (!flutterIzi) {
+    ok('sayfa Flutter değil', 'bu bölüm atlandı');
+  } else {
+    /* Flutter web'de sayfa boş bir kabuk: gövde JS gelmezse ekranda hiçbir şey
+       olmaz ya da ağ hatası görünür. Bu yüzden varlıkların TEK TEK durumu
+       ölçülüyor; "index.html 200 döndü" Flutter'da açıldı anlamına gelmiyor. */
+    const bekleyen = ['/flutter_bootstrap.js', '/main.dart.js', '/flutter.js', '/version.json', '/assets/AssetManifest.json'];
+    const durumlar = {};
+    for (const yol of bekleyen) {
+      const y = await iste(HOST + yol);
+      durumlar[yol] = y.hata ? y.hata : y.durum;
+      const boy = y.govde ? (y.govde.length / 1024).toFixed(1) + ' KB' : '—';
+      bilgi(yol, String(durumlar[yol]) + ' · ' + boy);
+    }
+    const girisVar = durumlar['/flutter_bootstrap.js'] === 200 || durumlar['/main.dart.js'] === 200;
+    bekle(girisVar, 'uygulama gövdesi sunuluyor (flutter_bootstrap.js veya main.dart.js)',
+      'kabuk HTML 200 dönüyor ama uygulama kodu yok: ekranda boş sayfa ya da hata');
+
+    const bas = /<base[^>]+href=["']([^"']+)["']/i.exec(sonGovde);
+    bilgi('<base href>', bas ? bas[1] : '—');
+    if (bas) bekle(bas[1] === '/' || bas[1] === './', '<base href> kökte', bas[1]);
+
+    const swv = /serviceWorkerVersion["']?\s*[:=]\s*["']?([\w.-]+)/.exec(sonGovde);
+    bilgi('index.html serviceWorkerVersion', swv ? swv[1] : 'yok');
+
+    if (bulunanSw.indexOf('/flutter_service_worker.js') !== -1) {
+      const sw = await iste(HOST + '/flutter_service_worker.js');
+      const kaynakHaritasi = /RESOURCES\s*=|CORE\s*=/.test(sw.govde || '');
+      bekle(kaynakHaritasi, 'flutter_service_worker.js gerçek Flutter service worker\'ı',
+        'RESOURCES/CORE listesi yok (' + ((sw.govde || '').length) + ' bayt): '
+        + 'ya elle yazılmış bir taslak ya da eksik derleme — önbellek listesi olmayan '
+        + 'bir service worker isteği karşılamaya çalışıp açılışı kilitleyebilir');
+    }
+  }
+
   console.log('');
   if (notlar.length) {
     console.log('NOTLAR');
