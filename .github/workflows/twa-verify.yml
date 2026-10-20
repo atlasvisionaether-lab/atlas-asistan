@@ -1,0 +1,43 @@
+name: TWA denetimi (Play uygulaması)
+
+# Telefondaki "Tekrar deneyin" (uydu simgesi) hatasinin sebebini olcer:
+# uygulamanin actigi adres gercekten aciliyor mu, yonlendirme kaynak
+# degistiriyor mu, /.well-known/assetlinks.json JSON olarak mi donuyor
+# (Firebase/SPA "**" yeniden yazimi bu dosyayi da yakalar), Google'in
+# dogrulayicisi bagi goruyor mu, service worker var mi.
+#
+# SALT OKUMA: GET istekleri. Hicbir sey yazmaz, uygulama yuklemez, onay
+# gerektirmez. Kapta cikis kapali oldugu icin (web.app ve cyberlionai.com
+# 403 CONNECT) olcum burada yapiliyor.
+
+on:
+  workflow_dispatch:
+    inputs:
+      host:
+        description: Uygulamanin actigi adres (sonunda / olmadan)
+        required: true
+        default: https://cyberlionai-c320e.web.app
+      package:
+        description: Android paket adi
+        required: true
+        default: com.cyberlionai.app
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: TWA ana makinesini ölç
+        env:
+          TWA_HOST: ${{ inputs.host }}
+          TWA_PACKAGE: ${{ inputs.package }}
+        run: node cyberlionai/tools/twa-verify.js

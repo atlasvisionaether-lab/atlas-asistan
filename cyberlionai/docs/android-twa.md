@@ -143,3 +143,113 @@ açılış ekranını boyuyor; site altın/koyu olduğu için mor açılış ekr
 yüklendiğinde göze çarpan bir renk sıçraması yaratırdı. Değişmesi isteniyorsa
 tek yer `manifest.json` + `android-twa/twa-manifest.json` (ikisi sınamayla
 eşitlenmiş durumda).
+
+## 7. Arıza: telefonda "Tekrar deneyin" (uydu simgesi)
+
+O ekran Chrome'un **ağ hatası** sayfasıdır, TWA doğrulama hatası değildir.
+İkisini karıştırmamak gerekiyor, çünkü çözümleri farklı:
+
+| Belirti | Sebep |
+| --- | --- |
+| Uygulama açılıyor ama **üstte adres çubuğu** var | assetlinks doğrulaması başarısız |
+| Uygulama **"Tekrar deneyin" / uydu** gösteriyor | açılan adres yüklenemiyor |
+
+"Chrome'da site açılıyor" ikinci durumu çürütmez: Chrome **elle yazılan**
+adresi açar, uygulama ise **AAB'ye gömülü** adresi açar. Aynı olmak zorunda
+değiller — en sık arıza tam burada.
+
+### Sırayla ölçün (tahmin etmeyin)
+
+**1) AAB'nin gerçekten hangi adresi açtığı** — tek kanıt:
+
+```bash
+node cyberlionai/tools/twa-audit-local.js /home/aliatlaskotan/cyberlion-app
+```
+
+`twa-manifest.json`, varsa yerel `assetlinks.json`, AAB içindeki paket adı,
+`versionCode`, **açılış adresi** (`DEFAULT_URL`), `asset_statements`,
+`INTERNET` ve `POST_NOTIFICATIONS` izinlerini okur. AAB okuması için
+`bundletool` gerekir; yoksa o satır ÖLÇÜLEMEDİ der.
+
+**2) Yayındaki ana makinenin yanıtları:**
+
+```bash
+gh workflow run twa-verify.yml -f host=https://www.cyberlionai.com
+gh workflow run twa-verify.yml -f host=https://cyberlionai-c320e.web.app
+```
+
+Açılış adresinin durumu, yönlendirmelerin kaynak değiştirip değiştirmediği,
+`assetlinks.json`'un JSON mu HTML mi döndüğü, Google'ın kendi
+doğrulayıcısının ne gördüğü, service worker ve manifest.
+
+**3) Telefondaki kesin hata kodu:**
+
+```bash
+adb logcat -c && adb logcat | grep -iE "cromite|chrome|twa|net::|TrustedWeb"
+```
+
+`net::ERR_NAME_NOT_RESOLVED` → adres yanlış yazılmış.
+`net::ERR_CLEARTEXT_NOT_PERMITTED` → açılış adresi `http://`.
+`net::ERR_CONNECTION_*` → ana makine o ağdan erişilemiyor.
+`net::ERR_FAILED` + service worker satırları → önbellek.
+
+### Tek ana makine seçin
+
+İki ayrı yer var: `www.cyberlionai.com` (Vercel, sitenin kendisi) ve
+`cyberlionai-c320e.web.app` (Firebase Hosting). TWA **tek** bir ana makineye
+bağlanır ve şunların **üçü de aynı** olmak zorundadır:
+
+1. `twa-manifest.json` → `host` (şemasız) ve `webManifestUrl`,
+2. o ana makinede `/.well-known/assetlinks.json`,
+3. o ana makinede `rel="manifest"` ile verilen web manifest.
+
+Biri farklıysa uygulama ya ağ hatası ya adres çubuğu gösterir. Depodaki
+yapılandırma `www.cyberlionai.com`'u gösteriyor; Firebase'deki kopya
+kullanılacaksa `host`, `webManifestUrl` ve `assetlinks.json` oraya taşınıp
+AAB **yeniden derlenmeli**.
+
+### Firebase Hosting'de assetlinks tuzağı
+
+Flutter/SPA kurulumunun varsayılan `firebase.json`'u her yolu `index.html`'e
+çevirir:
+
+```json
+{ "hosting": { "rewrites": [{ "source": "**", "destination": "/index.html" }] } }
+```
+
+Bu kural `/.well-known/assetlinks.json` isteğini de yakalar: Android
+doğrulayıcı JSON beklerken HTML alır ve bağ kurulmaz. Dosya
+`public/.well-known/assetlinks.json` olarak **gerçek dosya** hâlinde
+durmalı (Hosting önce gerçek dosyaya bakar, yoksa rewrite devreye girer) ve
+`firebase.json`'daki `ignore` listesi `**/.*` gibi bir kalıpla nokta ile
+başlayan klasörleri dışlamamalı:
+
+```json
+"ignore": ["firebase.json", "**/node_modules/**"]
+```
+
+Doğrulama: `curl -sI https://<ana-makine>/.well-known/assetlinks.json` →
+`content-type: application/json`. `text/html` geliyorsa tuzağa düşülmüş.
+
+### Service worker ve Flutter
+
+Depodaki site **service worker kullanmıyor** (ölçüm: `sw.js`,
+`service-worker.js`, `flutter_service_worker.js` yok, `index.html`
+`serviceWorker.register` çağırmıyor), yani sitenin kendisinde çevrimdışı
+önbellek diye bir şey yok.
+
+Firebase'deki kopya bir Flutter web derlemesiyse durum farklı: Flutter'ın
+`flutter_service_worker.js`'i `index.html` içindeki `serviceWorkerVersion`
+ile eşleşmezse açılış kilitlenir, ve TWA telefondaki Chrome ile **aynı**
+service worker kaydını paylaşır — bu yüzden uygulamada hata, Chrome'da
+yeniden yükleme çalışabilir. Elemek için:
+
+1. Telefonda: Ayarlar → Uygulamalar → Chrome → Depolama → site verilerini
+   temizle; uygulamanın verilerini de temizle, sonra yeniden açın.
+2. Düzelirse sebep önbellekti: Flutter derlemesini `flutter build web
+   --release` ile yenileyip dağıtın (sürüm damgası güncellenir).
+3. Düzelmezse sebep önbellek **değil**; 1. ve 3. ölçüme dönün.
+
+"Yavaş internet" tek başına bu hatayı kalıcı yapmaz: açılış adresi birkaç
+yönlendirmeden geçiyorsa ilk açılış zayıf bağlantıda düşebilir, ama aynı
+telefonda Chrome açılıyorsa bağlantı ayakta demektir.
