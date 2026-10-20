@@ -93,10 +93,16 @@ imzalama → **SHA-256 sertifika parmak izi** (yükleme anahtarınınki değil,
 uygulama imzalama anahtarınınki). Alındıktan sonra:
 
 ```bash
-node cyberlionai/tools/twa-assetlinks.js "AB:CD:…:EF"
+# Play App Signing açıksa İKİ parmak izi de verilir: uygulama imzalama + yükleme.
+node cyberlionai/tools/twa-assetlinks.js "AB:CD:…:EF" "12:34:…:90"
 # cyberlionai/.well-known/assetlinks.json yazılır → commit → dağıt
 curl -s https://www.cyberlionai.com/.well-known/assetlinks.json
 ```
+
+Play yüklediğiniz paketi **kendi** anahtarıyla yeniden imzalar: mağazadan
+inen sürümün parmak izi, yerelde imzaladığınızınkiyle aynı değildir. Tek izi
+listelemek "yerelde kurunca oluyor, Play'den inince olmuyor" arızasını
+üretir.
 
 Dosya bu yüzden hazır commit'lenmedi: sahte parmak izli bir assetlinks,
 olmayan dosyadan daha kötüdür (doğrulama sessizce başarısız olur).
@@ -253,3 +259,30 @@ yeniden yükleme çalışabilir. Elemek için:
 "Yavaş internet" tek başına bu hatayı kalıcı yapmaz: açılış adresi birkaç
 yönlendirmeden geçiyorsa ilk açılış zayıf bağlantıda düşebilir, ama aynı
 telefonda Chrome açılıyorsa bağlantı ayakta demektir.
+
+## 8. 20.10.2026 denetimi (ölçülmüş)
+
+Koşular: `39352629756` ve `39352888603` (web.app), `39352636379` (www).
+
+| Ölçüm | `cyberlionai-c320e.web.app` | `www.cyberlionai.com` |
+| --- | --- | --- |
+| `/` | 200, yönlendirme yok | 200, yönlendirme yok |
+| manifest `name` | **`cyberlion_test_app`** | `Cyber Lion AI — Web Sitesi Güvenlik Taraması` |
+| `/.well-known/assetlinks.json` | 200, geçerli JSON, paket + biçim doğru | **404** |
+| Google doğrulayıcı | bağı **görüyor** | **hiç bağ yok** |
+| service worker | `/flutter_service_worker.js` var, **784 bayt**, `RESOURCES` listesi yok | yok |
+| `index.html` `serviceWorkerVersion` | **yok** | — |
+| `/flutter_bootstrap.js` | 200 (12.8 KB) | — |
+| `/main.dart.js` | 200 (398.4 KB) | — |
+| `/assets/AssetManifest.json` | **404** | — |
+
+Okunuşu: uygulamanın bağlı olduğu ana makine Firebase'deki **eksik bir
+Flutter deneme derlemesi**. Flutter web açılışta `AssetManifest.json`'u
+okur; 404 dönerse uygulama açılmaz. Üstüne önbellek listesi olmayan
+784 baytlık bir `flutter_service_worker.js` var ve `index.html` onun sürümünü
+hiç bildirmiyor. Chrome'da "site açılıyor" denen adres ise
+`www.cyberlionai.com` — **başka bir ana makine**; karşılaştırma hiç aynı
+şeyi ölçmemiş.
+
+Ürün sitesi `www.cyberlionai.com`'da ve manifest'i yayında; orada eksik olan
+tek şey `assetlinks.json`.
