@@ -310,7 +310,7 @@
       "en": "Assistant memory (stored conversations and remember preference)",
       "kaynak": "cl_assistant_messages, cl_user_prefs — db/migrations/011_assistant_memory.sql; api/_lib/memory.js; api/user/memory.js; vektör: db/migrations/012_assistant_vectors.sql, api/_lib/embed.js, supabase/functions/embed; arama fonksiyonu cl_match_assistant_messages ve atomik yazma fonksiyonu cl_append_assistant_messages (yalnızca servis rolü)",
       "amac": "Kullanıcı 'Evet, hatırla' dediyse sonraki sorularda önceki konuşmayı bağlam olarak kullanmak",
-      "not": "Yalnızca giriş yapmış ve hatırla diyen kullanıcı; maskeli içerik; kullanıcı başına en çok 1000 mesaj. Anlamsal arama için mesaj başına 384 boyutlu vektör (embedding) aynı satırda saklanır; vektör Supabase Edge Function'da (gte-small) üretilir.",
+      "not": "Yalnızca giriş yapmış ve hatırla diyen kullanıcı; maskeli içerik; kullanıcı başına en çok 1000 mesaj. Anlamsal arama için mesaj başına 384 boyutlu vektör (embedding) aynı satırda saklanır; vektör Supabase Edge Function'da (gte-small, yalnızca İngilizce) üretilir; maskeli metin önce DeepSeek flash ile İngilizceye çevrilir, çeviri saklanmaz (api/_lib/embed.js).",
       "playKategori": "Messages",
       "playTip": "Other in-app messages",
       "toplanir": true,

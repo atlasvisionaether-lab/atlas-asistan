@@ -62,8 +62,10 @@ function sahteVektor(metin) {
 }
 
 /* ---------- fetch saplaması ---------- */
-const istekler = { embed: [], resend: [], deepseek: [], rpc: [] };
+const istekler = { embed: [], resend: [], deepseek: [], rpc: [], ceviri: [] };
 let embedDurum = 200;
+let ceviriDurum = 200;
+let ceviriBos = false;
 let akisSirasindaKapat = null;
 let embedSirasindaKapat = null;
 let resendDurum = 200;
@@ -81,6 +83,14 @@ global.fetch = async function (adres, sec) {
   if (adres.indexOf('api.resend.com') !== -1) {
     istekler.resend.push({ headers: sec.headers, govde: govde });
     return resendDurum === 200 ? cevap({ id: 'em_' + istekler.resend.length }) : cevap({}, resendDurum);
+  }
+  /* Akışsız DeepSeek isteği = embedding öncesi çeviri. Sahte çeviri metni
+     "EN: " önekiyle döndürür (anahtar kelimeler korunur, sahteVektor çalışır). */
+  if (adres.indexOf('deepseek') !== -1 && govde.stream === false) {
+    istekler.ceviri.push({ adres: adres, govde: govde });
+    if (ceviriDurum !== 200) return cevap({ error: 'x' }, ceviriDurum);
+    const metin = ceviriBos ? '   ' : 'EN: ' + govde.messages[1].content;
+    return cevap({ choices: [{ message: { role: 'assistant', content: metin } }] });
   }
   if (adres.indexOf('deepseek') !== -1) {
     istekler.deepseek.push(govde);
@@ -218,11 +228,46 @@ async function main() {
   dogru('supabase isteğinde model/dimensions yok', e0.govde.model === undefined && e0.govde.dimensions === undefined);
   esit('pgvector metni', embed.toPg([0.5, 1]), '[0.5000000,1.000000]');
 
+  /* Çevir ve vektörleştir: gte-small yalnızca İngilizce. */
+  esit('embed\'e çeviri gider, sıra korunur', e0.govde.input, ['EN: SSL nedir', 'EN: fiyat']);
+  esit('metin başına bir çeviri isteği', istekler.ceviri.length, 2);
+  const c0 = istekler.ceviri[0];
+  dogru('çeviri DeepSeek /chat/completions, akışsız, flash, sıcaklık 0',
+    c0.adres === 'https://api.deepseek.com/chat/completions' && c0.govde.stream === false
+    && c0.govde.model === 'deepseek-flash' && c0.govde.temperature === 0);
+  dogru('çeviride düşünme kapalı', c0.govde.thinking.type === 'disabled' && c0.govde.reasoning_effort === 'none');
+  dogru('çeviri talimatı sistemde, metin kullanıcıda',
+    /Translate the following text to English for semantic search/.test(c0.govde.messages[0].content)
+    && c0.govde.messages[1].content === 'SSL nedir');
+  dogru('çeviri sohbet isteklerine karışmaz', istekler.deepseek.length === 0);
+
+  ceviriDurum = 503;
+  const yedekV = await embed.embed(['SSL kurulumu']);
+  esit('çeviri düşerse özgün metin vektörleşir, hata yok',
+    [istekler.embed[istekler.embed.length - 1].govde.input, yedekV[0][0]], [['SSL kurulumu'], 1]);
+  ceviriDurum = 200;
+  ceviriBos = true;
+  await embed.embed(['fiyat nedir']);
+  esit('boş çeviri → özgün metin', istekler.embed[istekler.embed.length - 1].govde.input, ['fiyat nedir']);
+  ceviriBos = false;
+
+  let say = istekler.ceviri.length;
+  process.env.EMBED_TRANSLATE = 'off';
+  await embed.embed(['SSL']);
+  esit('EMBED_TRANSLATE=off → çeviri yok', [istekler.ceviri.length - say, istekler.embed[istekler.embed.length - 1].govde.input], [0, ['SSL']]);
+  delete process.env.EMBED_TRANSLATE;
+  const dsAnahtar = process.env.DEEPSEEK_API_KEY; delete process.env.DEEPSEEK_API_KEY;
+  await embed.embed(['SSL']);
+  esit('DeepSeek anahtarı yoksa çeviri yok, embedding sürer', [istekler.ceviri.length - say, istekler.embed[istekler.embed.length - 1].govde.input], [0, ['SSL']]);
+  process.env.DEEPSEEK_API_KEY = dsAnahtar;
+
   process.env.EMBEDDING_PROVIDER = 'openai';
   process.env.EMBEDDING_API_KEY = 'sk-openai-test-key-0123456789';
+  say = istekler.ceviri.length;
   await embed.embed(['x']);
   const e1 = istekler.embed[istekler.embed.length - 1];
   esit('openai sağlayıcısı: model + 384 boyut', [e1.adres, e1.govde.model, e1.govde.dimensions], ['https://api.openai.com/v1/embeddings', 'text-embedding-3-small', 384]);
+  esit('openai çok dilli: çeviri yok', [istekler.ceviri.length - say, e1.govde.input], [0, ['x']]);
   delete process.env.EMBEDDING_PROVIDER; delete process.env.EMBEDDING_API_KEY;
 
   embedDurum = 500;

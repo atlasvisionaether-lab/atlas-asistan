@@ -19,14 +19,86 @@
  * DeepSeek'in embedding ucu yok (dokümanında yalnızca chat/completions var),
  * bu yüzden seçenek değil.
  *
+ * ÇEVİR VE VEKTÖRLEŞTİR (yalnızca supabase sağlayıcısı)
+ *   gte-small yalnızca İngilizce: canlı ölçümde Türkçe sorguda ilgisiz metin
+ *   ilgili metnin önüne geçti (fark −0.007), İngilizcede doğru sonuç 0.159
+ *   farkla öndeydi. Çok dilli multilingual-e5-small Edge Function'da
+ *   WORKER_RESOURCE_LIMIT ile düştü. Bu yüzden her metin önce DeepSeek flash
+ *   ile İngilizceye çevrilir, vektör çeviriden alınır. Soru da saklanan
+ *   mesajlar da aynı yoldan geçer; karşılaştırma İngilizce↔İngilizce olur.
+ *   DeepSeek zaten asistanın birincil sağlayıcısı ve metin zaten maskeli
+ *   (ai-redact): yeni veri işleyen eklenmez. Çeviri düşerse (anahtar yok,
+ *   zaman aşımı, boş cevap) özgün metin kullanılır; arama zayıflar, durmaz.
+ *   EMBED_TRANSLATE=off ile kapanır. Çevrilen metin hiçbir yere yazılmaz;
+ *   veritabanına mesajın özgün (maskeli) hâli girer.
+ *
  * Hata hâlinde fırlatır; çağıran (assistant-ai) hafızayı "son mesajlar"
  * moduna düşürür, asistan durmaz. Anahtarlar loglanmaz.
  */
+
+const llm = require('./llm');
 
 const DIM = 384;
 const TIMEOUT_MS = 8000;
 const MAX_INPUTS = 16;
 const MAX_CHARS = 2000;
+const TRANSLATE_TIMEOUT_MS = 6000;
+/* 2000 karakterlik Türkçe metnin İngilizcesi ~600 token; pay bırakıldı. */
+const TRANSLATE_MAX_TOKENS = 1200;
+const TRANSLATE_SYSTEM = 'Translate the following text to English for semantic search purposes. '
+  + 'Output only the translation, with no notes or quotes. If the text is already in English, '
+  + 'return it unchanged. Keep bracketed placeholders such as [e-posta], [ip] or [gizli] exactly as they are.';
+
+function translator(provider) {
+  if (provider !== 'supabase') return null;
+  if (String(process.env.EMBED_TRANSLATE || '').toLowerCase() === 'off') return null;
+  return llm.config().deepseek;
+}
+
+/* Tek metni İngilizceye çevirir; başarısızlıkta fırlatır. Akışsız istek:
+   kısa metin, ilk-token yedeği gerekmiyor. */
+async function toEnglish(ds, text) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(function () { ctrl.abort(); }, TRANSLATE_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(ds.base + '/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ds.key },
+      body: JSON.stringify({
+        model: ds.models.flash,
+        stream: false,
+        max_tokens: TRANSLATE_MAX_TOKENS,
+        temperature: 0,
+        thinking: { type: 'disabled' },
+        reasoning_effort: 'none',
+        messages: [{ role: 'system', content: TRANSLATE_SYSTEM }, { role: 'user', content: text }]
+      }),
+      signal: ctrl.signal
+    });
+  } catch (err) {
+    throw new Error('translate_unreachable');
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new Error('translate_http_' + res.status);
+  let json;
+  try { json = await res.json(); } catch (e) { throw new Error('translate_bad_response'); }
+  const choice = json && json.choices && json.choices[0];
+  const out = choice && choice.message && typeof choice.message.content === 'string' ? choice.message.content.trim() : '';
+  if (!out) throw new Error('translate_empty');
+  return out.slice(0, MAX_CHARS);
+}
+
+/* Metinleri paralel çevirir; düşen metin özgün hâliyle kalır. Metin loglanmaz. */
+async function translateAll(ds, texts) {
+  return Promise.all(texts.map(function (t) {
+    return toEnglish(ds, t).catch(function (err) {
+      console.error(JSON.stringify({ ev: 'embed_translate_fail', code: String(err && err.message).slice(0, 40) }));
+      return t;
+    });
+  }));
+}
 
 function config() {
   const env = process.env;
@@ -67,7 +139,8 @@ async function embed(texts) {
     throw new Error('embed_bad_input');
   }
 
-  const body = { input: input };
+  const ds = translator(cfg.provider);
+  const body = { input: ds ? await translateAll(ds, input) : input };
   if (cfg.provider === 'openai') { body.model = cfg.model; body.dimensions = DIM; }
 
   const ctrl = new AbortController();
