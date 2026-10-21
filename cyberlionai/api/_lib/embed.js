@@ -39,10 +39,11 @@
 const llm = require('./llm');
 
 const DIM = 384;
-const TIMEOUT_MS = 8000;
 const MAX_INPUTS = 16;
 const MAX_CHARS = 2000;
-const TRANSLATE_TIMEOUT_MS = 6000;
+/* Süreler isteğin TAMAMINI kapsar (başlık + gövde); sınama kısaltabilsin
+   diye nesnede. */
+const LIMITS = { timeoutMs: 8000, translateTimeoutMs: 6000 };
 /* 2000 karakterlik Türkçe metnin İngilizcesi ~600 token; pay bırakıldı. */
 const TRANSLATE_MAX_TOKENS = 1200;
 const TRANSLATE_SYSTEM = 'Translate the following text to English for semantic search purposes. '
@@ -55,35 +56,51 @@ function translator(provider) {
   return llm.config().deepseek;
 }
 
+/* JSON POST; süre sınırı gövde okunana kadar sürer. fetch başlıklar gelince
+   döner: zamanlayıcı orada temizlenirse, başlığı erken gönderip gövdeyi
+   bekleten uç (DeepSeek akışsız istekte yük altında cevap hazır olana dek
+   boş keep-alive satırları yollar) res.json()'u süresiz bekletir ve hafıza
+   araması, dolayısıyla asistan yanıtı takılır (PR #105 inceleme bulgusu).
+   Hata kodları: <önek>_unreachable | _timeout | _http_<durum> | _bad_response. */
+async function postJson(url, headers, body, timeoutMs, prefix) {
+  const ctrl = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(function () { timedOut = true; ctrl.abort(); }, timeoutMs);
+  try {
+    let res;
+    try {
+      res = await fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body), signal: ctrl.signal });
+    } catch (err) {
+      throw new Error(prefix + (timedOut ? '_timeout' : '_unreachable'));
+    }
+    if (!res.ok) throw new Error(prefix + '_http_' + res.status);
+    try {
+      return await res.json();
+    } catch (err) {
+      throw new Error(prefix + (timedOut ? '_timeout' : '_bad_response'));
+    }
+  } finally {
+    clearTimeout(timer);
+    /* Okunmadan bırakılan gövdenin (hata durumu) bağlantısı açık kalmasın. */
+    ctrl.abort();
+  }
+}
+
 /* Tek metni İngilizceye çevirir; başarısızlıkta fırlatır. Akışsız istek:
    kısa metin, ilk-token yedeği gerekmiyor. */
 async function toEnglish(ds, text) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(function () { ctrl.abort(); }, TRANSLATE_TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch(ds.base + '/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ds.key },
-      body: JSON.stringify({
-        model: ds.models.flash,
-        stream: false,
-        max_tokens: TRANSLATE_MAX_TOKENS,
-        temperature: 0,
-        thinking: { type: 'disabled' },
-        reasoning_effort: 'none',
-        messages: [{ role: 'system', content: TRANSLATE_SYSTEM }, { role: 'user', content: text }]
-      }),
-      signal: ctrl.signal
-    });
-  } catch (err) {
-    throw new Error('translate_unreachable');
-  } finally {
-    clearTimeout(timer);
-  }
-  if (!res.ok) throw new Error('translate_http_' + res.status);
-  let json;
-  try { json = await res.json(); } catch (e) { throw new Error('translate_bad_response'); }
+  const json = await postJson(ds.base + '/chat/completions',
+    { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ds.key },
+    {
+      model: ds.models.flash,
+      stream: false,
+      max_tokens: TRANSLATE_MAX_TOKENS,
+      temperature: 0,
+      thinking: { type: 'disabled' },
+      reasoning_effort: 'none',
+      messages: [{ role: 'system', content: TRANSLATE_SYSTEM }, { role: 'user', content: text }]
+    },
+    LIMITS.translateTimeoutMs, 'translate');
   const choice = json && json.choices && json.choices[0];
   const out = choice && choice.message && typeof choice.message.content === 'string' ? choice.message.content.trim() : '';
   if (!out) throw new Error('translate_empty');
@@ -143,20 +160,7 @@ async function embed(texts) {
   const body = { input: ds ? await translateAll(ds, input) : input };
   if (cfg.provider === 'openai') { body.model = cfg.model; body.dimensions = DIM; }
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch(cfg.url, { method: 'POST', headers: cfg.headers, body: JSON.stringify(body), signal: ctrl.signal });
-  } catch (err) {
-    throw new Error('embed_unreachable');
-  } finally {
-    clearTimeout(timer);
-  }
-  if (!res.ok) throw new Error('embed_http_' + res.status);
-
-  let json;
-  try { json = await res.json(); } catch (e) { throw new Error('embed_bad_response'); }
+  const json = await postJson(cfg.url, cfg.headers, body, LIMITS.timeoutMs, 'embed');
   const data = json && Array.isArray(json.data) ? json.data.slice() : null;
   if (!data || data.length !== input.length) throw new Error('embed_bad_response');
   data.sort(function (a, b) { return a.index - b.index; });
@@ -170,4 +174,4 @@ function toPg(vector) {
   return '[' + vector.map(function (x) { return Number(x).toPrecision(7); }).join(',') + ']';
 }
 
-module.exports = { embed, isConfigured, toPg, DIM };
+module.exports = { embed, isConfigured, toPg, DIM, LIMITS };

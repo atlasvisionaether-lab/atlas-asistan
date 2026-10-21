@@ -66,6 +66,19 @@ const istekler = { embed: [], resend: [], deepseek: [], rpc: [], ceviri: [] };
 let embedDurum = 200;
 let ceviriDurum = 200;
 let ceviriBos = false;
+/* Başlık hemen gelir, gövde ancak istek iptal edilince biter (DeepSeek'in
+   cevap hazır olana dek keep-alive satırı yollaması). */
+let ceviriAsili = false;
+let embedAsili = false;
+const asiliSinyaller = [];
+function asiliCevap(sinyal) {
+  asiliSinyaller.push(sinyal);
+  return { ok: true, status: 200, json: function () {
+    return new Promise(function (_, red) {
+      sinyal.addEventListener('abort', function () { red(Object.assign(new Error('aborted'), { name: 'AbortError' })); });
+    });
+  } };
+}
 let akisSirasindaKapat = null;
 let embedSirasindaKapat = null;
 let resendDurum = 200;
@@ -77,6 +90,7 @@ global.fetch = async function (adres, sec) {
   if (adres.indexOf('/functions/v1/embed') !== -1 || adres.indexOf('/embeddings') !== -1) {
     istekler.embed.push({ adres: adres, headers: sec.headers, govde: govde });
     if (embedSirasindaKapat && govde.input[0].indexOf('adımları izleyin') !== -1) { db.prefs[embedSirasindaKapat] = false; embedSirasindaKapat = null; }
+    if (embedAsili) return asiliCevap(sec.signal);
     if (embedDurum !== 200) return cevap({ error: 'x' }, embedDurum);
     return cevap({ data: govde.input.map(function (t, i) { return { index: i, embedding: sahteVektor(t) }; }) });
   }
@@ -88,6 +102,7 @@ global.fetch = async function (adres, sec) {
      "EN: " önekiyle döndürür (anahtar kelimeler korunur, sahteVektor çalışır). */
   if (adres.indexOf('deepseek') !== -1 && govde.stream === false) {
     istekler.ceviri.push({ adres: adres, govde: govde });
+    if (ceviriAsili) return asiliCevap(sec.signal);
     if (ceviriDurum !== 200) return cevap({ error: 'x' }, ceviriDurum);
     const metin = ceviriBos ? '   ' : 'EN: ' + govde.messages[1].content;
     return cevap({ choices: [{ message: { role: 'assistant', content: metin } }] });
@@ -250,6 +265,29 @@ async function main() {
   await embed.embed(['fiyat nedir']);
   esit('boş çeviri → özgün metin', istekler.embed[istekler.embed.length - 1].govde.input, ['fiyat nedir']);
   ceviriBos = false;
+
+  /* Süre sınırı gövdeyi de kapsar (PR #105 inceleme bulgusu): başlık gelip
+     gövde gelmezse çağrı takılmaz. Düzeltme yoksa bekçi 2 sn'de keser. */
+  const bekci = function (p) {
+    return Promise.race([p, new Promise(function (ok) { setTimeout(function () { ok('TAKILDI'); }, 2000); })]);
+  };
+  const eskiSure = Object.assign({}, embed.LIMITS);
+  embed.LIMITS.translateTimeoutMs = 50; embed.LIMITS.timeoutMs = 50;
+  ceviriAsili = true;
+  let t0 = Date.now();
+  const asiliV = await bekci(embed.embed(['SSL asılı']));
+  ceviriAsili = false;
+  esit('çeviri gövdesi gelmezse süre dolar, özgün metinle devam',
+    [asiliV === 'TAKILDI' ? 'TAKILDI' : 'bitti', istekler.embed[istekler.embed.length - 1].govde.input], ['bitti', ['SSL asılı']]);
+  dogru('asılı çeviri süre sınırında kesilir', Date.now() - t0 < 1000);
+  dogru('asılı çeviri bağlantısı iptal edilir', asiliSinyaller[asiliSinyaller.length - 1].aborted);
+  embedAsili = true;
+  t0 = Date.now();
+  const asiliE = await bekci(embed.embed(['SSL']).then(function () { return 'ok'; }, function (e) { return e.message; }));
+  embedAsili = false;
+  esit('embed gövdesi gelmezse embed_timeout', asiliE, 'embed_timeout');
+  dogru('asılı embed süre sınırında kesilir', Date.now() - t0 < 1000);
+  Object.assign(embed.LIMITS, eskiSure);
 
   let say = istekler.ceviri.length;
   process.env.EMBED_TRANSLATE = 'off';
