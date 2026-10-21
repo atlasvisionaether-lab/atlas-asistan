@@ -1147,6 +1147,17 @@
        tamamını okunur bırakmak daha kullanışlı. */
     white-space: pre-wrap; overflow-wrap: anywhere;
   }
+  .bubble--ai p { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .bubble__note {
+    display: block; margin-top: 9px; font-size: .74rem; line-height: 1.45; color: var(--text-gray);
+  }
+  .assist-consent__title { margin: 0 0 6px; color: var(--text-white); }
+  .assist-offer {
+    margin-top: 12px; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--glass-border); background: rgba(212, 175, 55, .07);
+  }
+  .assist-offer p { margin: 0 0 10px; }
+  .assist-consent a { color: var(--gold-primary); }
   .bubble__meta {
     display: block; margin-top: 10px; padding-top: 8px;
     border-top: 1px solid var(--hairline);
@@ -1239,6 +1250,12 @@
     border: 1px solid var(--hairline); background: var(--surface-raised);
     color: var(--text-white); outline: none; font-size: .9rem;
     transition: border-color var(--transition-speed) var(--transition-ease);
+  }
+  /* textarea: log/kod yapıştırılınca satır sonları korunur; Enter gönderir,
+     Shift+Enter yeni satır. Yükseklik içerikle büyür (JS), en fazla ~6 satır. */
+  textarea.assist__input {
+    resize: none; height: 46px; max-height: 150px; line-height: 1.35;
+    font-family: inherit; overflow-y: auto;
   }
   .assist__input:focus { border-color: var(--gold-primary); }
   .assist__input::placeholder { color: var(--text-gray); opacity: .7; }
@@ -2273,8 +2290,8 @@
 
     <form class="assist__form" id="assistForm">
       <label class="sr-only" for="assistInput" data-i18n="assist.inputLabel">Sorunuz</label>
-      <input class="assist__input" type="text" id="assistInput" autocomplete="off"
-             placeholder="Sorunuzu yazın…" data-i18n-placeholder="assist.placeholder" />
+      <textarea class="assist__input" id="assistInput" rows="1" maxlength="4000" autocomplete="off"
+             placeholder="Sorunuzu yazın…" data-i18n-placeholder="assist.placeholder"></textarea>
       <button type="submit" class="assist__send" id="assistSend" aria-label="Gönder" data-i18n-aria="assist.send">
         <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
       </button>
@@ -2368,7 +2385,8 @@
         cookie: 'cookieConsent',
         mode: 'preferredRemediationMode',
         quota: 'freeScansUsed',
-        token: 'authToken'
+        token: 'authToken',
+        aiConsent: 'aiAssistConsent'
       }
     };
 
@@ -2675,7 +2693,33 @@
           escalateUrgent: 'Bu acil görünüyor. Aktif bir güvenlik olayı yaşıyorsanız önce etkilenen sistemi izole edin, ardından aşağıdaki formla ya da e-posta düğmesiyle doğrudan ekibimize ulaşın.',
           escalateBtn: 'Uzman ekibe yaz',
           more: 'Başka bir konu',
-          disclaimer: 'Bu asistan Cyber Lion bilgi tabanından yanıt verir; sitenizi taramaz ve hesabınıza erişmez.'
+          disclaimer: 'Bu asistan Cyber Lion bilgi tabanından yanıt verir; sitenizi taramaz ve hesabınıza erişmez.',
+          disclaimerAi: 'Bu asistan önce Cyber Lion bilgi tabanından, orada cevap yoksa yapay zekâ ile yanıt verir. Sitenizi taramaz ve hesabınıza erişmez.',
+          aiConsentTitle: 'Yapay zekâ ile devam edilsin mi?',
+          aiConsentText: 'Bu soruyu yanıtlamak için mesajınız ve bu sohbetteki son mesajlar yapay zekâ hizmet sağlayıcılarına gönderilir: DeepSeek (Çin) ve yedek olarak Anthropic (ABD). Asistan hafızasını açtıysanız kayıtlı önceki konuşmalarınız da bağlam olarak gönderilir. E-posta, IP adresi ve anahtar biçimli değerler göndermeden önce otomatik gizlenir; yine de şifre, API anahtarı veya kişisel veri girmeyin.',
+          aiConsentAccept: 'Kabul ediyorum, devam et',
+          aiConsentDecline: 'Hayır, uzmana ilet',
+          aiConsentMore: 'Gizlilik Politikası',
+          layerAi: 'Yapay zekâ',
+          aiThinking: 'Derin analiz yapılıyor…',
+          aiNote: 'Yapay zekâ yanıtıdır, hata içerebilir. Canlı sisteme uygulamadan önce kontrol edin.',
+          aiRedacted: '{n} hassas değer gönderilmeden önce gizlendi.',
+          aiInterrupted: 'Yanıt yarıda kesildi. Sorunuzu tekrar gönderebilirsiniz.',
+          aiTruncated: 'Yanıt uzunluk sınırına ulaştı; devamı için "devam et" yazabilirsiniz.',
+          aiUnavailable: 'Yapay zekâ şu anda yanıt veremiyor. Sorunuzu uzman ekibimize iletebilirsiniz:',
+          aiRateLimited: 'Çok hızlı soru gönderdiniz. Lütfen biraz bekleyip tekrar deneyin.',
+          aiDailyLimit: 'Bugünkü yapay zekâ soru hakkınız doldu. Yarın tekrar deneyebilir ya da sorunuzu uzman ekibimize iletebilirsiniz:',
+          aiTooLong: 'Mesaj çok uzun. Lütfen en fazla 4000 karakter gönderin; uzun loglardan yalnızca hatanın geçtiği bölümü yapıştırın.',
+          memAskTitle: 'Sizi hatırlayalım mı?',
+          memAskText: 'Evet derseniz asistanla konuşmalarınız (gizlenmiş hâliyle, en fazla son 1000 mesaj) hesabınıza kaydedilir ve bir dahaki sefere kaldığımız yerden devam ederiz. İstediğiniz an Panelim → Güvenlik → Veri Yönetimi\'nden silebilirsiniz.',
+          memYes: 'Evet, hatırla',
+          memNo: 'Hayır, unut beni',
+          memSavedYes: 'Tamam, konuşmalarımızı hatırlayacağım.',
+          memSavedNo: 'Tamam, konuşmalarımızı kaydetmeyeceğim.',
+          memSaveErr: 'Tercihiniz kaydedilemedi. Daha sonra panelden değiştirebilirsiniz.',
+          memManage: 'Hafızayı yönet',
+          greetReturning: 'Tekrar hoş geldiniz. Önceki konuşmalarımızı hatırlıyorum; kaldığımız yerden devam edebiliriz.',
+          greetFirstTime: 'Merhaba, sizi ilk kez görüyorum.'
         },
         services: {
           eyebrow: 'Yetenekler',
@@ -3125,7 +3169,33 @@
           escalateUrgent: 'This looks urgent. If you have an active security incident, isolate the affected system first, then reach our team directly with the form or the email button below.',
           escalateBtn: 'Message the expert team',
           more: 'Another topic',
-          disclaimer: 'This assistant answers from the Cyber Lion knowledge base; it does not scan your site or access your account.'
+          disclaimer: 'This assistant answers from the Cyber Lion knowledge base; it does not scan your site or access your account.',
+          disclaimerAi: 'This assistant answers from the Cyber Lion knowledge base first and uses AI when the knowledge base has no answer. It does not scan your site or access your account.',
+          aiConsentTitle: 'Continue with AI?',
+          aiConsentText: 'To answer this question, your message and the recent messages in this chat are sent to AI service providers: DeepSeek (China) and, as a backup, Anthropic (USA). If you turned on assistant memory, your stored earlier conversations are sent as context too. Email addresses, IP addresses and key-like values are hidden automatically before sending; still, do not enter passwords, API keys or personal data.',
+          aiConsentAccept: 'I agree, continue',
+          aiConsentDecline: 'No, send to an expert',
+          aiConsentMore: 'Privacy Policy',
+          layerAi: 'AI',
+          aiThinking: 'Running a deep analysis…',
+          aiNote: 'AI-generated answer; it may contain mistakes. Review before applying to a live system.',
+          aiRedacted: '{n} sensitive value(s) were hidden before sending.',
+          aiInterrupted: 'The answer was cut off. You can send your question again.',
+          aiTruncated: 'The answer hit the length limit; type "continue" for the rest.',
+          aiUnavailable: 'The AI cannot answer right now. You can send your question to our experts:',
+          aiRateLimited: 'You are sending questions too quickly. Please wait a moment and try again.',
+          aiDailyLimit: 'You have used today\'s AI questions. Try again tomorrow or send your question to our experts:',
+          aiTooLong: 'The message is too long. Please send at most 4000 characters; from long logs paste only the part with the error.',
+          memAskTitle: 'Shall we remember you?',
+          memAskText: 'If you say yes, your conversations with the assistant (with sensitive values hidden, at most the last 1000 messages) are saved to your account so we can pick up where we left off. You can delete them any time in Dashboard → Security → Data Management.',
+          memYes: 'Yes, remember me',
+          memNo: 'No, forget me',
+          memSavedYes: 'Got it, I will remember our conversations.',
+          memSavedNo: 'Got it, I will not save our conversations.',
+          memSaveErr: 'Your choice could not be saved. You can change it later in the dashboard.',
+          memManage: 'Manage memory',
+          greetReturning: 'Welcome back. I remember our earlier conversations; we can pick up where we left off.',
+          greetFirstTime: 'Hello, this is the first time I am seeing you.'
         },
         services: {
           eyebrow: 'Capabilities',
@@ -6005,6 +6075,337 @@
         });
       }
 
+      /* ---- Yapay zekâ katmanı (/api/assistant-ai) ----
+         Bilgi tabanı net cevap veremediğinde (fallback) soru buraya gider.
+         Sunucu kapalıysa (bayrak/anahtar yok) eski davranış sürer: uzman formu.
+         İlk AI sorusundan önce açık rıza alınır; sürüm sunucudan gelir, metin
+         değişince sürüm yükselir ve rıza yeniden sorulur. */
+      var ai = { enabled: false, consentVersion: null, checked: null };
+
+      function checkAi() {
+        if (ai.checked) return ai.checked;
+        ai.checked = fetch('/api/assistant-ai', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (d && d.enabled === true && typeof d.consentVersion === 'string') {
+              ai.enabled = true; ai.consentVersion = d.consentVersion;
+            }
+            return ai;
+          })
+          .catch(function (err) { log('ai check error', err); return ai; });
+        return ai.checked;
+      }
+
+      function hasConsent() {
+        return Boolean(ai.consentVersion) && store.get(CONFIG.storageKeys.aiConsent) === ai.consentVersion;
+      }
+
+      /** Model metnini güvenli çizer: yalnızca textContent; ``` blokları <code>. */
+      function richText(container, text) {
+        while (container.firstChild) container.removeChild(container.firstChild);
+        var parts = String(text).split(/```[^\n`]*\n?/);
+        for (var i = 0; i < parts.length; i++) {
+          if (i % 2 === 1) {
+            var code = document.createElement('code');
+            code.textContent = parts[i].replace(/\n+$/, '');
+            container.appendChild(code);
+            continue;
+          }
+          var plain = parts[i].replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/^#{1,6}\s+/gm, '');
+          var paras = plain.split(/\n{2,}/);
+          for (var j = 0; j < paras.length; j++) {
+            if (!paras[j].trim()) continue;
+            var pEl = document.createElement('p');
+            pEl.textContent = paras[j].trim();
+            container.appendChild(pEl);
+          }
+        }
+      }
+
+      function note(bubble, text) {
+        var span = document.createElement('span');
+        span.className = 'bubble__note';
+        span.textContent = text;
+        bubble.appendChild(span);
+      }
+
+      /** Sunucunun eklediği sabit Pro teklifi (bkz. api/_lib/offer.js). Adres
+          yalnızca kendi ödeme sayfamıza gidebilir. */
+      function offerBlock(bubble, o) {
+        if (!o || typeof o.text !== 'string' || typeof o.url !== 'string' || !/^\/odeme\?plan=(pro|enterprise)$/.test(o.url)) return;
+        var box = document.createElement('div');
+        box.className = 'assist-offer';
+        var p = document.createElement('p');
+        p.textContent = o.text;
+        box.appendChild(p);
+        var a = document.createElement('a');
+        a.className = 'btn btn--gold btn--sm';
+        a.href = o.url;
+        a.textContent = typeof o.cta === 'string' ? o.cta : 'Pro';
+        box.appendChild(a);
+        bubble.appendChild(box);
+      }
+
+      function modelLabel(m) {
+        if (!m) return '';
+        if (m.provider === 'anthropic') return 'Claude Haiku';
+        return m.tier === 'pro' ? 'DeepSeek V4 Pro' : 'DeepSeek Flash';
+      }
+
+      function metaAi(bubble, seconds, m) {
+        var label = t('assist.layerAi') + (m ? ' · ' + modelLabel(m) : '');
+        var span = document.createElement('span');
+        span.className = 'bubble__meta';
+        span.textContent = seconds.toFixed(2) + ' s · ' + label;
+        bubble.appendChild(span);
+        if (timeEl) timeEl.textContent = seconds.toFixed(2) + ' s';
+        if (layerEl) layerEl.textContent = label;
+      }
+
+      /** Rıza balonu. Kabul → akış başlar; ret → eski uzman formu. */
+      function consentPrompt(question, prior) {
+        var bubble = row('bot');
+        bubble.classList.add('assist-consent');
+        var title = document.createElement('p');
+        title.className = 'assist-consent__title';
+        var strong = document.createElement('strong');
+        strong.textContent = t('assist.aiConsentTitle');
+        title.appendChild(strong);
+        bubble.appendChild(title);
+        var body = document.createElement('p');
+        body.textContent = t('assist.aiConsentText') + ' ';
+        var link = document.createElement('a');
+        link.href = '/gizlilik-politikasi';
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = t('assist.aiConsentMore');
+        body.appendChild(link);
+        bubble.appendChild(body);
+
+        var wrap = document.createElement('div');
+        wrap.className = 'chips';
+        function button(key, onClick) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'chip';
+          b.textContent = t(key);
+          b.addEventListener('click', function () {
+            var all = wrap.querySelectorAll('button');
+            for (var i = 0; i < all.length; i++) all[i].disabled = true;
+            onClick();
+          });
+          wrap.appendChild(b);
+        }
+        button('assist.aiConsentAccept', function () {
+          store.set(CONFIG.storageKeys.aiConsent, ai.consentVersion);
+          streamAi(question, prior);
+        });
+        button('assist.aiConsentDecline', function () {
+          var b = row('bot');
+          paragraphs(b, t('assist.unknown'));
+          handoffForm(b);
+        });
+        bubble.appendChild(wrap);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      /* ---- Asistan hafızası (/api/user/memory) ----
+         Yalnızca giriş yapmış kullanıcı: kalıcı hafıza hesaba bağlı. Karar
+         verilmediyse "Sizi hatırlayalım mı?" kartı çıkar. Hafızası olmayan
+         (yeni ya da verisini silmiş) kullanıcıya "sizi ilk kez görüyorum"
+         denir; ikisi bilerek ayırt edilmez. */
+      function memoryGreeting() {
+        fetch('/api/user/memory', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (m) {
+            if (!m || !m.authenticated) return;
+            var b = row('bot');
+            paragraphs(b, t(m.greeting === 'returning' ? 'assist.greetReturning' : 'assist.greetFirstTime'));
+            if (m.remember === null) memoryAsk(b);
+            else manageLink(b);
+          })
+          .catch(function (err) { log('memory status error', err); });
+      }
+
+      function manageLink(bubble) {
+        var a = document.createElement('a');
+        a.className = 'bubble__note';
+        a.href = '/dashboard#security';
+        a.textContent = t('assist.memManage');
+        bubble.appendChild(a);
+      }
+
+      function memoryAsk(bubble) {
+        var title = document.createElement('p');
+        title.className = 'assist-consent__title';
+        var strong = document.createElement('strong');
+        strong.textContent = t('assist.memAskTitle');
+        title.appendChild(strong);
+        bubble.appendChild(title);
+        var text = document.createElement('p');
+        text.textContent = t('assist.memAskText');
+        bubble.appendChild(text);
+        var wrap = document.createElement('div');
+        wrap.className = 'chips';
+        [['assist.memYes', true], ['assist.memNo', false]].forEach(function (opt) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'chip';
+          btn.textContent = t(opt[0]);
+          btn.addEventListener('click', function () {
+            var all = wrap.querySelectorAll('button');
+            for (var i = 0; i < all.length; i++) all[i].disabled = true;
+            fetch('/api/user/memory', {
+              method: 'PUT',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({ remember: opt[1] })
+            }).then(function (r) {
+              if (!r.ok) throw new Error('http_' + r.status);
+              note(bubble, t(opt[1] ? 'assist.memSavedYes' : 'assist.memSavedNo'));
+            }).catch(function () {
+              note(bubble, t('assist.memSaveErr'));
+              for (var i = 0; i < all.length; i++) all[i].disabled = false;
+            });
+          });
+          wrap.appendChild(btn);
+        });
+        bubble.appendChild(wrap);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      /** AI geçmişi: kullanıcı mesajları + önceki AI yanıtları (bilgi tabanı niyet kimlikleri değil). */
+      function aiHistory(prior) {
+        return prior.filter(function (h) { return h.role === 'user' || h.role === 'assistant'; })
+          .map(function (h) { return { role: h.role, text: h.text }; });
+      }
+
+      function streamAi(question, prior) {
+        busy = true;
+        if (sendBtn) sendBtn.disabled = true;
+        var started = performance.now();
+        var indicator = typing();
+        var bubble = null, body = null, text = '', info = null, finish = null, failed = null, offer = null;
+        var painting = false, thinkingShown = false;
+        var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+        var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 90000) : null;
+
+        function dropIndicator() {
+          if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
+          indicator = null;
+        }
+        function ensureBubble() {
+          if (bubble) return;
+          dropIndicator();
+          bubble = row('bot');
+          bubble.classList.add('bubble--ai');
+          body = document.createElement('div');
+          bubble.appendChild(body);
+        }
+        function paint() {
+          painting = false;
+          if (body) richText(body, text);
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+        function handle(ev, data) {
+          if (ev === 'meta') info = data;
+          else if (ev === 'thinking' && !thinkingShown && indicator) {
+            thinkingShown = true;
+            var label = document.createElement('span');
+            label.className = 'bubble__note';
+            label.textContent = t('assist.aiThinking');
+            var b = indicator.querySelector('.bubble');
+            if (b) b.appendChild(label);
+          } else if (ev === 'delta' && data && typeof data.t === 'string') {
+            ensureBubble();
+            text += data.t;
+            if (!painting) { painting = true; requestAnimationFrame(paint); }
+          } else if (ev === 'offer') offer = data;
+          else if (ev === 'done') finish = data && data.finishReason;
+          else if (ev === 'error') failed = (data && data.code) || 'ai_unavailable';
+        }
+
+        fetch('/api/assistant-ai', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+          body: JSON.stringify({
+            message: question, history: aiHistory(prior), lang: lang(), consent: ai.consentVersion
+          }),
+          signal: ctrl ? ctrl.signal : undefined
+        }).then(function (r) {
+          var ct = r.headers.get('Content-Type') || '';
+          if (ct.indexOf('text/event-stream') === -1 || !r.body) {
+            return r.json().catch(function () { return null; }).then(function (j) {
+              failed = (j && j.error && j.error.code) || ('http_' + r.status);
+            });
+          }
+          var reader = r.body.getReader();
+          var decoder = new TextDecoder();
+          var buf = '';
+          function pump() {
+            return reader.read().then(function (chunk) {
+              if (chunk.done) return;
+              buf += decoder.decode(chunk.value, { stream: true }).replace(/\r\n?/g, '\n');
+              var idx;
+              while ((idx = buf.indexOf('\n\n')) !== -1) {
+                var raw = buf.slice(0, idx);
+                buf = buf.slice(idx + 2);
+                var ev = 'message', data = '';
+                raw.split('\n').forEach(function (line) {
+                  if (line.indexOf('event:') === 0) ev = line.slice(6).trim();
+                  else if (line.indexOf('data:') === 0) data += line.slice(5).trim();
+                });
+                var parsed = null;
+                try { parsed = JSON.parse(data); } catch (e) { parsed = null; }
+                if (parsed) handle(ev, parsed);
+              }
+              return pump();
+            });
+          }
+          return pump();
+        }).catch(function (err) {
+          log('assistant ai error', err);
+          if (!failed) failed = text ? 'interrupted' : 'network';
+        }).then(function () {
+          if (timer) clearTimeout(timer);
+          var seconds = (performance.now() - started) / 1000;
+          if (text) {
+            ensureBubble();
+            paint();
+            if (failed || finish === 'interrupted') note(bubble, t('assist.aiInterrupted'));
+            else if (finish === 'max_tokens') note(bubble, t('assist.aiTruncated'));
+            if (offer && !failed) offerBlock(bubble, offer);
+            if (info && info.redacted > 0) note(bubble, t('assist.aiRedacted', { n: info.redacted }));
+            note(bubble, t('assist.aiNote'));
+            metaAi(bubble, seconds, info);
+            remember('assistant', text);
+          } else {
+            dropIndicator();
+            var b = row('bot');
+            if (failed === 'consent_required') {
+              /* Sunucudaki rıza sürümü değişmiş: yeniden sor. */
+              ai.checked = null;
+              store.set(CONFIG.storageKeys.aiConsent, '');
+              checkAi().then(function () { consentPrompt(question, prior); });
+              b.parentNode.removeChild(b);
+            } else if (failed === 'rate_limited') {
+              paragraphs(b, t('assist.aiRateLimited'));
+            } else if (failed === 'too_long') {
+              paragraphs(b, t('assist.aiTooLong'));
+            } else {
+              paragraphs(b, t(failed === 'daily_limit' ? 'assist.aiDailyLimit' : 'assist.aiUnavailable'));
+              handoffForm(b);
+              mailButton(b, question, false);
+            }
+            if (b.parentNode) meta(b, seconds, 'assist.layerHuman');
+          }
+          logEl.scrollTop = logEl.scrollHeight;
+          busy = false;
+          if (sendBtn) sendBtn.disabled = false;
+        });
+      }
+
       /** Sunucu cevabını çizer. Aynı cevap → aynı çıktı. */
       function render(bubble, res, question) {
         if (res.type === 'answer' && res.answer) {
@@ -6038,6 +6439,7 @@
         if (sendBtn) sendBtn.disabled = true;
 
         paragraphs(row('user'), question);
+        var prior = history.slice();
         var payload = { lang: lang(), history: history.slice() };
         if (intent) payload.intent = intent; else payload.message = question;
         remember('user', question);
@@ -6052,6 +6454,21 @@
         }
 
         callAssistant(payload).then(function (res) {
+          /* Bilgi tabanının net cevabı yoksa ve AI katmanı açıksa soru modele gider. */
+          if (res.type === 'fallback' && !intent) {
+            return checkAi().then(function (a) {
+              if (!a.enabled) return res;
+              if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
+              busy = false;
+              if (sendBtn) sendBtn.disabled = false;
+              if (hasConsent()) streamAi(question, prior);
+              else consentPrompt(question, prior);
+              return null;
+            });
+          }
+          return res;
+        }).then(function (res) {
+          if (!res) return;
           if (indicator && indicator.parentNode) indicator.parentNode.removeChild(indicator);
           var bubble = row('bot');
           var layer = render(bubble, res, question);
@@ -6078,6 +6495,11 @@
         note.className = 'bubble__meta';
         note.textContent = t('assist.disclaimer');
         bubble.appendChild(note);
+        checkAi().then(function (a) {
+          if (!a.enabled) return;
+          note.textContent = t('assist.disclaimerAi');
+          memoryGreeting();
+        });
         /* Karşılama düğmeleri bilgi tabanından: soru metni tek kaynakta. */
         fetch('/api/assistant?lang=' + lang(), { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
           .then(function (r) { return r.ok ? r.json() : null; })
@@ -6114,9 +6536,27 @@
           form.addEventListener('submit', function (e) {
             e.preventDefault();
             var value = input.value.trim();
-            if (!value) return;
+            if (!value || busy) return;
             input.value = '';
+            autosize();
             ask(value);
+          });
+        }
+
+        /* textarea: Enter gönderir, Shift+Enter yeni satır; yükseklik içerikle büyür. */
+        function autosize() {
+          if (!input || input.tagName !== 'TEXTAREA') return;
+          input.style.height = 'auto';
+          input.style.height = Math.min(input.scrollHeight + 2, 150) + 'px';
+        }
+        if (input) {
+          input.addEventListener('input', autosize);
+          input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+              e.preventDefault();
+              if (form && typeof form.requestSubmit === 'function') form.requestSubmit();
+              else if (form) form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
           });
         }
 

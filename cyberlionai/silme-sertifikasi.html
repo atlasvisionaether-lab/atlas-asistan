@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Silme Sertifikası Doğrulama | Cyber Lion AI</title>
+  <meta name="description" content="Cyber Lion AI'da yapılan bir veri silme işleminin sertifika kodunu doğrulayın. Sertifika kişiye bağlı değildir." />
+  <meta name="robots" content="noindex" />
+  <link rel="canonical" href="https://www.cyberlionai.com/silme-sertifikasi" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 3 L42 9 V23 C42 34 34 41.5 24 45 C14 41.5 6 34 6 23 V9 Z' fill='%230a0a0f' stroke='%23d4af37' stroke-width='2.5'/%3E%3Ccircle cx='24' cy='22' r='9' fill='none' stroke='%23d4af37' stroke-width='2.5'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="/manifest.json" />
+  <style>
+  :root{--primary-black:#0a0a0f;--card-black:#1a1a24;--gold-primary:#d4af37;--gold-light:#ffdf00;
+    --text-white:#f0f0f0;--text-gray:#a0a0b0;--glass-border:rgba(212,175,55,.2);--hairline:rgba(255,255,255,.08);
+    --ok:#5fd98a;--bad:#ff8f87}
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--primary-black);color:var(--text-white);
+    font-family:'Space Grotesk','Segoe UI',system-ui,sans-serif;font-size:16px;line-height:1.6}
+  a{color:var(--gold-primary)}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--gold-light);outline-offset:3px}
+  main{max-width:640px;margin:0 auto;padding:40px 16px}
+  h1{font-size:1.5rem;margin:0 0 8px}
+  .lead{color:var(--text-gray);margin:0 0 24px}
+  .card{background:var(--card-black);border:1px solid var(--glass-border);border-radius:14px;padding:20px}
+  form{display:flex;flex-wrap:wrap;gap:10px}
+  input{flex:1 1 220px;min-width:0;padding:12px 14px;border-radius:10px;border:1px solid var(--hairline);
+    background:#12121a;color:var(--text-white);font:inherit;font-family:ui-monospace,Menlo,monospace;text-transform:uppercase}
+  button{padding:12px 18px;border-radius:10px;border:0;font:inherit;font-weight:600;cursor:pointer;
+    color:#0a0a0f;background:linear-gradient(135deg,var(--gold-light),var(--gold-primary))}
+  .result{margin-top:18px}
+  .result--ok h2{color:var(--ok)} .result--bad h2{color:var(--bad)}
+  h2{font-size:1.05rem;margin:0 0 10px}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+  dt{color:var(--text-gray)} dd{margin:0;overflow-wrap:anywhere}
+  .note{color:var(--text-gray);font-size:.88rem;margin-top:18px}
+  </style>
+</head>
+<body>
+  <main>
+    <p><a href="/">← Cyber Lion AI</a></p>
+    <h1>Silme sertifikası doğrulama</h1>
+    <p class="lead">Veri silme işleminden sonra size gösterilen <strong>DEL-XXXXXXXX</strong> kodunu girin. Sertifika silmenin ne zaman ve hangi kapsamda yapıldığını gösterir; kimin yaptığını göstermez, çünkü kişiye bağlı değildir.</p>
+    <div class="card">
+      <form id="certForm" novalidate>
+        <label for="certCode" class="sr-only" hidden>Sertifika kodu</label>
+        <input id="certCode" name="code" autocomplete="off" spellcheck="false" maxlength="12"
+               placeholder="DEL-XXXXXXXX" aria-label="Sertifika kodu" />
+        <button type="submit" id="certBtn">Doğrula</button>
+      </form>
+      <div class="result" id="certResult" role="status" aria-live="polite" hidden></div>
+    </div>
+    <p class="note">Sertifikada kullanıcı kimliği, e-posta veya IP adresi tutulmaz. Ayrıntı: <a href="/gizlilik-politikasi">Gizlilik Politikası</a>.</p>
+  </main>
+  <script src="/silme-sertifikasi.js" defer></script>
+</body>
+</html>

@@ -44,6 +44,8 @@
 const db = require('../_lib/db.js');
 const auth = require('../_lib/auth.js');
 const tg = require('../_lib/telegram.js');
+const memory = require('../_lib/memory.js');
+const mailer = require('../_lib/mailer.js');
 
 /* Kazara silmeye karşı açık onay. Panelin onay kutusu ve /hesap-silme sayfası
    bu dizgeyi gönderiyor; TR ve EN sayfalar aynı uca gittiği için iki karşılık
@@ -116,8 +118,27 @@ module.exports = async function handler(req, res) {
     await tg.sendTelegram(tg.mesaj.hesapSilindi(user.email, sonuc.silinen), { type: 'alert' });
   } catch (e) { /* bildirim gönderilemedi diye silme geri alınmaz */ }
 
+  /* Silme kanıtı (bkz. db/migrations/011): kod + kapsam + sayılar; kişiye
+     bağ yok. Yazılamazsa silme geri alınmaz, yanıt kodsuz döner. */
+  let certificate = null;
+  try {
+    certificate = await memory.createCertificate(['account', 'conversations', 'scans'], sonuc.silinen);
+  } catch (e) {
+    if (console && console.error) console.error('certificate failed:', e.message);
+  }
+
+  /* Sertifika e-postası: hesap silindi ama adres bu istekte hâlâ elde
+     (oturumdan okundu). Talebi tamamlamak için TEK bir e-posta gider; adres
+     başka bir yere yazılmaz. Gönderilemezse sertifika yanıtta (ekranda). */
+  let mail = 'failed';
+  try {
+    mail = user.email ? await mailer.sendCertificate(user.email, certificate, ['account', 'conversations', 'scans']) : 'failed';
+  } catch (e) { mail = 'failed'; }
+
   return res.status(200).json({
     ok: true,
+    certificate: certificate,
+    mail: mail,
     deleted: sonuc.silinen,
     anonymized: sonuc.anonimlestirilen,
     skipped: sonuc.atlanan

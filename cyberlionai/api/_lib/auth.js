@@ -479,7 +479,36 @@ async function adminDeleteUser(userId) {
   return { ok: response.ok || response.status === 404, status: response.status };
 }
 
+/**
+ * Kullanıcının e-postasını GoTrue yönetici ucundan okur (servis rolü).
+ * Yalnızca sunucu işleri (sabah özeti) çağırır; kimlik veritabanındaki
+ * kendi kayıtlarından gelir, istemciden değil. Dönüş: e-posta | null.
+ */
+async function adminGetUserEmail(userId) {
+  const cfg = adminConfig();
+  if (!cfg) throw new Error('admin_not_configured');
+  if (!UUID_RE.test(String(userId || ''))) throw new Error('invalid_user_id');
+  const controller = new AbortController();
+  const timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch(cfg.url + '/auth/v1/admin/users/' + encodeURIComponent(userId), {
+      method: 'GET',
+      signal: controller.signal,
+      headers: { 'apikey': cfg.key, 'Authorization': 'Bearer ' + cfg.key }
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    throw new Error('auth_unreachable');
+  }
+  clearTimeout(timer);
+  if (!response.ok) return null;
+  const body = await response.json().catch(function () { return null; });
+  return body && typeof body.email === 'string' ? body.email : null;
+}
+
 module.exports = {
+  adminGetUserEmail,
   isConfigured, call,
   validEmail, passwordProblem, mapError, logFailure, siteUrl, PASSWORD_MIN, PASSWORD_MAX,
   signUp, signInPassword, signInMagicLink, recover, verifyOtp,

@@ -20,7 +20,7 @@ Web: https://www.cyberlionai.com
 
 **Hukuki Sebep:** KVKK m.5/2-c (sözleşmenin ifası), m.5/2-ç (veri sorumlusunun hukuki yükümlülüğü), m.5/2-f (meşru menfaat)
 
-**Aktarım:** iyzico'ya ödeme için, muhasebe için mali müşavire, yetkili kurumlara talep halinde; hizmetin sunulması için altyapı sağlayıcılarına (Vercel, Cloudflare, Supabase). Bu sağlayıcıların sunucuları yurt dışında bulunabilir.
+**Aktarım:** iyzico'ya ödeme için, muhasebe için mali müşavire, yetkili kurumlara talep halinde; hizmetin sunulması için altyapı sağlayıcılarına (Vercel, Cloudflare, Supabase). Bu sağlayıcıların sunucuları yurt dışında bulunabilir. Canlı Asistan'ın yapay zekâ katmanını kullanırsanız, açık rızanıza dayanarak gizlenmiş soru metniniz ve sohbet bağlamınız yapay zekâ hizmet sağlayıcılarına (DeepSeek – Çin, yedek olarak Anthropic – ABD) aktarılır. Silme sertifikası ve izleme özeti gibi işlem e-postaları için e-posta adresiniz e-posta gönderim sağlayıcısına (Resend – ABD) aktarılır.
 
 **Saklama Süresi:** Abonelik süresince + 10 yıl (Vergi Usul Kanunu)
 

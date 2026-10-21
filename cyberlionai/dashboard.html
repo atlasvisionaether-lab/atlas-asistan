@@ -261,6 +261,10 @@
   .link--underline{text-decoration:underline}
   /* Hesap silme: tehlikeli işlem, altın değil kırmızı. */
   .card--danger{border-color:rgba(255,107,107,.35)}
+  .check{display:flex;align-items:center;gap:8px;margin:8px 0;cursor:pointer}
+  .check input{accent-color:var(--gold-primary);width:16px;height:16px}
+  .switch[aria-disabled="false"]{cursor:pointer}
+  .cert strong{font-family:ui-monospace,Menlo,monospace;letter-spacing:.04em}
   .btn--danger{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.45);color:#ff8f8f}
   .btn--danger:hover{background:rgba(255,107,107,.2);color:#ffb3b3}
   .modal{border:1px solid var(--glass-border);background:#12121a;color:var(--text-white);border-radius:14px;padding:22px;max-width:460px;width:calc(100% - 32px)}
@@ -499,6 +503,23 @@
                 <span class="pill pill--soon" data-i18n="common.soon">Yakında</span>
               </div>
               <p class="note" data-i18n="security.cfNote">Cloudflare 1-Tık Düzeltme bugün de kullanılabilir: Araçlar bölümünde kendi Cloudflare token'ınızla çalışır, token bizde saklanmaz.</p>
+            </div>
+            <div class="card" id="dataCard">
+              <p class="card__title"><i class="fa-solid fa-database" aria-hidden="true"></i><span data-i18n="data.title">Veri Yönetimi</span></p>
+              <div class="soon-row">
+                <span class="soon-row__t"><i class="fa-solid fa-brain" aria-hidden="true"></i><span><span data-i18n="data.memory">Asistan hafızası</span>: <strong id="memState">—</strong></span></span>
+                <span class="switch" role="switch" id="memSwitch" tabindex="0" aria-checked="false" aria-disabled="true" aria-label="Asistan hafızası" data-i18n-aria="data.memory"></span>
+              </div>
+              <p class="note" data-i18n="data.memoryDesc">Açıkken asistanla konuşmalarınız kaydedilir.</p>
+              <p class="msg" id="memMsg" role="status" aria-live="polite"></p>
+              <form id="dataForm" novalidate>
+                <p class="muted muted--desc" data-i18n="data.partial">Hesabınızı silmeden yalnızca seçtiğiniz verileri silin:</p>
+                <label class="check"><input type="checkbox" id="delConversations" /> <span data-i18n="data.conversations">Asistanla konuşmalarım</span></label>
+                <label class="check"><input type="checkbox" id="delScans" /> <span data-i18n="data.scans">Tarama geçmişim</span></label>
+                <button class="btn btn--danger btn--mt14" type="submit" id="dataBtn"><i class="fa-solid fa-eraser" aria-hidden="true"></i><span data-i18n="data.delete">Seçilenleri Sil</span></button>
+                <p class="msg" id="dataMsg" role="status" aria-live="polite"></p>
+              </form>
+              <p class="note" data-i18n="data.note">Tarama günlüğü hukuki ispat için saklanır ama kimliğinizle bağı kesilir.</p>
             </div>
             <div class="card card--danger">
               <p class="card__title"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span data-i18n="del.title">Hesabı Sil</span></p>
