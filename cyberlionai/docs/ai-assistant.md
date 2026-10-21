@@ -104,8 +104,13 @@ anlamsal hafıza (embedding sağlayıcısı = yeni veri işleyen, KVKK metni ger
 - **Embedding:** DeepSeek'in embedding ucu yok. Varsayılan sağlayıcı Supabase Edge
   Function `supabase/functions/embed` (gte-small, 384 boyut) — metin Supabase dışına
   çıkmaz. `EMBEDDING_PROVIDER=openai` ile OpenAI uyumlu uç seçilebilir (yeni veri
-  işleyen: politika ve katalog güncellenmeli). gte-small İngilizce ağırlıklıdır;
-  Türkçe eşleşme kalitesi gerçek veriyle ölçülmeli.
+  işleyen: politika ve katalog güncellenmeli).
+- **Çevir ve vektörleştir (2026-10-21):** gte-small yalnızca İngilizce; canlı ölçümde
+  Türkçe sorguda ilgisiz metin öne geçti (fark −0.007; İngilizcede +0.159).
+  multilingual-e5-small Edge Function'da `WORKER_RESOURCE_LIMIT` ile düştü. Bu yüzden
+  supabase sağlayıcısında her metin önce DeepSeek flash ile İngilizceye çevrilir
+  (akışsız, sıcaklık 0, 6 sn zaman aşımı); çeviri düşerse özgün metin kullanılır.
+  `EMBED_TRANSLATE=off` kapatır. openai sağlayıcısı çok dilli, çeviri yapılmaz.
 - **Arama:** `db/migrations/012` — `embedding vector(384)` + `cl_match_assistant_messages`
   (yalnız servis rolü). Yaklaşık indeks yok: kullanıcı başına ≤1000 satırda tam arama.
 - **Bağlam:** son 6 mesaj + son mesajlardan eski, benzerliği ≥0.3 en yakın 5 mesaj
