@@ -278,10 +278,10 @@ async function handler(req, res) {
           try { answerVector = (await embedder.embed([answer]))[0]; } catch (e) { answerVector = null; }
         }
         /* Tercih akış başında okundu; kullanıcı cevap akarken ya da embedding
-           beklenirken "unut beni" demiş olabilir. Yazmadan HEMEN önce, son
-           bekleyen işten sonra yeniden okunur (inceleme bulgusu, 2 tur). */
-        if (await memory.getRemember(rememberUser) !== true) throw new Error('memory_turned_off');
-        await memory.appendMessages(rememberUser, [
+           beklenirken "unut beni" demiş olabilir. Kontrol ile yazma
+           veritabanında tek işlemde (cl_append_assistant_messages, FOR SHARE):
+           "oku, sonra yaz" penceresi yok (inceleme bulgusu, 3. tur). */
+        await memory.appendIfRemembered(rememberUser, [
           { role: 'user', content: current.text, embedding: questionVector },
           { role: 'assistant', content: answer, embedding: answerVector }
         ]);

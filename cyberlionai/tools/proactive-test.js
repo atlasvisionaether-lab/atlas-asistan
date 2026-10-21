@@ -106,6 +106,17 @@ global.fetch = async function (adres, sec) {
         .sort(function (a, b) { return b.similarity - a.similarity; }).slice(0, govde.p_limit);
       return cevap(liste.map(function (m) { return { id: m.id, role: m.role, content: m.content, created_at: m.created_at, similarity: m.similarity }; }));
     }
+    if (yol === 'rpc/cl_append_assistant_messages') {
+      istekler.append = (istekler.append || 0) + 1;
+      if (db.prefs[govde.p_user_id] !== true) return cevap(0);
+      govde.p_rows.forEach(function (r) {
+        sira += 1;
+        const satir = { id: sira, created_at: '2026-10-' + String(sira).padStart(2, '0') + 'T10:00:00Z', user_id: govde.p_user_id, role: r.role, content: r.content };
+        if (r.embedding !== null) satir.embedding = r.embedding;
+        db.messages.push(satir);
+      });
+      return cevap(govde.p_rows.length);
+    }
     if (yol === 'cl_user_prefs') {
       const uid = (p.get('user_id') || '').replace('eq.', '');
       if (yontem === 'GET') return cevap(db.prefs[uid] === undefined ? [] : [{ remember_me: db.prefs[uid] }]);
@@ -269,6 +280,7 @@ async function main() {
   dogru('embedding düşünce asistan durmaz', ev.some(function (e) { return e.event === 'done'; }));
   dogru('embedding düşünce etiket yok, son mesajlar gider', !giden2.some(function (m) { return m.content.indexOf('[Önceki konuşma') === 0; }) && giden2.length > 2);
   dogru('embedding düşünce mesaj vektörsüz yazılır', db.messages[db.messages.length - 2].embedding === undefined);
+  dogru('asistan hafızaya atomik RPC ile yazar', istekler.append > 0);
   embedDurum = 200;
 
   /* ================= mailer ================= */

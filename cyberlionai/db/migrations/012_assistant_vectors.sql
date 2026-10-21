@@ -65,4 +65,51 @@ REVOKE ALL ON FUNCTION public.cl_match_assistant_messages(uuid, extensions.vecto
 GRANT EXECUTE ON FUNCTION public.cl_match_assistant_messages(uuid, extensions.vector, integer, bigint, double precision)
   TO service_role;
 
+-- Hafızaya YAZMA: tercih kontrolü ile insert TEK işlemde (inceleme bulgusu,
+-- 3. tur). Uygulama katmanında "oku, sonra yaz" arasında her zaman bir
+-- pencere kalıyordu: o arada "unut beni" diyen kullanıcının uçuştaki cevabı
+-- silinmiş konuşmayı yeniden yaratabiliyordu.
+--
+-- Tercih satırı FOR SHARE ile kilitlenir:
+--   - Eşzamanlı "unut beni" (UPDATE remember_me=false) bu işlemin bitmesini
+--     bekler; ardından gelen silme, burada yazılan satırları da siler.
+--   - "Unut beni" önce işlendiyse burada remember_me=false okunur ve HİÇBİR
+--     satır yazılmaz.
+-- p_rows: [{ "role": "user"|"assistant", "content": "...", "embedding": "[...]"|null }]
+-- Dönüş: yazılan satır sayısı (hafıza kapalıysa 0).
+CREATE OR REPLACE FUNCTION public.cl_append_assistant_messages(
+  p_user_id uuid,
+  p_rows    jsonb
+)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public, extensions
+AS $$
+DECLARE
+  v_remember boolean;
+  v_count    integer;
+BEGIN
+  SELECT remember_me INTO v_remember
+  FROM public.cl_user_prefs
+  WHERE user_id = p_user_id
+  FOR SHARE;
+
+  IF v_remember IS DISTINCT FROM true THEN
+    RETURN 0;
+  END IF;
+
+  INSERT INTO public.cl_assistant_messages (user_id, role, content, embedding)
+  SELECT p_user_id, r->>'role', r->>'content',
+         NULLIF(r->>'embedding', '')::extensions.vector(384)
+  FROM jsonb_array_elements(p_rows) AS r;
+
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.cl_append_assistant_messages(uuid, jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cl_append_assistant_messages(uuid, jsonb) TO service_role;
+
 COMMIT;

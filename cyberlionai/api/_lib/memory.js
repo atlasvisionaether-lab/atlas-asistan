@@ -121,7 +121,48 @@ async function appendMessages(userId, list) {
     method: 'POST', body: rows, headers: { 'Prefer': 'return=minimal' }
   });
 
-  /* Budama: KEEP'inci en yeni mesajdan eskiler silinir. */
+  await prune(userId);
+  return rows.length;
+}
+
+/**
+ * Hafıza AÇIKSA yazar; tercih kontrolü ile yazma veritabanında TEK işlemde
+ * (db/migrations/012 cl_append_assistant_messages, FOR SHARE kilidi). Uçuştaki
+ * bir cevap, eşzamanlı "unut beni"den sonra konuşmayı yeniden yaratamaz.
+ *
+ * 012 uygulanmamışsa (RPC 404) en iyi çaba: oku, sonra yaz. Dönüş: yazılan
+ * satır sayısı (hafıza kapalıysa 0).
+ */
+async function appendIfRemembered(userId, list) {
+  const id = decodeURIComponent(uid(userId));
+  const rows = (list || []).filter(function (m) {
+    return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim();
+  }).map(function (m) {
+    return {
+      role: m.role,
+      content: redact(m.content.trim()).text.slice(0, MAX_CONTENT),
+      embedding: Array.isArray(m.embedding) && m.embedding.length === DIM ? toPg(m.embedding) : null
+    };
+  });
+  if (!rows.length) return 0;
+
+  let written;
+  try {
+    written = await db.request('rpc/cl_append_assistant_messages', {
+      method: 'POST', body: { p_user_id: id, p_rows: rows }
+    });
+  } catch (err) {
+    if (!/db_error_404/.test(err.message)) throw err;
+    if (await getRemember(userId) !== true) return 0;
+    return appendMessages(userId, list);
+  }
+  written = Number(written) || 0;
+  if (written > 0) await prune(userId);
+  return written;
+}
+
+/* KEEP'inci en yeni mesajdan eskiler silinir. */
+async function prune(userId) {
   const cut = await db.request('cl_assistant_messages?user_id=eq.' + uid(userId)
     + '&select=id&order=id.desc&offset=' + KEEP + '&limit=1');
   if (Array.isArray(cut) && cut.length) {
@@ -129,7 +170,6 @@ async function appendMessages(userId, list) {
       method: 'DELETE', headers: { 'Prefer': 'return=minimal' }
     });
   }
-  return rows.length;
 }
 
 async function deleteMessages(userId) {
@@ -188,7 +228,7 @@ async function getCertificate(code) {
 }
 
 module.exports = {
-  isConfigured, getRemember, setRemember, loadMessages, searchMessages, hasMessages, appendMessages,
+  isConfigured, getRemember, setRemember, loadMessages, searchMessages, hasMessages, appendMessages, appendIfRemembered,
   deleteMessages, createCertificate, getCertificate, newCode, cleanCounts,
   KEEP, SCOPES, CODE_RE
 };
