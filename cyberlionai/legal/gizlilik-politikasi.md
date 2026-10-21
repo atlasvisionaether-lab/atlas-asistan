@@ -42,7 +42,7 @@ Cyber Lion AI olarak gizliliğinize önem veriyoruz.
 - Bildirim: Google / Firebase Cloud Messaging (yalnızca cihaz jetonu ve bildirim içeriği)
 - Hız sınırı sayaçları: Upstash (yalnızca IP özetinden türetilmiş süreli anahtar)
 - Yapay zekâ asistanı: DeepSeek (Çin) ve yedek olarak Anthropic (ABD); yalnızca açık rızanızla ve yalnızca gizlenmiş soru metni ile sohbet bağlamı
-- İşlem e-postaları: Resend (ABD). Silme sertifikası ve ücretli planlarda sabah izleme özeti e-posta adresinize bu sağlayıcı üzerinden gönderilir; yalnızca e-posta adresiniz ve e-postanın içeriği iletilir
+- İşlem e-postaları: Resend (ABD). Hesap e-postaları (kayıt onayı, giriş bağlantısı, şifre sıfırlama), silme sertifikası ve ücretli planlarda sabah izleme özeti e-posta adresinize bu sağlayıcı üzerinden gönderilir; yalnızca e-posta adresiniz ve e-postanın içeriği iletilir
 - Verileriniz satılmaz. Altyapı sağlayıcılarımızın sunucuları yurt dışında bulunabilir; bu nedenle verileriniz yurt dışındaki sunucularda işlenebilir. Ayrıntı için KVKK Aydınlatma Metni'ne bakınız.
 
 **Hesabınızı ve Verilerinizi Silme:** Hesabınızı ve hesaba bağlı tüm verileri kendiniz silebilirsiniz; bekleme süresi yoktur.
