@@ -65,6 +65,7 @@ function sahteVektor(metin) {
 const istekler = { embed: [], resend: [], deepseek: [], rpc: [] };
 let embedDurum = 200;
 let akisSirasindaKapat = null;
+let embedSirasindaKapat = null;
 let resendDurum = 200;
 global.fetch = async function (adres, sec) {
   const govde = sec && sec.body ? JSON.parse(sec.body) : null;
@@ -73,6 +74,7 @@ global.fetch = async function (adres, sec) {
   };
   if (adres.indexOf('/functions/v1/embed') !== -1 || adres.indexOf('/embeddings') !== -1) {
     istekler.embed.push({ adres: adres, headers: sec.headers, govde: govde });
+    if (embedSirasindaKapat && govde.input[0].indexOf('adımları izleyin') !== -1) { db.prefs[embedSirasindaKapat] = false; embedSirasindaKapat = null; }
     if (embedDurum !== 200) return cevap({ error: 'x' }, embedDurum);
     return cevap({ data: govde.input.map(function (t, i) { return { index: i, embedding: sahteVektor(t) }; }) });
   }
@@ -253,6 +255,11 @@ async function main() {
   akisSirasindaKapat = A;
   await sor('SSL hafıza yarışı');
   esit('akış sırasında hafıza kapatılırsa yazılmaz (inceleme bulgusu)', db.messages.filter(function (m) { return m.user_id === A; }).length, onceKapat);
+  db.prefs[A] = true;
+  /* Cevabın embedding'i beklenirken "unut beni" (inceleme 2. tur). */
+  embedSirasindaKapat = A;
+  await sor('SSL embedding yarışı');
+  esit('cevap embedding beklenirken hafıza kapatılırsa yazılmaz', db.messages.filter(function (m) { return m.user_id === A; }).length, onceKapat);
   db.prefs[A] = true;
 
   embedDurum = 500;

@@ -174,6 +174,9 @@ async function main() {
   const cerez = redact('Cookie: theme=dark; sid=abc123secret; csrftoken=zzz999\nHost: ornek.com').text;
   dogru('çoklu çerez başlığının tamamı gizlenir (inceleme bulgusu)', cerez.indexOf('abc123secret') === -1 && cerez.indexOf('zzz999') === -1 && cerez.indexOf('Host: ornek.com') !== -1);
   dogru('Set-Cookie başlığı gizlenir', redact('Set-Cookie: sid=abc123secret; HttpOnly; Path=/').text.indexOf('abc123') === -1);
+  const jsonCerez = redact('{"headers": {"cookie": "theme=dark; sid=abc123secret; csrftoken=zzz999", "host": "ornek.com"}}').text;
+  dogru('JSON çerez değerinin tamamı gizlenir (inceleme 2. tur)', jsonCerez.indexOf('abc123secret') === -1 && jsonCerez.indexOf('zzz999') === -1 && jsonCerez.indexOf('"host": "ornek.com"') !== -1);
+  dogru("tek tırnaklı çerez gizlenir", redact("cookie='a=1; sid=abc123secret'").text.indexOf('abc123') === -1);
 
   /* ================= Mesaj biçimi ================= */
   esit('baştaki asistan atılır, ardışık birleşir', llm.normalizeMessages([

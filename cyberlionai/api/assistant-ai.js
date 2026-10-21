@@ -272,15 +272,15 @@ async function handler(req, res) {
        Kullanıcı mesajı maskeli hâliyle saklanır (modele gidenle aynı). */
     if (rememberUser && result.finishReason !== 'interrupted' && answer.trim()) {
       try {
-        /* Tercih akış başında okundu; kullanıcı cevap akarken "unut beni"
-           demiş olabilir. Yazmadan hemen önce yeniden okunur (inceleme
-           bulgusu): kapatıldıysa hiçbir şey yazılmaz. */
-        if (await memory.getRemember(rememberUser) !== true) throw new Error('memory_turned_off');
         /* Yanıtın vektörü de saklanır; düşerse satır vektörsüz yazılır. */
         let answerVector = null;
         if (embedder.isConfigured()) {
           try { answerVector = (await embedder.embed([answer]))[0]; } catch (e) { answerVector = null; }
         }
+        /* Tercih akış başında okundu; kullanıcı cevap akarken ya da embedding
+           beklenirken "unut beni" demiş olabilir. Yazmadan HEMEN önce, son
+           bekleyen işten sonra yeniden okunur (inceleme bulgusu, 2 tur). */
+        if (await memory.getRemember(rememberUser) !== true) throw new Error('memory_turned_off');
         await memory.appendMessages(rememberUser, [
           { role: 'user', content: current.text, embedding: questionVector },
           { role: 'assistant', content: answer, embedding: answerVector }

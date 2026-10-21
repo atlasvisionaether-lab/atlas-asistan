@@ -33,7 +33,9 @@ const RULES = [
   /* Cookie / Set-Cookie başlığı: değerin TAMAMI satır sonuna kadar. Genel
      anahtar=değer kuralı ';' ile durduğu için "Cookie: a=1; sid=..." içinde
      yalnızca ilk değeri gizliyordu (inceleme bulgusu). */
-  { tag: '$1[gizli]', re: /(\b(?:set-)?cookie\s*:\s*)[^\r\n]+/gi },
+  /* JSON/tırnaklı biçim de: "cookie": "a=1; sid=…" (inceleme bulgusu, 2. tur).
+     Tırnaklıysa tırnak içinin tamamı, değilse satır sonuna kadar. */
+  { tag: '$1[gizli]', re: /(\b(?:set-)?cookie["']?\s*[:=]\s*)("[^"\r\n]*"?|'[^'\r\n]*'?|[^\r\n]+)/gi },
   /* Authorization: Bearer <...> / Basic <...> */
   { tag: '$1[gizli]', re: /(\b(?:Bearer|Basic)\s+)[A-Za-z0-9._~+/=-]{12,}/gi },
   /* anahtar=değer biçiminde şifre/sır/token (password=..., "secret": "...", şifre: ...) */
