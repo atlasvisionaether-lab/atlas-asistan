@@ -101,12 +101,19 @@ async function hasMessages(userId) {
 
 async function appendMessages(userId, list) {
   const id = decodeURIComponent(uid(userId));
-  const rows = (list || []).filter(function (m) {
+  const valid = (list || []).filter(function (m) {
     return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim();
-  }).map(function (m) {
+  });
+  /* PostgREST toplu eklemede TÜM nesnelerin anahtarları aynı olmalı; biri
+     vektörlü biri vektörsüzse ikisi de reddedilirdi (inceleme bulgusu).
+     Hiçbirinde vektör yoksa sütun hiç gönderilmez: 012 uygulanmamış bir
+     veritabanında da yazma çalışır. */
+  const vectorOk = function (m) { return Array.isArray(m.embedding) && m.embedding.length === DIM; };
+  const withVectors = valid.some(vectorOk);
+  const rows = valid.map(function (m) {
     const row = { user_id: id, role: m.role, content: redact(m.content.trim()).text.slice(0, MAX_CONTENT) };
     /* Vektör yoksa satır yine yazılır; yalnızca anlamsal aramada görünmez. */
-    if (Array.isArray(m.embedding) && m.embedding.length === DIM) row.embedding = toPg(m.embedding);
+    if (withVectors) row.embedding = vectorOk(m) ? toPg(m.embedding) : null;
     return row;
   });
   if (!rows.length) return 0;

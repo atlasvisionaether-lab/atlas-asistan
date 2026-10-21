@@ -64,6 +64,7 @@ function sahteVektor(metin) {
 /* ---------- fetch saplaması ---------- */
 const istekler = { embed: [], resend: [], deepseek: [], rpc: [] };
 let embedDurum = 200;
+let akisSirasindaKapat = null;
 let resendDurum = 200;
 global.fetch = async function (adres, sec) {
   const govde = sec && sec.body ? JSON.parse(sec.body) : null;
@@ -81,6 +82,7 @@ global.fetch = async function (adres, sec) {
   }
   if (adres.indexOf('deepseek') !== -1) {
     istekler.deepseek.push(govde);
+    if (akisSirasindaKapat) { db.prefs[akisSirasindaKapat] = false; akisSirasindaKapat = null; }
     const enc = new TextEncoder();
     const parca = ['data: ' + JSON.stringify({ choices: [{ delta: { content: 'Şu adımları izleyin.' } }] }) + '\n\n',
       'data: ' + JSON.stringify({ choices: [{ delta: {}, finish_reason: 'stop' }] }) + '\n\ndata: [DONE]\n\n'];
@@ -110,6 +112,11 @@ global.fetch = async function (adres, sec) {
     if (yol === 'cl_assistant_messages') {
       const uid = (p.get('user_id') || '').replace('eq.', '');
       if (yontem === 'POST') {
+        /* Gerçek PostgREST gibi: toplu eklemede anahtarlar eşit olmalı (PGRST102). */
+        const anahtar0 = Object.keys(govde[0]).sort().join(',');
+        if (govde.some(function (r) { return Object.keys(r).sort().join(',') !== anahtar0; })) {
+          return cevap({ code: 'PGRST102', message: 'All object keys must match' }, 400);
+        }
         govde.forEach(function (r) { sira += 1; db.messages.push(Object.assign({ id: sira, created_at: '2026-10-' + String(sira).padStart(2, '0') + 'T10:00:00Z' }, r)); });
         return cevap(null, 201);
       }
@@ -233,6 +240,20 @@ async function main() {
   const yazilan = db.messages.slice(-2);
   dogru('soru vektörüyle saklandı', JSON.parse(yazilan[0].embedding)[0] === 1);
   dogru('cevap vektörüyle saklandı', typeof yazilan[1].embedding === 'string');
+
+  /* Karışık vektör: soru vektörlü, cevabın embedding'i düşerse iki satır da
+     yazılmalı (inceleme bulgusu: eşit olmayan anahtarlar ikisini de düşürüyordu). */
+  const onceKarisik = db.messages.length;
+  await memory.appendMessages(A, [{ role: 'user', content: 'vektörlü', embedding: yon(0) }, { role: 'assistant', content: 'vektörsüz' }]);
+  esit('karışık vektörlü toplu ekleme iki satırı da yazar', db.messages.length - onceKarisik, 2);
+  esit('vektörsüz satırda embedding null', db.messages[db.messages.length - 1].embedding, null);
+
+  /* Akış sürerken "unut beni": cevap bitince hiçbir şey yazılmamalı. */
+  const onceKapat = db.messages.filter(function (m) { return m.user_id === A; }).length;
+  akisSirasindaKapat = A;
+  await sor('SSL hafıza yarışı');
+  esit('akış sırasında hafıza kapatılırsa yazılmaz (inceleme bulgusu)', db.messages.filter(function (m) { return m.user_id === A; }).length, onceKapat);
+  db.prefs[A] = true;
 
   embedDurum = 500;
   const onceSay = istekler.deepseek.length;

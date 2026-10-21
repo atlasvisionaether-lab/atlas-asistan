@@ -171,6 +171,9 @@ async function main() {
   dogru('telefon gitmez', redact('Ara: +90 532 123 45 67').text.indexOf('532') === -1);
   esit('sürüm numarası IP sanılmaz', redact('nginx 1.18.0 ve PHP 8.2.12').count, 0);
   esit('temiz metin dokunulmaz', redact('SSL nedir?'), { text: 'SSL nedir?', count: 0 });
+  const cerez = redact('Cookie: theme=dark; sid=abc123secret; csrftoken=zzz999\nHost: ornek.com').text;
+  dogru('çoklu çerez başlığının tamamı gizlenir (inceleme bulgusu)', cerez.indexOf('abc123secret') === -1 && cerez.indexOf('zzz999') === -1 && cerez.indexOf('Host: ornek.com') !== -1);
+  dogru('Set-Cookie başlığı gizlenir', redact('Set-Cookie: sid=abc123secret; HttpOnly; Path=/').text.indexOf('abc123') === -1);
 
   /* ================= Mesaj biçimi ================= */
   esit('baştaki asistan atılır, ardışık birleşir', llm.normalizeMessages([
@@ -253,6 +256,13 @@ async function main() {
   esit('akış ortası kopma: yarım kalır', r.metin, 'Yarım cevap');
   esit('akış ortası kopma: interrupted', r.sonuc.finishReason, 'interrupted');
   esit('akış ortası kopma: haiku çağrılmaz', istekler.length, 1);
+
+  senaryo = { deepseek: { parcalar: [dsMetin('Yarım '), dsMetin('ama temiz kapanış')] } };
+  r = await sohbet('flash');
+  esit('bitiş sinyalsiz temiz kapanış = interrupted (inceleme bulgusu)', r.sonuc.finishReason, 'interrupted');
+  senaryo = { deepseek: { status: 500 }, anthropic: { parcalar: AN_BASARILI.slice(0, 4) } };
+  r = await sohbet('flash');
+  esit('anthropic message_stop yoksa interrupted', r.sonuc.finishReason, 'interrupted');
 
   /* Canlıda görülen: yalnızca düşünme, sonra finish_reason=length, metin yok. */
   senaryo = { deepseek: { parcalar: [

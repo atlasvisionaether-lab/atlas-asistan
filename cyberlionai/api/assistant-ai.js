@@ -272,6 +272,10 @@ async function handler(req, res) {
        Kullanıcı mesajı maskeli hâliyle saklanır (modele gidenle aynı). */
     if (rememberUser && result.finishReason !== 'interrupted' && answer.trim()) {
       try {
+        /* Tercih akış başında okundu; kullanıcı cevap akarken "unut beni"
+           demiş olabilir. Yazmadan hemen önce yeniden okunur (inceleme
+           bulgusu): kapatıldıysa hiçbir şey yazılmaz. */
+        if (await memory.getRemember(rememberUser) !== true) throw new Error('memory_turned_off');
         /* Yanıtın vektörü de saklanır; düşerse satır vektörsüz yazılır. */
         let answerVector = null;
         if (embedder.isConfigured()) {

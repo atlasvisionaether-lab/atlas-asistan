@@ -201,7 +201,9 @@ async function* deepseekStream(cfg, tier, system, messages, signal) {
     if (typeof d.content === 'string' && d.content) { sawText = true; yield { type: 'text', text: d.content }; }
     if (choice.finish_reason) finish = choice.finish_reason;
   }
-  yield { type: 'done', finishReason: finish === 'length' ? 'max_tokens' : 'stop', usage: usage, sawText: sawText };
+  /* finish_reason hiç gelmeden kapanan akış yarımdır (inceleme bulgusu):
+     "tamamlandı" sayılırsa yarım cevap hafızaya yazılır ve teklif eklenirdi. */
+  yield { type: 'done', finishReason: finish === null ? 'interrupted' : finish === 'length' ? 'max_tokens' : 'stop', usage: usage, sawText: sawText };
 }
 
 async function* anthropicStream(cfg, tier, system, messages, signal) {
@@ -226,6 +228,7 @@ async function* anthropicStream(cfg, tier, system, messages, signal) {
   if (!res.ok || !res.body) throw statusError(res.status);
 
   let finish = null;
+  let stopped = false;
   const usage = { input: 0, output: 0 };
   for await (const ev of sseEvents(res.body, IDLE_MS)) {
     const j = parseJson(ev.data);
@@ -242,10 +245,11 @@ async function* anthropicStream(cfg, tier, system, messages, signal) {
       if (j.delta && j.delta.stop_reason) finish = j.delta.stop_reason;
       if (j.usage && j.usage.output_tokens) usage.output = j.usage.output_tokens;
     } else if (j.type === 'message_stop') {
+      stopped = true;
       break;
     }
   }
-  yield { type: 'done', finishReason: finish === 'max_tokens' ? 'max_tokens' : 'stop', usage: usage };
+  yield { type: 'done', finishReason: !stopped ? 'interrupted' : finish === 'max_tokens' ? 'max_tokens' : 'stop', usage: usage };
 }
 
 /* ---------------------------------------------------------------------------

@@ -30,6 +30,10 @@ const RULES = [
   { tag: '[jwt]', re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g },
   /* Bilinen sağlayıcı anahtar önekleri */
   { tag: '[api-anahtari]', re: /\b(?:sk-(?:ant-|proj-)?[A-Za-z0-9_-]{16,}|nvapi-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|xox[abprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,}|AKIA[0-9A-Z]{16}|sandbox-[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9]{16,})\b/g },
+  /* Cookie / Set-Cookie başlığı: değerin TAMAMI satır sonuna kadar. Genel
+     anahtar=değer kuralı ';' ile durduğu için "Cookie: a=1; sid=..." içinde
+     yalnızca ilk değeri gizliyordu (inceleme bulgusu). */
+  { tag: '$1[gizli]', re: /(\b(?:set-)?cookie\s*:\s*)[^\r\n]+/gi },
   /* Authorization: Bearer <...> / Basic <...> */
   { tag: '$1[gizli]', re: /(\b(?:Bearer|Basic)\s+)[A-Za-z0-9._~+/=-]{12,}/gi },
   /* anahtar=değer biçiminde şifre/sır/token (password=..., "secret": "...", şifre: ...) */
