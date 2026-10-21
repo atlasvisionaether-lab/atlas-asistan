@@ -234,6 +234,7 @@ async function handler(req, res) {
 
   const providerErrors = [];
   let started = false;
+  let thinkingSent = false;
   let answer = '';
   try {
     const result = await llm.streamChat({
@@ -249,7 +250,9 @@ async function handler(req, res) {
           memory: rememberUser ? 'on' : 'off'
         }, rememberUser ? { recalled: recalled } : {}));
       },
-      onThinking: function () { if (!started) sse(res, 'thinking', {}); },
+      /* Model her düşünme parçası için sinyal verir (canlı denemede ~3000);
+         arayüze yalnızca BİR kez "düşünüyor" demek yeter. */
+      onThinking: function () { if (!started && !thinkingSent) { thinkingSent = true; sse(res, 'thinking', {}); } },
       onDelta: function (text) { answer += text; sse(res, 'delta', { t: text }); },
       onProviderError: function (e) { providerErrors.push(e); }
     });

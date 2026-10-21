@@ -49,7 +49,18 @@ const FIRST_TOKEN_MS = 15000;
 /* Bir parça ile sonraki arasında en uzun sessizlik. */
 const IDLE_MS = 30000;
 
-const MAX_TOKENS = { flash: 1200, pro: 3000 };
+/* DeepSeek'te max_tokens DÜŞÜNME token'larını da kapsar (belgelenmiş). İlk
+   canlı denemede pro 3000 token'ın tamamını düşünmeye harcadı ve cevap boş
+   döndü. Flash'ta düşünme kapalı; pro'da 'low' + geniş tavan: hem cevaba yer
+   kalır hem fonksiyonun 60 sn sınırı içinde biter. */
+const MAX_TOKENS = { flash: 1500, pro: 8000 };
+const REASONING = { flash: 'none', pro: 'low' };
+const REASONING_VALUES = ['none', 'low', 'high', 'max'];
+
+function reasoningFor(tier) {
+  const v = String(process.env[tier === 'pro' ? 'DEEPSEEK_REASONING_PRO' : 'DEEPSEEK_REASONING_FLASH'] || '').toLowerCase();
+  return REASONING_VALUES.indexOf(v) !== -1 ? v : REASONING[tier];
+}
 const TEMPERATURE = { flash: 0.3, pro: 0.2 };
 
 function keyOk(k) { return typeof k === 'string' && k.length >= 20; }
@@ -163,6 +174,8 @@ async function* deepseekStream(cfg, tier, system, messages, signal) {
       stream_options: { include_usage: true },
       max_tokens: MAX_TOKENS[tier],
       temperature: TEMPERATURE[tier],
+      thinking: { type: reasoningFor(tier) === 'none' ? 'disabled' : 'enabled' },
+      reasoning_effort: reasoningFor(tier),
       messages: [{ role: 'system', content: system }].concat(messages.map(function (m) {
         return { role: m.role, content: m.content };
       }))
@@ -173,6 +186,7 @@ async function* deepseekStream(cfg, tier, system, messages, signal) {
 
   let finish = null;
   let usage = null;
+  let sawText = false;
   for await (const ev of sseEvents(res.body, IDLE_MS)) {
     if (ev.data === '[DONE]') break;
     const j = parseJson(ev.data);
@@ -184,10 +198,10 @@ async function* deepseekStream(cfg, tier, system, messages, signal) {
     const d = choice.delta || {};
     /* Düşünme içeriği kullanıcıya gösterilmez, yalnızca "canlı" sinyali. */
     if (typeof d.reasoning_content === 'string' && d.reasoning_content) yield { type: 'thinking' };
-    if (typeof d.content === 'string' && d.content) yield { type: 'text', text: d.content };
+    if (typeof d.content === 'string' && d.content) { sawText = true; yield { type: 'text', text: d.content }; }
     if (choice.finish_reason) finish = choice.finish_reason;
   }
-  yield { type: 'done', finishReason: finish === 'length' ? 'max_tokens' : 'stop', usage: usage };
+  yield { type: 'done', finishReason: finish === 'length' ? 'max_tokens' : 'stop', usage: usage, sawText: sawText };
 }
 
 async function* anthropicStream(cfg, tier, system, messages, signal) {
@@ -312,7 +326,8 @@ async function streamChat(opts) {
           continue;
         }
         if (part.type === 'done') {
-          if (!started) throw new ProviderError('empty_response', 0, true);
+          /* Tavan düşünmeye yetti, cevaba kalmadı: ayrı kodla loglansın. */
+          if (!started) throw new ProviderError(part.finishReason === 'max_tokens' ? 'reasoning_budget_exhausted' : 'empty_response', 0, true);
           return { provider: step.provider, model: step.model, fallback: i > 0, finishReason: part.finishReason, usage: part.usage };
         }
       }
@@ -344,5 +359,5 @@ async function streamChat(opts) {
 
 module.exports = {
   streamChat, isConfigured, config, gizle, normalizeMessages, sseEvents,
-  ProviderError, FIRST_TOKEN_MS, MAX_TOKENS, DEFAULTS
+  ProviderError, FIRST_TOKEN_MS, MAX_TOKENS, REASONING, DEFAULTS
 };

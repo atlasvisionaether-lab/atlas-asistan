@@ -204,6 +204,7 @@ async function main() {
   let r = await sohbet('flash');
   esit('deepseek flash metni', r.metin, 'Merhaba');
   esit('deepseek flash modeli', istekler[0].govde.model, 'deepseek-flash');
+  esit('flash: düşünme kapalı', [istekler[0].govde.thinking, istekler[0].govde.reasoning_effort], [{ type: 'disabled' }, 'none']);
   esit('sistem talimatı ilk mesaj', istekler[0].govde.messages[0], { role: 'system', content: 'SYS' });
   esit('deepseek yetki başlığı', istekler[0].headers.Authorization, 'Bearer ' + DS_KEY);
   esit('yedek yok', r.sonuc.fallback, false);
@@ -215,6 +216,8 @@ async function main() {
   ] } };
   r = await sohbet('pro');
   esit('pro modeli', istekler[0].govde.model, 'deepseek-v4-pro');
+  esit('pro: düşünme açık ama low (canlı hata: 3000 token düşünmeye gitti)', [istekler[0].govde.thinking, istekler[0].govde.reasoning_effort, istekler[0].govde.max_tokens],
+    [{ type: 'enabled' }, 'low', 8000]);
   esit('düşünme metni gösterilmez', r.metin, 'Cevap');
   dogru('düşünme sinyali', r.bilgi.thinking === 1);
 
@@ -250,6 +253,14 @@ async function main() {
   esit('akış ortası kopma: yarım kalır', r.metin, 'Yarım cevap');
   esit('akış ortası kopma: interrupted', r.sonuc.finishReason, 'interrupted');
   esit('akış ortası kopma: haiku çağrılmaz', istekler.length, 1);
+
+  /* Canlıda görülen: yalnızca düşünme, sonra finish_reason=length, metin yok. */
+  senaryo = { deepseek: { parcalar: [
+    dsParca({ choices: [{ delta: { reasoning_content: 'uzun düşünce' } }] }),
+    dsParca({ choices: [{ delta: {}, finish_reason: 'length' }] }) + 'data: [DONE]\n\n'
+  ] }, anthropic: { parcalar: AN_BASARILI } };
+  r = await sohbet('pro');
+  esit('düşünme bütçesi bitti → ayrı kod, yedeğe geçer', [r.bilgi.errors[0].code, r.sonuc.provider], ['reasoning_budget_exhausted', 'anthropic']);
 
   senaryo = { deepseek: { status: 500 }, anthropic: { status: 529 } };
   let firlatti = null;
@@ -379,6 +390,15 @@ async function main() {
   esit('hata kodu', evHata[0].data, { code: 'ai_unavailable' });
   esit('günlük hak iade', depo.iade, 1);
   dogru('telegram uyarısı', telegram.length === 1 && telegram[0].indexOf('all_providers_failed') !== -1);
+
+  senaryo = { deepseek: { parcalar: [
+    dsParca({ choices: [{ delta: { reasoning_content: 'a' } }] }),
+    dsParca({ choices: [{ delta: { reasoning_content: 'b' } }] }),
+    dsParca({ choices: [{ delta: { reasoning_content: 'c' } }] }),
+    dsMetin('Cevap'), DS_SON
+  ] } };
+  res = await cagir(istek({ message: 'Bu kodu incele', consent: RIZA }));
+  esit('thinking olayı istek başına bir kez', olaylariAyir(res.yazilan).filter(function (e) { return e.event === 'thinking'; }).length, 1);
 
   senaryo = { deepseek: { status: 503 }, anthropic: { parcalar: AN_BASARILI } };
   telegram.length = 0;
