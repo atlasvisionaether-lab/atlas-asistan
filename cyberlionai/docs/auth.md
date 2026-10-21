@@ -147,22 +147,81 @@ bağlantıyı aşağıdaki gibi değiştirin.
 `type` parametresi şablona göre değişir ve doğru olmalı: `signup`, `recovery`,
 `magiclink`. Uç, gelen tipi doğrular; yanlış tip `link_invalid` döner.
 
-### 3.4 Gönderen adresi
+### 3.4 Gönderen adresi — Resend ile özel SMTP
 
-**Project Settings → Authentication → SMTP Settings**
+**Neden:** Supabase'in varsayılan SMTP'si yalnızca **proje ekibinin** adreslerine
+gönderir ve saatte birkaç e-postayla sınırlıdır. Dışarıdan bir kullanıcının kayıt
+onayı, sihirli bağlantısı ve şifre sıfırlama e-postası **hiç gitmez**
+(21.10.2026'da harici bir adresle görüldü). Bu e-postaları uygulamamız değil
+Supabase Auth gönderir; çözüm kodda değil, Supabase'in SMTP ayarındadır.
 
-Varsayılan Supabase SMTP'si **saatte 3-4 e-posta** ile sınırlıdır ve gönderen
-`noreply@mail.app.supabase.io` görünür. Üretim için kendi alan adınızdan
-gönderim kurun:
+**Ölçülen DNS (21.10.2026, `node cyberlionai/tools/resend-dns-probe.js`):**
+DNS Hostinger'da. `resend._domainkey` (DKIM), `send.cyberlionai.com` MX + SPF
+zaten var. DMARC **katı**: `v=DMARC1; p=reject; adkim=s; aspf=s`.
 
-1. Bir e-posta sağlayıcısı seçin (Resend, Postmark, SendGrid, Amazon SES).
-2. `cyberlionai.com` alan adını doğrulayın — sağlayıcının verdiği SPF, DKIM ve
-   DMARC kayıtlarını DNS'e ekleyin. Bunlar olmadan e-postalar spam'e düşer.
-3. Supabase'de **Enable Custom SMTP**'yi açın; host, port, kullanıcı ve şifreyi
-   girin. Sender email: `hesap@cyberlionai.com`, sender name: `Cyber Lion AI`.
-4. **Rate Limits** bölümünde saatlik e-posta sınırını yükseltin.
+> **Gönderen adresi TAM OLARAK `@cyberlionai.com` olmalı** (`hesap@cyberlionai.com`).
+> `aspf=s` yüzünden SPF hiçbir zaman hizalanmaz (Resend dönüş yolu `send.` alt
+> alan adı); DMARC yalnızca DKIM ile geçer ve `adkim=s` imza alanı ile gönderen
+> alanının birebir aynı olmasını ister. `hesap@mail.cyberlionai.com` gibi bir
+> alt alan adı **p=reject ile reddedilir**: Resend "delivered" bile demez ya da
+> "bounced" gösterir, kullanıcıya hiç ulaşmaz. Değiştirmeden önce
+> `node cyberlionai/tools/resend-dns-probe.js <adres>` çalıştırın.
 
-SMTP bilgilerini bana göndermenize gerek yok; bunlar yalnızca Supabase'de durur.
+**1. Resend — alan adı**
+- resend.com → **Domains**: `cyberlionai.com` **Verified** görünmeli.
+- Görünmüyorsa (başka bir Resend hesabında eklenmiş olabilir) alan adını
+  ekleyin; Resend'in verdiği DKIM `TXT resend._domainkey`, `MX send` ve
+  `TXT send` değerlerini Hostinger DNS'te **güncelleyin** (eski DKIM anahtarı
+  yeni hesabınkiyle eşleşmezse doğrulama düşer). Kök MX (Google Workspace) ve
+  kök SPF'e dokunmayın; Resend yalnızca `send.` alt alan adını kullanır.
+
+**2. Resend — API anahtarları (iki ayrı anahtar)**
+- **API Keys → Create**: `supabase-smtp`, izin **Sending access**, alan
+  `cyberlionai.com`. Yalnızca Supabase'e girilir.
+- İkinci anahtar `vercel-transactional` (silme sertifikası ve sabah özeti,
+  `api/_lib/mailer.js`). Ayrı anahtar: biri sızarsa ötekini döndürmeden
+  iptal edilebilir.
+
+**3. Supabase — SMTP**
+**Authentication → Emails → SMTP Settings → Enable custom SMTP**
+
+| Alan | Değer |
+|---|---|
+| Sender email | `hesap@cyberlionai.com` |
+| Sender name | `Cyber Lion AI` |
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | `supabase-smtp` API anahtarı |
+
+**4. Supabase — sınırlar**
+**Authentication → Rate Limits**: özel SMTP açılınca e-posta sınırı
+düzenlenebilir hâle gelir. Resend ücretsiz planının günlük ve aylık gönderim
+tavanını (Resend fiyat sayfası) aşmayacak bir saatlik değer seçin; bu tavanı
+uygulamanın kendi e-postaları (sertifika, sabah özeti) ile **paylaşır**.
+
+**5. Şablonlar ve adresler**
+- **Email Templates**: 3.3'teki `token_hash` şablonları girilmiş olmalı.
+  Varsayılan `{{ .ConfirmationURL }}` şablonuyla bağlantılar bu uygulamada
+  çalışmaz (`/api/auth/verify` `token_hash` bekler).
+- **URL Configuration → Site URL**: `https://www.cyberlionai.com`.
+
+**6. Vercel (uygulamanın kendi e-postaları için)**
+Production'a `RESEND_API_KEY` (`vercel-transactional` anahtarı) ve
+`MAIL_FROM=Cyber Lion AI <bildirim@cyberlionai.com>` ekleyin, sonra yeniden
+dağıtın (env değişikliği çalışan dağıtıma yansımaz). `MAIL_FROM` da
+`@cyberlionai.com` olmalı (yukarıdaki DMARC notu).
+
+**7. Doğrulama**
+- Harici bir adresle (ör. Gmail) kayıt olun veya şifre sıfırlama isteyin.
+- Resend → **Logs**: e-posta `delivered` olmalı.
+- Gelen e-postada **Orijinali göster**: `DKIM: PASS` (`d=cyberlionai.com`),
+  `DMARC: PASS`. SPF `PASS` ama hizasız görünmesi normal.
+- Bağlantıya tıklayın: hesap doğrulanıp oturum açılmalı (`link_invalid`
+  dönerse şablondaki `type` yanlıştır).
+
+SMTP bilgilerini ve anahtarları bana göndermenize gerek yok; bunlar yalnızca
+Supabase'de ve Vercel'de durur.
 
 ### 3.5 Şifre politikası
 
