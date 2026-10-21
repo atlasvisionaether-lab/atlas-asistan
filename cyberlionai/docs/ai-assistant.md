@@ -19,6 +19,16 @@ tarayıcı ──POST /api/assistant──▶ bilgi tabanı (deterministik)
 Fiyat/plan gibi soruların tek doğru cevabı var ve modele bırakılmıyor;
 bilgi tabanı önce soruluyor.
 
+AI katmanı açıkken (`AI_ASSISTANT_ENABLED` + sağlayıcı anahtarı) serbest metinde
+bilgi tabanı iki durumda `fallback` + `reason` döner, soru modele gider
+(`api/assistant.js`, 2026-10-22): `ai_topic` — teknik tavsiye konuları
+(tls, csp, hsts, xframe, cookies); `recall` — önceki konuşmaya atıf ("geçen
+sefer", "önermiştin", "last time"…), net bir ürün konusuna eşleşmiyorsa.
+Canlı denemede tek güçlü kelime ("sertifika") 0.70 ile eşiği geçiyor, hem
+"süresi doldu" sorusu hem hafıza atfı TLS sürümü cevabını alıyordu. Geçmişle
+birleştirip eşleştirme de AI açıkken yapılmaz. Düğme niyeti, ürün konuları,
+acil durum ve selam değişmedi; `reason`'lı fallback Telegram'a bildirilmez.
+
 ## Dosyalar
 
 | Dosya | Görev |
