@@ -182,6 +182,45 @@ async function previousScore(userId, domain) {
 }
 
 /* ------------------------------------------------------------------
+   Yeni bulgu (önceki taramada olmayan) — 013
+   ------------------------------------------------------------------ */
+
+/* Bildirime değer önemler. low/info her gün oynayabilir; kanalı doldurmasın. */
+const NEW_FINDING_SEVERITIES = ['critical', 'high', 'medium'];
+
+function findingKey(f) { return String(f.severity) + '|' + String(f.title); }
+
+/** Bu alan adının son tamamlanmış taramasının bulgu anahtarları; tarama yoksa null. */
+async function previousFindingKeys(userId, domain) {
+  try {
+    const jobs = await db.request('scan_jobs?user_id=eq.' + encodeURIComponent(userId)
+      + '&domain=eq.' + encodeURIComponent(domain)
+      + '&status=eq.completed&select=id&order=created_at.desc&limit=1');
+    if (!jobs || !jobs[0]) return null;
+    const rows = await db.request('scan_findings?job_id=eq.' + encodeURIComponent(jobs[0].id) + '&select=severity,title');
+    return new Set((Array.isArray(rows) ? rows : []).map(findingKey));
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Saf: önceki anahtar kümesinde olmayan bildirime değer bulgular.
+ * `previous` null ise (ilk tarama) taban çizgisi yok: hiçbir şey "yeni" sayılmaz.
+ */
+function newFindings(previous, current) {
+  if (!previous) return [];
+  const seen = {};
+  return (current || []).filter(function (f) {
+    if (!f || NEW_FINDING_SEVERITIES.indexOf(f.severity) === -1 || typeof f.title !== 'string') return false;
+    const k = findingKey(f);
+    if (previous.has(k) || seen[k]) return false;
+    seen[k] = true;
+    return true;
+  });
+}
+
+/* ------------------------------------------------------------------
    Günlük kontrol (tek hedef)
    ------------------------------------------------------------------ */
 
@@ -192,6 +231,8 @@ async function previousScore(userId, domain) {
 async function dailyCheck(target, ctx) {
   const out = { domain: target.domain, ok: false, alerts: [] };
   const onceki = await previousScore(target.userId, target.domain);
+  /* Kayıt yeni iş kaydedilmeden ÖNCE okunur: karşılaştırma dünkü taramayla. */
+  const oncekiBulgular = await (ctx.previousFindingKeys || previousFindingKeys)(target.userId, target.domain);
 
   /* Kullanım şartları 3.2: her tarama günlüğe yazılır (izleme dahil; IP yok,
      isteği eden bir kullanıcı yok). */
@@ -218,6 +259,20 @@ async function dailyCheck(target, ctx) {
     if (await raise(target, 'score_drop', 'warning', { from: onceki, to: scan.score },
       'drop:' + target.userId + ':' + target.domain + ':' + (out.jobId || Date.now()), 2 * 86400)) {
       out.alerts.push('score_drop');
+    }
+  }
+
+  /* Yeni bulgu: dünkü taramada olmayan kritik/yüksek/orta bulgular. */
+  const yeni = newFindings(oncekiBulgular, scan.owaspFindings);
+  if (yeni.length) {
+    const sev = {};
+    yeni.forEach(function (f) { sev[f.severity] = (sev[f.severity] || 0) + 1; });
+    const kritik = sev.critical || sev.high;
+    if (await raise(target, 'new_findings', kritik ? 'critical' : 'warning', {
+      count: yeni.length, first: yeni[0].title.slice(0, 120),
+      titles: yeni.slice(0, 5).map(function (f) { return f.title.slice(0, 120); }), severities: sev
+    }, 'nf:' + target.userId + ':' + target.domain + ':' + (out.jobId || Date.now()), 2 * 86400)) {
+      out.alerts.push('new_findings');
     }
   }
 
@@ -361,6 +416,7 @@ async function ensureTickSchedule(siteUrl, fetcher) {
 }
 
 module.exports = {
+  newFindings, previousFindingKeys, NEW_FINDING_SEVERITIES,
   paidTargets, claimDue, dailyCheck, uptimeCheck, probe, raise, loadBlacklist, domainExpiry,
   ensureTickSchedule, crossedThreshold, registrableDomain, parseHostfile, blacklistedHost,
   rdapExpiration, previousScore, TICK_BODY,

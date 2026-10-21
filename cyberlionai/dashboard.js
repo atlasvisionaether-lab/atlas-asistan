@@ -60,6 +60,14 @@
       'del.title': 'Hesabı Sil', 'del.open': 'Hesabı Sil',
       'del.desc': 'Hesabınız ve hesaba bağlı tüm veriler kalıcı olarak silinir. Bu işlem geri alınamaz.',
       'del.note': 'Silme yolu web üzerinden de açıktır:', 'del.page': 'cyberlionai.com/hesap-silme',
+      'data.title': 'Veri Yönetimi',
+      'data.memory': 'Asistan hafızası',
+      'data.memoryDesc': 'Açıkken asistanla konuşmalarınız (gizlenmiş hâliyle, en fazla son 1000 mesaj) kaydedilir ve sonraki sorularınızda bağlam olarak kullanılır. Kapatmak kayıtlı konuşmaları da siler.',
+      'data.partial': 'Hesabınızı silmeden yalnızca seçtiğiniz verileri silin:',
+      'data.conversations': 'Asistanla konuşmalarım',
+      'data.scans': 'Tarama geçmişim (bulgular ve AI raporları dahil)',
+      'data.delete': 'Seçilenleri Sil',
+      'data.note': 'Tarama günlüğü hukuki ispat için saklanır ama kimliğinizle bağı kesilir. Hesabınızın tamamı için aşağıdaki "Hesabı Sil" kartını kullanın.',
       'del.confirmTitle': 'Hesabınızı silmek üzeresiniz',
       'del.confirmBody': 'Tüm tarama geçmişiniz ve aboneliğiniz silinecek. Bu işlem geri alınamaz.',
       'del.confirmLegal': 'Üçüncü bir siteyi taradığınızı gösteren hukuki ispat günlüğü, kimliğinizle bağı kesilerek saklanır; ödeme ve fatura kayıtları yasal saklama süresince iyzico tarafında kalır.',
@@ -92,6 +100,13 @@
       delDone: 'Hesabınız ve verileriniz silindi. Ana sayfaya yönlendiriliyorsunuz.',
       delPartial: 'Verileriniz silindi ama hesap kaydı kapatılamadı. Lütfen birkaç dakika sonra tekrar deneyin.',
       delUnavailable: 'Silme işlemi şu an yapılamıyor. Lütfen daha sonra tekrar deneyin ya da destek@cyberlionai.com adresine yazın.',
+      certLabel: 'Silme sertifikası:', certVerify: 'Doğrula', certMissing: 'Silme tamamlandı ancak sertifika kodu üretilemedi.',
+      mailSent: 'Sertifika e-posta adresinize de gönderildi.',
+      mailFallback: 'E-posta gönderilemedi; sertifikanız yukarıda. Lütfen kodu not alın.',
+      dataPick: 'Silinecek en az bir kategori seçin.', dataWorking: 'Siliniyor…',
+      dataDone: 'Seçtiğiniz veriler silindi.', dataConfirm: 'Seçtiğiniz veriler kalıcı olarak silinecek. Emin misiniz? Onaylamak için tekrar basın.',
+      memOn: 'Açık', memOff: 'Kapalı', memUndecided: 'Henüz seçilmedi', memSaved: 'Tercihiniz kaydedildi.',
+      memOffDone: 'Hafıza kapatıldı; kayıtlı {n} mesaj silindi.',
       badEmail: 'Geçerli bir e-posta adresi girin.', tooMany: 'Çok fazla deneme. Bir süre sonra tekrar deneyin.',
       failed: 'İşlem tamamlanamadı. Birazdan tekrar deneyin.', loading: 'Yükleniyor…',
       empty: 'Henüz taramanız yok. Ana sayfadan ilk taramanızı başlatın.', emptyFiltered: 'Bu süzgeçle eşleşen tarama yok.',
@@ -133,6 +148,7 @@
       al_blacklist: 'Kara listede görünüyor ({source})',
       al_downtime: 'Site erişilemiyor ({reason})',
       al_recovered: 'Site yeniden erişilebilir',
+      al_new_findings: 'Önceki taramada olmayan {count} yeni bulgu: {first}',
       pwShort: 'Şifre en az 10 karakter olmalı.', pwLong: 'Şifre çok uzun.', pwMismatch: 'Şifreler eşleşmiyor.',
       pwWeak: 'Bu şifre çok zayıf; daha uzun ve tahmin edilmesi zor bir şifre seçin.',
       pwOk: 'Şifreniz güncellendi.', pwAuth: 'Oturumunuzun süresi dolmuş. Lütfen yeniden giriş yapın.',
@@ -181,6 +197,14 @@
       'del.title': 'Delete Account', 'del.open': 'Delete Account',
       'del.desc': 'Your account and all data linked to it are permanently deleted. This cannot be undone.',
       'del.note': 'Deletion is also available on the web:', 'del.page': 'cyberlionai.com/hesap-silme',
+      'data.title': 'Data Management',
+      'data.memory': 'Assistant memory',
+      'data.memoryDesc': 'When on, your conversations with the assistant (with sensitive values hidden, at most the last 1000 messages) are saved and used as context for later questions. Turning it off also deletes stored conversations.',
+      'data.partial': 'Delete only the data you select, without deleting your account:',
+      'data.conversations': 'My conversations with the assistant',
+      'data.scans': 'My scan history (including findings and AI reports)',
+      'data.delete': 'Delete Selected',
+      'data.note': 'The scan log is kept as legal evidence but is unlinked from your identity. To delete your whole account, use the "Delete Account" card below.',
       'del.confirmTitle': 'You are about to delete your account',
       'del.confirmBody': 'Your entire scan history and your subscription will be deleted. This cannot be undone.',
       'del.confirmLegal': 'The legal-evidence log showing that you scanned a third-party site is kept with its link to your identity removed; payment and invoice records stay with iyzico for the statutory retention period.',
@@ -212,6 +236,13 @@
       delDone: 'Your account and data have been deleted. Redirecting to the home page.',
       delPartial: 'Your data was deleted but the account record could not be closed. Please try again in a few minutes.',
       delUnavailable: 'Deletion is unavailable right now. Please try again later or write to destek@cyberlionai.com.',
+      certLabel: 'Deletion certificate:', certVerify: 'Verify', certMissing: 'Deletion completed but a certificate code could not be issued.',
+      mailSent: 'The certificate was also sent to your email address.',
+      mailFallback: 'The email could not be sent; your certificate is shown above. Please note the code.',
+      dataPick: 'Select at least one category to delete.', dataWorking: 'Deleting…',
+      dataDone: 'The selected data has been deleted.', dataConfirm: 'The selected data will be permanently deleted. Are you sure? Press again to confirm.',
+      memOn: 'On', memOff: 'Off', memUndecided: 'Not chosen yet', memSaved: 'Your preference has been saved.',
+      memOffDone: 'Memory turned off; {n} stored message(s) deleted.',
       badEmail: 'Enter a valid email address.', tooMany: 'Too many attempts. Please try again later.',
       failed: 'Could not complete. Please try again shortly.', loading: 'Loading…',
       empty: 'No scans yet. Start your first scan from the home page.', emptyFiltered: 'No scans match this filter.',
@@ -253,6 +284,7 @@
       al_blacklist: 'Appears on a blacklist ({source})',
       al_downtime: 'Site unreachable ({reason})',
       al_recovered: 'Site reachable again',
+      al_new_findings: '{count} new finding(s) not seen in the previous scan: {first}',
       pwShort: 'Password must be at least 10 characters.', pwLong: 'Password is too long.', pwMismatch: 'Passwords do not match.',
       pwWeak: 'This password is too weak; choose a longer, harder-to-guess one.',
       pwOk: 'Your password has been updated.', pwAuth: 'Your session has expired. Please sign in again.',
@@ -795,7 +827,9 @@
         kapat();
         if (r.ok) {
           setMsg(msg, t('delDone'), 'ok');
-          setTimeout(function () { location.href = '/'; }, 2500);
+          /* Sertifika kodu okunup not alınabilsin diye yönlendirme bekletiliyor. */
+          showCertificate(msg.parentNode, r.data && r.data.certificate, r.data && r.data.mail);
+          setTimeout(function () { location.href = '/'; }, 15000);
           return;
         }
         var code = r.data && r.data.error && r.data.error.code;
@@ -806,6 +840,113 @@
       }).catch(function () {
         btn.disabled = false; kapat(); setMsg(msg, t('failed'), 'err');
       });
+    });
+  }
+
+  /* Silme sertifikası satırı: kod + doğrulama bağlantısı (textContent; kod
+     sunucudan gelse de biçimi denetlenir). */
+  function showCertificate(container, code, mail) {
+    var olds = container.querySelectorAll('.cert');
+    for (var i = 0; i < olds.length; i++) olds[i].parentNode.removeChild(olds[i]);
+    var p = document.createElement('p');
+    p.className = 'note cert';
+    if (!code || !/^DEL-[0-9A-HJKMNP-TV-Z]{8}$/.test(code)) {
+      p.textContent = t('certMissing');
+    } else {
+      p.textContent = t('certLabel') + ' ';
+      var strong = document.createElement('strong');
+      strong.textContent = '#' + code;
+      p.appendChild(strong);
+      p.appendChild(document.createTextNode(' · '));
+      var a = document.createElement('a');
+      a.className = 'link--underline';
+      a.href = '/silme-sertifikasi?code=' + encodeURIComponent(code);
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = t('certVerify');
+      p.appendChild(a);
+    }
+    container.appendChild(p);
+    /* E-posta durumu: gönderilemediyse (sağlayıcı yok ya da düştü) kod
+       ekrandaki tek kopya; kullanıcıya bunu açıkça söylüyoruz. */
+    if (code && mail) {
+      var m = document.createElement('p');
+      m.className = 'note cert';
+      m.textContent = mail === 'sent' ? t('mailSent') : t('mailFallback');
+      container.appendChild(m);
+    }
+  }
+
+  /* Veri Yönetimi: asistan hafızası anahtarı + kısmi silme (konuşmalar /
+     tarama geçmişi). Hesabın tamamı ayrı kartta (bindDelete). */
+  function bindData() {
+    var sw = $('memSwitch'), state = $('memState'), msg = $('memMsg');
+    var form = $('dataForm'), dmsg = $('dataMsg'), dbtn = $('dataBtn');
+    if (!sw || !form) return;
+    var current = null;
+
+    function show(v) {
+      current = v;
+      sw.setAttribute('aria-checked', v === true ? 'true' : 'false');
+      state.textContent = v === true ? t('memOn') : v === false ? t('memOff') : t('memUndecided');
+    }
+    if (!S.demo) {
+      getJSON('/api/user/memory').then(function (r) {
+        if (r.ok && r.data && r.data.authenticated) { show(r.data.remember); sw.setAttribute('aria-disabled', 'false'); }
+      });
+    }
+    function toggle() {
+      if (S.demo) { setMsg(msg, t('demoOff'), 'err'); return; }
+      if (sw.getAttribute('aria-disabled') === 'true') return;
+      var next = current !== true;
+      sw.setAttribute('aria-disabled', 'true');
+      fetch('/api/user/memory', {
+        method: 'PUT', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ remember: next })
+      }).then(function (r) {
+        return r.json().catch(function () { return null; }).then(function (d) { return { ok: r.ok, status: r.status, data: d }; });
+      }).then(function (r) {
+        sw.setAttribute('aria-disabled', 'false');
+        if (!r.ok || !r.data) { setMsg(msg, r.status === 401 ? t('pwAuth') : t('failed'), 'err'); return; }
+        show(r.data.remember);
+        setMsg(msg, next ? t('memSaved') : t('memOffDone').replace('{n}', String(r.data.deleted || 0)), 'ok');
+      }).catch(function () { sw.setAttribute('aria-disabled', 'false'); setMsg(msg, t('failed'), 'err'); });
+    }
+    sw.addEventListener('click', toggle);
+    sw.addEventListener('keydown', function (e) {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); }
+    });
+
+    /* İki aşamalı onay: ilk basış uyarır, 6 sn içinde ikinci basış siler. */
+    var armed = false, armTimer = null;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (S.demo) { setMsg(dmsg, t('demoOff'), 'err'); return; }
+      var scopes = [];
+      if ($('delConversations').checked) scopes.push('conversations');
+      if ($('delScans').checked) scopes.push('scans');
+      if (!scopes.length) { setMsg(dmsg, t('dataPick'), 'err'); return; }
+      if (!armed) {
+        armed = true;
+        setMsg(dmsg, t('dataConfirm'), 'err');
+        clearTimeout(armTimer);
+        armTimer = setTimeout(function () { armed = false; setMsg(dmsg, ''); }, 6000);
+        return;
+      }
+      armed = false; clearTimeout(armTimer);
+      dbtn.disabled = true;
+      setMsg(dmsg, t('dataWorking'));
+      postJSON('/api/user/delete', { scopes: scopes }).then(function (r) {
+        dbtn.disabled = false;
+        if (!r.ok) { setMsg(dmsg, r.status === 401 ? t('pwAuth') : t('failed'), 'err'); return; }
+        setMsg(dmsg, t('dataDone'), 'ok');
+        showCertificate(form, r.data && r.data.certificate, r.data && r.data.mail);
+        $('delConversations').checked = false; $('delScans').checked = false;
+        if (scopes.indexOf('scans') !== -1) {
+          loadScans(false).then(function () { return loadLatestDetail(); }).then(function () { renderOverview(); renderTable(); });
+        }
+      }).catch(function () { dbtn.disabled = false; setMsg(dmsg, t('failed'), 'err'); });
     });
   }
 
@@ -1088,7 +1229,7 @@
         applyLang(); if (!$('app').hidden) renderAll();
       });
     });
-    bindLogin(); bindTable(); bindPassword(); bindDelete(); bindDns(); bindCloudflare(); bindTabs();
+    bindLogin(); bindTable(); bindPassword(); bindDelete(); bindData(); bindDns(); bindCloudflare(); bindTabs();
     $('logoutBtn').addEventListener('click', function () {
       if (S.demo) { location.href = '/dashboard'; return; }
       fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })

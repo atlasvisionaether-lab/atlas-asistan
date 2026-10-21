@@ -17,10 +17,8 @@
     "playKategori/playTip: Google Play Data Safety formundaki karşılığı.",
     "politikada: true ise gizlilik politikasında ADI GEÇMEK ZORUNDA (sınanıyor)."
   ],
-
   "surum": "1.0.0",
-  "olcumTarihi": "2026-10-11",
-
+  "olcumTarihi": "2026-10-21",
   "kalemler": [
     {
       "id": "eposta",
@@ -35,7 +33,10 @@
       "zorunlu": true,
       "aktarimdaSifreli": true,
       "silinebilir": true,
-      "ucuncuTaraf": ["Supabase"],
+      "ucuncuTaraf": [
+        "Supabase",
+        "Resend"
+      ],
       "politikada": true,
       "politikaAnahtari": "E-posta"
     },
@@ -53,7 +54,9 @@
       "zorunlu": true,
       "aktarimdaSifreli": true,
       "silinebilir": true,
-      "ucuncuTaraf": ["Supabase"],
+      "ucuncuTaraf": [
+        "Supabase"
+      ],
       "politikada": true,
       "politikaAnahtari": "Tarama verileri"
     },
@@ -71,7 +74,10 @@
       "zorunlu": true,
       "aktarimdaSifreli": true,
       "silinebilir": true,
-      "ucuncuTaraf": ["Vercel", "Supabase"],
+      "ucuncuTaraf": [
+        "Vercel",
+        "Supabase"
+      ],
       "politikada": true,
       "politikaAnahtari": "ülke bilgisi"
     },
@@ -89,7 +95,10 @@
       "zorunlu": false,
       "aktarimdaSifreli": true,
       "silinebilir": true,
-      "ucuncuTaraf": ["iyzico", "Supabase"],
+      "ucuncuTaraf": [
+        "iyzico",
+        "Supabase"
+      ],
       "politikada": true,
       "politikaAnahtari": "Ödeme verileri"
     },
@@ -107,7 +116,9 @@
       "zorunlu": false,
       "aktarimdaSifreli": true,
       "silinebilir": true,
-      "ucuncuTaraf": ["Google (Firebase Cloud Messaging)"],
+      "ucuncuTaraf": [
+        "Google (Firebase Cloud Messaging)"
+      ],
       "politikada": true,
       "politikaAnahtari": "cihaz jetonu"
     },
@@ -144,7 +155,9 @@
       "aktarimdaSifreli": true,
       "silinebilir": false,
       "silinemezSebep": "Kişiye bağlanamayan, süreli ve kendiliğinden silinen bir sayaç anahtarıdır.",
-      "ucuncuTaraf": ["Upstash"],
+      "ucuncuTaraf": [
+        "Upstash"
+      ],
       "politikada": true,
       "politikaAnahtari": "Hız sınırı"
     },
@@ -161,7 +174,9 @@
       "zorunlu": false,
       "aktarimdaSifreli": true,
       "silinebilir": true,
-      "ucuncuTaraf": ["Supabase"],
+      "ucuncuTaraf": [
+        "Supabase"
+      ],
       "politikada": true,
       "politikaAnahtari": "Bekleme listesi"
     },
@@ -178,7 +193,9 @@
       "zorunlu": false,
       "aktarimdaSifreli": true,
       "silinebilir": true,
-      "ucuncuTaraf": ["Supabase"],
+      "ucuncuTaraf": [
+        "Supabase"
+      ],
       "politikada": true,
       "politikaAnahtari": "Doğrulanmış alan adları"
     },
@@ -195,7 +212,9 @@
       "zorunlu": false,
       "aktarimdaSifreli": true,
       "silinebilir": true,
-      "ucuncuTaraf": ["Supabase"],
+      "ucuncuTaraf": [
+        "Supabase"
+      ],
       "politikada": true,
       "politikaAnahtari": "İzleme uyarıları"
     },
@@ -214,7 +233,9 @@
       "aktarimdaSifreli": true,
       "silinebilir": false,
       "silinemezSebep": "Yasal yükümlülük (hukuki ispat, 12 ay). Satır silinmiyor; hesap silindiğinde kişiyle bağı kesiliyor.",
-      "ucuncuTaraf": ["Supabase"],
+      "ucuncuTaraf": [
+        "Supabase"
+      ],
       "politikada": true,
       "politikaAnahtari": "Tarama günlüğü"
     },
@@ -233,7 +254,10 @@
       "aktarimdaSifreli": true,
       "silinebilir": false,
       "silinemezSebep": "Fatura ve vergi yükümlülüğü. Satır silinmiyor; hesap silindiğinde kişiyle bağı kesiliyor.",
-      "ucuncuTaraf": ["iyzico", "Supabase"],
+      "ucuncuTaraf": [
+        "iyzico",
+        "Supabase"
+      ],
       "politikada": true,
       "politikaAnahtari": "Düzeltme siparişleri"
     },
@@ -252,12 +276,99 @@
       "aktarimdaSifreli": true,
       "silinebilir": false,
       "silinemezSebep": "Ekip sohbetine düşen bildirimdir; kayıt silindiğinde geçmiş bildirim geri alınamaz.",
-      "ucuncuTaraf": ["Telegram"],
+      "ucuncuTaraf": [
+        "Telegram"
+      ],
       "politikada": true,
       "politikaAnahtari": "Telegram"
+    },
+    {
+      "id": "asistan_sorulari",
+      "tr": "Asistana yazılan sorular (yapay zekâ katmanı)",
+      "en": "Questions sent to the assistant (AI layer)",
+      "kaynak": "api/assistant-ai.js; maskeleme api/_lib/ai-redact.js",
+      "amac": "Bilgi tabanının cevaplayamadığı güvenlik sorusuna yapay zekâ ile yanıt üretmek",
+      "not": "Yalnızca açık rızayla. E-posta, IP, anahtar/şifre biçimli değerler gönderilmeden önce maskelenir. Hafıza kapalıysa bizde saklanmaz.",
+      "playKategori": "Messages",
+      "playTip": "Other in-app messages",
+      "toplanir": true,
+      "paylasilir": true,
+      "zorunlu": false,
+      "aktarimdaSifreli": true,
+      "silinebilir": false,
+      "silinemezSebep": "Hafıza kapalıyken bizde saklanmaz; yanıt için sağlayıcıya iletilen metin sağlayıcının saklama koşullarına tabidir.",
+      "ucuncuTaraf": [
+        "DeepSeek",
+        "Anthropic"
+      ],
+      "politikada": true,
+      "politikaAnahtari": "Asistan soruları"
+    },
+    {
+      "id": "asistan_hafizasi",
+      "tr": "Asistan hafızası (kayıtlı konuşmalar ve hatırla tercihi)",
+      "en": "Assistant memory (stored conversations and remember preference)",
+      "kaynak": "cl_assistant_messages, cl_user_prefs — db/migrations/011_assistant_memory.sql; api/_lib/memory.js; api/user/memory.js; vektör: db/migrations/012_assistant_vectors.sql, api/_lib/embed.js, supabase/functions/embed; arama fonksiyonu cl_match_assistant_messages ve atomik yazma fonksiyonu cl_append_assistant_messages (yalnızca servis rolü)",
+      "amac": "Kullanıcı 'Evet, hatırla' dediyse sonraki sorularda önceki konuşmayı bağlam olarak kullanmak",
+      "not": "Yalnızca giriş yapmış ve hatırla diyen kullanıcı; maskeli içerik; kullanıcı başına en çok 1000 mesaj. Anlamsal arama için mesaj başına 384 boyutlu vektör (embedding) aynı satırda saklanır; vektör Supabase Edge Function'da (gte-small) üretilir.",
+      "playKategori": "Messages",
+      "playTip": "Other in-app messages",
+      "toplanir": true,
+      "paylasilir": true,
+      "zorunlu": false,
+      "aktarimdaSifreli": true,
+      "silinebilir": true,
+      "ucuncuTaraf": [
+        "Supabase",
+        "DeepSeek",
+        "Anthropic"
+      ],
+      "politikada": true,
+      "politikaAnahtari": "Asistan hafızası"
+    },
+    {
+      "id": "silme_sertifikasi",
+      "tr": "Silme sertifikası (kod, kapsam, silinen kayıt sayıları)",
+      "en": "Deletion certificate (code, scope, deleted row counts)",
+      "kaynak": "cl_deletion_certificates — db/migrations/011_assistant_memory.sql; api/deletion-certificate.js",
+      "amac": "Silme işleminin yapıldığını kanıtlamak",
+      "not": "Kişiye bağ YOK: kullanıcı kimliği, e-posta, IP yazılmaz.",
+      "playKategori": "App activity",
+      "playTip": "Other actions",
+      "toplanir": true,
+      "paylasilir": false,
+      "zorunlu": false,
+      "aktarimdaSifreli": true,
+      "silinebilir": false,
+      "silinemezSebep": "Kişiye bağlı değildir; silmenin kanıtı olduğu için saklanır.",
+      "ucuncuTaraf": [
+        "Supabase"
+      ],
+      "politikada": true,
+      "politikaAnahtari": "Silme sertifikası"
+    },
+    {
+      "id": "islem_epostasi",
+      "tr": "İşlem e-postası (silme sertifikası, sabah izleme özeti)",
+      "en": "Transactional email (deletion certificate, morning monitoring digest)",
+      "kaynak": "api/_lib/mailer.js; api/user/delete.js; api/panel/account.js; api/cron/morning-digest.js",
+      "amac": "Silme sertifikasını ve ücretli planda izleme uyarılarının sabah özetini kullanıcıya iletmek",
+      "not": "Yalnızca e-posta adresi ve e-postanın içeriği gider. Sağlayıcı yapılandırılmamışsa hiç gönderilmez; sertifika ekranda kalır.",
+      "playKategori": "Personal info",
+      "playTip": "Email address",
+      "toplanir": true,
+      "paylasilir": true,
+      "zorunlu": false,
+      "aktarimdaSifreli": true,
+      "silinebilir": false,
+      "silinemezSebep": "Gönderilmiş bir e-posta geri alınamaz; sağlayıcıdaki gönderim kaydı sağlayıcının saklama süresine tabidir.",
+      "ucuncuTaraf": [
+        "Resend"
+      ],
+      "politikada": true,
+      "politikaAnahtari": "İşlem e-postaları"
     }
   ],
-
   "hesapSilme": {
     "_hakkinda": [
       "Google Play'in 'hesabı ve verileri sil' şartı ve KVKK silme talebi için.",
@@ -270,18 +381,30 @@
     "yetki": "Oturum zorunlu; bir hesap yalnızca kendisini silebilir (kimlik gövdeden değil oturumdan)",
     "onay": "Gövdede confirm dizgesi şart (kazara silmeye karşı)",
     "silinenTablolar": [
-      "scan_jobs", "scan_findings", "ai_reports", "cl_scans", "cl_subscriptions",
-      "cl_device_tokens", "verified_domains", "monitor_alerts", "cl_waitlist"
+      "scan_jobs",
+      "scan_findings",
+      "ai_reports",
+      "cl_scans",
+      "cl_subscriptions",
+      "cl_device_tokens",
+      "verified_domains",
+      "monitor_alerts",
+      "cl_waitlist",
+      "cl_assistant_messages",
+      "cl_user_prefs"
     ],
     "silinenHesap": "Supabase auth.users satırı (GoTrue admin ucu, servis rolü)",
-    "anonimlestirilenTablolar": ["scan_logs", "fix_orders"],
+    "anonimlestirilenTablolar": [
+      "scan_logs",
+      "fix_orders"
+    ],
     "neden": [
       "Yabancı anahtarlar tek tip değil: scan_jobs ve scan_logs 'on delete set null'.",
       "Yalnızca hesabı silmek scan_jobs satırlarını SAHİPSİZ bırakırdı, silmezdi.",
       "scan_logs ve fix_orders yasal yükümlülük; satır kalıyor, kişiyle bağı kesiliyor."
-    ]
+    ],
+    "sertifika": "Başarılı silmede cl_deletion_certificates'a kişiye bağsız bir #DEL kodu yazılır ve yanıtta döner"
   },
-
   "toplanmayanlar": [
     {
       "tr": "Kart numarası, son kullanma tarihi, CVV",
@@ -303,5 +426,27 @@
       "tr": "Tarama gövdesinin yapay zekâ modeline gönderilmesi",
       "sebep": "api/_lib/aianalyst.js tarama gövdesini modele göndermiyor; tools/aianalyst-test.js bunu kilitliyor."
     }
-  ]
+  ],
+  "kismiSilme": {
+    "_hakkinda": [
+      "Panelim → Güvenlik → Veri Yönetimi: hesabı silmeden veri kategorisi silme."
+    ],
+    "uc": "POST /api/user/delete { scopes: ['conversations'|'scans'] }",
+    "kaynak": "api/user/delete.js; api/_lib/memory.js deleteMessages; api/_lib/db.js deleteScanHistory",
+    "kapsamlar": {
+      "conversations": [
+        "cl_assistant_messages"
+      ],
+      "scans": [
+        "scan_jobs",
+        "scan_findings",
+        "ai_reports",
+        "cl_scans"
+      ]
+    },
+    "anonimlestirilen": [
+      "scan_logs"
+    ],
+    "hafizaTercihi": "PUT /api/user/memory { remember: false } kayıtlı konuşmaları da siler"
+  }
 }

@@ -340,6 +340,8 @@ const mesaj = {
     if (tur === 'domain_expiry') return ONEK + ' 📅 Alan adı kaydı bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
     if (tur === 'blacklist') return ONEK + ' ☣️ Kara listede: ' + a + ' (' + kod(d.source) + ': ' + kod(d.match) + ')';
     if (tur === 'downtime') return ONEK + ' 🔴 Erişilemiyor: ' + a + ' (' + kod(d.reason) + ')';
+    if (tur === 'new_findings') return ONEK + ' 🆕 Yeni bulgu: ' + a + ' — ' + Number(d.count) + ' adet'
+      + (d.first ? ' (' + kod(d.first) + ')' : '');
     if (tur === 'recovered') return ONEK + ' 🟢 Yeniden erişilebilir: ' + a
       + (typeof d.downMinutes === 'number' ? ' (' + d.downMinutes + ' dk kesinti)' : '');
     return ONEK + ' ℹ️ İzleme: ' + a + ' ' + kod(tur);

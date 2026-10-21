@@ -1042,7 +1042,11 @@ async function deleteAccountData(userId, email) {
     ['cl_subscriptions', kullanici],
     ['cl_device_tokens', kullanici],
     ['verified_domains', kullanici],
-    ['monitor_alerts', kullanici]
+    ['monitor_alerts', kullanici],
+    /* Asistan hafızası ve tercihi (011). auth.users silinince CASCADE ile de
+       giderdi; burada açıkça silinmesi sayının sertifikaya yazılması için. */
+    ['cl_assistant_messages', kullanici],
+    ['cl_user_prefs', kullanici]
   ];
 
   const silinen = {};
@@ -1086,7 +1090,47 @@ async function deleteAccountData(userId, email) {
   return { silinen: silinen, anonimlestirilen: anonimlestirilen, atlanan: atlanan };
 }
 
+/**
+ * Yalnızca tarama geçmişini siler (kısmi silme: "Tarama geçmişimi sil").
+ * Hesap, abonelik, doğrulanmış alan adları ve uyarılar KALIR.
+ *
+ *   scan_jobs (+ scan_findings, ai_reports — cascade) · cl_scans
+ *   scan_logs: hesap silmedeki gerekçeyle SİLİNMEZ, kişiye bağı kesilir
+ *              (üçüncü bir siteyi kimin taradığının hukuki ispatı).
+ *
+ * Dönüş: { silinen: {...}, anonimlestirilen: {...}, atlanan: [...] }
+ */
+async function deleteScanHistory(userId) {
+  if (!UUID_RE.test(String(userId || ''))) throw new Error('invalid_user_id');
+  const kullanici = 'user_id=eq.' + encodeURIComponent(userId);
+  const silinen = {};
+  const anonimlestirilen = {};
+  const atlanan = [];
+
+  for (const tablo of ['scan_jobs', TABLE]) {
+    try {
+      silinen[tablo] = await sil(tablo, kullanici);
+    } catch (err) {
+      if (/db_error_404/.test(err.message)) { atlanan.push(tablo); continue; }
+      throw err;
+    }
+  }
+  try {
+    const rows = await request('scan_logs?' + kullanici + '&select=id', {
+      method: 'PATCH',
+      body: { user_id: null },
+      headers: { 'Prefer': 'return=representation' }
+    });
+    anonimlestirilen.scan_logs = rows ? rows.length : 0;
+  } catch (err) {
+    if (/db_error_404/.test(err.message)) atlanan.push('scan_logs');
+    else throw err;
+  }
+  return { silinen: silinen, anonimlestirilen: anonimlestirilen, atlanan: atlanan };
+}
+
 module.exports = {
+  deleteScanHistory,
   saveDeviceToken, deleteDeviceToken, deviceTokensForJob, dropDeviceToken,
   jobsPendingNotify,
 

@@ -48,6 +48,9 @@
         <li>İzleme uyarıları: Ücretli planlarda günlük izleme bir sorun bulduğunda (skor düşüşü, sertifika bitişi, kara liste) uyarı kaydı hesabınıza yazılır</li>
         <li>Tarama günlüğü: Her tarama; alan adı, tarama seviyesi, doğrulama durumu ve zamanla kaydedilir ve hukuki ispat için 12 ay saklanır. İzinsiz tarama şüphesinde bu kayıt incelenir</li>
         <li>Düzeltme siparişleri: Ücretli bir düzeltme satın aldıysanız sipariş kaydı (alan adı, tutar, ödeme zamanı) fatura ve vergi yükümlülüğü için saklanır</li>
+        <li>Asistan soruları: Canlı Asistan&#39;ın yapay zekâ katmanını açık rızanızla kullanırsanız, sorunuz ve sohbetteki son mesajlar yanıt üretmek için yapay zekâ hizmet sağlayıcılarına iletilir. E-posta adresi, IP adresi ve anahtar/şifre biçimli değerler gönderilmeden önce otomatik gizlenir. Asistan hafızasını açmadıysanız bu sorular bizde saklanmaz</li>
+        <li>Asistan hafızası: Giriş yapmışsanız ve &quot;Evet, hatırla&quot; seçtiyseniz, asistanla konuşmalarınız gizlenmiş hâliyle (en fazla son 1000 mesaj) hesabınıza kaydedilir. Yeni bir soru sorduğunuzda bu kayıtlar içinden soruyla anlamca en ilgili birkaç mesajı bulabilmek için her mesajdan sayısal bir vektör (embedding) üretilir ve mesajla birlikte saklanır; vektör Supabase altyapısında üretilir, başka bir üçüncü tarafa gönderilmez. Son mesajlar ve bulunan ilgili mesajlar sonraki sorularınızda bağlam olarak yapay zekâ sağlayıcısına iletilir. &quot;Hayır, unut beni&quot; seçtiğinizde ya da konuşmalarınızı sildiğinizde bu kayıtlar kalıcı olarak silinir</li>
+        <li>Silme sertifikası: Veri sildiğinizde bir doğrulama kodu (DEL-XXXXXXXX), silinen veri kategorisi ve kayıt sayıları saklanır. Bu kayıt kimliğinize, e-posta adresinize veya IP adresinize bağlanmaz; kodu bilen kişi silmenin yapıldığını doğrulayabilir, kimin yaptığını öğrenemez</li>
       </ul>
       <p><strong>Veri Kullanımı:</strong></p>
       <ul>
@@ -62,21 +65,25 @@
         <li>İç bildirimler: Telegram (e-posta adresi maskelenmiş olarak)</li>
         <li>Bildirim: Google / Firebase Cloud Messaging (yalnızca cihaz jetonu ve bildirim içeriği)</li>
         <li>Hız sınırı sayaçları: Upstash (yalnızca IP özetinden türetilmiş süreli anahtar)</li>
+        <li>Yapay zekâ asistanı: DeepSeek (Çin) ve yedek olarak Anthropic (ABD); yalnızca açık rızanızla ve yalnızca gizlenmiş soru metni ile sohbet bağlamı</li>
+        <li>İşlem e-postaları: Resend (ABD). Silme sertifikası ve ücretli planlarda sabah izleme özeti e-posta adresinize bu sağlayıcı üzerinden gönderilir; yalnızca e-posta adresiniz ve e-postanın içeriği iletilir</li>
         <li>Verileriniz satılmaz. Altyapı sağlayıcılarımızın sunucuları yurt dışında bulunabilir; bu nedenle verileriniz yurt dışındaki sunucularda işlenebilir. Ayrıntı için KVKK Aydınlatma Metni&#39;ne bakınız.</li>
       </ul>
       <p><strong>Hesabınızı ve Verilerinizi Silme:</strong> Hesabınızı ve hesaba bağlı tüm verileri kendiniz silebilirsiniz; bekleme süresi yoktur.</p>
       <ul>
         <li>Panelden: Panelim → Güvenlik Ayarları → Hesabı Sil</li>
         <li>Web üzerinden: <a href="https://www.cyberlionai.com/hesap-silme">www.cyberlionai.com/hesap-silme</a></li>
+        <li>Yalnızca bir kategori: Panelim → Güvenlik Ayarları → Veri Yönetimi bölümünden hesabınızı silmeden yalnızca asistan konuşmalarınızı veya yalnızca tarama geçmişinizi silebilirsiniz</li>
       </ul>
-      <p>Silinenler: hesabınız (e-posta ve giriş bilgileri), tarama geçmişiniz ve bulgularınız, yapay zekâ rapor özetleri, aboneliğiniz ve iyzico referansları, bildirim cihaz jetonunuz, doğruladığınız alan adları, izleme uyarılarınız ve bekleme listesi kaydınız.</p>
+      <p>Her silme işleminden sonra size bir silme sertifikası kodu gösterilir ve hesabınızın e-posta adresine gönderilir; kodu <a href="https://www.cyberlionai.com/silme-sertifikasi">www.cyberlionai.com/silme-sertifikasi</a> adresinde doğrulayabilirsiniz.</p>
+      <p>Silinenler: hesabınız (e-posta ve giriş bilgileri), tarama geçmişiniz ve bulgularınız, yapay zekâ rapor özetleri, aboneliğiniz ve iyzico referansları, bildirim cihaz jetonunuz, doğruladığınız alan adları, izleme uyarılarınız, asistan konuşmalarınız ve hafıza tercihiniz ve bekleme listesi kaydınız.</p>
       <p>Silinmeyenler ve sebebi: tarama günlüğü ile düzeltme siparişi kayıtları yasal yükümlülük (hukuki ispat ve vergi mevzuatı) gereği saklanır; bu satırlar silinmez ama <strong>kimliğinizle bağı kesilir</strong>. Ödeme ve fatura kayıtları yasal saklama süresince iyzico tarafında kalır; kart bilgileriniz bizde hiç tutulmaz.</p>
       <p><strong>Haklarınız:</strong> KVKK Madde 11 kapsamındaki haklarınız için <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a> adresine yazabilirsiniz.</p>
       <p>Çerez ayarlarınızı tarayıcınızdan yönetebilirsiniz. Sitemizde pazarlama çerezi yoktur.</p>
     </article>
 
     <aside class="legal-meta" aria-label="Belge bilgileri">
-      <p><strong>Son güncelleme:</strong> 11.10.2026</p>
+      <p><strong>Son güncelleme:</strong> 21.10.2026</p>
       <p><strong>Ali Kotan – Şahıs İşletmesi (Cyber Lion AI)</strong><br />
         Ritim AVM, Cevizli Mah. Zuhal Cad. No:46/50 Maltepe/İstanbul<br />
         VKN 5810910912 · Kartal Vergi Dairesi<br />
