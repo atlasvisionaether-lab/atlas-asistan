@@ -47,6 +47,26 @@ const { KB, normalize, hasKeyword, classify } = require('./_lib/kb.js');
 const store = require('./_lib/store.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
 const tg = require('./_lib/telegram.js');
+const llm = require('./_lib/llm.js');
+
+/* Yapay zekâ katmanı açıkken serbest metinde bilgi tabanını atlayan durumlar
+   (cevap `fallback` + `reason` döner; arayüz fallback'i /api/assistant-ai'ye
+   yollar). Canlı denemede (2026-10-21) tek güçlü anahtar kelime 0.70 puanla
+   eşiği geçiyordu: "SSL sertifikamın süresi doldu" (0.91) ve "geçen sefer
+   sertifikam bitmişti, ne önermiştin?" (0.70) ikisi de TLS sürümü cevabını
+   aldı, hafızaya hiç ulaşmadı. Eşiği yükseltmek yetmez (0.91).
+   - AI_TOPICS: teknik tavsiye konuları; soru biçimi çok çeşitli, tek kanonik
+     cevap çoğuna uymuyor. Ürün konuları (fiyat, rapor, gizlilik…) bilgi
+     tabanında kalır: orada sabit metin modelden güvenli.
+   - RECALL_RE: önceki konuşmaya atıf; yalnızca hafızalı model cevaplayabilir.
+   Düğmeden gelen niyet her zaman kanonik cevabı alır. */
+const AI_TOPICS = ['tls', 'csp', 'hsts', 'xframe', 'cookies'];
+const RECALL_RE = /\b(gecen sefer|gecen gun|daha once|onceki konusma|hatirliyor musun|hatirlat|demistin|last time|earlier you|you said|you told me|you suggested|do you remember|we talked)\b|m[iu]st[iu][nkm]\b/;
+
+/** assistant-ai.js enabled() ile aynı koşul: arayüz AI katmanını açar mı. */
+function aiEnabled() {
+  return process.env.AI_ASSISTANT_ENABLED === 'true' && llm.isConfigured();
+}
 
 const LANGS = ['tr', 'en'];
 const MAX_MESSAGE = 500;
@@ -123,6 +143,20 @@ function decide(input) {
 
   let c = classify(message);
 
+  if (input.ai === true) {
+    const toAi = function (reason) {
+      return {
+        type: 'fallback', intent: null, score: c.score, answer: null, reason: reason,
+        suggestions: suggestionsOf(KB.fallbackSuggestions, lang), handoff: false
+      };
+    };
+    const matched = c.intent && c.score >= KB.threshold;
+    const aiTopic = matched && AI_TOPICS.indexOf(c.intent) !== -1;
+    /* Atıf + net ürün konusu ("sormuştum, fiyat ne?"): sabit metin kalır. */
+    if (RECALL_RE.test(normalize(message)) && (!matched || aiTopic)) return toAi('recall');
+    if (aiTopic) return toAi('ai_topic');
+  }
+
   /* Selam/teşekkür: bilgi tabanı sorusu değil, uzmana da gitmemeli. Ama
      "merhaba, fiyatlar?" gibi bir soru taşıyorsa soru kazanır. */
   if (c.score < KB.threshold && isSmalltalk(message)) {
@@ -132,8 +166,10 @@ function decide(input) {
     };
   }
 
+  /* Önceki mesajla birleştirip eşleştirme: AI açıkken yapılmaz, model
+     geçmişi zaten görüyor; birleştirme ilgisiz kanonik cevaba bağlıyordu. */
   let contextual = false;
-  if (c.score < KB.threshold) {
+  if (c.score < KB.threshold && input.ai !== true) {
     const prev = lastUserMessage(input.history);
     if (prev) {
       const withContext = classify(prev + ' ' + message);
@@ -207,11 +243,12 @@ async function handler(req, res) {
     } catch (err) { /* sınır uygulanamadı, istek kabul */ }
   }
 
-  const result = decide({ message: message, intent: intent, lang: lang, history: history });
+  const result = decide({ message: message, intent: intent, lang: lang, history: history, ai: aiEnabled() });
 
+  /* reason'lı fallback cevapsız değil, modele yönlendirildi: bildirim yok. */
   if (result.type === 'urgent' && await tg.tekSefer('assist:u:' + questionKey(message), 3600)) {
     await tg.sendTelegram(tg.mesaj.asistanAcil(message), { type: 'alert' });
-  } else if (result.type === 'fallback' && await tg.tekSefer('assist:f:' + questionKey(message), 86400)) {
+  } else if (result.type === 'fallback' && !result.reason && await tg.tekSefer('assist:f:' + questionKey(message), 86400)) {
     await tg.sendTelegram(tg.mesaj.asistanCevapsiz(message, lang), { type: 'assist' });
   }
 

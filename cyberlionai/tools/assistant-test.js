@@ -163,6 +163,25 @@ async function kos() {
   esit('fallback uzmana yönlenir', bilinmez.handoff, true);
   dogru('fallback öneri veriyor', bilinmez.suggestions.length > 0);
 
+  /* ---------- AI katmanı açıkken yönlendirme (canlı deneme 2026-10-21) ---------- */
+  const ai = function (m, ek) { return asistan.decide(Object.assign({ message: m, lang: 'tr', ai: true }, ek || {})); };
+  const yon = function (r) { return r.type + (r.reason ? '/' + r.reason : '') + (r.intent ? ':' + r.intent : ''); };
+  esit('AI kapalı: davranış aynı (sertifika → tls)', yon(asistan.decide({ message: 'SSL sertifikamın süresi doldu, ne yapmalıyım?', lang: 'tr' })), 'answer:tls');
+  esit('AI açık: teknik konu modele', yon(ai('SSL sertifikamın süresi doldu, ne yapmalıyım?')), 'fallback/ai_topic');
+  esit('AI açık: EN teknik konu modele', yon(ai('Must I enable HSTS?')), 'fallback/ai_topic');
+  esit('AI açık: hafıza atfı modele (canlıda tls\'e gidiyordu)', yon(ai('Geçen sefer sertifikam bitmişti, ne yapmamı önermiştin?')), 'fallback/recall');
+  esit('AI açık: "daha önce" atfı', yon(ai('Daha önce konuştuğumuz CSP ayarı neydi?')), 'fallback/recall');
+  esit('AI açık: EN atıf', yon(ai('Do you remember what you suggested last time?')), 'fallback/recall');
+  esit('AI açık: atıf + ürün konusu sabit metinde kalır', yon(ai('Sormuştum ama cevap gelmedi, fiyat ne?')), 'answer:pricing');
+  esit('AI açık: ürün konuları bilgi tabanında',
+    ['Fiyatlar ne kadar?', 'Ücretsiz tarama var mı?', 'Raporumu nasıl indiririm?'].map(function (m) { return yon(ai(m)); }).join(' '),
+    'answer:pricing answer:free answer:report');
+  esit('AI açık: acil durum önce', yon(ai('sitem hacklendi, geçen sefer ne demiştin?')), 'urgent');
+  esit('AI açık: selam smalltalk kalır', yon(ai('merhaba')), 'smalltalk');
+  esit('AI açık: düğme niyeti kanonik cevap', yon(ai(undefined, { intent: 'tls' })), 'answer:tls');
+  esit('AI açık: modele giden uzmana yönlenmez', ai('HSTS nasıl açılır?').handoff, false);
+  esit('AI açık: geçmişle birleştirme yapılmaz', ai('peki örnek kod?', { history: [{ role: 'user', text: 'CSP nedir' }] }).intent, null);
+
   /* ---------- uç: Telegram ---------- */
   giden.length = 0;
   const istek = function (govde) { return { method: 'POST', body: govde, headers: {}, query: {} }; };
