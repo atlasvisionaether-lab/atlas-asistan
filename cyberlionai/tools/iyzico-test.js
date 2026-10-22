@@ -476,9 +476,7 @@ function fakeRes() {
     const fs = require('node:fs');
     const path = require('node:path');
     const pricing = require('../api/_lib/fixpricing.js');
-    sina('KDV dahil: 2.500 → 3.000', pricing.grossTry(2500), 3000);
-    sina('KDV dahil: 499 → 598,80', pricing.grossTry(499), 598.8);
-    sina('fiyat tablosu KDV oranını veriyor', pricing.table().vatRate, 0.2);
+    sina('fiyatlar KDV dahil, 50\'nin katı', [pricing.table().vatIncluded, pricing.TIERS.header, pricing.TIERS.tls_dns, pricing.TIERS.full], [true, 500, 1000, 5000]);
 
     const eskiFetch = global.fetch;
     const eskiWarn = console.warn;
@@ -510,8 +508,8 @@ function fakeRes() {
     console.warn = eskiWarn;
 
     const { verify } = require('../api/fix-pay-return.js');
-    /* Sipariş veritabanından: KDV hariç 2.500 → beklenen 3.000. */
-    const sip = { id: SIP, status: 'pending', price_discounted: 2500 };
+    /* Sipariş veritabanından: tutar KDV dahil, aynen çekilen (3.000). */
+    const sip = { id: SIP, status: 'pending', price_discounted: 3000 };
     const ok = { status: 'success', paymentStatus: 'SUCCESS', fraudStatus: 1, basketId: SIP, price: '3000.0' };
     const v = function (fark, s2) { return verify(Object.assign({}, ok, fark), s2 === undefined ? sip : s2); };
     sina('başarılı ve fraud onaylı ödeme doğrulanıyor', v({}).ok, true);
@@ -528,8 +526,8 @@ function fakeRes() {
 
     const kok = path.join(__dirname, '..');
     const payJs = fs.readFileSync(path.join(kok, 'api', 'fix-pay.js'), 'utf8');
-    sina('tutar veritabanındaki siparişten (istemciden değil)',
-      /grossTry\(order\.price_discounted\)/.test(payJs) && !/params\.(amount|price|tutar)/.test(payJs), true);
+    sina('tutar veritabanındaki siparişten (istemciden değil), ek KDV yok',
+      /const tutar = Number\(order\.price_discounted\)/.test(payJs) && !/params\.(amount|price|tutar)/.test(payJs) && !/VAT_RATE|grossTry/.test(payJs), true);
     sina('yalnızca bekleyen sipariş ödenebiliyor', /order\.status !== 'pending'/.test(payJs), true);
     /* PR #115 incelemesi: eşleme yazılamazsa ödeme alınıp sipariş ödenmemiş
        kalıyordu. Artık önbellek yok; dönüş siparişi basketId ile VT'den okur. */
@@ -544,7 +542,11 @@ function fakeRes() {
     sina('/fix-checkout artık "ödeme bağlantısı gönderilir" demiyor', /ödeme bağlantısı/.test(fc), false);
     const ix = fs.readFileSync(path.join(kok, 'index.html'), 'utf8');
     sina('sepet butonu "Güvenli Öde"', /cartOrder: 'Güvenli Öde'/.test(ix) && !/cartOrder: 'Sipariş ver'/.test(ix), true);
-    sina('sepet KDV dahil gösteriyor', /cartVat: '\(KDV dahil\)'/.test(ix) && /cartVatNote: 'Fiyatlara KDV dahildir/.test(ix) && /fmtTL\(gross\(list\)\)/.test(ix), true);
+    sina('sepet KDV dahil gösteriyor, ek KDV çarpımı yok', /cartVat: '\(KDV dahil\)'/.test(ix) && /cartVatNote: 'Fiyatlara KDV dahildir/.test(ix) && !/gross\(/.test(ix), true);
+    sina('sepette indirim kalem başına', /ids\.reduce\(function \(a, id\) \{ return a \+ discounted\(fixState\.cart\[id\]\); \}, 0\)/.test(ix), true);
+    sina('sayfalarda eski fix fiyatları yok', ['index.html', 'pricing.html', 'pages/on-bilgilendirme-formu.html', 'data/knowledge.json'].every(function (f) {
+      return !/₺ ?(499|999)\b|düzeltme ücretlerine|fix fees/.test(fs.readFileSync(path.join(kok, f), 'utf8'));
+    }), true);
   }
 
   /* ---- 10c. Sonuç sorgulanamazsa müşteri KENDİ siparişine döner ----

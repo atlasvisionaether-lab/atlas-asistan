@@ -4,8 +4,8 @@
  * "Biz düzeltelim" tek seferlik hizmet fiyatlandırması — TEK KAYNAK.
  * Fiyat İSTEMCİDEN ALINMAZ: sipariş ucu burada yeniden hesaplar.
  *
- *   header   ₺499    basit güvenlik başlıkları (HSTS, X-Frame, nosniff, Referrer…)
- *   tls_dns  ₺999    TLS / sertifika / HTTPS, SPF / DMARC / DKIM / DNSSEC ve
+ *   header   ₺500    basit güvenlik başlıkları (HSTS, X-Frame, nosniff, Referrer…)
+ *   tls_dns  ₺1.000  TLS / sertifika / HTTPS, SPF / DMARC / DKIM / DNSSEC ve
  *                    siteye özgü değişiklik isteyenler (CSP, çerez, CORS, SRI, karışık içerik)
  *   full     ₺5.000  tam paket (sepet tavanı); OWASP (A01–A10) bulguları yalnızca bununla
  *
@@ -23,13 +23,23 @@
  * bulgu seçen müşteri 9'uncuyu da satın almış oluyor.
  *
  * Pro ve Enterprise: %50 indirim (üst plan alt plandan pahalıya almasın).
- * Fiyatlar KDV hariç, tam TL.
+ *
+ * FİYATLAR KDV DAHİL VE 50 TL'NİN KATI (2026-10-22 kararı). Gösterilen,
+ * sepete eklenen, siparişe yazılan ve iyzico'dan çekilen tutar AYNI sayı;
+ * ayrıca KDV eklenmez. İndirim TOPLAMA değil HER KALEME uygulanır ve 50'nin
+ * katına AŞAĞI yuvarlanır (müşteri belirtilenden az indirim almaz); toplam
+ * kalemlerin düz toplamıdır. Önceki modelde kalemler KDV hariç/indirimli,
+ * toplam toplanıp indirilip KDV eklenmiş görünüyordu: Pro'da "₺250 + ₺250
+ * = ₺598,80" (satırlar ve toplam farklı kurallarla).
  */
 
 const { FIXES, fixFor } = require('./engines/fixes.js');
 const { VAT_RATE } = require('./plans.js');
 
-const TIERS = { header: 499, tls_dns: 999, full: 5000 };
+/* Tüm tutarlar bu adımın katı. */
+const PRICE_STEP = 50;
+
+const TIERS = { header: 500, tls_dns: 1000, full: 5000 };
 const DISCOUNT_PERCENT = 50;
 const DISCOUNT_PLANS = ['pro', 'enterprise'];
 /* Tam paketin kapsamı: katalogdaki her düzeltme. Elle liste tutulmuyor,
@@ -44,8 +54,10 @@ function tierOf(id) {
   return f ? f.tier : 'full';
 }
 
+/** Tek tutarın indirimli hali: 50'nin katına aşağı yuvarlanır. */
 function discounted(price, plan) {
-  return DISCOUNT_PLANS.indexOf(plan) !== -1 ? Math.round(price * (100 - DISCOUNT_PERCENT) / 100) : price;
+  if (DISCOUNT_PLANS.indexOf(plan) === -1) return price;
+  return Math.floor(price * (100 - DISCOUNT_PERCENT) / 100 / PRICE_STEP) * PRICE_STEP;
 }
 
 /** Geçerli, tekil bulgu kimlikleri (en çok 40). */
@@ -88,7 +100,8 @@ function quote(ids, type, plan) {
   if (!tamPaket) {
     return {
       ok: true, type: 'single', coversAll: false, items: secili, price: toplam,
-      priceDiscounted: discounted(toplam, plan),
+      /* İndirim kalem başına: satırların toplamı = gösterilen toplam. */
+      priceDiscounted: secili.reduce(function (a, i) { return a + discounted(i.price, plan); }, 0),
       isPro: DISCOUNT_PLANS.indexOf(plan) !== -1
     };
   }
@@ -103,22 +116,15 @@ function quote(ids, type, plan) {
   };
 }
 
-/* Tutarlar KDV HARİÇ saklanır (fix_orders.price_discounted, tam sayı TL);
-   müşteriye gösterilen ve iyzico'dan çekilen tutar KDV DAHİL: kuruşlu,
-   tek yerden hesaplanır (sepet, /fix-checkout, ödeme, dönüş doğrulaması). */
-function grossTry(net) {
-  return Math.round(Number(net) * (1 + VAT_RATE) * 100) / 100;
-}
-
 /** Herkese açık fiyat tablosu (GET /api/fix-pricing). */
 function table() {
   const tierById = {};
   Object.keys(FIXES).forEach(function (id) { tierById[id] = tierOf(id); });
-  return { currency: 'TRY', vatIncluded: false, vatRate: VAT_RATE, tiers: TIERS, discountPercent: DISCOUNT_PERCENT,
+  return { currency: 'TRY', vatIncluded: true, vatRate: VAT_RATE, priceStep: PRICE_STEP, tiers: TIERS, discountPercent: DISCOUNT_PERCENT,
     discountPlans: DISCOUNT_PLANS, tierById: tierById, otherFindings: 'full',
     /* Tavana ulaşan sepetin kapsamı: katalogdaki düzeltme sayısı. Arayüz
        "23 bulgunun tamamı düzeltilecek" derken bunu okuyor, sabit yazmıyor. */
     fullCoverageCount: ALL_IDS.length };
 }
 
-module.exports = { TIERS, DISCOUNT_PERCENT, DISCOUNT_PLANS, ALL_IDS, tierOf, quote, table, cleanIds, discounted, grossTry };
+module.exports = { TIERS, DISCOUNT_PERCENT, DISCOUNT_PLANS, ALL_IDS, PRICE_STEP, tierOf, quote, table, cleanIds, discounted };

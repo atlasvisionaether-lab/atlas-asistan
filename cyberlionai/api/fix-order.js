@@ -35,8 +35,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 function view(r) {
   return { orderId: r.id, domain: r.domain, findingIds: r.finding_ids, type: r.type,
     price: r.price, priceDiscounted: r.price_discounted,
-    /* KDV dahil: /fix-checkout'ta gösterilen ve iyzico'dan çekilen tutar. */
-    amountGross: pricing.grossTry(r.price_discounted), listGross: pricing.grossTry(r.price),
+    /* Tutarlar KDV dahil (fixpricing): gösterilen = iyzico'dan çekilen. */
+    amountGross: r.price_discounted, listGross: r.price,
     status: r.status, createdAt: r.created_at };
 }
 
@@ -107,7 +107,7 @@ async function handler(req, res) {
 
   return res.status(201).json({
     orderId: row.id, checkoutUrl: '/fix-checkout?orderId=' + encodeURIComponent(row.id),
-    amountGross: pricing.grossTry(row.price_discounted),
+    amountGross: row.price_discounted,
     type: row.type, price: row.price, priceDiscounted: row.price_discounted
   });
 }

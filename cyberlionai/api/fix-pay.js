@@ -9,8 +9,8 @@
  *
  * KURALLAR
  *   - Giriş zorunlu; sipariş bu hesabın ve 'pending' olmalı.
- *   - TUTAR İSTEMCİDEN ALINMAZ: veritabanındaki price_discounted (KDV hariç)
- *     → grossTry (KDV dahil, karttan çekilen).
+ *   - TUTAR İSTEMCİDEN ALINMAZ: veritabanındaki price_discounted (KDV dahil,
+ *     50'nin katı; bkz. fixpricing) aynen karttan çekilen tutar.
  *   - Fatura bilgileri abonelikteki gibi (billing-details.js): gövdede gelir,
  *     loglanmaz, veritabanına yazılmaz, yalnızca iyzico'ya gider.
  *   - iyzico'nun dönüşü siteler arası POST (SameSite=Lax çerez gelmez).
@@ -24,7 +24,6 @@ const auth = require('./_lib/auth.js');
 const db = require('./_lib/db.js');
 const iyzico = require('./_lib/iyzico.js');
 const billing = require('./_lib/billing-details.js');
-const pricing = require('./_lib/fixpricing.js');
 const tg = require('./_lib/telegram.js');
 const { clientIp } = require('./_lib/session.js');
 const { formBody, customerName } = require('./checkout.js');
@@ -78,7 +77,7 @@ async function handler(req, res) {
   const details = billing.buildCustomer(params, user.email, customerName);
   if (!details.ok) return back(res, orderId, 'details_required', details.field);
   const alici = billing.buyerFrom(details.customer, user.id, clientIp(req));
-  const tutar = pricing.grossTry(order.price_discounted);
+  const tutar = Number(order.price_discounted);
 
   let init;
   try {
