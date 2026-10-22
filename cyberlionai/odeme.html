@@ -116,6 +116,9 @@
   @media(max-width:400px){.logo span{display:none}}
   .cardnote__icon{flex:0 0 auto;margin-top:3px}
   .link--underline{text-decoration:underline}
+  .field--row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:480px){.field--row{grid-template-columns:1fr}}
+  .opt{font-weight:400;opacity:.7;font-size:.85em}
 </style>
 </head>
 <body>
@@ -157,7 +160,11 @@
             <a class="pay pay--muted" href="/#hero">Ücretsiz Tara</a>
           </div>
 
-          <form class="card" id="payForm" novalidate>
+          <!-- POST: fatura bilgileri URL'ye değil gövdeye (KVKK); bkz. api/checkout.js. -->
+          <form class="card" id="payForm" method="post" action="/api/checkout" novalidate>
+            <input type="hidden" name="plan" id="fPlan" value="pro_monthly" />
+            <input type="hidden" name="declaration" id="fDeclaration" value="" />
+            <input type="hidden" name="agreements" id="fAgreements" value="" />
             <h2>Fatura Bilgileri</h2>
             <div class="field">
               <label for="adSoyad">Ad Soyad</label>
@@ -165,8 +172,35 @@
             </div>
             <div class="field">
               <label for="eposta">E-posta</label>
-              <input type="email" id="eposta" name="eposta" autocomplete="email" maxlength="200" required />
+              <input type="email" id="eposta" autocomplete="email" maxlength="200" required />
               <p class="hint" id="epostaHint">Abonelik Cyber Lion AI hesabınıza bağlanır. Giriş yapmadıysanız ödemeden önce giriş ekranına yönlendirilirsiniz.</p>
+            </div>
+            <div class="field">
+              <label for="gsm">Cep Telefonu</label>
+              <input type="tel" id="gsm" name="gsm" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="0555 444 33 33" required />
+            </div>
+            <div class="field">
+              <label for="adres">Fatura Adresi</label>
+              <input type="text" id="adres" name="adres" autocomplete="street-address" maxlength="250" placeholder="Mahalle, cadde/sokak, no, daire" required />
+            </div>
+            <div class="field field--row">
+              <div>
+                <label for="il">İl</label>
+                <input type="text" id="il" name="il" autocomplete="address-level1" maxlength="50" required />
+              </div>
+              <div>
+                <label for="ilce">İlçe <span class="opt">(isteğe bağlı)</span></label>
+                <input type="text" id="ilce" name="ilce" autocomplete="address-level2" maxlength="50" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="ulke">Ülke</label>
+              <input type="text" id="ulke" name="ulke" autocomplete="country-name" maxlength="56" value="Türkiye" required />
+            </div>
+            <div class="field">
+              <label for="tckn">TC Kimlik No <span class="opt">(Fatura için - İsteğe bağlı)</span></label>
+              <input type="text" id="tckn" name="tckn" inputmode="numeric" autocomplete="off" maxlength="11" pattern="[0-9]{11}" />
+              <p class="hint">Faturanızın kimlik numaranızla kesilmesini istiyorsanız yazın. Boş bırakabilirsiniz. Bu bilgiler yalnızca ödeme kuruluşu iyzico'ya iletilir, sunucularımızda saklanmaz.</p>
             </div>
 
             <div class="cardnote">

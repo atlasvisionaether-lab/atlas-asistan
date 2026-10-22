@@ -321,9 +321,60 @@ function fakeRes() {
   sina('plan verilmezse 400', res.body, { error: { code: 'missing_plan' } });
 
   res = fakeRes();
-  await require('../api/checkout.js')({ method: 'POST', query: {}, headers: {} }, res);
-  sina('GET dışı yöntem 405', res.statusCode, 405);
-  sina('405 Allow başlığı', res.headers.allow, 'GET');
+  await require('../api/checkout.js')({ method: 'PUT', query: {}, headers: {} }, res);
+  sina('GET/POST dışı yöntem 405', res.statusCode, 405);
+  sina('405 Allow başlığı', res.headers.allow, 'GET, POST');
+
+  /* POST: /odeme formu gövdeyle gelir (fatura bilgileri URL'de değil). */
+  res = fakeRes();
+  await require('../api/checkout.js')({ method: 'POST', query: {}, headers: { accept: 'text/html' },
+    body: 'plan=pro_yearly&declaration=1' }, res);
+  sina('POST gövdeden okunuyor: sözleşme onayı yoksa fiyat sayfasına',
+    res.headers.location, '/pricing?checkout=agreements_required&plan=pro_yearly');
+  sina('POST durum ucu değil (mode yok sayılır)',
+    checkout.formBody({ body: 'mode=1&plan=pro' }), { mode: '1', plan: 'pro' });
+  sina('JSON gövde de okunuyor', checkout.formBody({ body: '{"plan":"pro"}' }), { plan: 'pro' });
+  sina('nesne gövde aynen', checkout.formBody({ body: { plan: 'x' } }), { plan: 'x' });
+
+  /* ---- 8b. Fatura bilgileri (iyzico 200702, canlı 2026-10-22) ---- */
+  {
+    const b = require('../api/_lib/billing-details.js');
+    sina('0555 444 33 33 → +90', b.normalizeGsm('0555 444 33 33'), '+905554443333');
+    sina('5554443333 → +90', b.normalizeGsm('5554443333'), '+905554443333');
+    sina('+90 (555) 444-33-33 → +90', b.normalizeGsm('+90 (555) 444-33-33'), '+905554443333');
+    sina('sabit hat reddediliyor (iyzico cep istiyor)', b.normalizeGsm('0212 444 33 33'), null);
+    sina('yurt dışı + ile kabul', b.normalizeGsm('+44 7911 123456'), '+447911123456');
+    sina('harf reddediliyor', b.normalizeGsm('0555abc'), null);
+    sina('geçerli TC kimlik', b.isValidTckn('10000000146'), true);
+    sina('sağlaması tutmayan TC reddediliyor', b.isValidTckn('12345678901'), false);
+    sina('0 ile başlayan TC reddediliyor', b.isValidTckn('01234567890'), false);
+
+    const tam = { ad: 'Ali Veli Kaya', gsm: '0555 444 33 33', adres: 'Atatürk Cad. No: 1 Daire 2',
+      il: 'İstanbul', ilce: 'Kadıköy', ulke: 'Türkiye' };
+    const c = b.buildCustomer(tam, 'ali@ornek.com', checkout.customerName);
+    sina('müşteri iyzico modeliyle kuruluyor', c.ok && c.customer, {
+      name: 'Ali Veli', surname: 'Kaya', email: 'ali@ornek.com', gsmNumber: '+905554443333',
+      identityNumber: '11111111111',
+      billingAddress: { contactName: 'Ali Veli Kaya', city: 'İstanbul', country: 'Türkiye',
+        address: 'Atatürk Cad. No: 1 Daire 2', district: 'Kadıköy' },
+      shippingAddress: { contactName: 'Ali Veli Kaya', city: 'İstanbul', country: 'Türkiye',
+        address: 'Atatürk Cad. No: 1 Daire 2', district: 'Kadıköy' } });
+    sina('TC boşsa 11111111111', c.customer.identityNumber, '11111111111');
+    sina('geçerli TC aynen gidiyor',
+      b.buildCustomer(Object.assign({}, tam, { tckn: '100 000 001 46' }), 'a@b.co', checkout.customerName).customer.identityNumber, '10000000146');
+    const alan = function (deg) { return b.buildCustomer(Object.assign({}, tam, deg), 'a@b.co', checkout.customerName).field; };
+    sina('geçersiz TC → tckn', alan({ tckn: '12345678901' }), 'tckn');
+    sina('telefon yok → gsm', alan({ gsm: '' }), 'gsm');
+    sina('adres kısa → adres', alan({ adres: 'kısa' }), 'adres');
+    sina('il yok → il', alan({ il: '' }), 'il');
+    sina('il rakam → il', alan({ il: '34' }), 'il');
+    sina('tek kelime ad → ad (fatura yer tutucu kabul etmez)', alan({ ad: 'Ali' }), 'ad');
+    sina('ülke boşsa Türkiye', b.buildCustomer(Object.assign({}, tam, { ulke: '' }), 'a@b.co', checkout.customerName).customer.billingAddress.country, 'Türkiye');
+    sina('ilçe isteğe bağlı', 'district' in b.buildCustomer(Object.assign({}, tam, { ilce: '' }), 'a@b.co', checkout.customerName).customer.billingAddress, false);
+    sina('kontrol karakterleri temizleniyor',
+      b.buildCustomer(Object.assign({}, tam, { adres: 'Atatürk\u0000 Cad.\n No: 1 Daire 2' }), 'a@b.co', checkout.customerName).customer.billingAddress.address,
+      'Atatürk Cad. No: 1 Daire 2');
+  }
 
   /* ---- 9. Webhook ucu: imzasız istek yazmıyor ----
      Veritabanı yapılandırması sahte: imza denetimi veritabanına HİÇ

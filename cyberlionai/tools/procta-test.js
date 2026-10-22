@@ -60,10 +60,21 @@ sina('girişten sonra dönüş free/bilinmeyen seçeneği kabul etmiyor',
 sina('ana sayfada continueCheckout kalıpla doğruluyor', Boolean(dondurAna), true);
 sina('Pro yıllık satırı da ödeme sayfasına bakıyor',
   /href="\/odeme\?plan=pro_yearly"[^>]*data-pro-intent/.test(html), true);
+/* Ödeme sayfası formu POST ile gönderir: fatura bilgileri (telefon, adres,
+   TC kimlik) URL'ye düşmez. */
+const odemeJs = fs.readFileSync(path.join(__dirname, '..', 'odeme.js'), 'utf8');
+const odemeHtml = fs.readFileSync(path.join(__dirname, '..', 'odeme.html'), 'utf8');
 sina('ödeme sayfası beyan ve sözleşme onayını gönderiyor',
-  /&declaration=1&agreements=1/.test(fs.readFileSync(path.join(__dirname, '..', 'odeme.js'), 'utf8')), true);
-sina('ödeme sayfası ödeme ucuna gidiyor',
-  /\/api\/checkout\?plan=/.test(fs.readFileSync(path.join(__dirname, '..', 'odeme.js'), 'utf8')), true);
+  /\$\('fDeclaration'\)\.value = '1'/.test(odemeJs) && /\$\('fAgreements'\)\.value = '1'/.test(odemeJs), true);
+sina('ödeme formu POST ile ödeme ucuna gidiyor',
+  /<form[^>]*id="payForm"[^>]*method="post"[^>]*action="\/api\/checkout"/.test(odemeHtml) && /form\.submit\(\)/.test(odemeJs), true);
+sina('ödeme sayfası fatura bilgilerini URL\'ye koymuyor',
+  /location\.href\s*=\s*'\/api\/checkout/.test(odemeJs), false);
+['gsm', 'adres', 'il', 'ilce', 'ulke', 'tckn'].forEach(function (ad) {
+  sina('ödeme formunda "' + ad + '" alanı', new RegExp('name="' + ad + '"').test(odemeHtml), true);
+});
+sina('TC kimlik alanı isteğe bağlı', /id="tckn"[^>]*required/.test(odemeHtml), false);
+sina('telefon zorunlu', /id="gsm"[^>]*required/.test(odemeHtml), true);
 
 /* ---- 2. Tıklama yönlendirmesi ---- */
 
