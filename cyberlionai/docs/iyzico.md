@@ -58,7 +58,8 @@ kalan eksik bu.
 Kodu almanın üç yolu var; **hepsi aynı sonucu** verir:
 
 1. **Panelden:** Abonelik → Ürünler → ürün oluştur → fiyat planı oluştur
-   (aylık, TRY, KDV hariç tutar). Plan satırındaki referans kodunu kopyalayın.
+   (aylık, TRY, **KDV dahil** tutar: Pro 249, Enterprise 1990; plana yazılan
+   tutar karttan çekilen tutardır). Plan satırındaki referans kodunu kopyalayın.
 2. **Yönetici ucundan** (anahtarları kimseye vermeden, sunucudaki anahtarlarla):
 
    ```
@@ -69,7 +70,7 @@ Kodu almanın üç yolu var; **hepsi aynı sonucu** verir:
    `ADMIN_EMAILS` içindeki hesapla giriş yapılmış olmalı. Yanıt ürün ve plan
    referans kodlarını döner; uç bunları hiçbir yere yazmaz, para çekmez.
    Kum havuzunda onay sözcüğü `PLAN OLUSTUR`, canlıda `PLAN OLUSTUR CANLI`.
-   Fiyat `api/_lib/plans.js`'ten okunur (Pro 299 ₺ + %20 KDV), istekten
+   Fiyat `api/_lib/plans.js`'ten okunur (Pro 249 ₺, KDV dahil), istekten
    fiyat kabul edilmez.
 3. **Komut satırından:** anahtarlar ortamda varsa
    `CONFIRM=evet node tools/iyzico-plan-setup.js`. Anahtar yoksa betik

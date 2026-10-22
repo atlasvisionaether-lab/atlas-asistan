@@ -24,11 +24,14 @@
  *   Enterprise.
  */
 
-/* KDV oranı. Sayfalarda KDV DAHİL tutar da gösteriliyor (`gross`). */
+/* KDV oranı. Abonelik fiyatları KDV DAHİL; KDV hariç tutar bundan türetilir
+   (`netOf`), yalnızca ödeme özeti ve sözleşmedeki KDV dökümü için. */
 const VAT_RATE = 0.20;
 
-/* Fiyatlar KDV hariç, Türk lirası, aylık. Kuruş yok: tutarlar tam sayı.
-   `gross` = priceTry × (1 + VAT_RATE), sayfada yazdığı biçimiyle. */
+/* Fiyatlar KDV DAHİL, Türk lirası, aylık: iyzico fiyat planına yazılan ve
+   karttan çekilen tutarın kendisi (2026-10-22 kararı; önceki model "₺299 +
+   KDV" iken iyzico'ya KDV hariç tutar gidiyor, çekilen tutar sayfadakinden
+   farklı oluyordu). `gross` sayfada fiyatın altındaki "KDV dahil" ibaresi. */
 const PLANS = {
   free: {
     id: 'free',
@@ -38,15 +41,15 @@ const PLANS = {
   },
   pro: {
     id: 'pro',
-    priceTry: 299,
-    tr: { price: '₺299/ay', gross: '₺358,80', period: 'Aylık, istediğiniz zaman iptal' },
-    en: { price: '₺299/mo', gross: '₺358.80', period: 'Monthly, cancel anytime' }
+    priceTry: 249,
+    tr: { price: '₺249/ay', gross: 'KDV dahil', period: 'Aylık, istediğiniz zaman iptal' },
+    en: { price: '₺249/mo', gross: 'incl. VAT', period: 'Monthly, cancel anytime' }
   },
   enterprise: {
     id: 'enterprise',
-    priceTry: 2499,
-    tr: { price: '₺2.499/ay', gross: '₺2.998,80', period: 'Aylık, istediğiniz zaman iptal' },
-    en: { price: '₺2,499/mo', gross: '₺2,998.80', period: 'Monthly, cancel anytime' }
+    priceTry: 1990,
+    tr: { price: '₺1.990/ay', gross: 'KDV dahil', period: 'Aylık, istediğiniz zaman iptal' },
+    en: { price: '₺1,990/mo', gross: 'incl. VAT', period: 'Monthly, cancel anytime' }
   }
 };
 

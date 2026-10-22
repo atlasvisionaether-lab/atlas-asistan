@@ -48,8 +48,9 @@ CONFIRM=evet node cyberlionai/tools/iyzico-plan-setup.js
 - Taban adres canlıysa durur; canlı plan ayrı bir karar (`CONFIRM=evet-canli`).
 - Fiyatı `api/_lib/plans.js`'ten okur: panelde yanlış tutar girmek,
   sözleşme metnindeki fiyatla sitedeki fiyatın ayrışması demekti
-  (Pro 299 TRY, Enterprise 2499 TRY, **KDV hariç**; KDV dahil tutarlar
-  sözleşme ve ön bilgilendirme belgelerinde yazılı).
+  (Pro 249 TRY, Enterprise 1990 TRY, **KDV dahil**: plana yazılan tutar
+  karttan çekilen tutardır; KDV dökümü sözleşme ve ön bilgilendirme
+  belgelerinde yazılı).
 - Çıktıdaki referans kodlarını `IYZICO_PRICING_PLAN_PRO` ve
   `IYZICO_PRICING_PLAN_ENTERPRISE` olarak Vercel'e gir.
 

@@ -74,7 +74,7 @@ function referansOf(data) {
   process.stdout.write('Ortam : ' + ortam + '\n');
   process.stdout.write('Ürün  : ' + URUN_ADI + '\n');
   PLANLAR.forEach(function (p) {
-    process.stdout.write('        ' + p.id + ' → ' + PLANS[p.id].priceTry + ' TRY/ay (KDV hariç, plans.js)\n');
+    process.stdout.write('        ' + p.id + ' → ' + PLANS[p.id].priceTry + ' TRY/ay (KDV dahil, plans.js)\n');
   });
 
   if (ortam !== 'sandbox' && CONFIRM !== 'evet-canli') {

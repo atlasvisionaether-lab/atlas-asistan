@@ -97,7 +97,7 @@ module.exports = async function handler(req, res) {
         .map(function (p) { return p.env; }),
       confirmWord: ortam === 'production' ? ONAY_CANLI : ONAY_SANDBOX,
       prices: PLANLAR.map(function (p) {
-        return { plan: p.id, priceTry: PLANS[p.id].priceTry, vatIncluded: false };
+        return { plan: p.id, priceTry: PLANS[p.id].priceTry, vatIncluded: true };
       })
     });
   }

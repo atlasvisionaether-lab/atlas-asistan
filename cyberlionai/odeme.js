@@ -3,8 +3,8 @@
  * Satır içi değil, ayrı dosya: CSP script-src 'self' bunu hash gerektirmeden
  * kabul ediyor.
  *
- * Fiyatlar api/_lib/plans.js ile AYNI olmak zorunda (KDV hariç tutar);
- * tools/pricing-test.js bu dosyadaki NET_TRY değerlerini oradaki priceTry ile
+ * Fiyatlar api/_lib/plans.js ile AYNI olmak zorunda (KDV DAHİL tutar);
+ * tools/pricing-test.js bu dosyadaki GROSS_TRY değerlerini oradaki priceTry ile
  * karşılaştırıyor. KDV oranı da orada (VAT_RATE).
  *
  * /api/checkout üç onay olmadan ödemeyi başlatmaz: tarama yetkisi beyanı
@@ -18,7 +18,7 @@
   'use strict';
 
   var VAT_RATE = 0.20;
-  var NET_TRY = { pro: 299, enterprise: 2499 };
+  var GROSS_TRY = { pro: 249, enterprise: 1990 };
   var NAMES = { free: 'Free', pro: 'Pro', enterprise: 'Enterprise' };
 
   function tl(n) {
@@ -44,10 +44,11 @@
     return;
   }
 
-  var net = NET_TRY[planId];
+  var gross = GROSS_TRY[planId];
   /* Kuruş hesabı tam sayıyla: 299 × 1,20 kayan noktada 358,79999… çıkar. */
-  var vat = Math.round(net * VAT_RATE * 100) / 100;
-  var gross = Math.round((net * 100) + (vat * 100)) / 100;
+  /* Fiyat KDV dahil; döküm ondan türetilir: net + KDV = gross tam tutar. */
+  var net = Math.round(gross / (1 + VAT_RATE) * 100) / 100;
+  var vat = Math.round((gross * 100) - (net * 100)) / 100;
 
   $('planPrice').textContent = tl(gross);
   $('planSub').textContent = 'Aylık · KDV dahil (' + tl(net) + ' + %20 KDV)';

@@ -201,7 +201,7 @@ yapmayın veya bölümü gizleyin. Ücretli bir "otomatik düzeltme" vaadi, arka
 ### Fiyat notu
 
 Bölümdeki fiyatlar (₺299 / ₺199 / ₺2.499) düzeltme yöntemi başınadır ve
-`Fiyatlandırma` bölümündeki plan fiyatlarından (Free / Pro ₺299/ay /
+`Fiyatlandırma` bölümündeki plan fiyatlarından (Free / Pro ₺249/ay /
 Enterprise) ayrıdır. İki liste birbiriyle çelişirse tek bir yapıya
 indirilmesi gerekir.
 

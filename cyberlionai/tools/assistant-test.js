@@ -247,14 +247,14 @@ async function kos() {
   esit('taslaklı talep 200', res.statusCode, 200);
   const g = sonGovde[0];
   dogru('Telegram metninde önerilen cevap (pricing)', /Önerilen cevap \(pricing\)/.test(g.text));
-  dogru('önerilen cevap fiyat bilgisini içeriyor', g.text.indexOf('₺299') !== -1);
+  dogru('önerilen cevap fiyat bilgisini içeriyor', g.text.indexOf('₺249') !== -1);
   const gmailDugme = g.reply_markup && g.reply_markup.inline_keyboard[0][0];
   dogru('Gmail düğmesi var', gmailDugme && /^https:\/\/mail\.google\.com\/mail\/\?/.test(gmailDugme.url));
   const p = new URL(gmailDugme.url).searchParams;
   esit('Gmail alıcısı müşteri', p.get('to'), 'hamza@ornek.com');
   esit('Gmail konusu konuya göre', p.get('su'), 'Re: Cyber Lion AI - ' + KB.intents.pricing.tr.q);
   dogru('Gmail gövdesi selamla başlıyor', p.get('body').indexOf('Merhaba hamza,') === 0);
-  dogru('Gmail gövdesi kanonik cevabı içeriyor', p.get('body').indexOf('KDV hariçtir.') !== -1);
+  dogru('Gmail gövdesi kanonik cevabı içeriyor', p.get('body').indexOf('Abonelik fiyatları KDV dahildir') !== -1);
   dogru('Gmail gövdesinde imza', /Cyber Lion AI Destek Ekibi/.test(p.get('body')));
 
   const yalniz = contact.cevapTaslagi({ name: 'Ali', lang: 'tr', last: ['İnsan bir uzmanla konuşmak istiyorum'] });
@@ -263,7 +263,7 @@ async function kos() {
   esit('yalnız uzman isteği → genel konu', yalniz.konuBasligi, 'Re: Cyber Lion AI - Destek talebiniz');
   const en = contact.cevapTaslagi({ name: 'Ann', lang: 'en', last: ['How much is Pro?', 'I want to talk to a human'] });
   esit('EN taslak konusu', en.konu, 'pricing');
-  dogru('EN taslak İngilizce', en.govde.indexOf('Hello Ann,') === 0 && /All prices exclude VAT/.test(en.govde));
+  dogru('EN taslak İngilizce', en.govde.indexOf('Hello Ann,') === 0 && /Subscription prices include VAT/.test(en.govde));
   const kodlu = contact.cevapTaslagi({ name: 'A', lang: 'tr', last: ['CSP nasıl eklenir'] });
   dogru('kod bloğu taslakta', kodlu.govde.indexOf("default-src 'self'") !== -1);
 

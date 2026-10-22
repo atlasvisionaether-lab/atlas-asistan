@@ -18,14 +18,14 @@ Bu sözleşme, Alıcının Satıcıya ait https://www.cyberlionai.com internet s
 ## MADDE 2 - HİZMETİN NİTELİĞİ
 Konu: Yapay zeka destekli web güvenlik tarama hizmeti (SaaS)
 - Free Plan: 3 tarama, temel SSL/TLS ve başlık kontrolü
-- Pro Plan: Ayda 50 tarama, OWASP Lite, PDF rapor, günlük izleme, güven rozeti - 299 TL + KDV / ay
-- Enterprise Plan: Sınırsız tarama, Cloudflare 1-tık düzeltme, 5dk uptime kontrolü, kurumsal raporlama - 2.499 TL + KDV / ay
+- Pro Plan: Ayda 50 tarama, OWASP Lite, PDF rapor, günlük izleme, güven rozeti - 249 TL / ay (KDV dahil)
+- Enterprise Plan: Sınırsız tarama, Cloudflare 1-tık düzeltme, 5dk uptime kontrolü, kurumsal raporlama - 1.990 TL / ay (KDV dahil)
 Tüm hizmetler dijital ortamda anında ifa edilir, fiziksel kargo yoktur.
 
 ## MADDE 3 - FİYAT VE ÖDEME
-Listelenen fiyatlar KDV hariçtir; ödeme anında %20 KDV eklenerek tahsil edilir. Toplam tutar:
-- Pro: 299 TL + 59,80 TL KDV = 358,80 TL
-- Enterprise: 2.499 TL + 499,80 TL KDV = 2.998,80 TL
+Listelenen abonelik fiyatları %20 KDV dahildir; tahsil edilen tutar listelenen tutardır. KDV dökümü:
+- Pro: 207,50 TL + 41,50 TL KDV = 249,00 TL
+- Enterprise: 1.658,33 TL + 331,67 TL KDV = 1.990,00 TL
 Ödemeler iyzico altyapısı ile kredi kartı/banka kartı ile alınır.
 
 ## MADDE 4 - TESLİMAT

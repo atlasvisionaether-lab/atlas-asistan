@@ -179,7 +179,9 @@ dene('belgedeki fiyatlar plans.js ile aynı', function () {
   const { PLANS } = require(path.join(KOK, 'api', '_lib', 'plans.js'));
   assert.ok(DOC.indexOf(String(PLANS.pro.priceTry)) !== -1, 'Pro fiyatı belgede yok');
   assert.ok(DOC.indexOf(String(PLANS.enterprise.priceTry)) !== -1, 'Enterprise fiyatı belgede yok');
-  assert.ok(/KDV hariç/.test(DOC), 'fiyatın KDV hariç olduğu yazılı değil');
+  /* 2026-10-22: abonelik fiyatları KDV DAHİL (iyzico planına yazılan =
+     karttan çekilen = sayfada yazan). */
+  assert.ok(/KDV dahil/.test(DOC), 'fiyatın KDV dahil olduğu yazılı değil');
 });
 
 /* ---------------------------------------------------- 4. Onay kapıları */

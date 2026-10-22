@@ -57,7 +57,7 @@ function buildOffer(lang) {
     return {
       plan: 'pro', url: CHECKOUT_URL, cta: 'Go Pro', price: p.en.price, gross: p.en.gross,
       text: 'You can fix this yourself with the steps above. To catch issues like this before they hurt you, '
-        + 'the Pro plan (' + p.en.price + ' + VAT, ' + p.en.gross + ' incl. VAT, cancel anytime) monitors your site daily '
+        + 'the Pro plan (' + p.en.price + ', VAT included, cancel anytime) monitors your site daily '
         + '(score drop, SSL / domain expiry and blacklist alerts in your dashboard), gives you the OWASP PDF report '
         + 'with fix code, and 50% off our one-time "we fix it" service. Would you like to switch?'
     };
@@ -65,7 +65,7 @@ function buildOffer(lang) {
   return {
     plan: 'pro', url: CHECKOUT_URL, cta: 'Pro\'ya Geç', price: p.tr.price, gross: p.tr.gross,
     text: 'Bu sorunu yukarıdaki adımlarla kendiniz çözebilirsiniz. Benzer sorunları siz fark etmeden yakalamak için '
-      + 'Pro plan (' + p.tr.price + ' + KDV, KDV dahil ' + p.tr.gross + ', istediğiniz zaman iptal) sitenizi her gün izler '
+      + 'Pro plan (' + p.tr.price + ', KDV dahil, istediğiniz zaman iptal) sitenizi her gün izler '
       + '(skor düşüşü, SSL / alan adı bitişi ve kara liste uyarıları panelinizde), düzeltme kodlu OWASP PDF raporu verir '
       + 've tek seferlik "Biz düzeltelim" hizmetinde %50 indirim sağlar. Pro\'ya geçmek ister misiniz?'
   };
