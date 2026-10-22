@@ -96,10 +96,40 @@
   var form = $('payForm');
   var err = $('formErr');
 
+  /* Sunucunun (api/_lib/billing-details.js) kurallarının aynısı: tarayıcıda
+     erken uyarı. Son karar sunucuda. */
+  function gsmOk(v) {
+    var d = v.replace(/[\s\-().]/g, '');
+    if (/^\+?(90)?0?5\d{9}$/.test(d)) return true;
+    return /^\+[1-9]\d{7,14}$/.test(d) && !/^\+90/.test(d);
+  }
+  function tcknOk(v) {
+    if (!/^[1-9]\d{10}$/.test(v)) return false;
+    var d = v.split('').map(Number);
+    var d10 = (((d[0] + d[2] + d[4] + d[6] + d[8]) * 7 - (d[1] + d[3] + d[5] + d[7])) % 10 + 10) % 10;
+    var top = 0; for (var i = 0; i < 10; i += 1) top += d[i];
+    return d[9] === d10 && d[10] === top % 10;
+  }
+  var ALAN_MESAJ = {
+    ad: ['adSoyad', 'Lütfen adınızı ve soyadınızı yazın.'],
+    gsm: ['gsm', 'Lütfen geçerli bir cep telefonu yazın (ör. 0555 444 33 33).'],
+    adres: ['adres', 'Lütfen fatura adresinizi yazın (en az 10 karakter).'],
+    il: ['il', 'Lütfen ilinizi yazın.'],
+    ilce: ['ilce', 'İlçe adı geçersiz.'],
+    ulke: ['ulke', 'Lütfen ülkenizi yazın.'],
+    tckn: ['tckn', 'TC kimlik numarası geçersiz. Boş bırakabilirsiniz.']
+  };
+
   function fail(msg, el) {
     err.textContent = msg;
     err.hidden = false;
     if (el) el.focus();
+  }
+
+  /* Sunucu bir fatura alanını reddettiyse (/odeme?checkout=details_required&field=gsm). */
+  if (params.get('checkout') === 'details_required') {
+    var hata = ALAN_MESAJ[params.get('field')] || ['adSoyad', 'Lütfen fatura bilgilerinizi kontrol edin.'];
+    fail(hata[1], $(hata[0]));
   }
 
   form.addEventListener('submit', function (e) {
@@ -111,6 +141,12 @@
 
     if (ad.length < 3 || ad.indexOf(' ') === -1) return fail('Lütfen adınızı ve soyadınızı yazın.', $('adSoyad'));
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eposta)) return fail('Lütfen geçerli bir e-posta adresi yazın.', $('eposta'));
+    if (!gsmOk($('gsm').value.trim())) return fail(ALAN_MESAJ.gsm[1], $('gsm'));
+    if ($('adres').value.trim().replace(/\s+/g, ' ').length < 10) return fail(ALAN_MESAJ.adres[1], $('adres'));
+    if ($('il').value.trim().length < 2) return fail(ALAN_MESAJ.il[1], $('il'));
+    if ($('ulke').value.trim().length < 2) return fail(ALAN_MESAJ.ulke[1], $('ulke'));
+    var tckn = $('tckn').value.replace(/\s+/g, '');
+    if (tckn && !tcknOk(tckn)) return fail(ALAN_MESAJ.tckn[1], $('tckn'));
     if (!$('onayYetki').checked) return fail('Devam etmek için tarama yetkisi beyanını onaylayın.', $('onayYetki'));
     if (!$('onayOnBilgi').checked) return fail('Devam etmek için Ön Bilgilendirme Formu\'nu onaylayın.', $('onayOnBilgi'));
     if (!$('onaySozlesme').checked) return fail('Devam etmek için Mesafeli Satış Sözleşmesi ve Gizlilik Politikası\'nı onaylayın.', $('onaySozlesme'));
@@ -125,9 +161,13 @@
     btn.disabled = true;
     btn.textContent = 'iyzico\'ya yönlendiriliyorsunuz…';
 
-    window.location.href = '/api/checkout?plan=' + encodeURIComponent(planKey)
-      + '&declaration=1&agreements=1'
-      + '&ad=' + encodeURIComponent(ad);
+    /* POST: fatura bilgileri URL'ye düşmesin. form.submit() submit olayını
+       yeniden tetiklemez. */
+    $('adSoyad').value = ad;
+    $('fPlan').value = planKey;
+    $('fDeclaration').value = '1';
+    $('fAgreements').value = '1';
+    form.submit();
   });
 
   /* Geri tuşuyla (bfcache) dönülürse buton kilitli kalmasın. */

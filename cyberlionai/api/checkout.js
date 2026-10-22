@@ -54,6 +54,7 @@
 
 const { PLANS, checkoutOption } = require('./_lib/plans.js');
 const iyzicoPlans = require('./_lib/iyzico-plans.js');
+const billing = require('./_lib/billing-details.js');
 const iyzico = require('./_lib/iyzico.js');
 const auth = require('./_lib/auth.js');
 const tg = require('./_lib/telegram.js');
@@ -65,6 +66,19 @@ const TEKRARLI_SEBEPLER = ['iyzico_unconfigured', 'pricing_plan_ref_missing', 'a
    bkz. _lib/iyzico-plans.js. Eski `pro`/`enterprise` adları aylık. */
 const PLAN_REF_ENV = iyzicoPlans.PLAN_REF_ENV;
 const pricingPlanRef = iyzicoPlans.refOf;
+
+/** POST gövdesi (application/x-www-form-urlencoded ya da JSON) → düz nesne.
+    Vercel gövdeyi ayrıştırır; ham metin gelirse burada ayrıştırılır. */
+function formBody(req) {
+  const b = req.body;
+  if (b && typeof b === 'object' && !Buffer.isBuffer(b)) return b;
+  const raw = Buffer.isBuffer(b) ? b.toString('utf8') : (typeof b === 'string' ? b : '');
+  if (!raw) return {};
+  if (/^\s*\{/.test(raw)) { try { return JSON.parse(raw) || {}; } catch (e) { return {}; } }
+  const out = {};
+  new URLSearchParams(raw).forEach(function (v, k) { out[k] = v; });
+  return out;
+}
 
 /**
  * /odeme formundaki "Ad Soyad"ı iyzico'nun ad/soyad alanlarına böler: son
@@ -118,17 +132,22 @@ async function unavailable(req, res, reason, planId, user) {
 async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
+  /* POST: /odeme formu. Fatura bilgileri (telefon, adres, isteğe bağlı TC
+     kimlik) URL'de değil gövdede gelir: tarayıcı geçmişine, erişim
+     kayıtlarına ve yönlendirme başlıklarına düşmesin (KVKK). GET eski
+     bağlantılar ve durum ucu (?mode=1) için. */
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: { code: 'method_not_allowed' } });
   }
+  const params = req.method === 'POST' ? formBody(req) : (req.query || {});
 
   /* --- Ödemenin durumu (kamuya açık) ---
      /pricing sayfası "test modu" rozetini buna göre gösteriyor. Dönen şey bir
      sır değil: ödemenin açık olup olmadığı ve sandbox mı olduğu. Müşterinin
      gerçek bir kart girmeden önce bunu BİLMESİ gerekiyor. Anahtar, referans
      kodu ya da adres dönmüyor. */
-  if (req.query && req.query.mode !== undefined) {
+  if (req.method === 'GET' && req.query && req.query.mode !== undefined) {
     const ready = iyzico.isConfigured() && iyzico.isEnabled();
     return res.status(200).json({
       enabled: ready,
@@ -140,7 +159,7 @@ async function handler(req, res) {
 
   /* `planId` istekteki değer (yönlendirmelerde aynen geri yazılır, sayfa
      seçimi korunsun); `option` çözülmüş seçenek. */
-  const planId = String((req.query && req.query.plan) || '').trim().toLowerCase();
+  const planId = String(params.plan || '').trim().toLowerCase();
 
   if (!planId) {
     return res.status(400).json({ error: { code: 'missing_plan' } });
@@ -155,7 +174,7 @@ async function handler(req, res) {
      Ödeme, kullanıcının taranacak alan adlarının sahibi ya da yetkilisi
      olduğunu beyan etmesine bağlı (fiyatlandırmadaki onay kutusu). Beyan
      yoksa ödeme BAŞLAMAZ; tarayıcı fiyat sayfasına geri gönderilir. */
-  if (!req.query || req.query.declaration !== '1') {
+  if (params.declaration !== '1') {
     if (wantsHtml(req)) {
       res.setHeader('Location', '/pricing?checkout=declaration_required&plan=' + encodeURIComponent(planId));
       return res.status(303).end();
@@ -167,7 +186,7 @@ async function handler(req, res) {
      Mesafeli Sözleşmeler Yönetmeliği: tüketici ön bilgilendirmeyi ve
      sözleşmeyi okuduğunu SİPARİŞTEN ÖNCE onaylamalı. Fiyat sayfasındaki
      ikinci kutu; onaysız ödeme başlamaz. */
-  if (req.query.agreements !== '1') {
+  if (params.agreements !== '1') {
     if (wantsHtml(req)) {
       res.setHeader('Location', '/pricing?checkout=agreements_required&plan=' + encodeURIComponent(planId));
       return res.status(303).end();
@@ -197,19 +216,29 @@ async function handler(req, res) {
     return res.status(401).json({ error: { code: 'auth_required' } });
   }
 
+  /* --- Fatura bilgileri ---
+     iyzico abonelik formunu ad, cep telefonu, TC kimlik ve fatura adresi
+     olmadan başlatmıyor (200702). Eksik/geçersizse ödeme başlamaz, müşteri
+     hangi alanın düzeltilmesi gerektiğiyle forma döner; değer geri
+     yansıtılmaz, loglanmaz. Giriş kontrolünden SONRA: girişe gönderilen
+     müşterinin bilgisi zaten taşınmıyor. */
+  const details = billing.buildCustomer(params, user.email, customerName);
+  if (!details.ok) {
+    if (wantsHtml(req) || req.method === 'POST') {
+      res.setHeader('Location', '/odeme?plan=' + encodeURIComponent(planId)
+        + '&checkout=details_required&field=' + encodeURIComponent(details.field));
+      return res.status(303).end();
+    }
+    return res.status(400).json({ error: { code: 'details_required', field: details.field } });
+  }
+
   /* --- iyzico aboneliği --- */
   let init;
   try {
     init = await iyzico.initializeCheckoutForm({
       callbackUrl: callbackUrl(req),
       pricingPlanRef: planRef,
-      customer: Object.assign(
-        /* /odeme formundan gelen ad soyad varsa o; yoksa e-postadan türetilen
-           yer tutucu. iyzico daha fazlasını isterse `errorCode` ile
-           reddediyor; uydurma TC kimlik gönderilmiyor. */
-        { email: user.email || '' },
-        customerName(req.query && req.query.ad, user.email)
-      )
+      customer: details.customer
     });
   } catch (err) {
     return unavailable(req, res, 'iyzico_error', planId, user);
@@ -234,6 +263,7 @@ module.exports = tg.ucuSar(handler, '/api/checkout');
 module.exports.pricingPlanRef = pricingPlanRef;
 module.exports.wantsHtml = wantsHtml;
 module.exports.customerName = customerName;
+module.exports.formBody = formBody;
 module.exports.callbackUrl = callbackUrl;
 module.exports.PLAN_REF_ENV = PLAN_REF_ENV;
 module.exports.PLANS = PLANS;

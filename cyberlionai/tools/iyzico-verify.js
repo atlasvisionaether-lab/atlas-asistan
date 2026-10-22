@@ -146,9 +146,10 @@ function kod(y) { return y.govde && y.govde.error ? y.govde.error.code : null; }
   /* ------------------------------------------------------- 2. Kapılar */
   process.stdout.write('\n' + KALIN + '2. Ödeme başlatma kapıları (hiçbir abonelik başlatılmıyor)' + SIFIRLA + '\n');
 
-  const post = await istek('/api/checkout?plan=pro', { method: 'POST' });
-  sonuc(post.status === 405 && post.allow === 'GET' && kod(post) === 'method_not_allowed',
-    'POST /api/checkout → 405 + Allow: GET + method_not_allowed',
+  /* POST artık /odeme formunun yolu (fatura bilgileri gövdede); 405 PUT ile. */
+  const post = await istek('/api/checkout?plan=pro', { method: 'PUT' });
+  sonuc(post.status === 405 && /GET/.test(post.allow || '') && /POST/.test(post.allow || '') && kod(post) === 'method_not_allowed',
+    'PUT /api/checkout → 405 + Allow: GET, POST + method_not_allowed',
     'HTTP ' + post.status + ' Allow=' + post.allow + ' ' + kod(post));
 
   const plansiz = await istek('/api/checkout');

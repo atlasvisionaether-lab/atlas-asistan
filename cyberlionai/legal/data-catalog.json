@@ -103,6 +103,69 @@
       "politikaAnahtari": "Ödeme verileri"
     },
     {
+      "id": "fatura_telefon",
+      "tr": "Cep telefonu (abonelik ödemesi)",
+      "en": "Mobile phone number (subscription payment)",
+      "kaynak": "/odeme formu → POST /api/checkout → api/_lib/billing-details.js → iyzico abonelik formu; veritabanına yazılmaz, loglanmaz",
+      "amac": "iyzico abonelik başlatma ve faturalandırma (iyzico bu alanlar olmadan aboneliği başlatmıyor)",
+      "not": "Zorunlu; +90 biçimine çevrilip iyzico'ya iletilir.",
+      "playKategori": "Personal info",
+      "playTip": "Phone number",
+      "toplanir": true,
+      "paylasilir": true,
+      "zorunlu": true,
+      "aktarimdaSifreli": true,
+      "silinebilir": false,
+      "ucuncuTaraf": [
+        "iyzico"
+      ],
+      "politikada": true,
+      "politikaAnahtari": "Ödeme verileri",
+      "silinemezSebep": "Sunucumuzda saklanmaz; yalnızca iyzico'ya iletilir. iyzico'daki kopya iyzico'nun yasal saklama yükümlülüklerine tabidir."
+    },
+    {
+      "id": "fatura_adresi",
+      "tr": "Fatura adresi (adres, il, ilçe, ülke)",
+      "en": "Billing address (address, city, district, country)",
+      "kaynak": "/odeme formu → POST /api/checkout → api/_lib/billing-details.js → iyzico abonelik formu; veritabanına yazılmaz, loglanmaz",
+      "amac": "iyzico abonelik başlatma ve faturalandırma (iyzico bu alanlar olmadan aboneliği başlatmıyor)",
+      "not": "Adres, il ve ülke zorunlu; ilçe isteğe bağlı.",
+      "playKategori": "Personal info",
+      "playTip": "Address",
+      "toplanir": true,
+      "paylasilir": true,
+      "zorunlu": true,
+      "aktarimdaSifreli": true,
+      "silinebilir": false,
+      "ucuncuTaraf": [
+        "iyzico"
+      ],
+      "politikada": true,
+      "politikaAnahtari": "Ödeme verileri",
+      "silinemezSebep": "Sunucumuzda saklanmaz; yalnızca iyzico'ya iletilir. iyzico'daki kopya iyzico'nun yasal saklama yükümlülüklerine tabidir."
+    },
+    {
+      "id": "fatura_tckn",
+      "tr": "TC kimlik numarası (isteğe bağlı, fatura için)",
+      "en": "Turkish ID number (optional, for invoicing)",
+      "kaynak": "/odeme formu → POST /api/checkout → api/_lib/billing-details.js → iyzico abonelik formu; veritabanına yazılmaz, loglanmaz",
+      "amac": "iyzico abonelik başlatma ve faturalandırma (iyzico bu alanlar olmadan aboneliği başlatmıyor)",
+      "not": "İsteğe bağlı; girilirse sağlama algoritmasıyla doğrulanır. Boşsa iyzico'ya 11111111111 (kimliği bilinmeyen alıcı) iletilir.",
+      "playKategori": "Personal info",
+      "playTip": "Other info",
+      "toplanir": true,
+      "paylasilir": true,
+      "zorunlu": false,
+      "aktarimdaSifreli": true,
+      "silinebilir": false,
+      "ucuncuTaraf": [
+        "iyzico"
+      ],
+      "politikada": true,
+      "politikaAnahtari": "Ödeme verileri",
+      "silinemezSebep": "Sunucumuzda saklanmaz; yalnızca iyzico'ya iletilir. iyzico'daki kopya iyzico'nun yasal saklama yükümlülüklerine tabidir."
+    },
+    {
       "id": "cihaz_jetonu",
       "tr": "Bildirim cihaz jetonu (FCM)",
       "en": "Push notification device token (FCM)",
