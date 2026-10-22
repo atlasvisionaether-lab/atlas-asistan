@@ -14,9 +14,9 @@
  *     satış, ön bilgilendirme, iade) ve hizmetin cayma süresi içinde ifasına
  *     başlanması. Cayma hakkı istisnası bu onaya dayanıyor.
  *   - Fiyat İSTEMCİDEN ALINMAZ: _lib/fixpricing.js ile burada hesaplanır.
- *   - Ödeme: şimdilik ekip iyzico ödeme bağlantısı gönderir (canlı iyzico tek
- *     seferlik ödeme formu alıcının TC kimlik ve adres bilgisini ister; uydurma
- *     veri gönderilmez). Sipariş Telegram'a düşer.
+ *   - Ödeme: /fix-checkout'taki form → /api/fix-pay → iyzico tek seferlik
+ *     ödeme formu (KDV dahil tutar); dönüş /api/fix-pay-return siparişi 'paid'
+ *     yapar. Sipariş ödemeden ÖNCE açılır: onaylar sipariş anında saklanmalı.
  *   - Hesap başına saatte 10 sipariş.
  */
 
@@ -34,7 +34,10 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 function view(r) {
   return { orderId: r.id, domain: r.domain, findingIds: r.finding_ids, type: r.type,
-    price: r.price, priceDiscounted: r.price_discounted, status: r.status, createdAt: r.created_at };
+    price: r.price, priceDiscounted: r.price_discounted,
+    /* KDV dahil: /fix-checkout'ta gösterilen ve iyzico'dan çekilen tutar. */
+    amountGross: pricing.grossTry(r.price_discounted), listGross: pricing.grossTry(r.price),
+    status: r.status, createdAt: r.created_at };
 }
 
 async function handler(req, res) {
@@ -104,6 +107,7 @@ async function handler(req, res) {
 
   return res.status(201).json({
     orderId: row.id, checkoutUrl: '/fix-checkout?orderId=' + encodeURIComponent(row.id),
+    amountGross: pricing.grossTry(row.price_discounted),
     type: row.type, price: row.price, priceDiscounted: row.price_discounted
   });
 }

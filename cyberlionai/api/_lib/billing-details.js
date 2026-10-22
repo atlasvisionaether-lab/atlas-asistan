@@ -107,4 +107,27 @@ function buildCustomer(input, email, nameSplit) {
   };
 }
 
-module.exports = { normalizeGsm, isValidTckn, buildCustomer, UNKNOWN_TCKN };
+/**
+ * Tek seferlik ödemenin alıcısı (resmi Buyer + Address modelleri), aynı
+ * doğrulanmış müşteriden. `ip` iyzico'nun zorunlu alanı.
+ */
+function buyerFrom(customer, userId, ip) {
+  const a = customer.billingAddress;
+  return {
+    buyer: {
+      id: String(userId),
+      name: customer.name,
+      surname: customer.surname,
+      identityNumber: customer.identityNumber,
+      email: customer.email,
+      gsmNumber: customer.gsmNumber,
+      registrationAddress: a.address,
+      city: a.city,
+      country: a.country,
+      ip: String(ip || '').slice(0, 45) || '0.0.0.0'
+    },
+    address: { contactName: a.contactName, city: a.city, country: a.country, address: a.address }
+  };
+}
+
+module.exports = { normalizeGsm, isValidTckn, buildCustomer, buyerFrom, UNKNOWN_TCKN };
