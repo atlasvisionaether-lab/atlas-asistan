@@ -32,6 +32,13 @@ const AUTH_HATA_KODLARI = ['1000', '1001', '5', '8'];
 function kimlikHatasi(r) {
   return r.reason === 'iyzico_http_401' || AUTH_HATA_KODLARI.indexOf(String(r.errorCode)) !== -1;
 }
+/* Kimlik hakkında HİÇBİR şey söylemeyen sonuç: bağlantı yok, zaman aşımı,
+   iyzico 5xx (PR #111 incelemesi: bunlar "geçti" ya da "anahtar yanlış"
+   sayılıyordu). */
+function belirsiz(r) {
+  return r.reason === 'iyzico_unreachable' || r.reason === 'iyzico_timeout'
+    || /^iyzico_http_5\d\d$/.test(String(r.reason || ''));
+}
 
 function bicim(ad, deger) {
   const v = String(deger || '');
@@ -82,6 +89,17 @@ function bicim(ad, deger) {
     : 'kimlik hatası değil (' + (r.errorCode || r.reason || 'başarılı') + ') — yukarıdaki iyzico satırına bak'));
 
   console.log('');
+  if (belirsiz(bin) || belirsiz(r)) {
+    console.log('SONUÇ: BELİRSİZ — iyzico\'ya ulaşılamadı ya da iyzico sunucu hatası verdi ('
+      + (belirsiz(bin) ? bin.reason : r.reason) + '). Anahtarlar hakkında bir şey söylenemez.');
+    console.log('→ Birkaç dakika sonra yeniden deneyin; sürerse taban adresi ve ağı kontrol edin.');
+    process.exit(2);
+  }
+  if (!binGecti && !kimlikHatasi(bin)) {
+    console.log('SONUÇ: BELİRSİZ — standart API kimlik hatası dışında bir sonuç verdi ('
+      + (bin.errorCode || bin.reason) + '). Yukarıdaki iyzico satırını bana iletin.');
+    process.exit(2);
+  }
   if (!binGecti) {
     console.log('SONUÇ: Anahtarlar bu taban adreste HİÇ geçmiyor (abonelikten bağımsız).');
     console.log('→ Yanlış anahtar ya da yanlış ortam. Biçim satırlarına bak: "sandbox-" ise canlı');
