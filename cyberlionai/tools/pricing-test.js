@@ -110,6 +110,13 @@ const odemeJs = fs.readFileSync(path.join(ROOT, 'odeme.js'), 'utf8');
   const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
   sina(f + ': eski abonelik fiyatı yok', /₺ ?(299|2[.,]499)\b|358[,.]80|2[.,]998[,.]80|\b(299|2\.499) TL/.test(t), false);
 });
+/* Genel "fiyatlar KDV hariç" ibaresi kalmamalı (PR #108 incelemesi: bilgi
+   tabanı ve EN dipnot kaçmıştı). Düzeltme hizmetinin kendi "+ KDV"si serbest. */
+['index.html', 'pricing.html', 'data/knowledge.json'].forEach(function (f) {
+  const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  sina(f + ': genel "KDV hariç" ibaresi yok',
+    /Liste fiyatları KDV hariç|Tüm fiyatlar KDV hariç|List prices exclude VAT|All prices exclude VAT/.test(t), false);
+});
 const odemeHtml = fs.readFileSync(path.join(ROOT, 'odeme.html'), 'utf8');
 sina('odeme.html varsayılan özeti Pro dökümü', ['₺207,50', '₺41,50', '₺249,00'].every(function (s) { return odemeHtml.indexOf(s) !== -1; }), true);
 sina('odeme.js KDV oranı plans.js ile aynı',
