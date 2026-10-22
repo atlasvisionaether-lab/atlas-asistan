@@ -67,6 +67,10 @@
     {
       "source": "/pages/cerez-politikasi",
       "destination": "/pages/cerez-politikasi.html"
+    },
+    {
+      "source": "/cl-billing-form.js",
+      "destination": "/cyberlionai/billing-form.js"
     }
   ],
   "redirects": [
@@ -131,6 +135,26 @@
       "permanent": false
     },
     {
+      "source": "/api/_atlas/:path*",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/tools/:path*",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/package.json",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/package-lock.json",
+      "destination": "/",
+      "permanent": false
+    },
+    {
       "source": "/kvkk",
       "destination": "/pages/kvkk-aydinlatma-metni",
       "permanent": true
@@ -164,6 +188,17 @@
       "source": "/cerez",
       "destination": "/pages/cerez-politikasi",
       "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ]
 }

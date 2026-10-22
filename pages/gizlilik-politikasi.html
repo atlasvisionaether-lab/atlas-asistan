@@ -283,6 +283,7 @@ footer ul a:hover{color:var(--fg)}
 <ul>
 <li>İletişim formu üzerinden: ad soyad, telefon numarası, klinik/ işletme adı, e-posta adresi;</li>
 <li>Üyelik ve abonelik süreçlerinde: iletişim bilgileri, faturalandırma bilgileri;</li>
+<li>Sipariş formu üzerinden: ad soyad, klinik/işletme adı, e-posta, ülke ve telefon numarası, fatura adresi ve şehir; isteğe bağlı olarak TC kimlik numarası (bireysel) ya da vergi kimlik numarası ve vergi dairesi (kurumsal), Türkiye dışındaki müşteriler için vergi/KDV numarası ve şirket sicil numarası; sözleşme ve aktarım onaylarınız;</li>
 <li>Ödeme süreçlerinde: ödeme işlemine ilişkin bilgiler (kart bilgileri bizim tarafımızdan saklanmaz; ödeme altyapısı sağlayıcısı tarafından işlenir).</li>
 </ul>
 <h2>3. İşleme Amaçları</h2>
@@ -292,11 +293,13 @@ footer ul a:hover{color:var(--fg)}
 <ul>
 <li><strong>iyzico</strong> — ödeme altyapısı sağlayıcısı (kart ve ödeme verileri yalnızca ödeme işlemi için bu altyapı üzerinden işlenir);</li>
 <li><strong>WhatsApp Business API / Meta</strong> — mesajlaşma kanalı altyapısı;</li>
+<li><strong>Supabase</strong> — sipariş ve fatura bilgilerinin saklandığı veritabanı hizmeti;</li>
+<li><strong>Vercel</strong> — web sitesi ve sipariş sunucusu altyapısı;</li>
 <li>Barındırma (hosting) ve altyapı hizmeti sağlayıcıları.</li>
 </ul>
-<p>Veriler, yürürlükteki mevzuatta öngörülen haller dışında, açık rızanız olmadan yurt dışına aktarılmaz.</p>
+<p>Supabase ve Vercel'in sunucuları yurt dışında bulunabilir. Sipariş formunda, ödeme ve faturalandırma amacıyla yurt dışındaki bu hizmet sağlayıcılara aktarım için açık rızanız alınır; bunun dışında veriler, yürürlükteki mevzuatta öngörülen haller dışında yurt dışına aktarılmaz.</p>
 <h2>5. Saklama Süresi</h2>
-<p>Kişisel veriler, ilgili mevzuatta öngörülen süreler ile verilerin işleme amaçları için gerekli olan süre boyunca saklanır; mevzuatta bir süre öngörülmemişse, işleme amacın gerçekleşmesine gerek kalmadığı sürede saklanır ve sonrasında silinir, anonim hale getirilir.</p>
+<p>Sipariş ve fatura bilgileri, vergi ve ticaret mevzuatındaki saklama süreleri (VUK m.253, TTK m.82) boyunca saklanır. Diğer kişisel veriler, ilgili mevzuatta öngörülen süreler ile verilerin işleme amaçları için gerekli olan süre boyunca saklanır; mevzuatta bir süre öngörülmemişse, işleme amacın gerçekleşmesine gerek kalmadığı sürede saklanır ve sonrasında silinir, anonim hale getirilir.</p>
 <h2>6. Çerezler</h2>
 <p>Sitemiz, temel işlevsellik ve analitik amaçlarla çerez kullanabilir. Tarayıcı ayarlarınızdan çerezleri yönetebilirsiniz.</p>
 <h2>7. Veri Sahibi Hakları</h2>

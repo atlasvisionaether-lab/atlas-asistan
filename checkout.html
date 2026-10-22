@@ -186,6 +186,51 @@ input,textarea{font:inherit}
 .field input{width:100%;background:var(--secondary);border:1px solid var(--border);border-radius:.5rem;padding:.6rem .8rem;color:var(--fg)}
 .field input::placeholder{color:hsl(215 20% 45%)}
 .field input:focus{outline:none;border-color:var(--blue)}
+/* Sipariş formu: zorunlu alan açık (beyaz) kenarlık, isteğe bağlı soluk gri;
+   hata kırmızı + mesaj, geçerli yeşil ✓. Mantık: /atlas-checkout.js */
+.field.req input{border-color:hsl(0 0% 100% / .45)}
+.field.opt input{border-color:var(--border)}
+.field.req label::after{content:" *";color:#f87171}
+.field .ctl{position:relative}
+.field .ctl input{padding-right:2.2rem}
+.field .ok{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--emerald);font-weight:700;display:none;pointer-events:none}
+.field.valid .ok{display:block}
+.field.valid input{border-color:hsl(160 84% 39% / .7)}
+.field.invalid input{border-color:#f87171}
+.field.invalid input:focus{border-color:#f87171;box-shadow:0 0 0 2px rgb(248 113 113 / .25)}
+.card .err,.err{font-size:.78rem;color:#f87171;margin:.35rem 0 0;line-height:1.45}
+.card .hint{font-size:.75rem;color:var(--muted);margin:.35rem 0 0;line-height:1.45}
+.field input:disabled{opacity:.6}
+.iti{width:100%;--iti-border-color:var(--border);--iti-country-selector-bg:var(--card);--iti-hover-color:hsl(240 10% 18%);--iti-icon-color:var(--muted);--iti-spacer-horizontal:.8rem}
+.iti__dropdown-content{color:var(--fg);border-color:var(--border)!important}
+.field .iti__search-input{background:var(--secondary);color:var(--fg);border-color:var(--border);padding:.55rem .8rem .55rem 2.4rem}
+.iti__selected-country-primary:hover,.iti__selected-country:focus-visible .iti__selected-country-primary{background:hsl(240 10% 18%)}
+.iti__selected-dial-code{color:var(--fg)}
+.iti__dial-code{color:var(--muted)}
+.billing{border:1px solid var(--border);border-radius:.6rem;margin:1.25rem 0 1rem}
+.billing summary{cursor:pointer;padding:.75rem 1rem;font-size:.88rem;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.billing summary::-webkit-details-marker{display:none}
+.billing summary::after{content:"▼";font-size:.7rem;color:var(--muted);transition:transform .2s}
+.billing[open] summary::after{transform:rotate(180deg)}
+.billing summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:.6rem}
+.billing-body{padding:0 1rem 0.25rem}
+.seg{display:inline-flex;background:var(--secondary);border:1px solid var(--border);border-radius:.5rem;padding:.2rem;margin-bottom:1rem}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;padding:.4rem .95rem;border-radius:.35rem;font-size:.82rem;color:var(--muted);transition:background .15s,color .15s}
+.seg input:checked+span{background:var(--blue);color:#fff}
+.seg input:focus-visible+span{outline:2px solid var(--blue);outline-offset:2px}
+.consent{margin-bottom:1rem}
+.consent label{display:flex;gap:.6rem;align-items:flex-start;font-size:.8rem;color:var(--muted);cursor:pointer;line-height:1.5}
+.consent input{margin-top:.2rem;width:1rem;height:1rem;flex-shrink:0;accent-color:#2F80FF}
+.consent a,.co-terms a{color:#2F80FF}
+.consent.invalid label{color:#fca5a5}
+.co-terms{font-size:.72rem;color:var(--muted);margin-top:.9rem;text-align:center}
+.co-status{border-radius:.6rem;padding:.8rem 1rem;font-size:.85rem;margin-bottom:1rem;border:1px solid}
+.co-status.success{background:hsl(160 84% 39% / .08);border-color:hsl(160 84% 39% / .35);color:#6ee7b7}
+.co-status.pending{background:hsl(38 92% 50% / .08);border-color:hsl(38 92% 50% / .35);color:#fcd34d}
+.co-status.failed{background:rgb(248 113 113 / .08);border-color:rgb(248 113 113 / .35);color:#fca5a5}
+#co-submit[aria-busy="true"]{opacity:.6;cursor:progress}
 
 /* ---- Footer ---- */
 footer{padding:3rem 1rem;border-top:1px solid var(--border)}
@@ -254,6 +299,7 @@ footer ul a:hover{color:var(--fg)}
 .tagline{font-size:.7rem;padding:.15rem .6rem;border-radius:999px;background:hsl(217 91% 60% / .1);color:#2F80FF;border:1px solid hsl(217 91% 60% / .2)}
 
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.3/dist/css/intlTelInput.min.css" integrity="sha384-khdvUrzJNN6Jw9yHboN6430RRijNf+nAlKcZv0a5IrkTjwZpwgJ9fzD3kjbqhOyZ" crossorigin="anonymous">
 <link rel="stylesheet" href="premium.css"></head>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -294,17 +340,11 @@ footer ul a:hover{color:var(--fg)}
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <div>
           <b>Güvenli Ödeme</b>
-          <span>Ödemeleriniz 256-bit SSL ile iyzico güvencesindedir. iyzico altyapısı ile 256-bit SSL şifreleme koruması altında. Online ödeme çok yakında aktif olacak — şimdilik siparişiniz WhatsApp üzerinden alınmaktadır.</span>
+          <span>Ödemeleriniz 256-bit SSL ile iyzico güvencesindedir. Kart bilgileriniz bize değil, doğrudan iyzico'ya iletilir. <span id="co-pay-mode">Online ödeme çok yakında aktif olacak — şimdilik siparişiniz WhatsApp üzerinden alınmaktadır.</span></span>
         </div>
       </div>
 
-      <div style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin:1rem 0;padding:.75rem 1rem;border:1px solid rgba(47,128,255,.3);border-radius:.75rem;background:linear-gradient(135deg,rgba(0,209,178,.2),rgba(47,128,255,.2))">
-        <span style="font-weight:700;font-size:.85rem">iyzico ile Öde</span>
-        <span style="font-size:.75rem;color:var(--muted)">256-bit SSL</span>
-        <span style="font-weight:700;font-size:.85rem;letter-spacing:.05em">VISA</span>
-        <span style="font-weight:700;font-size:.85rem;font-style:italic">Mastercard</span>
-        <span style="font-weight:700;font-size:.85rem;color:#00A0E9">troy</span>
-      </div>      <div class="warn">
+      <div style="margin:1rem 0;padding:.9rem 1rem;border:1px solid var(--border);border-radius:.75rem;display:flex;justify-content:center"><img src="/public/images/iyzico-logo-band-white.svg" alt="iyzico ile Öde — Mastercard, Visa, American Express, troy" width="456" height="32" style="max-width:100%;height:auto"></div>      <div class="warn">
         <h3>⚠️ WhatsApp Numaranız Hakkında Önemli Bilgi</h3>
         <p>Atlas Asistan, WhatsApp Business Cloud API altyapısı üzerinde çalışır. Kurulum sırasında vereceğiniz numara bu altyapıya kaydedilir.</p>
         <p><strong>Bunun anlamı:</strong></p>
@@ -321,30 +361,93 @@ footer ul a:hover{color:var(--fg)}
     <div>
       <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:1.25rem">İletişim Bilgileri</h2>
       <div class="card">
-        <form id="coForm">
-          <div class="field">
-            <label for="co-name">Ad Soyad</label>
-            <input id="co-name" type="text" placeholder="Adınız ve soyadınız" required>
+        <form id="coForm" novalidate>
+          <div id="co-status" class="co-status" role="status" hidden></div>
+          <div class="field req" data-field="name">
+            <label for="co-name" data-i18n="name">Ad Soyad</label>
+            <div class="ctl"><input id="co-name" name="name" type="text" autocomplete="name" placeholder="Adınız ve soyadınız" data-i18n-ph="namePh" required aria-describedby="co-name-err"><span class="ok" aria-hidden="true">✓</span></div>
+            <p class="err" id="co-name-err" hidden></p>
           </div>
-          <div class="field">
-            <label for="co-clinic">Klinik / İşletme Adı</label>
-            <input id="co-clinic" type="text" placeholder="İşletmenizin adı" required>
+          <div class="field req" data-field="clinic">
+            <label for="co-clinic" data-i18n="clinic">Klinik / İşletme Adı</label>
+            <div class="ctl"><input id="co-clinic" name="clinic" type="text" autocomplete="organization" placeholder="İşletmenizin adı" data-i18n-ph="clinicPh" required aria-describedby="co-clinic-err"><span class="ok" aria-hidden="true">✓</span></div>
+            <p class="err" id="co-clinic-err" hidden></p>
           </div>
-          <div class="field">
-            <label for="co-phone">Telefon</label>
-            <input id="co-phone" type="tel" placeholder="05XX XXX XX XX" required>
+          <div class="field req" data-field="phone">
+            <label for="co-phone" data-i18n="phone">Ülke ve Telefon</label>
+            <div class="ctl"><input id="co-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required aria-describedby="co-phone-err co-phone-hint"><span class="ok" aria-hidden="true">✓</span></div>
+            <p class="hint" id="co-phone-hint" data-i18n="phoneHint">Bayrağa tıklayıp ülkenizi seçin; kod otomatik eklenir.</p>
+            <p class="err" id="co-phone-err" hidden></p>
           </div>
-          <div class="field">
-            <label for="co-email">E-posta</label>
-            <input id="co-email" type="email" placeholder="ornek@eposta.com" required>
+          <div class="field req" data-field="email">
+            <label for="co-email" data-i18n="email">E-posta</label>
+            <div class="ctl"><input id="co-email" name="email" type="email" autocomplete="email" placeholder="ornek@eposta.com" required aria-describedby="co-email-err"><span class="ok" aria-hidden="true">✓</span></div>
+            <p class="err" id="co-email-err" hidden></p>
           </div>
-          <label for="co-consent" style="display:flex;gap:.6rem;align-items:flex-start;font-size:.8rem;color:var(--muted);margin-bottom:1rem;cursor:pointer;line-height:1.5">
-            <input id="co-consent" type="checkbox" required style="margin-top:.2rem;width:1rem;height:1rem;flex-shrink:0;accent-color:#2F80FF">
-            <span><a href="pages/on-bilgilendirme-formu.html" target="_blank" rel="noopener" style="color:#2F80FF">Ön Bilgilendirme Formu</a>'nu ve <a href="pages/mesafeli-satis-sozlesmesi.html" target="_blank" rel="noopener" style="color:#2F80FF">Mesafeli Satış Sözleşmesi</a>'ni okudum, onaylıyorum.</span>
-          </label>
-          <p id="co-consent-err" role="alert" style="display:none;font-size:.78rem;color:#f87171;margin:-.5rem 0 1rem">Devam etmek için Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi'ni onaylamanız gerekir.</p>
-          <button type="submit" id="co-submit" class="btn green block lg" disabled style="opacity:.5;cursor:not-allowed">WhatsApp ile Siparişi Tamamla</button>
-          <p style="font-size:.72rem;color:var(--muted);margin-top:.9rem;text-align:center">Siparişi tamamlayarak <a href="pages/kullanim-sartlari.html" style="color:#2F80FF">Kullanım Koşulları</a>'nı ve <a href="pages/teslimat-ve-iade-sartlari.html" style="color:#2F80FF">İade Politikası</a>'nı kabul etmiş olursunuz.</p>
+          <div class="field req" data-field="address">
+            <label for="co-address" data-i18n="address">Fatura Adresi</label>
+            <div class="ctl"><input id="co-address" name="address" type="text" autocomplete="street-address" placeholder="Mahalle, cadde, no, ilçe" data-i18n-ph="addressPh" required aria-describedby="co-address-err"><span class="ok" aria-hidden="true">✓</span></div>
+            <p class="err" id="co-address-err" hidden></p>
+          </div>
+          <div class="field req" data-field="city">
+            <label for="co-city" data-i18n="city">Şehir</label>
+            <div class="ctl"><input id="co-city" name="city" type="text" autocomplete="address-level2" placeholder="İstanbul" data-i18n-ph="cityPh" required aria-describedby="co-city-err"><span class="ok" aria-hidden="true">✓</span></div>
+            <p class="err" id="co-city-err" hidden></p>
+          </div>
+
+          <details class="billing" id="co-billing">
+            <summary data-i18n="billingTitle">Fatura Bilgileri (Opsiyonel)</summary>
+            <div class="billing-body">
+              <div class="seg" role="radiogroup" aria-label="Fatura tipi" data-i18n-aria="billingType">
+                <label><input type="radio" name="billingType" value="individual" checked><span data-i18n="individual">Bireysel</span></label>
+                <label><input type="radio" name="billingType" value="corporate"><span data-i18n="corporate">Kurumsal</span></label>
+              </div>
+              <div class="field opt" data-field="tcNo" data-show="tr individual">
+                <label for="co-tc" data-i18n="tcNo">TC Kimlik No</label>
+                <div class="ctl"><input id="co-tc" name="tcNo" type="text" inputmode="numeric" maxlength="11" autocomplete="off" placeholder="11 hane" data-i18n-ph="tcPh" aria-describedby="co-tc-err co-tc-hint"><span class="ok" aria-hidden="true">✓</span></div>
+                <p class="hint" id="co-tc-hint" data-i18n="tcHint">Fatura için gereklidir, boş bırakabilirsiniz.</p>
+                <p class="err" id="co-tc-err" hidden></p>
+              </div>
+              <div class="field opt" data-field="taxNo" data-show="tr corporate" hidden>
+                <label for="co-vkn" data-i18n="taxNo">Vergi No (VKN)</label>
+                <div class="ctl"><input id="co-vkn" name="taxNo" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="10 hane" data-i18n-ph="vknPh" aria-describedby="co-vkn-err"><span class="ok" aria-hidden="true">✓</span></div>
+                <p class="err" id="co-vkn-err" hidden></p>
+              </div>
+              <div class="field opt" data-field="taxOffice" data-show="tr corporate" hidden>
+                <label for="co-taxoffice" data-i18n="taxOffice">Vergi Dairesi</label>
+                <div class="ctl"><input id="co-taxoffice" name="taxOffice" type="text" autocomplete="off" placeholder="Ör. Kadıköy" data-i18n-ph="taxOfficePh" aria-describedby="co-taxoffice-err"><span class="ok" aria-hidden="true">✓</span></div>
+                <p class="err" id="co-taxoffice-err" hidden></p>
+              </div>
+              <div class="field opt" data-field="vatId" data-show="intl" hidden>
+                <label for="co-vat" data-i18n="vatId">Tax ID / VAT ID</label>
+                <div class="ctl"><input id="co-vat" name="vatId" type="text" autocomplete="off" placeholder="DE123456789" aria-describedby="co-vat-err"><span class="ok" aria-hidden="true">✓</span></div>
+                <p class="err" id="co-vat-err" hidden></p>
+              </div>
+              <div class="field opt" data-field="companyRegNo" data-show="intl corporate" hidden>
+                <label for="co-reg" data-i18n="companyRegNo">Company Registration No</label>
+                <div class="ctl"><input id="co-reg" name="companyRegNo" type="text" autocomplete="off" aria-describedby="co-reg-err"><span class="ok" aria-hidden="true">✓</span></div>
+                <p class="err" id="co-reg-err" hidden></p>
+              </div>
+            </div>
+          </details>
+
+          <div class="consent" data-field="consentPpf">
+            <label for="co-consent">
+              <input id="co-consent" type="checkbox" aria-describedby="co-consent-err">
+              <span data-i18n-html="consentPpf"><a href="pages/on-bilgilendirme-formu.html" target="_blank" rel="noopener">Ön Bilgilendirme Formu</a>'nu ve <a href="pages/mesafeli-satis-sozlesmesi.html" target="_blank" rel="noopener">Mesafeli Satış Sözleşmesi</a>'ni okudum, onaylıyorum.</span>
+            </label>
+            <p class="err" id="co-consent-err" hidden></p>
+          </div>
+          <div class="consent" data-field="consentTransfer" id="co-transfer-wrap">
+            <label for="co-transfer">
+              <input id="co-transfer" type="checkbox" aria-describedby="co-transfer-err">
+              <span data-i18n-html="consentTransfer">Kişisel verilerimin, ödeme ve faturalandırma amacıyla yurt dışındaki hizmet sağlayıcılara aktarılmasına <a href="pages/kvkk-aydinlatma-metni.html" target="_blank" rel="noopener">KVKK Aydınlatma Metni</a> kapsamında açık rıza veriyorum.</span>
+            </label>
+            <p class="err" id="co-transfer-err" hidden></p>
+          </div>
+          <p id="co-submit-err" class="err" role="alert" hidden></p>
+          <button type="submit" id="co-submit" class="btn green block lg" data-i18n="submitWa">WhatsApp ile Siparişi Tamamla</button>
+          <p class="co-terms" data-i18n-html="terms">Siparişi tamamlayarak <a href="pages/kullanim-sartlari.html">Kullanım Koşulları</a>'nı ve <a href="pages/teslimat-ve-iade-sartlari.html">İade Politikası</a>'nı kabul etmiş olursunuz.</p>
         </form>
       </div>
     </div>
@@ -429,26 +532,8 @@ footer ul a:hover{color:var(--fg)}
     ul.appendChild(li);
   });
 
-  var consent = document.getElementById('co-consent');
-  var submitBtn = document.getElementById('co-submit');
-  var consentErr = document.getElementById('co-consent-err');
-  consent.addEventListener('change', function(){
-    submitBtn.disabled = !consent.checked;
-    submitBtn.style.opacity = consent.checked ? '' : '.5';
-    submitBtn.style.cursor = consent.checked ? '' : 'not-allowed';
-    if (consent.checked) { consentErr.style.display = 'none'; }
-  });
-
-  document.getElementById('coForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    if (!consent.checked) { consentErr.style.display = 'block'; consent.focus(); return; }
-    var name = document.getElementById('co-name').value;
-    var clinic = document.getElementById('co-clinic').value;
-    var phone = document.getElementById('co-phone').value;
-    var email = document.getElementById('co-email').value;
-    var msg = 'Merhaba, ' + p.name + ' (' + p.price + ' ' + p.period + ') satın almak istiyorum.\n\nAd Soyad: ' + name + '\nKlinik: ' + clinic + '\nTelefon: ' + phone + '\nE-posta: ' + email;
-    window.open('https://wa.me/905344682769?text=' + encodeURIComponent(msg), '_blank');
-  });
+  /* Form, doğrulama ve gönderim: /atlas-checkout.js */
+  window.atlasPlan = { key: plans[key] ? key : 'pro', name: p.name, price: p.price, period: p.period };
 })();
 </script>
 <!-- ATLAS SATIŞ ASİSTANI WIDGET -->
@@ -651,6 +736,12 @@ footer ul a:hover{color:var(--fg)}
   });
 })();
 </script>
+<!-- Sipariş formu: TC/VKN kuralları (cyberlionai ile ortak), telefon (libphonenumber-js + intl-tel-input), doğrulama, gönderim -->
+<script src="/cl-billing-form.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/libphonenumber-js@1.13.14/bundle/libphonenumber-max.js" integrity="sha384-TL6PuziRMu9wcvBemTwYbdAy214PjKbUVuk16nYuoNHRBVrFQfPJP4H+qMUqRvyl" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.3/dist/js/intlTelInputWithUtils.min.js" integrity="sha384-BaDPu1JPrKMlyt17EqDudDB7+Kii733b0P665729w1WD1izDFe9luGQ+afj/2Tpm" crossorigin="anonymous" defer></script>
+<script src="/atlas-billing.js" defer></script>
+<script src="/atlas-checkout.js" defer></script>
 <script src="premium.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,8 @@
+{
+  "name": "atlasasistan-site",
+  "private": true,
+  "description": "atlasasistan.com — statik site + ödeme uçları (api/). Derleme adımı yok.",
+  "dependencies": {
+    "libphonenumber-js": "1.13.14"
+  }
+}
