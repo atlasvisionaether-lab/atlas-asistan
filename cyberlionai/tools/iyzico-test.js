@@ -469,6 +469,44 @@ function fakeRes() {
       fs.readFileSync(path.join(__dirname, '..', 'api', '_lib', 'db.js'), 'utf8')),
     true);
 
+  /* ---- 11a. Dönüşte kullanıcı çerezsiz bulunuyor ----
+     iyzico'nun dönüşü siteler arası POST; SameSite=Lax oturum çerezi
+     gelmez. Ödeme başlarken token → hesap eşlemesi depoya yazılıyor, dönüş
+     ucu kullanıcıyı oradan buluyor (canlı deneme 2026-10-22). */
+  {
+    const Module = require('node:module');
+    const path = require('node:path');
+    const depoYolu = require.resolve(path.join(__dirname, '..', 'api', '_lib', 'store.js'));
+    const donusYolu = require.resolve(path.join(__dirname, '..', 'api', 'checkout-return.js'));
+    const eskiDepo = require.cache[depoYolu];
+    const eskiDonus = require.cache[donusYolu];
+    const veri = {};
+    const sahte = new Module(depoYolu); sahte.filename = depoYolu; sahte.loaded = true;
+    sahte.exports = Object.assign({}, eskiDepo ? eskiDepo.exports : {}, {
+      isConfigured: function () { return true; },
+      cacheGet: async function (k) { return Object.prototype.hasOwnProperty.call(veri, k) ? veri[k] : null; },
+      cacheSet: async function (k, v) { veri[k] = v; }
+    });
+    require.cache[depoYolu] = sahte;
+    delete require.cache[donusYolu];
+    const donus = require(donusYolu);
+    const T = 'e828c62d-fd12-4b1a-ad5a-380f15fe6596';
+    sina('eşleme yoksa kullanıcı yok', await donus.pendingUser(T), null);
+    veri[checkout.PENDING_PREFIX + T] = { id: '11111111-1111-4111-8111-111111111111', email: 'a@b.co' };
+    sina('token → hesap eşlemesinden kullanıcı', await donus.pendingUser(T),
+      { id: '11111111-1111-4111-8111-111111111111', email: 'a@b.co' });
+    sina('token yoksa eşleme aranmıyor', await donus.pendingUser(null), null);
+    veri[checkout.PENDING_PREFIX + 'bozuk'] = { id: 42 };
+    sina('bozuk eşleme kabul edilmiyor', await donus.pendingUser('bozuk'), null);
+    const kaynak = require('node:fs').readFileSync(donusYolu, 'utf8');
+    sina('dönüş ucu kullanıcıyı çerezden SONRA eşlemeden arıyor',
+      /sessionUser \|\| await pendingUser\(token\)/.test(kaynak), true);
+    sina('dönüş ucu ve ödeme ucu aynı anahtar önekini kullanıyor',
+      kaynak.indexOf("'" + checkout.PENDING_PREFIX + "'") !== -1, true);
+    if (eskiDepo) require.cache[depoYolu] = eskiDepo; else delete require.cache[depoYolu];
+    if (eskiDonus) require.cache[donusYolu] = eskiDonus; else delete require.cache[donusYolu];
+  }
+
   /* ---- 11b. Form başlatma: canlıda başarılı yanıtta adres beklenen
      alanlarda değildi (iyzico_form_url_missing, 2026-10-22). Yanıtta yalnızca
      token + checkoutFormContent varken CPP adresi token'dan kuruluyor;
