@@ -334,7 +334,7 @@ const mesaj = {
     return ONEK + ' 🛠️ Fix siparişi: ' + alan(domain)
       + '\nSipariş: ' + kod(orderId)
       + '\nBulgular: ' + (ids || []).map(function (i) { return kod(i); }).join(', ')
-      + '\nTutar: ' + Number(priceDiscounted) + ' TL' + (price !== priceDiscounted ? ' (liste ' + Number(price) + ' TL)' : '') + ' + KDV'
+      + '\nTutar: ' + Number(priceDiscounted) + ' TL' + (price !== priceDiscounted ? ' (liste ' + Number(price) + ' TL)' : '') + ' (KDV dahil)'
       + '\nKullanıcı: ' + maskEmail(eposta)
       + '\nSonraki adım: müşteri /fix-checkout\'ta iyzico ile öder; ödeme gelince sipariş kendiliğinden "ödendi" olur (Telegram\'a ayrıca düşer).';
   },

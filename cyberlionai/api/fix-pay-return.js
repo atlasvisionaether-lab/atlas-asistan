@@ -15,14 +15,13 @@
  *     BAŞLAMAZ, sipariş bekler, ekibe haber verilir; -1 = reddedildi
  *     (PR #115 incelemesi).
  *   - sipariş var ve 'pending'
- *   - price === sipariş tutarının KDV dahil hali (kuruş)
+ *   - price === sipariş tutarı (KDV dahil, kuruş)
  * Güncelleme `status=eq.pending` koşulludur: aynı dönüş iki kez gelirse
  * ikinci sefer hiçbir şey değişmez. Kimlik ya da kart verisi loglanmaz.
  */
 
 const db = require('./_lib/db.js');
 const iyzico = require('./_lib/iyzico.js');
-const pricing = require('./_lib/fixpricing.js');
 const tg = require('./_lib/telegram.js');
 const { readToken } = require('./checkout-return.js');
 
@@ -55,7 +54,7 @@ function verify(data, order) {
   if (!order) return { ok: false, reason: 'order_not_found' };
   if (String(data.basketId || '') !== String(order.id)) return { ok: false, reason: 'basket_mismatch' };
   if (order.status !== 'pending') return { ok: false, reason: 'order_not_pending' };
-  if (kurus(data.price) !== kurus(pricing.grossTry(order.price_discounted))) return { ok: false, reason: 'amount_mismatch' };
+  if (kurus(data.price) !== kurus(order.price_discounted)) return { ok: false, reason: 'amount_mismatch' };
   return { ok: true };
 }
 

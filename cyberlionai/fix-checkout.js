@@ -1,7 +1,7 @@
 /* Düzeltme siparişi: özet + iyzico ödemesi (/fix-checkout?orderId=…).
    GET /api/fix-order okunur; ödeme POST /api/fix-pay (form) → iyzico.
    Gösterilen tutar KDV DAHİL ve iyzico'dan çekilen tutarın aynısı
-   (sunucuda fixpricing.grossTry). */
+   (fixpricing: KDV dahil, 50'nin katı). */
 (function () {
   'use strict';
   function $(id) { return document.getElementById(id); }

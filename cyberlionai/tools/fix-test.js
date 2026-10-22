@@ -45,25 +45,33 @@ async function cagir(h, req) { const r = res(); await h(Object.assign({ headers:
 
 (async function () {
   /* ---------- fiyatlar ---------- */
-  esit('başlık 499', pricing.quote(['hsts'], 'single', 'free').price, 499);
+  esit('başlık 500 (KDV dahil)', pricing.quote(['hsts'], 'single', 'free').price, 500);
   esit('Pro %50 → 250', pricing.quote(['hsts'], 'single', 'pro').priceDiscounted, 250);
   esit('Enterprise da %50', pricing.quote(['hsts'], 'single', 'enterprise').priceDiscounted, 250);
-  esit('Free indirimsiz', pricing.quote(['hsts'], 'single', 'free').priceDiscounted, 499);
-  esit('TLS 999', pricing.quote(['tls_cert'], 'single', 'free').price, 999);
-  esit('SPF 999', pricing.quote(['spf'], 'single', 'free').price, 999);
-  esit('sepet toplamı', pricing.quote(['hsts', 'xframe'], 'single', 'free').price, 998);
-  esit('tavan altındaki sepet toplanır', pricing.quote(['hsts', 'csp', 'tls_cert'], 'single', 'free').price, 2497);
-  /* Kullanıcının örneği: 3×999 + 4×499 = 4993 (tavanın altında). */
-  const yedi = ['dnssec', 'dmarc', 'permissions', 'referrer', 'nosniff', 'xframe', 'tls_legacy'];
-  esit('7 bulgu: liste 4993', pricing.quote(yedi, 'single', 'free').price, 4993);
-  esit('7 bulgu: Pro 2497', pricing.quote(yedi, 'single', 'pro').priceDiscounted, 2497);
+  esit('Free indirimsiz', pricing.quote(['hsts'], 'single', 'free').priceDiscounted, 500);
+  esit('TLS 1000', pricing.quote(['tls_cert'], 'single', 'free').price, 1000);
+  esit('SPF 1000', pricing.quote(['spf'], 'single', 'free').price, 1000);
+  esit('sepet toplamı', pricing.quote(['hsts', 'xframe'], 'single', 'free').price, 1000);
+  /* 2026-10-22 canlı şikâyet: Pro'da satırlar "₺250 + ₺250", toplam ₺598,80
+     görünüyordu. İndirim artık kalem başına; toplam satırların toplamı. */
+  esit('Pro 2 başlık: 250 + 250 = 500', pricing.quote(['hsts', 'xframe'], 'single', 'pro').priceDiscounted, 500);
+  esit('Pro 3 başlık: 750', pricing.quote(['hsts', 'xframe', 'nosniff'], 'single', 'pro').priceDiscounted, 750);
+  esit('tavan altındaki sepet toplanır', pricing.quote(['hsts', 'csp', 'tls_cert'], 'single', 'free').price, 2500);
+  /* Yuvarlak fiyatlarla (2026-10-22): 3×1000 + 3×500 = 4500 tavanın altında;
+     7. bulgu (bir başlık daha) sepeti TAM 5000'e, yani tavana çıkarıyor. Eski
+     fiyatlarla aynı 7 bulgu 4993'tü ve tekil kalıyordu. */
+  const alti = ['dnssec', 'dmarc', 'permissions', 'referrer', 'nosniff', 'tls_legacy'];
+  const yedi = alti.concat(['xframe']);
+  esit('6 bulgu: liste 4500', pricing.quote(alti, 'single', 'free').price, 4500);
+  esit('6 bulgu: Pro 2250', pricing.quote(alti, 'single', 'pro').priceDiscounted, 2250);
+  esit('7 bulgu tam 5000: tavana ulaşınca tam paket', [pricing.quote(yedi, 'single', 'free').type, pricing.quote(yedi, 'single', 'free').price], ['full', 5000]);
   /* iyzico başvurusu öncesi kontrol: 7 bulgu + "Tam paket" seçimi → liste 5000, Pro/Enterprise 2500. */
   esit('7 bulgu tam paket: liste 5000', pricing.quote(yedi, 'full', 'free').price, 5000);
   esit('7 bulgu tam paket: Pro 2500', pricing.quote(yedi, 'full', 'pro').priceDiscounted, 2500);
   esit('7 bulgu tam paket: Enterprise 2500', pricing.quote(yedi, 'full', 'enterprise').priceDiscounted, 2500);
   esit('7 bulgu tam paket: Free indirimsiz 5000', pricing.quote(yedi, 'full', 'free').priceDiscounted, 5000);
   const cok = ['https', 'csp', 'tls_cert', 'tls_protocol', 'spf', 'dmarc'];
-  esit('sepet tam paket tavanıyla sınırlı (6×999 → 5000)', pricing.quote(cok, 'single', 'free').price, 5000);
+  esit('sepet tam paket tavanıyla sınırlı (6×1000 → 5000)', pricing.quote(cok, 'single', 'free').price, 5000);
   esit('tavana ulaşınca tür full', pricing.quote(cok, 'single', 'free').type, 'full');
   esit('tavanda Pro 2500', pricing.quote(cok, 'single', 'pro').priceDiscounted, 2500);
   esit('tek TLS bulgusu Pro 500', pricing.quote(['csp'], 'single', 'pro').priceDiscounted, 500);
@@ -80,19 +88,44 @@ async function cagir(h, req) { const r = res(); await h(Object.assign({ headers:
   const KATALOG = pricing.ALL_IDS.length;
   esit('katalog 23 düzeltme taşıyor (okuma doğru çalışıyor)', KATALOG, 23);
 
-  /* 7 → 8 → 9: fiyat artar, tavanda sabitlenir; kapsam tavanda tamamına çıkar. */
-  const sekiz = yedi.concat(['hsts']);              /* 4993 + 499 = 5492 → tavan */
+  /* 6 → 8 → 9: fiyat artar, tavanda sabitlenir; kapsam tavanda tamamına çıkar. */
+  const sekiz = yedi.concat(['hsts']);              /* 5000 + 500 → tavan */
   const dokuz = sekiz.concat(['coop']);   /* katalogdan, 9. bulgu */
-  esit('7 bulgu: tür single', pricing.quote(yedi, 'single', 'free').type, 'single');
-  esit('7 bulgu: kapsam seçilenler', pricing.quote(yedi, 'single', 'free').items.length, 7);
-  esit('7 bulgu: coversAll false', pricing.quote(yedi, 'single', 'free').coversAll, false);
+  esit('6 bulgu: tür single', pricing.quote(alti, 'single', 'free').type, 'single');
+  esit('6 bulgu: kapsam seçilenler', pricing.quote(alti, 'single', 'free').items.length, 6);
+  esit('6 bulgu: coversAll false', pricing.quote(alti, 'single', 'free').coversAll, false);
   esit('8 bulgu: tavan 5000', pricing.quote(sekiz, 'single', 'free').price, 5000);
   esit('8 bulgu: kapsam TÜM katalog', pricing.quote(sekiz, 'single', 'free').items.length, KATALOG);
   esit('8 bulgu: coversAll true', pricing.quote(sekiz, 'single', 'free').coversAll, true);
   esit('9 bulgu: tavan 5000', pricing.quote(dokuz, 'single', 'free').price, 5000);
   esit('9 bulgu: kapsam TÜM katalog', pricing.quote(dokuz, 'single', 'free').items.length, KATALOG);
-  esit('7 < 8 fiyat artıyor',
-    pricing.quote(yedi, 'single', 'free').price < pricing.quote(sekiz, 'single', 'free').price, true);
+  esit('6 < 8 fiyat artıyor',
+    pricing.quote(alti, 'single', 'free').price < pricing.quote(sekiz, 'single', 'free').price, true);
+
+  /* Kural (2026-10-22): her tutar KDV dahil ve 50'nin katı; ödenecek toplam
+     = kalemlerin indirimli fiyatlarının toplamı. Katalogdaki her kimlikten
+     1–4'lü tüm sepetler, üç planla. */
+  (function () {
+    const ids = pricing.ALL_IDS;
+    let bozuk = 0; let toplamHata = 0; let denenen = 0;
+    const plans = ['free', 'pro', 'enterprise'];
+    for (let a = 0; a < ids.length; a++) for (let b = a; b < Math.min(ids.length, a + 4); b++) {
+      const sepet = ids.slice(a, b + 1);
+      plans.forEach(function (plan) {
+        const q = pricing.quote(sepet, 'single', plan);
+        denenen++;
+        if (q.price % 50 || q.priceDiscounted % 50) bozuk++;
+        if (q.type === 'single') {
+          const satir = q.items.reduce(function (t, i) { return t + pricing.discounted(i.price, plan); }, 0);
+          if (satir !== q.priceDiscounted) toplamHata++;
+        }
+      });
+    }
+    esit('tüm sepetlerde tutarlar 50\'nin katı (' + denenen + ' sepet)', bozuk, 0);
+    esit('satırlar toplamı = ödenecek toplam', toplamHata, 0);
+    esit('kademeler 50\'nin katı', Object.values(pricing.TIERS).every(function (v) { return v % 50 === 0; }), true);
+    esit('fiyat tablosu KDV dahil diyor', pricing.table().vatIncluded, true);
+  })();
   esit('8 ile 9 aynı fiyat ama ikisi de tam paket',
     [pricing.quote(sekiz, 'single', 'free').type, pricing.quote(dokuz, 'single', 'free').type],
     ['full', 'full']);
@@ -135,7 +168,7 @@ async function cagir(h, req) { const r = res(); await h(Object.assign({ headers:
   dogru('öneri: Nginx kodu', /add_header Strict-Transport-Security/.test(r.body.fix.nginx));
   dogru('öneri: Apache kodu', /Header always set Strict-Transport-Security/.test(r.body.fix.apache));
   dogru('öneri: Cloudflare adımı', /Transform Rules/.test(r.body.fix.cloudflare));
-  esit('öneri: fiyat + Pro indirimi', [r.body.price, r.body.priceDiscounted, r.body.isPro, r.body.severity], [499, 250, true, 'high']);
+  esit('öneri: fiyat + Pro indirimi', [r.body.price, r.body.priceDiscounted, r.body.isPro, r.body.severity], [500, 250, true, 'high']);
   r = await cagir(suggestion, { method: 'POST', body: { findingId: 'a01__env' } });
   esit('öneri: OWASP → kod yok, tam paket', [r.body.fix, r.body.tier, r.body.price], [null, 'full', 5000]);
   r = await cagir(suggestion, { method: 'POST', body: { findingId: '../etc' } });
@@ -155,14 +188,14 @@ async function cagir(h, req) { const r = res(); await h(Object.assign({ headers:
   telegram.length = 0;
   r = await cagir(order, { method: 'POST', body: govde });
   esit('sipariş 201', r.statusCode, 201);
-  esit('fiyat istemciden alınmadı (998 → Pro 499)', [r.body.price, r.body.priceDiscounted], [998, 499]);
+  esit('fiyat istemciden alınmadı (1000 → Pro 500)', [r.body.price, r.body.priceDiscounted], [1000, 500]);
   dogru('ödeme sayfası adresi', /^\/fix-checkout\?orderId=/.test(r.body.checkoutUrl));
   const s0 = siparisler[0];
   dogru('onay zaman damgaları kaydedildi', !!s0.agreements_at && !!s0.start_consent_at);
   esit('plan kaydedildi', s0.plan, 'pro');
   dogru('Telegram: fix siparişi', /🛠️ Fix siparişi: ornek\.com/.test(telegram[0] || ''));
   dogru('Telegram: e-posta maskeli', (telegram[0] || '').indexOf('ali.veli@') === -1 && (telegram[0] || '').indexOf('a***@ornek.com') !== -1);
-  dogru('Telegram: tutar', /Tutar: 499 TL \(liste 998 TL\) \+ KDV/.test(telegram[0] || ''));
+  dogru('Telegram: tutar', /Tutar: 500 TL \(liste 1000 TL\) \(KDV dahil\)/.test(telegram[0] || ''));
   kullanici = null;
   r = await cagir(order, { method: 'POST', body: govde });
   esit('girişsiz 401', r.statusCode, 401);
