@@ -67,6 +67,13 @@
   ul.list li span{min-width:0;overflow-wrap:anywhere;white-space:normal}
   ul.list li span:last-child{text-align:right;flex:1 1 180px}
   .h1__sub{font-size:.7em;color:var(--text-gray)}
+  .field{margin:0 0 12px} .field label{display:block;font-size:.85rem;margin:0 0 4px}
+  .field input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid var(--hairline);background:transparent;color:inherit;font:inherit}
+  .field--row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:480px){.field--row{grid-template-columns:1fr}}
+  .opt{font-weight:400;opacity:.7;font-size:.85em}
+  .pay{width:100%;padding:12px 16px;border:0;border-radius:10px;font:inherit;font-weight:700;cursor:pointer;background:#d4af37;color:#0b0b0f;margin:6px 0}
+  .pay[disabled]{opacity:.6;cursor:wait}
   </style>
 </head>
 <body>
@@ -81,11 +88,37 @@
       <p id="msg" class="msg" role="status" aria-live="polite">Yükleniyor… / Loading…</p>
       <ul class="list" id="details" hidden></ul>
     </section>
+    <!-- Ödeme: POST /api/fix-pay → iyzico tek seferlik ödeme formu. Fatura
+         bilgileri URL'ye değil gövdeye (KVKK); bkz. api/fix-pay.js. -->
+    <section class="card" id="payCard" hidden>
+      <h2>Ödeme / Payment</h2>
+      <p class="msg" id="payMsg" role="alert" hidden></p>
+      <form id="payForm" method="post" action="/api/fix-pay" novalidate>
+        <input type="hidden" name="orderId" id="fOrder" />
+        <div class="field"><label for="adSoyad">Ad Soyad / Full name</label>
+          <input type="text" id="adSoyad" name="ad" autocomplete="name" maxlength="100" required /></div>
+        <div class="field"><label for="gsm">Cep Telefonu / Mobile</label>
+          <input type="tel" id="gsm" name="gsm" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="0555 444 33 33" required /></div>
+        <div class="field"><label for="adres">Fatura Adresi / Billing address</label>
+          <input type="text" id="adres" name="adres" autocomplete="street-address" maxlength="250" required /></div>
+        <div class="field field--row">
+          <div><label for="il">İl / City</label><input type="text" id="il" name="il" autocomplete="address-level1" maxlength="50" required /></div>
+          <div><label for="ilce">İlçe / District <span class="opt">(isteğe bağlı)</span></label><input type="text" id="ilce" name="ilce" autocomplete="address-level2" maxlength="50" /></div>
+        </div>
+        <div class="field"><label for="ulke">Ülke / Country</label>
+          <input type="text" id="ulke" name="ulke" autocomplete="country-name" maxlength="56" value="Türkiye" required /></div>
+        <div class="field"><label for="tckn">TC Kimlik No <span class="opt">(Fatura için - İsteğe bağlı)</span></label>
+          <input type="text" id="tckn" name="tckn" inputmode="numeric" autocomplete="off" maxlength="11" pattern="[0-9]{11}" /></div>
+        <p class="note">Bu bilgiler yalnızca ödeme kuruluşu iyzico'ya iletilir; sunucularımızda saklanmaz. Kart bilgilerinizi iyzico'nun güvenli ödeme sayfasında girersiniz.</p>
+        <button type="submit" class="pay" id="payBtn">Güvenli Öde - iyzico ile</button>
+        <p class="note"><strong>Fiyatlara KDV dahildir.</strong> / Prices include VAT.</p>
+      </form>
+    </section>
     <section class="card">
       <h2>Sonraki adım / Next step</h2>
-      <p class="note">Ekibimiz siparişinizi kontrol edip <strong>iyzico ödeme bağlantısını</strong> hesabınızdaki e-posta adresine gönderir. Kart bilgileriniz bize ulaşmaz. Ödeme onayından sonra hizmet <strong>en geç 3 iş günü</strong> içinde tamamlanır (acil siparişlerde hedef 24 saat). Alan adı erişimi, Cloudflare yetkisi veya onayınız gecikirse süre en fazla 5 iş gününe uzar ve size bilgi verilir. Tamamlandığında bildirilirsiniz. Sorularınız için: <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></p>
-      <p class="note">Our team reviews your order and sends an <strong>iyzico payment link</strong> to your account's email address. Your card details never reach us. After payment confirmation the service is completed <strong>within 3 business days</strong> (24 hours targeted for urgent orders). If domain access, Cloudflare authorisation or your approval is delayed, this extends to at most 5 business days and you are informed. You are notified when it is done. Questions: <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></p>
-      <p class="note">Fiyatlar KDV hariçtir. / Prices exclude VAT. · <a href="/mesafeli-satis-sozlesmesi">Mesafeli Satış Sözleşmesi</a> · <a href="/pages/on-bilgilendirme-formu">Ön Bilgilendirme Formu</a> · <a href="/iade-iptal-politikasi">Teslimat ve İade</a> · <a href="/kvkk-aydinlatma-metni">KVKK Aydınlatma Metni</a> · <a href="/gizlilik-politikasi">Gizlilik</a></p>
+      <p class="note">Ödemeniz onaylandığında hizmet <strong>en geç 3 iş günü</strong> içinde tamamlanır (acil siparişlerde hedef 24 saat). Alan adı erişimi, Cloudflare yetkisi veya onayınız gecikirse süre en fazla 5 iş gününe uzar ve size bilgi verilir. Tamamlandığında bildirilirsiniz. Sorularınız için: <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></p>
+      <p class="note">Once your payment is confirmed the service is completed <strong>within 3 business days</strong> (24 hours targeted for urgent orders). If domain access, Cloudflare authorisation or your approval is delayed, this extends to at most 5 business days and you are informed. Questions: <a href="mailto:destek@cyberlionai.com">destek@cyberlionai.com</a></p>
+      <p class="note">Fiyatlara KDV dahildir. / Prices include VAT. · <a href="/mesafeli-satis-sozlesmesi">Mesafeli Satış Sözleşmesi</a> · <a href="/pages/on-bilgilendirme-formu">Ön Bilgilendirme Formu</a> · <a href="/iade-iptal-politikasi">Teslimat ve İade</a> · <a href="/kvkk-aydinlatma-metni">KVKK Aydınlatma Metni</a> · <a href="/gizlilik-politikasi">Gizlilik</a></p>
     </section>
   </main>
   <footer>© Cyber Lion AI · <a href="/kullanim-kosullari">Kullanım Şartları</a></footer>

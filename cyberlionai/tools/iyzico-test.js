@@ -469,6 +469,71 @@ function fakeRes() {
       fs.readFileSync(path.join(__dirname, '..', 'api', '_lib', 'db.js'), 'utf8')),
     true);
 
+  /* ---- 10b. "Biz düzeltelim" tek seferlik iyzico ödemesi ----
+     Gösterilen = çekilen = KDV dahil; tutar veritabanındaki siparişten;
+     dönüşte iyzico sonucu sipariş ve tutarla karşılaştırılıyor. */
+  {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const pricing = require('../api/_lib/fixpricing.js');
+    sina('KDV dahil: 2.500 → 3.000', pricing.grossTry(2500), 3000);
+    sina('KDV dahil: 499 → 598,80', pricing.grossTry(499), 598.8);
+    sina('fiyat tablosu KDV oranını veriyor', pricing.table().vatRate, 0.2);
+
+    const eskiFetch = global.fetch;
+    const eskiWarn = console.warn;
+    console.warn = function () {};
+    process.env.IYZICO_API_KEY = SANDBOX_API_KEY;
+    process.env.IYZICO_SECRET_KEY = SANDBOX_SECRET;
+    let adres = null; let govde = null;
+    global.fetch = async function (u, o) {
+      adres = u; govde = JSON.parse(o.body);
+      return { ok: true, status: 200, json: async function () {
+        return { status: 'success', token: 'f1e2d3c4-b5a6-7890-abcd-ef1234567890', paymentPageUrl: 'https://sandbox-cpp.iyzipay.com?token=f1e2d3c4-b5a6-7890-abcd-ef1234567890&lang=tr' };
+      } };
+    };
+    const SIP = '22222222-2222-4222-8222-222222222222';
+    const b = require('../api/_lib/billing-details.js');
+    const musteri = b.buildCustomer({ ad: 'Ali Veli Kaya', gsm: '05554443333', adres: 'Atatürk Cad. No: 1 Daire 2', il: 'İstanbul' },
+      'ali@ornek.com', checkout.customerName).customer;
+    const alici = b.buyerFrom(musteri, '11111111-1111-4111-8111-111111111111', '203.0.113.7');
+    const r = await iyzico.initializePaymentForm({ orderId: SIP, priceTry: 3000, callbackUrl: 'https://www.cyberlionai.com/api/fix-pay-return',
+      buyer: alici.buyer, address: alici.address, itemName: 'Düzeltme' });
+    sina('tek seferlik form ucu', new URL(adres).pathname, '/payment/iyzipos/checkoutform/initialize/auth/ecom');
+    sina('çekilen tutar KDV dahil, price = paidPrice = sepet', [govde.price, govde.paidPrice, govde.basketItems[0].price], ['3000.0', '3000.0', '3000.0']);
+    sina('taksit kapalı (tutar eşleşmesi bozulmasın)', govde.enabledInstallments, [1]);
+    sina('sepet = sipariş, hizmet VIRTUAL', [govde.basketId, govde.basketItems[0].id, govde.basketItems[0].itemType, govde.currency], [SIP, SIP, 'VIRTUAL', 'TRY']);
+    sina('alıcı iyzico modeliyle', [govde.buyer.gsmNumber, govde.buyer.identityNumber, govde.buyer.city, govde.buyer.ip, govde.billingAddress.contactName],
+      ['+905554443333', '11111111111', 'İstanbul', '203.0.113.7', 'Ali Veli Kaya']);
+    sina('ödeme sayfası adresi', [r.ok, r.url], [true, 'https://sandbox-cpp.iyzipay.com/?token=f1e2d3c4-b5a6-7890-abcd-ef1234567890&lang=tr']);
+    global.fetch = eskiFetch;
+    console.warn = eskiWarn;
+
+    const { verify } = require('../api/fix-pay-return.js');
+    const bekl = { orderId: SIP, amount: 3000 };
+    sina('başarılı ödeme doğrulanıyor', verify({ status: 'success', paymentStatus: 'SUCCESS', basketId: SIP, price: '3000.0' }, bekl).ok, true);
+    sina('tutar farklıysa REDDEDİLİYOR', verify({ status: 'success', paymentStatus: 'SUCCESS', basketId: SIP, price: '2500.0' }, bekl).reason, 'amount_mismatch');
+    sina('başka sepet REDDEDİLİYOR', verify({ status: 'success', paymentStatus: 'SUCCESS', basketId: 'baska', price: '3000' }, bekl).reason, 'basket_mismatch');
+    sina('ödeme başarısızsa REDDEDİLİYOR', verify({ status: 'success', paymentStatus: 'FAILURE', basketId: SIP, price: '3000' }, bekl).reason, 'payment_failure');
+    sina('iyzico failure REDDEDİLİYOR', verify({ status: 'failure' }, bekl).ok, false);
+
+    const kok = path.join(__dirname, '..');
+    const payJs = fs.readFileSync(path.join(kok, 'api', 'fix-pay.js'), 'utf8');
+    sina('tutar veritabanındaki siparişten (istemciden değil)',
+      /grossTry\(order\.price_discounted\)/.test(payJs) && !/params\.(amount|price|tutar)/.test(payJs), true);
+    sina('yalnızca bekleyen sipariş ödenebiliyor', /order\.status !== 'pending'/.test(payJs), true);
+    const retJs = fs.readFileSync(path.join(kok, 'api', 'fix-pay-return.js'), 'utf8');
+    sina('dönüş yalnızca pending siparişi paid yapıyor (tekrar dönüş etkisiz)', /status=eq\.pending/.test(retJs), true);
+    const fc = fs.readFileSync(path.join(kok, 'fix-checkout.html'), 'utf8');
+    sina('/fix-checkout formu POST /api/fix-pay', /<form[^>]*id="payForm"[^>]*method="post"[^>]*action="\/api\/fix-pay"/.test(fc), true);
+    sina('/fix-checkout "Güvenli Öde - iyzico ile"', /Güvenli Öde - iyzico ile/.test(fc), true);
+    sina('/fix-checkout "Fiyatlara KDV dahildir"', /Fiyatlara KDV dahildir/.test(fc) && !/KDV hariçtir/.test(fc), true);
+    sina('/fix-checkout artık "ödeme bağlantısı gönderilir" demiyor', /ödeme bağlantısı/.test(fc), false);
+    const ix = fs.readFileSync(path.join(kok, 'index.html'), 'utf8');
+    sina('sepet butonu "Güvenli Öde"', /cartOrder: 'Güvenli Öde'/.test(ix) && !/cartOrder: 'Sipariş ver'/.test(ix), true);
+    sina('sepet KDV dahil gösteriyor', /cartVat: '\(KDV dahil\)'/.test(ix) && /cartVatNote: 'Fiyatlara KDV dahildir/.test(ix) && /fmtTL\(gross\(list\)\)/.test(ix), true);
+  }
+
   /* ---- 11b. Form başlatma: canlıda başarılı yanıtta adres beklenen
      alanlarda değildi (iyzico_form_url_missing, 2026-10-22). Yanıtta yalnızca
      token + checkoutFormContent varken CPP adresi token'dan kuruluyor;

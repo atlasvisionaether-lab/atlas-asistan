@@ -17,7 +17,7 @@ Cyber Lion AI olarak gizliliğinize önem veriyoruz.
 **Topladığımız Veriler:**
 - Hesap bilgileri: E-posta
 - Tarama verileri: Taranan domain, tarama sonuçları (kişisel veri içermez)
-- Ödeme verileri: Kart bilgileriniz tarafımızda saklanmaz, doğrudan iyzico'ya iletilir. Abonelik satın alırken ödeme sayfasında girdiğiniz cep telefonu, fatura adresi (adres, il, isteğe bağlı ilçe, ülke) ve isteğe bağlı TC kimlik numarası yalnızca ödeme kuruluşu iyzico'ya abonelik ve fatura için iletilir; sunucularımızda saklanmaz ve kayıt altına alınmaz. TC kimlik numarası girmezseniz iyzico'ya kimliği bilinmeyen alıcı için kullanılan 11111111111 değeri iletilir
+- Ödeme verileri: Kart bilgileriniz tarafımızda saklanmaz, doğrudan iyzico'ya iletilir. Abonelik ya da tek seferlik düzeltme hizmeti satın alırken ödeme sayfasında girdiğiniz cep telefonu, fatura adresi (adres, il, isteğe bağlı ilçe, ülke) ve isteğe bağlı TC kimlik numarası yalnızca ödeme kuruluşu iyzico'ya ödeme ve fatura için iletilir; sunucularımızda saklanmaz ve kayıt altına alınmaz. TC kimlik numarası girmezseniz iyzico'ya kimliği bilinmeyen alıcı için kullanılan 11111111111 değeri iletilir
 - Çerezler: Zorunlu çerezler dışında izleme çerezi kullanmıyoruz (KVKK Uyumlu)
 - Bildirim cihaz jetonu: Mobil uygulamada bildirime izin verirseniz, cihazınızın bildirim jetonu (Firebase Cloud Messaging) hesabınıza bağlanır. Yalnızca size bildirim göndermek için kullanılır, reklam kimliği değildir ve uygulamadan çıkışta silinir
 - Hız sınırı: Kötüye kullanımı önlemek için IP adresinizin kısaltılmış bir özeti süreli bir sayaç olarak tutulur; IP adresi HAM hâliyle saklanmaz ve süresi dolunca sayaç kendiliğinden silinir

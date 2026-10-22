@@ -301,6 +301,53 @@ async function initializeCheckoutForm(opts) {
   return { ok: true, url: url, token: tokenOf(result.data) };
 }
 
+/**
+ * TEK SEFERLİK ödeme formu (abonelik değil): "Biz düzeltelim" siparişi.
+ * Resmi istemcinin CreateCheckoutFormInitializeRequest'i; imza ve adres
+ * çıkarma abonelikle aynı (request, formUrlOf, token yedeği).
+ *
+ *   opts: { orderId, priceTry (KDV DAHİL, karttan çekilecek), callbackUrl,
+ *           buyer, address, itemName }
+ *
+ * Tutar çağırandan gelir ama çağıran onu VERİTABANINDAKİ siparişten hesaplar
+ * (istemciden değil). Taksit kapalı (enabledInstallments [1]): taksit faizi
+ * çekilen tutarı değiştirir, dönüşte tutar eşleştirmesi bozulurdu.
+ */
+async function initializePaymentForm(opts) {
+  const tutar = formatPrice(opts.priceTry);
+  const result = await request('POST', '/payment/iyzipos/checkoutform/initialize/auth/ecom', {
+    locale: 'tr',
+    conversationId: String(opts.orderId),
+    price: tutar,
+    paidPrice: tutar,
+    currency: 'TRY',
+    basketId: String(opts.orderId),
+    paymentGroup: 'PRODUCT',
+    callbackUrl: opts.callbackUrl,
+    enabledInstallments: [1],
+    buyer: opts.buyer,
+    billingAddress: opts.address,
+    shippingAddress: opts.address,
+    basketItems: [{
+      id: String(opts.orderId),
+      name: String(opts.itemName || 'Yazılım Güvenlik Düzeltme Hizmeti').slice(0, 100),
+      category1: 'Hizmet',
+      itemType: 'VIRTUAL',
+      price: tutar
+    }]
+  });
+  if (!result.ok) return result;
+  if (console && console.warn) console.warn('iyzico paymentform shape', responseShape(result.data));
+  const url = formUrlOf(result.data) || hostedUrlFromToken(tokenOf(result.data));
+  if (!url) return { ok: false, reason: 'iyzico_form_url_missing' };
+  return { ok: true, url: url, token: tokenOf(result.data) };
+}
+
+/** Tek seferlik ödeme formunun sonucu (dönüşte; tek doğru kaynak iyzico). */
+async function retrievePaymentForm(token) {
+  return request('POST', '/payment/iyzipos/checkoutform/auth/ecom/detail', { locale: 'tr', token: String(token) });
+}
+
 /** Yanıtta token (üst düzeyde ya da `data` altında); biçimsizse null. */
 function tokenOf(data) {
   const t = (data && data.token) || (data && data.data && data.data.token);
@@ -477,6 +524,7 @@ module.exports = {
   formatPrice, authorizationHeader, request, errorDetail, LIMITS,
   createProduct, createPricingPlan, createCustomer,
   initializeCheckoutForm, formUrlOf, getSubscription, tokenOf, hostedUrlFromToken, responseShape,
+  initializePaymentForm, retrievePaymentForm,
   hmacSignature, signatureMatches, isActiveStatus,
   getCheckoutForm, webhookSignedData, verifyWebhookSignature, subscriptionRefOf,
   ALLOWED_FORM_HOSTS, KNOWN_STATUSES, MIN_KEY_LENGTH

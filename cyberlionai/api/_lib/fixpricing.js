@@ -27,6 +27,7 @@
  */
 
 const { FIXES, fixFor } = require('./engines/fixes.js');
+const { VAT_RATE } = require('./plans.js');
 
 const TIERS = { header: 499, tls_dns: 999, full: 5000 };
 const DISCOUNT_PERCENT = 50;
@@ -102,15 +103,22 @@ function quote(ids, type, plan) {
   };
 }
 
+/* Tutarlar KDV HARİÇ saklanır (fix_orders.price_discounted, tam sayı TL);
+   müşteriye gösterilen ve iyzico'dan çekilen tutar KDV DAHİL: kuruşlu,
+   tek yerden hesaplanır (sepet, /fix-checkout, ödeme, dönüş doğrulaması). */
+function grossTry(net) {
+  return Math.round(Number(net) * (1 + VAT_RATE) * 100) / 100;
+}
+
 /** Herkese açık fiyat tablosu (GET /api/fix-pricing). */
 function table() {
   const tierById = {};
   Object.keys(FIXES).forEach(function (id) { tierById[id] = tierOf(id); });
-  return { currency: 'TRY', vatIncluded: false, tiers: TIERS, discountPercent: DISCOUNT_PERCENT,
+  return { currency: 'TRY', vatIncluded: false, vatRate: VAT_RATE, tiers: TIERS, discountPercent: DISCOUNT_PERCENT,
     discountPlans: DISCOUNT_PLANS, tierById: tierById, otherFindings: 'full',
     /* Tavana ulaşan sepetin kapsamı: katalogdaki düzeltme sayısı. Arayüz
        "23 bulgunun tamamı düzeltilecek" derken bunu okuyor, sabit yazmıyor. */
     fullCoverageCount: ALL_IDS.length };
 }
 
-module.exports = { TIERS, DISCOUNT_PERCENT, DISCOUNT_PLANS, ALL_IDS, tierOf, quote, table, cleanIds, discounted };
+module.exports = { TIERS, DISCOUNT_PERCENT, DISCOUNT_PLANS, ALL_IDS, tierOf, quote, table, cleanIds, discounted, grossTry };

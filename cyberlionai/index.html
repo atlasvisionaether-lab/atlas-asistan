@@ -2541,7 +2541,8 @@
           cartCount: '{n} bulgu seçildi',
           cartFull: 'Tam paket',
           cartFullNote: 'Tam paket sınırına ulaştınız, {n} bulgunun tamamı düzeltilecek',
-          cartVat: '+ KDV',
+          cartVat: '(KDV dahil)',
+          cartVatNote: 'Fiyatlara KDV dahildir. Ödeme bir sonraki adımda iyzico ile alınır.',
           cartAgree1: '',
           cartAgreeLink: 'Mesafeli Satış Sözleşmesi',
           cartAgreeSep1: ', ',
@@ -2550,9 +2551,9 @@
           cartAgreeLink3: 'Teslimat ve İade Şartları',
           cartAgree2: '\'nı okudum, onaylıyorum.',
           cartStart: 'Hizmetin cayma süresi içinde ifasına başlanmasını onaylıyorum; ifaya başlanınca cayma hakkımın sona ereceğini biliyorum.',
-          cartOrder: 'Sipariş ver',
-          cartConsentNeeded: 'Sipariş için iki onay kutusunu da işaretleyin.',
-          cartLogin: 'Sipariş için giriş yapın (sağ üstteki Giriş Yap).',
+          cartOrder: 'Güvenli Öde',
+          cartConsentNeeded: 'Ödeme için iki onay kutusunu da işaretleyin.',
+          cartLogin: 'Ödeme için giriş yapın (sağ üstteki Giriş Yap).',
           cartErr: 'Sipariş oluşturulamadı. Lütfen tekrar deneyin.',
           emailScore: 'E-posta güvenlik skoru (SPF, DMARC, DKIM, DNSSEC): {n}/100',
           activeLocked: 'Aktif testler (XSS/SQLi yoklaması, hassas dosya kontrolü) çalıştırılmadı: bu alan adı hesabınız için doğrulanmamış. Pasif tarama tamamlandı.',
@@ -3025,7 +3026,8 @@
           cartCount: '{n} findings selected',
           cartFull: 'Full package',
           cartFullNote: 'You have reached the full package limit; all {n} findings will be fixed',
-          cartVat: '+ VAT',
+          cartVat: '(VAT incl.)',
+          cartVatNote: 'Prices include VAT. Payment is taken by iyzico in the next step.',
           cartAgree1: 'I have read and accept the ',
           cartAgreeLink: 'Distance Sales Agreement',
           cartAgreeSep1: ', the ',
@@ -3034,9 +3036,9 @@
           cartAgreeLink3: 'Delivery and Returns terms',
           cartAgree2: '.',
           cartStart: 'I consent to the service starting within the withdrawal period and understand that my right of withdrawal ends once it starts.',
-          cartOrder: 'Place order',
-          cartConsentNeeded: 'Please tick both boxes to order.',
-          cartLogin: 'Please sign in to order (Sign In at the top right).',
+          cartOrder: 'Pay securely',
+          cartConsentNeeded: 'Please tick both boxes to pay.',
+          cartLogin: 'Please sign in to pay (Sign In at the top right).',
           cartErr: 'The order could not be created. Please try again.',
           emailScore: 'Email security score (SPF, DMARC, DKIM, DNSSEC): {n}/100',
           activeLocked: 'Active tests (XSS/SQLi probes, sensitive file checks) were not run: this domain is not verified for your account. The passive scan is complete.',
@@ -4363,7 +4365,10 @@
     }
 
     function fmtTL(n) {
-      try { return '₺' + Number(n).toLocaleString(currentLang === 'en' ? 'en-US' : 'tr-TR'); } catch (e) { return '₺' + n; }
+      /* KDV dahil tutarlar kuruşlu olabilir (₺598,80): kuruş varsa iki hane. */
+      var v = Number(n);
+      var o = v % 1 ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : {};
+      try { return '₺' + v.toLocaleString(currentLang === 'en' ? 'en-US' : 'tr-TR', o); } catch (e) { return '₺' + n; }
     }
 
     function isDiscounted() {
@@ -4579,15 +4584,22 @@
       info.className = 'fixcart__info';
       info.textContent = t('scan.cartCount', { n: ids.length }) + ' · '
         + (full ? t('scan.cartFullNote', { n: kapsam }) + ' · ' : '');
+      /* Gösterilen tutar KDV DAHİL: iyzico'dan çekilen tutarın aynısı
+         (sunucu: fixpricing.grossTry). Liste KDV hariç saklanıyor. */
+      var vatRate = typeof p.vatRate === 'number' ? p.vatRate : 0.2;
+      function gross(n) { return Math.round(n * (1 + vatRate) * 100) / 100; }
       if (isDiscounted()) {
         var s = document.createElement('s');
-        s.textContent = fmtTL(list);
+        s.textContent = fmtTL(gross(list));
         info.appendChild(s);
-        info.appendChild(document.createTextNode(' ' + fmtTL(discounted(list)) + ' (' + t('scan.svcDiscount', { n: p.discountPercent }) + ')'));
+        info.appendChild(document.createTextNode(' ' + fmtTL(gross(discounted(list))) + ' (' + t('scan.svcDiscount', { n: p.discountPercent }) + ')'));
       } else {
-        info.appendChild(document.createTextNode(fmtTL(list)));
+        info.appendChild(document.createTextNode(fmtTL(gross(list))));
       }
       info.appendChild(document.createTextNode(' ' + t('scan.cartVat')));
+      var vatNote = document.createElement('p');
+      vatNote.className = 'fixcart__info';
+      vatNote.textContent = t('scan.cartVatNote');
 
       function consent(key, html) {
         var l = document.createElement('label');
@@ -4644,6 +4656,7 @@
         }, function () { syncGo(); msg.textContent = t('scan.cartErr'); });
       });
       cartBar.appendChild(info);
+      cartBar.appendChild(vatNote);
       cartBar.appendChild(c1);
       cartBar.appendChild(c2);
       cartBar.appendChild(go);

@@ -336,7 +336,7 @@ const mesaj = {
       + '\nBulgular: ' + (ids || []).map(function (i) { return kod(i); }).join(', ')
       + '\nTutar: ' + Number(priceDiscounted) + ' TL' + (price !== priceDiscounted ? ' (liste ' + Number(price) + ' TL)' : '') + ' + KDV'
       + '\nKullanıcı: ' + maskEmail(eposta)
-      + '\nSonraki adım: iyzico ödeme bağlantısı gönderin, ödeme gelince panelden "ödendi" işaretleyin.';
+      + '\nSonraki adım: müşteri /fix-checkout\'ta iyzico ile öder; ödeme gelince sipariş kendiliğinden "ödendi" olur (Telegram\'a ayrıca düşer).';
   },
   fixOdendi: function (orderId, domain) {
     return ONEK + ' ✅ Fix ödemesi alındı: ' + kod(orderId) + ' — ' + alan(domain);
