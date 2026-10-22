@@ -19,6 +19,9 @@
  * Güvenceler
  *   - Yalnızca hafızası HÂLÂ açık (remember_me = true) kullanıcıların
  *     satırları işlenir; "unut beni" demiş birinin kalıntısına dokunulmaz.
+ *     Tercih her partiden HEMEN ÖNCE yalnızca o partinin kullanıcıları için
+ *     okunur: başta alınan tek liste hem satır sınırında kesilirdi hem de
+ *     çalışma sırasında hafızayı kapatanı kaçırırdı (PR #107 incelemesi).
  *   - Güncelleme `embedding=is.null` koşuluyla: bu arada canlı yoldan vektör
  *     yazılmış ya da satır silinmişse hiçbir şey değişmez (PATCH satır
  *     yaratamaz).
@@ -38,8 +41,13 @@ const APPLY = args.indexOf('--apply') !== -1;
 const maxIdx = args.indexOf('--max');
 const MAX = maxIdx !== -1 ? Math.max(1, parseInt(args[maxIdx + 1], 10) || 0) : Infinity;
 
-async function rememberedUsers() {
-  const rows = await db.request('cl_user_prefs?remember_me=eq.true&select=user_id');
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/* Partideki kullanıcılardan hafızası şu an açık olanlar. */
+async function rememberedAmong(userIds) {
+  const ids = Array.from(new Set(userIds)).filter(function (id) { return UUID_RE.test(id); });
+  if (!ids.length) return new Set();
+  const rows = await db.request('cl_user_prefs?remember_me=eq.true&select=user_id&user_id=in.(' + ids.join(',') + ')');
   return new Set((rows || []).map(function (r) { return r.user_id; }));
 }
 
@@ -56,7 +64,6 @@ async function main() {
      yazılmaz. Kuru çalışma anahtarsız da sayar. */
   if (APPLY && !llm.config().deepseek) throw new Error('DEEPSEEK_API_KEY gerekli (çeviri olmadan vektör yazılmaz)');
 
-  const remembered = await rememberedUsers();
   const say = { bulunan: 0, atlanan_hafiza_kapali: 0, yazilan: 0, degismeyen: 0, hata: 0 };
   let last = 0;
 
@@ -65,9 +72,10 @@ async function main() {
     if (!rows.length) break;
     last = rows[rows.length - 1].id;
 
-    const hedef = rows.filter(function (r) { return remembered.has(r.user_id); })
-      .slice(0, MAX - say.bulunan);
-    say.atlanan_hafiza_kapali += rows.length - rows.filter(function (r) { return remembered.has(r.user_id); }).length;
+    const remembered = await rememberedAmong(rows.map(function (r) { return r.user_id; }));
+    const acik = rows.filter(function (r) { return remembered.has(r.user_id); });
+    const hedef = acik.slice(0, MAX - say.bulunan);
+    say.atlanan_hafiza_kapali += rows.length - acik.length;
     say.bulunan += hedef.length;
     if (!APPLY || !hedef.length) continue;
 
