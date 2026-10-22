@@ -92,16 +92,22 @@ const odemeJs = fs.readFileSync(path.join(ROOT, 'odeme.js'), 'utf8');
   sina(planId + ' fiyat tam lira (iyzico planı)', Number.isInteger(p.priceTry), true);
   sina(planId + ' "KDV dahil" ibaresi (tr/en)', [p.tr.gross, p.en.gross], ['KDV dahil', 'incl. VAT']);
   sina(planId + ' "KDV dahil" ana sayfada', index.indexOf('pricing.' + (planId === 'pro' ? 'pro' : 'ent') + '.gross">KDV dahil<') !== -1, true);
-  sina(planId + ' KDV dahil fiyat odeme.js ile aynı',
-    new RegExp('\\b' + planId + ': ' + p.priceTry + '\\b').test(odemeJs), true);
+  sina(planId + ' KDV dahil fiyat odeme.js ile aynı (aylık + yıllık)',
+    new RegExp('\\b' + planId + '_monthly: ' + p.priceTry + '\\b').test(odemeJs)
+    && new RegExp('\\b' + planId + '_yearly: ' + p.yearly.priceTry + '\\b').test(odemeJs), true);
+  sina(planId + ' yıllık = 10 aylık (2 ay bedava)', p.yearly.priceTry, p.priceTry * 10);
+  ['tr', 'en'].forEach(function (lang) {
+    sina(planId + ' ' + lang + ' yıllık fiyat /pricing sayfasında', pricing.indexOf(p.yearly[lang].price) !== -1, true);
+    sina(planId + ' ' + lang + ' yıllık fiyat ana sayfada', index.indexOf(p.yearly[lang].price) !== -1, true);
+  });
   /* odeme.js'in dökümü: net = round(gross / 1.2, 2), KDV = gross − net. */
   const net = Math.round(p.priceTry / (1 + VAT_RATE) * 100) / 100;
   const kdv = Math.round(p.priceTry * 100 - net * 100) / 100;
   sina(planId + ' döküm toplamı fiyata eşit', Math.round((net + kdv) * 100), p.priceTry * 100);
   sina(planId + ' butonu /odeme sayfasına gidiyor (ana sayfa)',
-    index.indexOf('href="/odeme?plan=' + planId + '"') !== -1, true);
+    ['_monthly', '_yearly'].every(function (d) { return index.indexOf('href="/odeme?plan=' + planId + d + '"') !== -1; }), true);
   sina(planId + ' butonu /odeme sayfasına gidiyor (/pricing)',
-    pricing.indexOf('href="/odeme?plan=' + planId + '"') !== -1, true);
+    ['_monthly', '_yearly'].every(function (d) { return pricing.indexOf('href="/odeme?plan=' + planId + d + '"') !== -1; }), true);
 });
 /* Eski KDV hariç fiyatlar (₺299 / ₺2.499 ve KDV dahil karşılıkları) satış
    sayfalarında, ödeme sayfasında ve yayındaki yasal metinlerde kalmamalı. */

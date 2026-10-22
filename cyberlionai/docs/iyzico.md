@@ -30,6 +30,8 @@ hiçbir yere düşmez. Uçların adları depodaki dosya yollarıyla birebir:
 | `IYZICO_SUBSCRIPTION_ENABLED` | ✅ | `true` olmadan ödeme ucu kapalı. |
 | `IYZICO_PRICING_PLAN_PRO` | ✅ | iyzico fiyat planı **referans kodu**. Bu olmadan `/odeme` "başlatılamıyor" diyor. |
 | `IYZICO_PRICING_PLAN_ENTERPRISE` | ➖ | Enterprise planı satılacaksa. |
+| `IYZICO_PRICING_PLAN_PRO_YEARLY` | ➖ | **Pro Yıllık** planının referans kodu (2.490 TL, KDV dahil). Yoksa yıllık Pro düğmesi "başlatılamıyor" der, aylık etkilenmez. |
+| `IYZICO_PRICING_PLAN_ENTERPRISE_YEARLY` | ➖ | **Enterprise Yıllık** planının referans kodu (19.900 TL, KDV dahil). |
 | `SITE_URL` | ✅ | `https://www.cyberlionai.com`. Geri dönüş adresi buradan kuruluyor. |
 
 **Kodda okunmayan adlar.** `IYZICO_ABONELIK_ETKINLESTIRICI` ve

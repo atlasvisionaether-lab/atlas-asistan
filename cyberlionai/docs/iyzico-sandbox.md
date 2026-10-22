@@ -17,6 +17,8 @@ Anahtar değerleri bu belgede **yok** ve sohbete yazılmaz: doğrudan Vercel'e
 | `IYZICO_BASE_URL` | `https://sandbox-api.iyzipay.com` (sandbox) ya da `https://api.iyzipay.com` (canlı) | aynı |
 | `IYZICO_PRICING_PLAN_PRO` | Pro fiyat planının referans kodu | Pro ödemesi açılmaz |
 | `IYZICO_PRICING_PLAN_ENTERPRISE` | Enterprise fiyat planının referans kodu | Enterprise ödemesi açılmaz |
+| `IYZICO_PRICING_PLAN_PRO_YEARLY` | Pro **yıllık** fiyat planının referans kodu | Yıllık Pro ödemesi açılmaz (aylık etkilenmez) |
+| `IYZICO_PRICING_PLAN_ENTERPRISE_YEARLY` | Enterprise **yıllık** fiyat planının referans kodu | Yıllık Enterprise ödemesi açılmaz |
 | `IYZICO_SUBSCRIPTION_ENABLED` | kill switch; `false/0/off/no` ödemeyi **kapatır**, yoksa açık sayılır | — |
 | `SITE_URL` | dönüş adresinin kökü (`<SITE_URL>/api/checkout-return`); yoksa istek host'undan türetilir | — |
 

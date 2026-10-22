@@ -796,6 +796,17 @@
   .plan--featured .plan__price { color: var(--gold-primary); }
   .plan__period { color: var(--text-gray); font-size: 0.82rem; margin-bottom: 26px; display: block; }
 
+  /* Aylık / Yıllık seçici (pricing-period.js). Görünürlük CSS'te: betik
+     yüklenmezse aylık fiyat görünür. */
+  [data-period-root][data-period="monthly"] [data-period-only="yearly"],
+  [data-period-root][data-period="yearly"] [data-period-only="monthly"]{display:none !important}
+  .period-switch{display:flex;justify-content:center;gap:4px;margin:0 auto 28px;padding:4px;width:max-content;max-width:100%;border:1px solid rgba(212,175,55,.35);border-radius:999px}
+  .period-switch[hidden]{display:none}
+  .period-switch button{font:inherit;font-size:.9rem;font-weight:600;padding:8px 18px;border:0;border-radius:999px;background:transparent;color:var(--text-gray);cursor:pointer}
+  .period-switch button[aria-pressed="true"]{background:var(--gold-primary);color:#0b0b0f}
+  .period-switch button:focus-visible{outline:2px solid var(--gold-primary);outline-offset:2px}
+  .period-switch__save{font-size:.75rem;font-weight:700;margin-left:6px;opacity:.85}
+
   .plan__list { display: grid; gap: 12px; margin-bottom: 30px; flex: 1; }
   .plan__list li { display: flex; align-items: flex-start; gap: 11px; font-size: 0.92rem; color: var(--text-gray); }
   .plan__list li i { color: var(--gold-primary); font-size: 0.8rem; margin-top: 5px; flex: 0 0 auto; }
@@ -1978,7 +1989,12 @@
           <p class="section__subtitle" data-i18n="pricing.subtitle">Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.</p>
         </div>
 
-        <div class="grid plans">
+        <div class="period-switch" data-period-switch role="group" aria-label="Fatura dönemi / Billing period" hidden>
+          <button type="button" data-period-btn="monthly" aria-pressed="true" data-i18n="pricing.periodMonthly">Aylık</button>
+          <button type="button" data-period-btn="yearly" aria-pressed="false"><span data-i18n="pricing.periodYearly">Yıllık</span><span class="period-switch__save" data-i18n="pricing.periodSave">2 ay bedava</span></button>
+        </div>
+
+        <div class="grid plans" data-period-root data-period="monthly">
 
           <!-- FREE -->
           <article class="plan reveal">
@@ -2003,9 +2019,11 @@
             <span class="plan__badge" data-i18n="pricing.pro.badge">Popüler</span>
             <h3 class="plan__name gold-text" data-i18n="pricing.pro.name">Pro</h3>
             <p class="plan__tagline" data-i18n="pricing.pro.tagline">Üretim ortamını sürekli izleyen ekipler için.</p>
-            <div class="plan__price" data-i18n="pricing.pro.price">₺249/ay</div>
+            <div class="plan__price" data-period-only="monthly" data-i18n="pricing.pro.price">₺249/ay</div>
+            <div class="plan__price" data-period-only="yearly" data-i18n="pricing.pro.priceYearly">₺2.490/yıl</div>
             <span class="plan__gross" data-i18n="pricing.pro.gross">KDV dahil</span>
-            <span class="plan__period" data-i18n="pricing.pro.period">Aylık, istediğiniz zaman iptal</span>
+            <span class="plan__period" data-period-only="monthly" data-i18n="pricing.pro.period">Aylık, istediğiniz zaman iptal</span>
+            <span class="plan__period" data-period-only="yearly" data-i18n="pricing.pro.periodYearly">Yıllık, 2 ay bedava (aylık ₺207,50'ye denk)</span>
             <ul class="plan__list">
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f1">Ayda 50 Tarama</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f2">OWASP Lite Taraması (A01–A10)</span></li>
@@ -2016,7 +2034,8 @@
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f8">Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.pro.f5">E-posta Desteği (destek@cyberlionai.com)</span></li>
             </ul>
-            <a class="btn btn--gold btn--block" href="/odeme?plan=pro" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
+            <a class="btn btn--gold btn--block" href="/odeme?plan=pro_monthly" data-period-only="monthly" data-pro-intent data-i18n="pricing.pro.cta">Pro'ya Geç</a>
+            <a class="btn btn--gold btn--block" href="/odeme?plan=pro_yearly" data-period-only="yearly" data-pro-intent data-i18n="pricing.pro.ctaYearly">Pro'ya Geç (Yıllık)</a>
           </article>
 
           <!-- ENTERPRISE -->
@@ -2024,9 +2043,11 @@
             <span class="plan__badge" data-i18n="pricing.ent.badge">Kurumsal</span>
             <h3 class="plan__name" data-i18n="pricing.ent.name">Enterprise</h3>
             <p class="plan__tagline" data-i18n="pricing.ent.tagline">Kendi altyapınıza uyarlanmış tarama ve raporlama.</p>
-            <div class="plan__price" data-i18n="pricing.ent.price">₺1.990/ay</div>
+            <div class="plan__price" data-period-only="monthly" data-i18n="pricing.ent.price">₺1.990/ay</div>
+            <div class="plan__price" data-period-only="yearly" data-i18n="pricing.ent.priceYearly">₺19.900/yıl</div>
             <span class="plan__gross" data-i18n="pricing.ent.gross">KDV dahil</span>
-            <span class="plan__period" data-i18n="pricing.ent.period">Aylık, istediğiniz zaman iptal</span>
+            <span class="plan__period" data-period-only="monthly" data-i18n="pricing.ent.period">Aylık, istediğiniz zaman iptal</span>
+            <span class="plan__period" data-period-only="yearly" data-i18n="pricing.ent.periodYearly">Yıllık, 2 ay bedava (aylık ₺1.658,33'e denk)</span>
             <ul class="plan__list">
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f1">Sınırsız Tarama</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f2">Cloudflare ile 1-Tık Düzeltme, sınırsız (kendi token'ınızla)</span></li>
@@ -2036,7 +2057,8 @@
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f7">Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim</span></li>
               <li><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="pricing.ent.f5">Öncelikli Destek ve Kurumsal Faturalandırma</span></li>
             </ul>
-            <a class="btn btn--blue btn--block" href="/odeme?plan=enterprise" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
+            <a class="btn btn--blue btn--block" href="/odeme?plan=enterprise_monthly" data-period-only="monthly" data-i18n="pricing.ent.cta">Enterprise'a Geç</a>
+            <a class="btn btn--blue btn--block" href="/odeme?plan=enterprise_yearly" data-period-only="yearly" data-i18n="pricing.ent.ctaYearly">Enterprise'a Geç (Yıllık)</a>
           </article>
 
         </div>
@@ -2745,7 +2767,7 @@
           s3d: 'Önem derecesine göre sıralanmış bulgular, kanıtlar ve uygulanabilir düzeltme adımları.'
         },
         pricing: {
-          eyebrow: 'Planlar', title: 'SİZE UYGUN PLANI SEÇİN',
+          eyebrow: 'Planlar', periodMonthly: 'Aylık', periodYearly: 'Yıllık', periodSave: '2 ay bedava', title: 'SİZE UYGUN PLANI SEÇİN',
           subtitle: 'Ücretsiz başlayın. Hazır olduğunuzda yükseltin. Uzun vadeli taahhüt yok.',
           fixNote: 'Tek seferlik düzeltme hizmeti ("Biz düzeltelim") - Yazılım Güvenlik Düzeltme Hizmeti: güvenlik başlığı ₺499, TLS/DNS ₺999, tam paket ₺5.000 + KDV; Pro ve Enterprise abonelerine %50 indirim. Ücretsiz düzeltme kodu her taramada.',
           foot: 'Abonelik fiyatları KDV dahildir; tek seferlik düzeltme ücretlerine %20 KDV eklenir. Ödemeler iyzico güvencesiyle alınır.',
@@ -2761,6 +2783,7 @@
           pro: {
             badge: 'Popüler', name: 'Pro', tagline: 'Üretim ortamını sürekli izleyen ekipler için.',
             price: '₺249/ay', gross: 'KDV dahil', period: 'Aylık, istediğiniz zaman iptal',
+            priceYearly: '₺2.490/yıl', periodYearly: "Yıllık, 2 ay bedava (aylık ₺207,50'ye denk)", ctaYearly: "Pro'ya Geç (Yıllık)",
             f1: 'Ayda 50 Tarama', f2: 'OWASP Lite Taraması (A01–A10)',
             f3: 'OWASP Gruplu PDF Rapor (düzeltme kodu ile)', f4: 'Panelde Tarama Geçmişi ve Skor Eğilimi',
             f5: 'E-posta Desteği (destek@cyberlionai.com)',
@@ -2772,6 +2795,7 @@
           ent: {
             badge: 'Kurumsal', name: 'Enterprise', tagline: 'Sürekli izleme ve düzeltme isteyen kurumlar için.',
             price: '₺1.990/ay', gross: 'KDV dahil', period: 'Aylık, istediğiniz zaman iptal',
+            priceYearly: '₺19.900/yıl', periodYearly: "Yıllık, 2 ay bedava (aylık ₺1.658,33'e denk)", ctaYearly: "Enterprise'a Geç (Yıllık)",
             f1: 'Sınırsız Tarama', f2: "Cloudflare ile 1-Tık Düzeltme, sınırsız (kendi token'ınızla)",
             f3: 'Günlük İzleme + 5 dakikada bir erişilebilirlik (uptime) kontrolü', f4: 'Skor Eğilimi ve Alan Adı Karşılaştırması',
             f5: 'Öncelikli Destek ve Kurumsal Faturalandırma',
@@ -3221,7 +3245,7 @@
           s3d: 'Findings ranked by severity, with evidence and actionable remediation steps.'
         },
         pricing: {
-          eyebrow: 'Plans', title: 'CHOOSE YOUR PLAN',
+          eyebrow: 'Plans', periodMonthly: 'Monthly', periodYearly: 'Yearly', periodSave: '2 months free', title: 'CHOOSE YOUR PLAN',
           subtitle: 'Start free. Upgrade when you are ready. No long-term commitment.',
           fixNote: 'One-time fix service ("We fix it") - Software Security Remediation Service: security header ₺499, TLS/DNS ₺999, full package ₺5,000 + VAT; 50% off for Pro and Enterprise subscribers. Free fix code with every scan.',
           foot: 'Subscription prices include VAT; 20% VAT is added to one-time fix fees. Payments are processed securely by iyzico.',
@@ -3237,6 +3261,7 @@
           pro: {
             badge: 'Popular', name: 'Pro', tagline: 'For teams monitoring production continuously.',
             price: '₺249/mo', gross: 'incl. VAT', period: 'Monthly, cancel anytime',
+            priceYearly: '₺2,490/yr', periodYearly: 'Yearly, 2 months free (₺207.50/mo equivalent)', ctaYearly: 'Go Pro (Yearly)',
             f1: '50 Scans per Month', f2: 'OWASP Lite Scan (A01–A10)',
             f3: 'PDF Report Grouped by OWASP (with fix code)', f4: 'Scan History and Score Trend in the Panel',
             f5: 'Email Support via destek@cyberlionai.com',
@@ -3248,6 +3273,7 @@
           ent: {
             badge: 'Enterprise', name: 'Enterprise', tagline: 'For organizations that want continuous monitoring and remediation.',
             price: '₺1,990/mo', gross: 'incl. VAT', period: 'Monthly, cancel anytime',
+            priceYearly: '₺19,900/yr', periodYearly: 'Yearly, 2 months free (₺1,658.33/mo equivalent)', ctaYearly: 'Go Enterprise (Yearly)',
             f1: 'Unlimited Scans', f2: '1-Click Fix via Cloudflare, unlimited (with your own token)',
             f3: 'Daily Monitoring + availability (uptime) check every 5 minutes', f4: 'Score Trend and Domain Comparison',
             f5: 'Priority Support and Corporate Invoicing',
@@ -7380,5 +7406,6 @@
   </script>
 
  <script src="/mail-links.js" defer></script>
+ <script src="/pricing-period.js" defer></script>
 </body>
 </html>

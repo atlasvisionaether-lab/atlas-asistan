@@ -123,7 +123,7 @@
       trendThin: 'Eğilim için en az iki skorlu tarama gerekiyor.',
       vsPrev: function (d) { return 'önceki taramaya göre ' + (d > 0 ? '+' : '') + d; },
       plans: { free: 'Free', pro: 'Pro', enterprise: 'Enterprise', unknown: 'Okunamadı' },
-      perMonth: '/ay', vatInc: 'KDV dahil', freeForever: 'Süresiz ücretsiz',
+      perMonth: '/ay', perYear: '/yıl', vatInc: 'KDV dahil', freeForever: 'Süresiz ücretsiz',
       monthly: function (d) { return 'Aylık · başlangıç ' + d; },
       planUnknown: 'Plan bilgisi şu an okunamıyor. Ödeme yaptıysanız aboneliğiniz etkilenmez.',
       testMode: 'Test modu', toEnterprise: "Enterprise'a Geç",
@@ -259,7 +259,7 @@
       trendThin: 'A trend needs at least two scored scans.',
       vsPrev: function (d) { return (d > 0 ? '+' : '') + d + ' vs previous scan'; },
       plans: { free: 'Free', pro: 'Pro', enterprise: 'Enterprise', unknown: 'Unavailable' },
-      perMonth: '/mo', vatInc: 'incl. VAT', freeForever: 'Free forever',
+      perMonth: '/mo', perYear: '/yr', vatInc: 'incl. VAT', freeForever: 'Free forever',
       monthly: function (d) { return 'Monthly · since ' + d; },
       planUnknown: 'Plan details cannot be read right now. If you have paid, your subscription is not affected.',
       testMode: 'Test mode', toEnterprise: 'Upgrade to Enterprise',
@@ -469,7 +469,7 @@
     pill.className = 'pill pill--' + (S.plan === 'unknown' ? 'free' : S.plan);
     pill.textContent = S.plan === 'unknown' ? '—' : S.plan.toUpperCase();
     $('planPrice').textContent = S.plan === 'free' ? t('freeForever')
-      : (S.sub && S.sub.priceTry ? fmtTry(S.sub.priceTry) + t('perMonth') + ' · ' + t('vatInc') : '');
+      : (S.sub && S.sub.priceTry ? fmtTry(S.sub.priceTry) + t(S.sub.period === 'yearly' ? 'perYear' : 'perMonth') + ' · ' + t('vatInc') : '');
 
     var paid = S.plan === 'pro' || S.plan === 'enterprise';
     $('upgradeBtn').hidden = paid;
@@ -763,7 +763,7 @@
       $('billPrice').textContent = fmtTry(0); $('billRenewal').textContent = '—';
       $('billNote').textContent = t('billNoteFree');
     } else {
-      $('billPrice').textContent = fmtTry(S.sub.priceTry) + t('perMonth') + ' (' + t('vatInc') + ')';
+      $('billPrice').textContent = fmtTry(S.sub.priceTry) + t(S.sub.period === 'yearly' ? 'perYear' : 'perMonth') + ' (' + t('vatInc') + ')';
       var subs = (S.sub && S.sub.subscriptions) || [];
       var first = subs.slice().sort(function (a, b) { return String(a.createdAt).localeCompare(String(b.createdAt)); })[0];
       /* Yenileme günü iyzico'da tutuluyor ve bu uç döndürmüyor; tahmini bir

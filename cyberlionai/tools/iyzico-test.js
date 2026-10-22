@@ -32,6 +32,8 @@ process.env.IYZICO_BASE_URL = 'https://sandbox-api.iyzipay.com';
 delete process.env.IYZICO_SUBSCRIPTION_ENABLED;
 delete process.env.IYZICO_PRICING_PLAN_PRO;
 delete process.env.IYZICO_PRICING_PLAN_ENTERPRISE;
+delete process.env.IYZICO_PRICING_PLAN_PRO_YEARLY;
+delete process.env.IYZICO_PRICING_PLAN_ENTERPRISE_YEARLY;
 
 const iyzico = require('../api/_lib/iyzico.js');
 const checkout = require('../api/checkout.js');
@@ -201,6 +203,23 @@ sina('plan referansı env\'den okunuyor', checkout.pricingPlanRef('pro'), 'plan-
 sina('free planın referansı yok', checkout.pricingPlanRef('free'), null);
 sina('bilinmeyen planın referansı yok', checkout.pricingPlanRef('kurumsal-plus'), null);
 
+/* Plan × dönem: dört seçenek, dört ayrı referans. Eski `pro` aylık. */
+sina('pro_monthly = eski pro referansı', checkout.pricingPlanRef('pro_monthly'), 'plan-ref-pro');
+sina('yıllık referans yoksa null (aylığa düşmez)', checkout.pricingPlanRef('pro_yearly'), null);
+process.env.IYZICO_PRICING_PLAN_PRO_YEARLY = ' plan-ref-pro-yil ';
+sina('yıllık referans ayrı env\'den, kırpılmış', checkout.pricingPlanRef('pro_yearly'), 'plan-ref-pro-yil');
+sina('bilinmeyen dönemin referansı yok', checkout.pricingPlanRef('pro_weekly'), null);
+sina('free_yearly diye bir seçenek yok', checkout.pricingPlanRef('free_yearly'), null);
+sina('dört seçenek, dört env adı', Object.keys(checkout.PLAN_REF_ENV).sort().join(','),
+  'enterprise_monthly,enterprise_yearly,pro_monthly,pro_yearly');
+{
+  const { checkoutOption } = require('../api/_lib/plans.js');
+  sina('yıllık seçenek tutarı', checkoutOption('enterprise_yearly'),
+    { key: 'enterprise_yearly', id: 'enterprise', period: 'yearly', priceTry: 19900 });
+  sina('eski enterprise aylık', checkoutOption('enterprise').key, 'enterprise_monthly');
+}
+delete process.env.IYZICO_PRICING_PLAN_PRO_YEARLY;
+
 sina('tarayıcı isteği HTML istiyor sayılıyor',
   checkout.wantsHtml({ headers: { accept: 'text/html,application/xhtml+xml' } }), true);
 sina('JSON isteği HTML istemiyor',
@@ -275,6 +294,23 @@ function fakeRes() {
 
   process.env.IYZICO_API_KEY = saved;
 
+  /* Durum ucu, ödeme açıkken yalnızca referansı tanımlı seçenekleri listeler. */
+  {
+    const eskiAcik = process.env.IYZICO_SUBSCRIPTION_ENABLED;
+    process.env.IYZICO_SUBSCRIPTION_ENABLED = 'true';
+    process.env.IYZICO_PRICING_PLAN_PRO_YEARLY = 'plan-ref-pro-yil';
+    res = fakeRes();
+    await require('../api/checkout.js')({ method: 'GET', query: { mode: '1' }, headers: {} }, res);
+    sina('durum ucu hazır seçenekleri listeliyor', res.body.plans, ['pro_monthly', 'pro_yearly']);
+    delete process.env.IYZICO_PRICING_PLAN_PRO_YEARLY;
+    if (eskiAcik === undefined) delete process.env.IYZICO_SUBSCRIPTION_ENABLED; else process.env.IYZICO_SUBSCRIPTION_ENABLED = eskiAcik;
+  }
+
+  /* Bilinmeyen dönem ödenemez. */
+  res = fakeRes();
+  await require('../api/checkout.js')({ method: 'GET', query: { plan: 'pro_weekly' }, headers: {} }, res);
+  sina('bilinmeyen dönem 400', [res.statusCode, res.body.error.code], [400, 'invalid_plan']);
+
   /* Plan denetimi: free ve bilinmeyen plan ödenemez. */
   res = fakeRes();
   await require('../api/checkout.js')({ method: 'GET', query: { plan: 'free' }, headers: {} }, res);
@@ -323,6 +359,15 @@ function fakeRes() {
   sina('tanınmayan plan referansı kabul edilmiyor',
     ret.planOf({ pricingPlanReferenceCode: 'baska-ref' }), null);
   sina('referans yoksa plan yok', ret.planOf({}), null);
+
+  /* Yıllık referans plan kimliğine (yetki) ve seçeneğe (tutar) çevriliyor. */
+  process.env.IYZICO_PRICING_PLAN_ENTERPRISE_YEARLY = 'plan-ref-ent-yil';
+  sina('yıllık referans → enterprise', ret.planOf({ pricingPlanReferenceCode: 'plan-ref-ent-yil' }), 'enterprise');
+  sina('yıllık referans → yıllık seçenek ve tutar',
+    ret.optionOf({ pricingPlanReferenceCode: 'plan-ref-ent-yil' }),
+    { key: 'enterprise_yearly', id: 'enterprise', period: 'yearly', priceTry: 19900 });
+  sina('aylık referans aylık kalıyor', ret.optionOf({ pricingPlanReferenceCode: 'plan-ref-ent' }).period, 'monthly');
+  delete process.env.IYZICO_PRICING_PLAN_ENTERPRISE_YEARLY;
 
   /* ---- 11. Göç: upsert'in dayandığı tekil indeks KISMİ OLMAMALI ----
      PostgREST'in `on_conflict=` parametresi ON CONFLICT'e WHERE koşulu

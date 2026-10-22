@@ -45,7 +45,9 @@ sina('en az üç yükseltme çağrısı var', proCtalar.length >= 3, true);
 /* Pro satırı önce /odeme özet ve onay sayfasına gider; oradaki "Güvenli Öde"
    düğmesi /api/checkout'a yönlendirir (odeme.js). */
 sina('Pro satırı ödeme sayfasına bakıyor',
-  /href="\/odeme\?plan=pro"[^>]*data-pro-intent/.test(html), true);
+  /href="\/odeme\?plan=pro_monthly"[^>]*data-pro-intent/.test(html), true);
+sina('Pro yıllık satırı da ödeme sayfasına bakıyor',
+  /href="\/odeme\?plan=pro_yearly"[^>]*data-pro-intent/.test(html), true);
 sina('ödeme sayfası beyan ve sözleşme onayını gönderiyor',
   /&declaration=1&agreements=1/.test(fs.readFileSync(path.join(__dirname, '..', 'odeme.js'), 'utf8')), true);
 sina('ödeme sayfası ödeme ucuna gidiyor',

@@ -95,6 +95,17 @@
   .plan__price{font-family:var(--font-heading);font-size:1.75rem;font-weight:800;color:var(--text-white);line-height:1.1}
   .plan__gross{display:block;font-size:.85rem;font-weight:600;color:var(--gold-primary);margin-top:6px}
   .plan__period{display:block;font-size:.78rem;color:var(--text-gray);margin:6px 0 20px}
+
+  /* Aylık / Yıllık seçici (pricing-period.js). Görünürlük CSS'te: betik
+     yüklenmezse aylık fiyat görünür. */
+  [data-period-root][data-period="monthly"] [data-period-only="yearly"],
+  [data-period-root][data-period="yearly"] [data-period-only="monthly"]{display:none !important}
+  .period-switch{display:flex;justify-content:center;gap:4px;margin:0 auto 28px;padding:4px;width:max-content;max-width:100%;border:1px solid rgba(212,175,55,.35);border-radius:999px}
+  .period-switch[hidden]{display:none}
+  .period-switch button{font:inherit;font-size:.9rem;font-weight:600;padding:8px 18px;border:0;border-radius:999px;background:transparent;color:var(--text-gray);cursor:pointer}
+  .period-switch button[aria-pressed="true"]{background:var(--gold-primary);color:#0b0b0f}
+  .period-switch button:focus-visible{outline:2px solid var(--gold-primary);outline-offset:2px}
+  .period-switch__save{font-size:.75rem;font-weight:700;margin-left:6px;opacity:.85}
   .plan__list{list-style:none;margin:0 0 24px;padding:0;flex:1 1 auto}
   .plan__list li{position:relative;padding-left:24px;margin-bottom:11px;font-size:.9rem;color:var(--text-gray)}
   .plan__list li::before{content:'';position:absolute;left:4px;top:.62em;width:9px;height:5px;
@@ -166,7 +177,12 @@
          data-t-tr="Bu plan için çevrimiçi ödeme şu an başlatılamadı. destek@cyberlionai.com adresine yazın, aboneliğinizi elle başlatalım."
          data-t-en="Online checkout could not be started for this plan right now. Email destek@cyberlionai.com and we will start the subscription manually.">Bu plan için çevrimiçi ödeme şu an başlatılamadı.</p>
 
-      <div class="plans">
+      <div class="period-switch" data-period-switch role="group" aria-label="Fatura dönemi / Billing period" hidden>
+        <button type="button" data-period-btn="monthly" aria-pressed="true" data-t-tr="Aylık" data-t-en="Monthly">Aylık</button>
+        <button type="button" data-period-btn="yearly" aria-pressed="false"><span data-t-tr="Yıllık" data-t-en="Yearly">Yıllık</span><span class="period-switch__save" data-t-tr="2 ay bedava" data-t-en="2 months free">2 ay bedava</span></button>
+      </div>
+
+      <div class="plans" data-period-root data-period="monthly">
 
         <article class="plan">
           <span class="plan__badge" data-t-tr="Deneme" data-t-en="Trial">Deneme</span>
@@ -193,9 +209,11 @@
           <p class="plan__tagline"
              data-t-tr="Üretim ortamını sürekli izleyen ekipler için."
              data-t-en="For teams monitoring production continuously.">Üretim ortamını sürekli izleyen ekipler için.</p>
-          <div class="plan__price" data-t-tr="₺249/ay" data-t-en="₺249/mo">₺249/ay</div>
+          <div class="plan__price" data-period-only="monthly" data-t-tr="₺249/ay" data-t-en="₺249/mo">₺249/ay</div>
+          <div class="plan__price" data-period-only="yearly" data-t-tr="₺2.490/yıl" data-t-en="₺2,490/yr">₺2.490/yıl</div>
           <span class="plan__gross" data-t-tr="KDV dahil" data-t-en="incl. VAT">KDV dahil</span>
-          <span class="plan__period" data-t-tr="Aylık, istediğiniz zaman iptal" data-t-en="Monthly, cancel anytime">Aylık, istediğiniz zaman iptal</span>
+          <span class="plan__period" data-period-only="monthly" data-t-tr="Aylık, istediğiniz zaman iptal" data-t-en="Monthly, cancel anytime">Aylık, istediğiniz zaman iptal</span>
+          <span class="plan__period" data-period-only="yearly" data-t-tr="Yıllık, 2 ay bedava (aylık ₺207,50'ye denk)" data-t-en="Yearly, 2 months free (₺207.50/mo equivalent)">Yıllık, 2 ay bedava (aylık ₺207,50'ye denk)</span>
           <ul class="plan__list">
             <li data-t-tr="Ayda 50 Tarama" data-t-en="50 Scans per Month">Ayda 50 Tarama</li>
             <li data-t-tr="OWASP Lite Taraması (A01–A10)" data-t-en="OWASP Lite Scan (A01–A10)">OWASP Lite Taraması (A01–A10)</li>
@@ -206,7 +224,8 @@
             <li data-t-tr="Tek seferlik &quot;Biz düzeltelim&quot; hizmetinde %50 indirim" data-t-en="50% off the one-time &quot;We fix it&quot; service">Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim</li>
             <li data-t-tr="E-posta Desteği (destek@cyberlionai.com)" data-t-en="Email Support via destek@cyberlionai.com">E-posta Desteği (destek@cyberlionai.com)</li>
           </ul>
-          <a class="cta cta--gold" href="/odeme?plan=pro" data-t-tr="Pro'ya Geç" data-t-en="Go Pro">Pro'ya Geç</a>
+          <a class="cta cta--gold" href="/odeme?plan=pro_monthly" data-period-only="monthly" data-t-tr="Pro'ya Geç" data-t-en="Go Pro">Pro'ya Geç</a>
+          <a class="cta cta--gold" href="/odeme?plan=pro_yearly" data-period-only="yearly" data-t-tr="Pro'ya Geç (Yıllık)" data-t-en="Go Pro (Yearly)">Pro'ya Geç (Yıllık)</a>
         </article>
 
         <article class="plan">
@@ -215,9 +234,11 @@
           <p class="plan__tagline"
              data-t-tr="Sürekli izleme ve düzeltme isteyen kurumlar için."
              data-t-en="For organizations that want continuous monitoring and remediation.">Sürekli izleme ve düzeltme isteyen kurumlar için.</p>
-          <div class="plan__price" data-t-tr="₺1.990/ay" data-t-en="₺1,990/mo">₺1.990/ay</div>
+          <div class="plan__price" data-period-only="monthly" data-t-tr="₺1.990/ay" data-t-en="₺1,990/mo">₺1.990/ay</div>
+          <div class="plan__price" data-period-only="yearly" data-t-tr="₺19.900/yıl" data-t-en="₺19,900/yr">₺19.900/yıl</div>
           <span class="plan__gross" data-t-tr="KDV dahil" data-t-en="incl. VAT">KDV dahil</span>
-          <span class="plan__period" data-t-tr="Aylık, istediğiniz zaman iptal" data-t-en="Monthly, cancel anytime">Aylık, istediğiniz zaman iptal</span>
+          <span class="plan__period" data-period-only="monthly" data-t-tr="Aylık, istediğiniz zaman iptal" data-t-en="Monthly, cancel anytime">Aylık, istediğiniz zaman iptal</span>
+          <span class="plan__period" data-period-only="yearly" data-t-tr="Yıllık, 2 ay bedava (aylık ₺1.658,33'e denk)" data-t-en="Yearly, 2 months free (₺1,658.33/mo equivalent)">Yıllık, 2 ay bedava (aylık ₺1.658,33'e denk)</span>
           <ul class="plan__list">
             <li data-t-tr="Sınırsız Tarama" data-t-en="Unlimited Scans">Sınırsız Tarama</li>
             <!-- Düzeltmenin adı bilerek böyle: müşterinin kendi Cloudflare
@@ -229,7 +250,8 @@
             <li data-t-tr="Tek seferlik &quot;Biz düzeltelim&quot; hizmetinde %50 indirim" data-t-en="50% off the one-time &quot;We fix it&quot; service">Tek seferlik "Biz düzeltelim" hizmetinde %50 indirim</li>
             <li data-t-tr="Öncelikli Destek ve Kurumsal Faturalandırma" data-t-en="Priority Support and Corporate Invoicing">Öncelikli Destek ve Kurumsal Faturalandırma</li>
           </ul>
-          <a class="cta cta--blue" href="/odeme?plan=enterprise" data-t-tr="Enterprise'a Geç" data-t-en="Go Enterprise">Enterprise'a Geç</a>
+          <a class="cta cta--blue" href="/odeme?plan=enterprise_monthly" data-period-only="monthly" data-t-tr="Enterprise'a Geç" data-t-en="Go Enterprise">Enterprise'a Geç</a>
+          <a class="cta cta--blue" href="/odeme?plan=enterprise_yearly" data-period-only="yearly" data-t-tr="Enterprise'a Geç (Yıllık)" data-t-en="Go Enterprise (Yearly)">Enterprise'a Geç (Yıllık)</a>
         </article>
 
       </div>
@@ -364,5 +386,6 @@
     }
   })();
   </script>
+  <script src="/pricing-period.js" defer></script>
 </body>
 </html>

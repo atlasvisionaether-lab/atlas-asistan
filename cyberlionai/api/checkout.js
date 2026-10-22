@@ -52,7 +52,8 @@
  * 2. Pro'nun "ayda 50 tarama" sınırı hâlâ kodda zorlanmıyor (Faz 6).
  */
 
-const { isPaidPlan, plan: planOf, PLANS } = require('./_lib/plans.js');
+const { PLANS, checkoutOption } = require('./_lib/plans.js');
+const iyzicoPlans = require('./_lib/iyzico-plans.js');
 const iyzico = require('./_lib/iyzico.js');
 const auth = require('./_lib/auth.js');
 const tg = require('./_lib/telegram.js');
@@ -60,20 +61,10 @@ const tg = require('./_lib/telegram.js');
 /* Hesaba bağlı olmayan, her tıklamada tekrarlayan sebepler: saatte bir bildirim. */
 const TEKRARLI_SEBEPLER = ['iyzico_unconfigured', 'pricing_plan_ref_missing', 'auth_unavailable'];
 
-/* Plan başına fiyat planı referansı. iyzico panelinde (ya da
-   createPricingPlan ile) bir kez oluşturulup env'e yazılıyor; kodda sabit
-   referans tutmak, sandbox ile canlıyı karıştırmak demekti. */
-const PLAN_REF_ENV = {
-  pro: 'IYZICO_PRICING_PLAN_PRO',
-  enterprise: 'IYZICO_PRICING_PLAN_ENTERPRISE'
-};
-
-function pricingPlanRef(planId) {
-  const name = PLAN_REF_ENV[planId];
-  if (!name) return null;
-  const value = process.env[name];
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
-}
+/* Ödeme seçeneği (plan × dönem) başına fiyat planı referansı: env'den,
+   bkz. _lib/iyzico-plans.js. Eski `pro`/`enterprise` adları aylık. */
+const PLAN_REF_ENV = iyzicoPlans.PLAN_REF_ENV;
+const pricingPlanRef = iyzicoPlans.refOf;
 
 /**
  * /odeme formundaki "Ad Soyad"ı iyzico'nun ad/soyad alanlarına böler: son
@@ -142,19 +133,21 @@ async function handler(req, res) {
     return res.status(200).json({
       enabled: ready,
       testMode: ready ? iyzico.isSandbox() : null,
-      plans: ready
-        ? Object.keys(PLAN_REF_ENV).filter(function (id) { return pricingPlanRef(id) !== null; })
-        : []
+      /* Referansı tanımlı seçenekler: pro_monthly, pro_yearly, … */
+      plans: ready ? iyzicoPlans.readyKeys() : []
     });
   }
 
-  const planId = String((req.query && req.query.plan) || '').toLowerCase();
+  /* `planId` istekteki değer (yönlendirmelerde aynen geri yazılır, sayfa
+     seçimi korunsun); `option` çözülmüş seçenek. */
+  const planId = String((req.query && req.query.plan) || '').trim().toLowerCase();
 
   if (!planId) {
     return res.status(400).json({ error: { code: 'missing_plan' } });
   }
-  if (!planOf(planId) || !isPaidPlan(planId)) {
-    /* Free planın ödemesi yok; bilinmeyen plan da buraya düşer. */
+  const option = checkoutOption(planId);
+  if (!option) {
+    /* Free planın ödemesi yok; bilinmeyen plan ya da dönem de buraya düşer. */
     return res.status(400).json({ error: { code: 'invalid_plan' } });
   }
 
@@ -226,8 +219,7 @@ async function handler(req, res) {
     return unavailable(req, res, init.reason, planId, user);
   }
 
-  const fiyat = planOf(planId) && planOf(planId).priceTry;
-  await tg.sendTelegram(tg.mesaj.odemeBasladi(planId, user.email, fiyat),
+  await tg.sendTelegram(tg.mesaj.odemeBasladi(option.key, user.email, option.priceTry),
     { type: 'payment', priority: true });
 
   /* 303: tarayıcı GET ile izlesin; geri tuşu ödeme sayfasına değil fiyat

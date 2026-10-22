@@ -18,8 +18,10 @@
   'use strict';
 
   var VAT_RATE = 0.20;
-  var GROSS_TRY = { pro: 249, enterprise: 1990 };
+  /* Ödeme seçeneği (plan_dönem) → KDV dahil tutar. Eski `plan=pro` aylık. */
+  var GROSS_TRY = { pro_monthly: 249, pro_yearly: 2490, enterprise_monthly: 1990, enterprise_yearly: 19900 };
   var NAMES = { free: 'Free', pro: 'Pro', enterprise: 'Enterprise' };
+  var PERIOD_TR = { monthly: 'Aylık', yearly: 'Yıllık · 2 ay bedava' };
 
   function tl(n) {
     return '₺' + n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -27,8 +29,11 @@
   function $(id) { return document.getElementById(id); }
 
   var params = new URLSearchParams(location.search);
-  var planId = String(params.get('plan') || 'pro').toLowerCase();
-  if (!Object.prototype.hasOwnProperty.call(NAMES, planId)) planId = 'pro';
+  var raw = String(params.get('plan') || 'pro').trim().toLowerCase();
+  if (raw === 'pro' || raw === 'enterprise') raw += '_monthly';
+  var planKey = Object.prototype.hasOwnProperty.call(GROSS_TRY, raw) || raw === 'free' ? raw : 'pro_monthly';
+  var planId = planKey === 'free' ? 'free' : planKey.split('_')[0];
+  var period = planKey === 'free' ? null : planKey.split('_')[1];
 
   $('planName').textContent = NAMES[planId];
   $('sumPlan').textContent = 'Cyber Lion AI ' + NAMES[planId];
@@ -44,14 +49,13 @@
     return;
   }
 
-  var gross = GROSS_TRY[planId];
-  /* Kuruş hesabı tam sayıyla: 299 × 1,20 kayan noktada 358,79999… çıkar. */
+  var gross = GROSS_TRY[planKey];
   /* Fiyat KDV dahil; döküm ondan türetilir: net + KDV = gross tam tutar. */
   var net = Math.round(gross / (1 + VAT_RATE) * 100) / 100;
   var vat = Math.round((gross * 100) - (net * 100)) / 100;
 
   $('planPrice').textContent = tl(gross);
-  $('planSub').textContent = 'Aylık · KDV dahil (' + tl(net) + ' + %20 KDV)';
+  $('planSub').textContent = PERIOD_TR[period] + ' · KDV dahil (' + tl(net) + ' + %20 KDV)';
   $('sumNet').textContent = tl(net);
   $('sumVat').textContent = tl(vat);
   $('sumTotal').textContent = tl(gross);
@@ -85,7 +89,7 @@
   }
   function payOpen() {
     if (!payMode) return true;
-    return payMode.enabled === true && (payMode.plans || []).indexOf(planId) !== -1;
+    return payMode.enabled === true && (payMode.plans || []).indexOf(planKey) !== -1;
   }
   $('payClosedLink').setAttribute('href', '/checkout?plan=' + encodeURIComponent(planId));
 
@@ -121,7 +125,7 @@
     btn.disabled = true;
     btn.textContent = 'iyzico\'ya yönlendiriliyorsunuz…';
 
-    window.location.href = '/api/checkout?plan=' + encodeURIComponent(planId)
+    window.location.href = '/api/checkout?plan=' + encodeURIComponent(planKey)
       + '&declaration=1&agreements=1'
       + '&ad=' + encodeURIComponent(ad);
   });
