@@ -547,6 +547,52 @@ function fakeRes() {
     sina('sepet KDV dahil gösteriyor', /cartVat: '\(KDV dahil\)'/.test(ix) && /cartVatNote: 'Fiyatlara KDV dahildir/.test(ix) && /fmtTL\(gross\(list\)\)/.test(ix), true);
   }
 
+  /* ---- 10c. Sonuç sorgulanamazsa müşteri KENDİ siparişine döner ----
+     Canlı 2026-10-22: iyzico sonuç sorgusu 10012 "Geçersiz işlem" döndü;
+     sipariş no yalnızca başarılı yanıttan okunduğu için müşteri
+     /fix-checkout?orderId= (boş) → "Sipariş bulunamadı" gördü. */
+  {
+    const SIP = '33333333-3333-4333-8333-333333333333';
+    const fp = require('../api/fix-pay.js');
+    process.env.SITE_URL = 'https://www.cyberlionai.com';
+    sina('dönüş adresinde sipariş no', fp.callbackUrl({ headers: {} }, SIP),
+      'https://www.cyberlionai.com/api/fix-pay-return?orderId=' + SIP);
+
+    const eskiFetch = global.fetch;
+    let govde = null;
+    global.fetch = async function (u, o) { govde = JSON.parse(o.body); return { ok: true, status: 200, json: async function () { return { status: 'failure', errorCode: '10012', errorMessage: 'Geçersiz işlem' }; } }; };
+    const eskiHata = console.error; const eskiWarn = console.warn; console.error = function () {}; console.warn = function () {};
+    await iyzico.retrievePaymentForm('f1e2d3c4-b5a6-7890-abcd-ef1234567890', SIP);
+    sina('sonuç sorgusu conversationId + token ile (resmi model)', [govde.locale, govde.conversationId, govde.token],
+      ['tr', SIP, 'f1e2d3c4-b5a6-7890-abcd-ef1234567890']);
+
+    const db = require('../api/_lib/db.js');
+    const tgm = require('../api/_lib/telegram.js');
+    const eski = { dbConf: db.isConfigured, dbReq: db.request, tg: tgm.sendTelegram };
+    const yazilan = [];
+    db.isConfigured = function () { return true; };
+    db.request = async function (q, o) {
+      if (o && o.method === 'PATCH') { yazilan.push(q); return []; }
+      return [{ id: SIP, domain: 'ornek.com', status: 'pending', price_discounted: 2500 }];
+    };
+    const bildirim = [];
+    tgm.sendTelegram = async function (m) { bildirim.push(String(m)); return { ok: true }; };
+    const donus = require('../api/fix-pay-return.js');
+    const res = fakeRes();
+    await donus({ method: 'POST', headers: {}, query: { orderId: SIP }, body: { token: 'f1e2d3c4-b5a6-7890-abcd-ef1234567890' } }, res);
+    sina('sorgu 10012 olunca müşteri kendi siparişine "failed" ile dönüyor',
+      [res.statusCode, res.headers.location], [303, '/fix-checkout?orderId=' + SIP + '&pay=failed']);
+    sina('sipariş ödendi YAPILMIYOR', yazilan.length, 0);
+    sina('ekibe iyzico kodu ve sipariş no ile haber', /10012/.test(bildirim.join(' ')) && bildirim.join(' ').indexOf(SIP) !== -1, true);
+
+    const res2 = fakeRes();
+    await donus({ method: 'POST', headers: {}, query: { orderId: 'kotu<id>' }, body: { token: 'f1e2d3c4-b5a6-7890-abcd-ef1234567890' } }, res2);
+    sina('biçimsiz sipariş no yansıtılmıyor', res2.headers.location, '/fix-checkout?orderId=&pay=failed');
+
+    db.isConfigured = eski.dbConf; db.request = eski.dbReq; tgm.sendTelegram = eski.tg;
+    global.fetch = eskiFetch; console.error = eskiHata; console.warn = eskiWarn;
+  }
+
   /* ---- 11a. Dönüşte kullanıcı çerezsiz bulunuyor ----
      iyzico'nun dönüşü siteler arası POST; SameSite=Lax oturum çerezi
      gelmez. Ödeme başlarken token → hesap eşlemesi depoya yazılıyor, dönüş
