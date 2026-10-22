@@ -31,13 +31,27 @@ def collect_hashes():
     return hashes
 
 
+IYZICO_FORM_HOSTS = [
+    'sandbox-cpp.iyzipay.com',
+    'cpp.iyzipay.com',
+    'sandbox-api.iyzipay.com',
+    'api.iyzipay.com',
+    'www.iyzico.com',
+    'sandbox-ode.iyzico.com',
+    'ode.iyzico.com',
+]
+
+
 def build_csp(hashes):
     return '; '.join([
         "default-src 'self'",
         "base-uri 'self'",
         "object-src 'none'",
         "frame-ancestors 'none'",
-        "form-action 'self'",
+        # /odeme formu POST /api/checkout → 303 iyzico'nun barındırılan formu.
+        # Chrome form-action'ı yönlendirmeye de uygular; liste
+        # api/_lib/iyzico.js ALLOWED_FORM_HOSTS ile aynı (iyzico-test denetler).
+        "form-action 'self' " + ' '.join('https://' + h for h in IYZICO_FORM_HOSTS),
         "img-src 'self' data:",
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",

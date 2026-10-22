@@ -336,6 +336,25 @@ function fakeRes() {
   sina('JSON gövde de okunuyor', checkout.formBody({ body: '{"plan":"pro"}' }), { plan: 'pro' });
   sina('nesne gövde aynen', checkout.formBody({ body: { plan: 'x' } }), { plan: 'x' });
 
+  /* CSP form-action: /odeme POST'u iyzico'ya 303 ile gidiyor; Chrome
+     form-action'ı yönlendirmeye de uyguluyor (PR #112 incelemesi). Kodun
+     izin verdiği her form host'u yayınlanan CSP'de olmalı. */
+  {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const kaynak = fs.readFileSync(path.join(__dirname, '..', 'api', '_lib', 'iyzico.js'), 'utf8');
+    const hostlar = (/const ALLOWED_FORM_HOSTS = \[([\s\S]*?)\];/.exec(kaynak)[1].match(/'([^']+)'/g) || [])
+      .map(function (h) { return h.replace(/'/g, ''); });
+    ['vercel.json', '_headers'].forEach(function (f) {
+      const csp = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+      const fa = (/form-action ([^;"]*)/.exec(csp) || [, ''])[1];
+      sina(f + ': form-action iyzico form host\'larını içeriyor (' + hostlar.length + ')',
+        hostlar.length >= 4 && hostlar.every(function (h) { return fa.split(/\s+/).indexOf('https://' + h) !== -1; }), true);
+      sina(f + ': form-action başka dış host içermiyor',
+        fa.split(/\s+/).filter(Boolean).every(function (x) { return x === "'self'" || hostlar.indexOf(x.replace('https://', '')) !== -1; }), true);
+    });
+  }
+
   /* ---- 8b. Fatura bilgileri (iyzico 200702, canlı 2026-10-22) ---- */
   {
     const b = require('../api/_lib/billing-details.js');
