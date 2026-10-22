@@ -37,13 +37,16 @@ function back(res, orderId, durum, alan) {
   return res.status(303).end();
 }
 
-function callbackUrl(req) {
+/* Sipariş no dönüş adresinde: iyzico sonucu sorgulanamazsa (ör. 10012
+   "Geçersiz işlem") müşteri yine KENDİ siparişine döner ("Sipariş
+   bulunamadı" yerine "ödeme tamamlanamadı"). Yalnızca yönlendirme için;
+   ödemenin doğrulaması iyzico'nun yanıtına ve veritabanına dayanır. */
+function callbackUrl(req, orderId) {
   const configured = process.env.SITE_URL;
-  if (typeof configured === 'string' && /^https:\/\//.test(configured.trim())) {
-    return configured.trim().replace(/\/+$/, '') + '/api/fix-pay-return';
-  }
-  const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
-  return 'https://' + String(host) + '/api/fix-pay-return';
+  const base = typeof configured === 'string' && /^https:\/\//.test(configured.trim())
+    ? configured.trim().replace(/\/+$/, '')
+    : 'https://' + String((req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '');
+  return base + '/api/fix-pay-return' + (orderId ? '?orderId=' + encodeURIComponent(orderId) : '');
 }
 
 async function handler(req, res) {
@@ -80,7 +83,7 @@ async function handler(req, res) {
   let init;
   try {
     init = await iyzico.initializePaymentForm({
-      orderId: order.id, priceTry: tutar, callbackUrl: callbackUrl(req),
+      orderId: order.id, priceTry: tutar, callbackUrl: callbackUrl(req, order.id),
       buyer: alici.buyer, address: alici.address,
       itemName: 'Yazılım Güvenlik Düzeltme Hizmeti — ' + (order.type === 'full' ? 'tam paket' : 'seçili bulgular')
     });

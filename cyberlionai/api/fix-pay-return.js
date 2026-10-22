@@ -66,11 +66,16 @@ async function handler(req, res) {
     return res.status(405).json({ error: { code: 'method_not_allowed' } });
   }
   const token = readToken(req);
-  if (console && console.warn) console.warn('fix-pay-return: received token=' + (token ? 'yes' : 'no'));
-  if (!token) return back(res, '', 'invalid');
-  if (!iyzico.isConfigured() || !db.isConfigured()) return back(res, '', 'pending');
+  /* Dönüş adresindeki sipariş no (fix-pay.js callbackUrl): YALNIZCA
+     müşteriyi kendi siparişine geri göndermek için. Doğrulama iyzico'nun
+     basketId'si ve veritabanıyla. */
+  const qId = String((req.query && req.query.orderId) || '');
+  const hint = UUID_RE.test(qId) ? qId : '';
+  if (console && console.warn) console.warn('fix-pay-return: received token=' + (token ? 'yes' : 'no') + ' order=' + (hint ? 'yes' : 'no'));
+  if (!token) return back(res, hint, 'invalid');
+  if (!iyzico.isConfigured() || !db.isConfigured()) return back(res, hint, 'pending');
 
-  const result = await iyzico.retrievePaymentForm(token);
+  const result = await iyzico.retrievePaymentForm(token, hint);
   const data = result.ok ? (result.data || {}) : null;
   if (console && console.warn && data) {
     console.warn('fix-pay-return: iyzico status=' + String(data.status || '-')
@@ -79,7 +84,7 @@ async function handler(req, res) {
       + ' mdStatus=' + String(data.mdStatus === undefined ? '-' : data.mdStatus)
       + ' shape=' + iyzico.responseShape(data));
   }
-  const orderId = data && UUID_RE.test(String(data.basketId || '')) ? String(data.basketId) : '';
+  const orderId = data && UUID_RE.test(String(data.basketId || '')) ? String(data.basketId) : hint;
 
   let order = null;
   if (orderId) {
@@ -96,7 +101,8 @@ async function handler(req, res) {
   if (!v.ok) {
     if (console && console.warn) console.warn('fix-pay-return: ' + v.reason);
     if (v.reason === 'order_not_pending') return back(res, orderId, 'already');
-    await tg.sendTelegram(tg.mesaj.odemeBasarisiz(null, 'fix ' + v.reason + ' (sipariş ' + (orderId || '-')
+    await tg.sendTelegram(tg.mesaj.odemeBasarisiz(null, 'fix ' + v.reason + (result.errorCode ? ' ' + result.errorCode : '')
+      + ' (sipariş ' + (orderId || '-')
       + ', ödeme ' + String((data && data.paymentId) || '-') + ')'
       + (v.review ? ' — iyzico incelemesinde; onaylanınca panelden "ödendi" işaretleyin' : '')),
       { type: 'alert', priority: true });

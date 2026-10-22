@@ -344,8 +344,12 @@ async function initializePaymentForm(opts) {
 }
 
 /** Tek seferlik ödeme formunun sonucu (dönüşte; tek doğru kaynak iyzico). */
-async function retrievePaymentForm(token) {
-  return request('POST', '/payment/iyzipos/checkoutform/auth/ecom/detail', { locale: 'tr', token: String(token) });
+async function retrievePaymentForm(token, conversationId) {
+  /* Resmi RetrieveCheckoutFormRequest: locale, conversationId, token. */
+  const body = { locale: 'tr' };
+  if (conversationId) body.conversationId = String(conversationId);
+  body.token = String(token);
+  return request('POST', '/payment/iyzipos/checkoutform/auth/ecom/detail', body);
 }
 
 /** Yanıtta token (üst düzeyde ya da `data` altında); biçimsizse null. */
