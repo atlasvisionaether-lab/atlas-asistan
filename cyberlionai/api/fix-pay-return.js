@@ -4,13 +4,15 @@
  * iyzico tek seferlik ödeme formunun dönüşü ("Biz düzeltelim").
  *
  *   POST /api/fix-pay-return  (iyzico'dan, token ile)
- *     → 303 /fix-checkout?orderId=…&pay=success|failed|pending|invalid
+ *     → 303 /fix-checkout?orderId=…&pay=success|declined|failed|pending|invalid
  *
  * Siteler arası POST: oturum çerezi gelmez, gerekmez. Sonuç İYZİCO'YA
  * SORULUR; sipariş iyzico'nun döndürdüğü basketId ile VERİTABANINDAN okunur
  * ve beklenen tutar oradan hesaplanır (önbellek eşlemesi yok). Sipariş
  * yalnızca şunların hepsi tutarsa 'paid' olur:
- *   - status 'success' ve paymentStatus 'SUCCESS'
+ *   - status 'success' ve paymentStatus 'SUCCESS'. Banka ret kodu (100xx,
+ *     ör. 10012) gelirse müşteri 'declined' ile döner: kartın internet
+ *     alışverişi iznini açması ya da başka kart denemesi söylenir.
  *   - fraudStatus 1 (onaylandı). 0 = iyzico incelemesinde: hizmet
  *     BAŞLAMAZ, sipariş bekler, ekibe haber verilir; -1 = reddedildi
  *     (PR #115 incelemesi).
@@ -46,6 +48,7 @@ function kurus(v) {
 function verify(data, order) {
   if (!data || data.status !== 'success') return { ok: false, reason: 'status_' + String(data && data.status) };
   if (String(data.paymentStatus || '').toUpperCase() !== 'SUCCESS') {
+    if (iyzico.isBankDecline(data.errorCode)) return { ok: false, reason: 'bank_declined', declined: true };
     return { ok: false, reason: 'payment_' + String(data.paymentStatus || 'unknown').toLowerCase() };
   }
   const fraud = data.fraudStatus === undefined || data.fraudStatus === null ? null : Number(data.fraudStatus);
@@ -96,16 +99,22 @@ async function handler(req, res) {
     }
   }
 
-  const v = result.ok ? verify(data, order) : { ok: false, reason: result.reason || 'retrieve_failed' };
+  const v = result.ok ? verify(data, order)
+    : iyzico.isBankDecline(result.errorCode) ? { ok: false, reason: 'bank_declined', declined: true }
+    : { ok: false, reason: result.reason || 'retrieve_failed' };
   if (!v.ok) {
-    if (console && console.warn) console.warn('fix-pay-return: ' + v.reason);
+    const kod = result.errorCode || (data && data.errorCode) || '';
+    const odemeNo = String((data && data.paymentId) || result.paymentId || '-');
+    if (console && console.warn) {
+      console.warn('fix-pay-return: ' + v.reason + (kod ? ' ' + kod : '') + ' paymentId=' + odemeNo);
+    }
     if (v.reason === 'order_not_pending') return back(res, orderId, 'already');
-    await tg.sendTelegram(tg.mesaj.odemeBasarisiz(null, 'fix ' + v.reason + (result.errorCode ? ' ' + result.errorCode : '')
-      + ' (sipariş ' + (orderId || '-')
-      + ', ödeme ' + String((data && data.paymentId) || '-') + ')'
+    await tg.sendTelegram(tg.mesaj.odemeBasarisiz(null, 'fix ' + v.reason + (kod ? ' ' + kod : '')
+      + ' (sipariş ' + (orderId || '-') + ', ödeme ' + odemeNo + ')'
+      + (v.declined ? ' — banka reddi' : '')
       + (v.review ? ' — iyzico incelemesinde; onaylanınca panelden "ödendi" işaretleyin' : '')),
       { type: 'alert', priority: true });
-    return back(res, orderId, v.review ? 'pending' : 'failed');
+    return back(res, orderId, v.review ? 'pending' : v.declined ? 'declined' : 'failed');
   }
 
   let rows;

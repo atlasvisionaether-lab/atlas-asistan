@@ -174,6 +174,22 @@ function errorDetail(data, cfg) {
   return s.replace(/\s+/g, ' ').slice(0, 200);
 }
 
+/* Hata cevabındaki ödeme no (destek talebi için): yalnızca biçimli kimlik. */
+function safeId(v) {
+  const s = v === undefined || v === null ? '' : String(v);
+  return /^[A-Za-z0-9-]{1,64}$/.test(s) ? s : null;
+}
+
+/* Banka/kart ret kodu: iyzico'nun 10005…10226 kodları kartı veren bankanın
+   cevabı (10012 geçersiz işlem — çoğunlukla kart internet alışverişine
+   kapalı, 10051 yetersiz bakiye, 10054 süresi dolmuş kart …). Kodla
+   düzelmez: müşteri kartının iznini açmalı ya da başka kart denemeli
+   (canlı deneme 2026-10-22: iki deneme de 10012). */
+const BANK_DECLINE_RE = /^10[0-2]\d\d$/;
+function isBankDecline(errorCode) {
+  return BANK_DECLINE_RE.test(String(errorCode === undefined || errorCode === null ? '' : errorCode));
+}
+
 async function request(method, uriPath, bodyObject) {
   const cfg = config();
   if (!cfg) return { ok: false, reason: 'iyzico_unconfigured' };
@@ -227,7 +243,7 @@ async function request(method, uriPath, bodyObject) {
     }
     return {
       ok: false, reason: 'iyzico_http_' + response.status, status: response.status,
-      errorCode: (data && data.errorCode) || null
+      errorCode: (data && data.errorCode) || null, paymentId: safeId(data && data.paymentId)
     };
   }
 
@@ -236,7 +252,7 @@ async function request(method, uriPath, bodyObject) {
     if (console && console.error) {
       console.error('iyzico failure', uriPath, errorDetail(data, cfg));
     }
-    return { ok: false, reason: 'iyzico_failure', errorCode: data.errorCode || null };
+    return { ok: false, reason: 'iyzico_failure', errorCode: data.errorCode || null, paymentId: safeId(data.paymentId) };
   }
 
   return { ok: true, data: data || {} };
@@ -528,7 +544,7 @@ module.exports = {
   formatPrice, authorizationHeader, request, errorDetail, LIMITS,
   createProduct, createPricingPlan, createCustomer,
   initializeCheckoutForm, formUrlOf, getSubscription, tokenOf, hostedUrlFromToken, responseShape,
-  initializePaymentForm, retrievePaymentForm,
+  initializePaymentForm, retrievePaymentForm, isBankDecline,
   hmacSignature, signatureMatches, isActiveStatus,
   getCheckoutForm, webhookSignedData, verifyWebhookSignature, subscriptionRefOf,
   ALLOWED_FORM_HOSTS, KNOWN_STATUSES, MIN_KEY_LENGTH

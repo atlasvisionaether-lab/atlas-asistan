@@ -557,6 +557,14 @@ function fakeRes() {
     sina('başka sepet REDDEDİLİYOR', v({ basketId: 'baska' }).reason, 'basket_mismatch');
     sina('ödeme başarısızsa REDDEDİLİYOR', v({ paymentStatus: 'FAILURE' }).reason, 'payment_failure');
     sina('iyzico failure REDDEDİLİYOR', verify({ status: 'failure' }, sip).ok, false);
+    sina('başarısız ödemede banka ret kodu "declined"',
+      [v({ paymentStatus: 'FAILURE', errorCode: '10012' }).reason, v({ paymentStatus: 'FAILURE', errorCode: '10012' }).declined],
+      ['bank_declined', true]);
+    /* Banka/kart ret kodları (10005…10226) ayrı; kimlik ve istek hataları değil. */
+    sina('banka ret kodları tanınıyor', ['10012', 10051, '10054', '10201', '10226'].map(iyzico.isBankDecline).join(','),
+      'true,true,true,true,true');
+    sina('diğer iyzico kodları banka reddi sayılmıyor', ['8', '1001', '5', '200702', '11', '10301', '100120', '', null, undefined]
+      .map(iyzico.isBankDecline).join(','), 'false,false,false,false,false,false,false,false,false,false');
     /* PR #115 incelemesi: fraud incelemesindeki ödeme hizmeti başlatmamalı. */
     sina('fraud incelemesinde (0) ödendi SAYILMIYOR', [v({ fraudStatus: 0 }).reason, v({ fraudStatus: 0 }).review], ['fraud_review', true]);
     sina('fraud durumu yoksa da incelemede sayılıyor', v({ fraudStatus: undefined }).reason, 'fraud_review');
@@ -602,7 +610,7 @@ function fakeRes() {
 
     const eskiFetch = global.fetch;
     let govde = null;
-    global.fetch = async function (u, o) { govde = JSON.parse(o.body); return { ok: true, status: 200, json: async function () { return { status: 'failure', errorCode: '10012', errorMessage: 'Geçersiz işlem' }; } }; };
+    global.fetch = async function (u, o) { govde = JSON.parse(o.body); return { ok: true, status: 200, json: async function () { return { status: 'failure', errorCode: '10012', errorMessage: 'Geçersiz işlem', paymentId: '27654321' }; } }; };
     const eskiHata = console.error; const eskiWarn = console.warn; console.error = function () {}; console.warn = function () {};
     await iyzico.retrievePaymentForm('f1e2d3c4-b5a6-7890-abcd-ef1234567890', SIP);
     sina('sonuç sorgusu conversationId + token ile (resmi model)', [govde.locale, govde.conversationId, govde.token],
@@ -622,14 +630,26 @@ function fakeRes() {
     const donus = require('../api/fix-pay-return.js');
     const res = fakeRes();
     await donus({ method: 'POST', headers: {}, query: { orderId: SIP }, body: { token: 'f1e2d3c4-b5a6-7890-abcd-ef1234567890' } }, res);
-    sina('sorgu 10012 olunca müşteri kendi siparişine "failed" ile dönüyor',
-      [res.statusCode, res.headers.location], [303, '/fix-checkout?orderId=' + SIP + '&pay=failed']);
+    /* Canlı 2026-10-22: banka reddi (10012) müşteriye kart iznini/başka
+       kartı söyleyen "declined" ile dönüyor; ekibe kod + ödeme no gidiyor. */
+    sina('sorgu 10012 olunca müşteri kendi siparişine "declined" ile dönüyor',
+      [res.statusCode, res.headers.location], [303, '/fix-checkout?orderId=' + SIP + '&pay=declined']);
     sina('sipariş ödendi YAPILMIYOR', yazilan.length, 0);
-    sina('ekibe iyzico kodu ve sipariş no ile haber', /10012/.test(bildirim.join(' ')) && bildirim.join(' ').indexOf(SIP) !== -1, true);
+    sina('ekibe banka reddi, kod, sipariş no ve ödeme no ile haber',
+      /bank_declined 10012/.test(bildirim.join(' ')) && bildirim.join(' ').indexOf(SIP) !== -1
+      && /ödeme 27654321/.test(bildirim.join(' ')) && /banka reddi/.test(bildirim.join(' ')), true);
 
     const res2 = fakeRes();
     await donus({ method: 'POST', headers: {}, query: { orderId: 'kotu<id>' }, body: { token: 'f1e2d3c4-b5a6-7890-abcd-ef1234567890' } }, res2);
-    sina('biçimsiz sipariş no yansıtılmıyor', res2.headers.location, '/fix-checkout?orderId=&pay=failed');
+    sina('biçimsiz sipariş no yansıtılmıyor', res2.headers.location, '/fix-checkout?orderId=&pay=declined');
+
+    /* Banka reddi DIŞINDAKİ hata genel "failed" kalıyor. */
+    global.fetch = async function () { return { ok: true, status: 200, json: async function () { return { status: 'failure', errorCode: '5001', errorMessage: 'x', paymentId: '<script>' }; } }; };
+    bildirim.length = 0;
+    const res3 = fakeRes();
+    await donus({ method: 'POST', headers: {}, query: { orderId: SIP }, body: { token: 'f1e2d3c4-b5a6-7890-abcd-ef1234567890' } }, res3);
+    sina('başka iyzico hatası "failed"', res3.headers.location, '/fix-checkout?orderId=' + SIP + '&pay=failed');
+    sina('biçimsiz ödeme no bildirime girmiyor', /<script>/.test(bildirim.join(' ')) || /banka reddi/.test(bildirim.join(' ')), false);
 
     db.isConfigured = eski.dbConf; db.request = eski.dbReq; tgm.sendTelegram = eski.tg;
     global.fetch = eskiFetch; console.error = eskiHata; console.warn = eskiWarn;
@@ -669,6 +689,50 @@ function fakeRes() {
       /sessionUser \|\| await pendingUser\(token\)/.test(kaynak), true);
     sina('dönüş ucu ve ödeme ucu aynı anahtar önekini kullanıyor',
       kaynak.indexOf("'" + checkout.PENDING_PREFIX + "'") !== -1, true);
+
+    /* Abonelik dönüşünde banka reddi (canlı 2026-10-22, 10012): panel
+       "declined" mesajını gösterir; ekibe kod + ödeme no gider. */
+    {
+      const authLib = require('../api/_lib/auth.js');
+      const dbLib = require('../api/_lib/db.js');
+      const tgLib = require('../api/_lib/telegram.js');
+      const eskiler = { aConf: authLib.isConfigured, aRes: authLib.resolveUser, dConf: dbLib.isConfigured,
+        tg: tgLib.sendTelegram, fetch: global.fetch, warn: console.warn, err: console.error,
+        k: process.env.IYZICO_API_KEY, s: process.env.IYZICO_SECRET_KEY };
+      process.env.IYZICO_API_KEY = SANDBOX_API_KEY;
+      process.env.IYZICO_SECRET_KEY = SANDBOX_SECRET;
+      authLib.isConfigured = function () { return true; };
+      authLib.resolveUser = async function () { return null; };
+      dbLib.isConfigured = function () { return true; };
+      const giden = [];
+      tgLib.sendTelegram = async function (m) { giden.push(String(m)); return { ok: true }; };
+      console.warn = function () {}; console.error = function () {};
+      const cevap = function (b) { return async function () { return { ok: true, status: 200, json: async function () { return b; } }; }; };
+      global.fetch = cevap({ status: 'failure', errorCode: '10012', errorMessage: 'Geçersiz işlem', paymentId: '27654321' });
+      const r1 = fakeRes();
+      await donus({ method: 'POST', headers: {}, query: {}, body: { token: T } }, r1);
+      sina('abonelik: banka reddi panele "declined" ile dönüyor', [r1.statusCode, r1.headers.location], [303, '/panel?checkout=declined']);
+      sina('abonelik: ekibe banka reddi, kod ve ödeme no', /bank_declined 10012 \(ödeme 27654321\) — banka reddi/.test(giden.join(' ')), true);
+      global.fetch = cevap({ status: 'failure', errorCode: '5001', errorMessage: 'x' });
+      const r2 = fakeRes();
+      await donus({ method: 'POST', headers: {}, query: {}, body: { token: T } }, r2);
+      sina('abonelik: başka hata genel "failed"', r2.headers.location, '/panel?checkout=failed');
+      authLib.isConfigured = eskiler.aConf; authLib.resolveUser = eskiler.aRes; dbLib.isConfigured = eskiler.dConf;
+      tgLib.sendTelegram = eskiler.tg; global.fetch = eskiler.fetch; console.warn = eskiler.warn; console.error = eskiler.err;
+      if (eskiler.k === undefined) delete process.env.IYZICO_API_KEY; else process.env.IYZICO_API_KEY = eskiler.k;
+      if (eskiler.s === undefined) delete process.env.IYZICO_SECRET_KEY; else process.env.IYZICO_SECRET_KEY = eskiler.s;
+    }
+
+    /* Müşteriye giden metin: iki sayfada da "declined" net yönlendirme. */
+    const fs2 = require('node:fs');
+    const fixJs = fs2.readFileSync(path.join(__dirname, '..', 'fix-checkout.js'), 'utf8');
+    sina('fix-checkout: banka reddi mesajı (internet alışverişi / başka kart)',
+      /declined: '[^']*internet alışverişine açık[^']*başka bir kart/.test(fixJs), true);
+    const panelHtml = fs2.readFileSync(path.join(__dirname, '..', 'panel.html'), 'utf8');
+    sina('panel: banka reddi mesajı TR ve EN',
+      /declined: '[^']*internet alışverişine açık/.test(panelHtml) && /declined: '[^']*enabled for online purchases/.test(panelHtml), true);
+    sina('panel: ödeme sonucu açılışta gösteriliyor ve prototip anahtarı yok sayılıyor',
+      /showCheckoutResult\(\);/.test(panelHtml) && /hasOwnProperty\.call\(tablo, durum\)/.test(panelHtml), true);
     if (eskiDepo) require.cache[depoYolu] = eskiDepo; else delete require.cache[depoYolu];
     if (eskiDonus) require.cache[donusYolu] = eskiDonus; else delete require.cache[donusYolu];
   }

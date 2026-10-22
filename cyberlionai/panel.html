@@ -246,6 +246,10 @@
       <section id="dash" class="dash">
         <h2 data-t-tr="Taramalarım" data-t-en="My Scans">Taramalarım</h2>
 
+        <!-- Abonelik ödemesinin sonucu: /api/checkout-return buraya
+             ?checkout=active|pending|declined|failed|… ile döner. -->
+        <p class="dash-note" id="dash-checkout-result" role="status" hidden></p>
+
         <!-- Giriş yapılmamış durum -->
         <div id="dash-auth" class="dash-card" hidden>
           <p id="dash-auth-text"
@@ -445,6 +449,15 @@
         badEmail: 'Geçerli bir e-posta adresi girin.',
         sending: 'Gönderiliyor…',
         tooMany: 'Çok fazla deneme. Bir süre sonra tekrar deneyin.',
+        checkout: {
+          active: 'Ödemeniz alındı, aboneliğiniz başladı. Teşekkürler!',
+          pending: 'Ödemeniz doğrulanıyor; birkaç dakika içinde aboneliğiniz açılır ve e-posta ile bilgi verilir.',
+          declined: 'Bankanız bu işlemi onaylamadı; kartınızdan çekim yapılmadı. Kartınızın internet alışverişine açık olduğunu bankanızın uygulamasından kontrol edin ya da başka bir kartla deneyin.',
+          failed: 'Ödeme tamamlanamadı; kartınızdan çekim yapılmadı. Tekrar deneyebilirsiniz.',
+          invalid: 'Ödeme oturumu bulunamadı; tekrar deneyin.',
+          unavailable: 'Çevrimiçi ödeme şu an kullanılamıyor. destek@cyberlionai.com adresine yazın.',
+          login: 'Ödeme sonucunu görmek için giriş yapın. Ödeme alındıysa aboneliğiniz hesabınıza eklenir.'
+        },
         failed: 'Gönderilemedi. Birazdan tekrar deneyin.',
         loading: 'Yükleniyor…',
         empty: 'Henüz taramanız yok. Ana sayfadan bir tarama başlatın.',
@@ -467,6 +480,15 @@
         badEmail: 'Enter a valid email address.',
         sending: 'Sending…',
         tooMany: 'Too many attempts. Please try again later.',
+        checkout: {
+          active: 'Payment received, your subscription has started. Thank you!',
+          pending: 'Verifying your payment; your subscription will be activated within minutes and you will be notified by email.',
+          declined: 'Your bank declined this payment; you were not charged. Check that your card is enabled for online purchases in your banking app, or try another card.',
+          failed: 'Payment could not be completed; you were not charged. You can try again.',
+          invalid: 'Payment session not found; please try again.',
+          unavailable: 'Online payment is unavailable right now. Please write to destek@cyberlionai.com.',
+          login: 'Sign in to see the payment result. If the payment went through, the subscription is added to your account.'
+        },
         failed: 'Could not send. Please try again shortly.',
         loading: 'Loading…',
         empty: 'No scans yet. Start one from the home page.',
@@ -805,11 +827,23 @@
       return null;
     }
 
+    /* Abonelik ödemesinin sonucu (?checkout=<durum>, plan adı değil). */
+    function showCheckoutResult() {
+      var durum = String(new URLSearchParams(location.search).get('checkout') || '').toLowerCase();
+      var tablo = L().checkout;
+      var metin = Object.prototype.hasOwnProperty.call(tablo, durum) ? tablo[durum] : null;
+      var kutu = el('dash-checkout-result');
+      if (!metin || !kutu) return;
+      kutu.textContent = metin;
+      kutu.hidden = false;
+    }
+
     /* ---- Açılış ---- */
     function start() {
       bindLogin();
       bindFilters();
       rememberCheckout();
+      showCheckoutResult();
 
       fetch('/api/auth/me', { headers: { 'Accept': 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; })

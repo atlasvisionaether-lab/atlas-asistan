@@ -102,9 +102,20 @@ async function handler(req, res) {
   /* Tek doğru kaynak: iyzico. */
   const result = await iyzico.getCheckoutForm(token);
   if (!result.ok) {
-    if (console && console.warn) console.warn('checkout-return: ' + result.reason);
-    await bildirBasarisiz(res, user, result.reason || 'checkout_form_failed');
-    return backToPanel(res, 'failed');
+    /* Banka ret kodu (100xx, ör. 10012): müşteriye kartın internet
+       alışverişi iznini açmasını ya da başka kart denemesini söyleyen
+       'declined'; diğer hatalar genel 'failed'. */
+    const reddi = iyzico.isBankDecline(result.errorCode);
+    const sebep = reddi
+      ? 'bank_declined ' + result.errorCode + ' (ödeme ' + (result.paymentId || '-')
+        + ') — banka reddi'
+      : (result.reason || 'checkout_form_failed') + (result.errorCode ? ' ' + result.errorCode : '');
+    if (console && console.warn) {
+      console.warn('checkout-return: ' + (reddi ? 'bank_declined' : result.reason)
+        + (result.errorCode ? ' ' + result.errorCode : '') + ' paymentId=' + (result.paymentId || '-'));
+    }
+    await bildirBasarisiz(res, user, sebep);
+    return backToPanel(res, reddi ? 'declined' : 'failed');
   }
 
   const data = result.data || {};
