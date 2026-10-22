@@ -7,10 +7,11 @@
  * düştü. Üç olası sebep: anahtar yanlış, anahtar başka ortamın (sandbox ↔
  * canlı), ya da imza (IYZWSv2) hesabı yanlış. Bu araç üçünü ayırır:
  *
- *   Ödeme formunu VAR OLMAYAN bir fiyat planı referansıyla başlatmayı dener.
- *   - Kimlik doğrulama geçerse iyzico bir İŞ hatası döner (plan bulunamadı
- *     vb., errorCode ≠ 8): anahtarlar ve imza doğru, hiçbir şey oluşmaz.
- *   - Geçmezse yine errorCode 8: sorun anahtarda/ortamda (ya da imzada).
+ *   1) Standart API'de BIN sorgusu (kart/para yok): anahtarlar hesapta geçerli mi?
+ *   2) Ödeme formunu VAR OLMAYAN bir fiyat planı referansıyla başlatmayı dener.
+ *   1 geçip 2 geçmezse anahtarlar doğru, abonelik ürünü hesapta yetkili değil.
+ *   Kimlik hatası kodları uca göre değişiyor (1001 standart API'de 200
+ *   içinde; 5/8 abonelikte 401 ile): "geçti" yalnızca olumlu kanıtla.
  *
  * Anahtarlar yazdırılmaz; yalnızca biçimleri (uzunluk, önek türü, görünmez
  * karakter) gösterilir. Kart, müşteri ya da abonelik oluşturulmaz.
@@ -22,6 +23,15 @@
  */
 
 const iyzico = require('../api/_lib/iyzico.js');
+
+/* iyzico kimlik hatasını uca göre farklı bildiriyor (sahte anahtarlarla
+   ölçüldü): standart API 200 içinde 1001 "api bilgileri bulunamadı";
+   abonelik API'si 401 ile 5 ya da 8 ("Authentication token is not
+   verified"). "Geçti" yalnızca olumlu kanıtla söylenir. */
+const AUTH_HATA_KODLARI = ['1000', '1001', '5', '8'];
+function kimlikHatasi(r) {
+  return r.reason === 'iyzico_http_401' || AUTH_HATA_KODLARI.indexOf(String(r.errorCode)) !== -1;
+}
 
 function bicim(ad, deger) {
   const v = String(deger || '');
@@ -47,6 +57,15 @@ function bicim(ad, deger) {
     process.exit(2);
   }
 
+  /* 1. Standart API (BIN sorgusu): kart istemez, para çekmez. Anahtarlar
+        hesapta geçerli mi? Abonelik ürününden bağımsız. */
+  const bin = await iyzico.request('POST', '/payment/bin/check',
+    { locale: 'tr', conversationId: 'cyberlion-auth-probe', binNumber: '554960' });
+  /* Geçerli anahtarla bu BIN sorgusu başarılı döner; başka her şey geçmedi. */
+  const binGecti = bin.ok === true;
+  console.log('\n1) Standart API (BIN sorgusu): ' + (binGecti ? 'KİMLİK DOĞRULAMA GEÇTİ' : 'GEÇMEDİ (' + (bin.errorCode || bin.reason) + ')'));
+
+  /* 2. Abonelik API'si: var olmayan planla form başlatma (hiçbir şey oluşmaz). */
   const r = await iyzico.request('POST', '/v2/subscription/checkoutform/initialize', {
     locale: 'tr',
     callbackUrl: 'https://www.cyberlionai.com/api/checkout-return',
@@ -54,20 +73,33 @@ function bicim(ad, deger) {
     subscriptionInitialStatus: 'PENDING',
     customer: { name: 'Tani', surname: 'Probe', email: 'probe@cyberlionai.com' }
   });
+  const abHata = kimlikHatasi(r);
+  /* Var olmayan planla başarılı olmamalı; kimlik hatası dışı bir hata "büyük
+     olasılıkla geçti" ama kodu bilinmiyorsa belirsiz sayılır. */
+  const abGecti = !abHata && !r.ok && r.reason !== 'iyzico_unreachable' && r.reason !== 'iyzico_timeout';
+  console.log('2) Abonelik API (var olmayan plan): ' + (abHata
+    ? 'GEÇMEDİ (' + (r.errorCode || r.reason) + ')'
+    : 'kimlik hatası değil (' + (r.errorCode || r.reason || 'başarılı') + ') — yukarıdaki iyzico satırına bak'));
 
   console.log('');
-  if (r.ok) {
-    console.log('BEKLENMEDİK: iyzico var olmayan planı kabul etti. Kimlik doğrulama GEÇTİ.');
-    process.exit(0);
-  }
-  if (r.reason === 'iyzico_http_401' || String(r.errorCode) === '8') {
-    console.log('KİMLİK DOĞRULAMA GEÇMEDİ (errorCode 8). Bu anahtarlar bu taban adreste geçerli değil.');
-    console.log('→ Biçim satırlarına bak: "sandbox-" ise canlı adrese sandbox anahtarı gidiyor;');
-    console.log('  "sk_live_" ise bu iyzico değil Stripe anahtarı. Panelde: Ayarlar → API Anahtarları.');
+  if (!binGecti) {
+    console.log('SONUÇ: Anahtarlar bu taban adreste HİÇ geçmiyor (abonelikten bağımsız).');
+    console.log('→ Yanlış anahtar ya da yanlış ortam. Biçim satırlarına bak: "sandbox-" ise canlı');
+    console.log('  adrese sandbox anahtarı gidiyor; "sk_live_" ise bu Stripe anahtarı.');
+    console.log('  Canlı panel: merchant.iyzipay.com → Ayarlar → API Anahtarları.');
     process.exit(1);
   }
-  console.log('KİMLİK DOĞRULAMA GEÇTİ: iyzico bir iş hatası döndü (' + (r.errorCode || r.reason)
-    + '), beklenen bu — var olmayan plan. Anahtarlar ve imza doğru.');
-  console.log('→ Bu anahtarlarla Vercel\'deki değerler farklı demektir: Vercel\'e aynen bunları gir.');
+  if (abHata) {
+    console.log('SONUÇ: Anahtarlar DOĞRU (standart API geçti) ama Abonelik API\'si bu anahtarları kabul etmiyor.');
+    console.log('→ Abonelik ürünü hesapta canlıda açık değil: iyzico\'dan açılmasını isteyin.');
+    process.exit(1);
+  }
+  if (!abGecti) {
+    console.log('SONUÇ: BELİRSİZ. Standart API geçti; abonelik adımı beklenmedik sonuç verdi.');
+    console.log('→ Yukarıdaki "iyzico failure/http error" satırını bana iletin (anahtar içermez).');
+    process.exit(1);
+  }
+  console.log('SONUÇ: Anahtarlar ve imza DOĞRU, abonelik API\'si de yetkili.');
+  console.log('→ Vercel\'deki değerler bunlardan farklı: aynı iki değeri Vercel\'e girip redeploy edin.');
   process.exit(0);
 })().catch(function (e) { console.error('HATA', e && e.message); process.exit(1); });
