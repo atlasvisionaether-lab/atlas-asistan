@@ -57,8 +57,14 @@
     if (plus) return /^[1-9]\d{7,14}$/.test(digits) && !/^90/.test(digits) ? '+' + digits : null;
     if (!dial || dial === '+90') return null;
     var code = dial.replace('+', '');
-    /* Yerel yazımdaki baştaki 0 (ör. Birleşik Krallık 07…) atılır. */
-    var local = digits.replace(/^0+/, '');
+    /* Yurt içi önek (trunk prefix) atılır: çoğu ülkede 0 (Birleşik Krallık
+       07… → 7…); Rusya'da 8 (8 912… → 912…), ABD/Kanada'da 1 (1 202… →
+       202…); İtalya'da yok (0 numaranın parçası). PR #118 incelemesi:
+       Rusya "8 912 345 67 89" → +789… gidiyordu. */
+    var local = digits;
+    if (code === '7') local = /^8\d{10}$/.test(local) ? local.slice(1) : local;
+    else if (code === '1') local = /^1\d{10}$/.test(local) ? local.slice(1) : local;
+    else if (code !== '39') local = local.replace(/^0+/, '');
     if (!/^\d{6,14}$/.test(local) || (code + local).length > 15) return null;
     return '+' + code + local;
   }
