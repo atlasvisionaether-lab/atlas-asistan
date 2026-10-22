@@ -11,6 +11,8 @@
   var PAY = {
     success: 'Ödemeniz alındı, teşekkürler. Hizmet başladı. / Payment received, thank you. The service has started.',
     failed: 'Ödeme tamamlanamadı; kartınızdan çekim yapılmadı. Tekrar deneyebilirsiniz. / Payment could not be completed; you were not charged. You can try again.',
+    /* Banka ret kodu (iyzico 100xx, ör. 10012): sorun kartta, tekrar denemek yetmez. */
+    declined: 'Bankanız bu işlemi onaylamadı; kartınızdan çekim yapılmadı. Kartınızın internet alışverişine açık olduğunu bankanızın uygulamasından kontrol edin ya da başka bir kartla deneyin. / Your bank declined this payment; you were not charged. Check that your card is enabled for online purchases in your banking app, or try another card.',
     pending: 'Ödeme sonucu doğrulanıyor; birkaç dakika içinde e-posta ile bilgi verilir. / Verifying the payment; you will be notified by email shortly.',
     unavailable: 'Çevrimiçi ödeme şu an başlatılamadı. destek@cyberlionai.com adresine yazın. / Online payment could not be started right now.',
     already: 'Bu sipariş için ödeme zaten alınmış. / This order has already been paid.',
