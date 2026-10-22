@@ -96,28 +96,27 @@
   var form = $('payForm');
   var err = $('formErr');
 
-  /* Sunucunun (api/_lib/billing-details.js) kurallarının aynısı: tarayıcıda
-     erken uyarı. Son karar sunucuda. */
+  /* Telefon ve kimlik kuralları sunucuyla ORTAK (/billing-form.js →
+     window.clBilling); son karar yine sunucuda. */
+  function ulkeAdi() {
+    var u = $('ulke').value;
+    return u === window.clBilling.OTHER ? $('ulkeDiger').value.trim() : u;
+  }
   function gsmOk(v) {
-    var d = v.replace(/[\s\-().]/g, '');
-    if (/^\+?(90)?0?5\d{9}$/.test(d)) return true;
-    return /^\+[1-9]\d{7,14}$/.test(d) && !/^\+90/.test(d);
+    var B = window.clBilling;
+    var diger = $('ulke').value === B.OTHER;
+    if (diger && !/^\s*(\+|00)/.test(v)) return false;
+    return !!B.normalizeGsm(v, diger ? null : B.dialOf($('ulke').value));
   }
-  function tcknOk(v) {
-    if (!/^[1-9]\d{10}$/.test(v)) return false;
-    var d = v.split('').map(Number);
-    var d10 = (((d[0] + d[2] + d[4] + d[6] + d[8]) * 7 - (d[1] + d[3] + d[5] + d[7])) % 10 + 10) % 10;
-    var top = 0; for (var i = 0; i < 10; i += 1) top += d[i];
-    return d[9] === d10 && d[10] === top % 10;
-  }
+  function tcknOk(v) { return window.clBilling.cleanIdentity(v) !== null; }
   var ALAN_MESAJ = {
     ad: ['adSoyad', 'Lütfen adınızı ve soyadınızı yazın.'],
-    gsm: ['gsm', 'Lütfen geçerli bir cep telefonu yazın (ör. 0555 444 33 33).'],
+    gsm: ['gsm', 'Lütfen geçerli bir cep telefonu yazın (ülke kodu otomatik eklenir; ör. 555 444 33 22). Listede olmayan ülkede numarayı +kodla yazın.'],
     adres: ['adres', 'Lütfen fatura adresinizi yazın (en az 10 karakter).'],
     il: ['il', 'Lütfen ilinizi yazın.'],
     ilce: ['ilce', 'İlçe adı geçersiz.'],
     ulke: ['ulke', 'Lütfen ülkenizi yazın.'],
-    tckn: ['tckn', 'TC kimlik numarası geçersiz. Boş bırakabilirsiniz.']
+    tckn: ['tckn', 'TC kimlik / vergi numarası geçersiz (11 haneli TC ya da 10 haneli vergi no). Boş bırakabilirsiniz.']
   };
 
   function fail(msg, el) {
@@ -144,8 +143,8 @@
     if (!gsmOk($('gsm').value.trim())) return fail(ALAN_MESAJ.gsm[1], $('gsm'));
     if ($('adres').value.trim().replace(/\s+/g, ' ').length < 10) return fail(ALAN_MESAJ.adres[1], $('adres'));
     if ($('il').value.trim().length < 2) return fail(ALAN_MESAJ.il[1], $('il'));
-    if ($('ulke').value.trim().length < 2) return fail(ALAN_MESAJ.ulke[1], $('ulke'));
-    var tckn = $('tckn').value.replace(/\s+/g, '');
+    if (ulkeAdi().length < 2) return fail(ALAN_MESAJ.ulke[1], $('ulke'));
+    var tckn = $('tckn').value.replace(/[\s.-]+/g, '');
     if (tckn && !tcknOk(tckn)) return fail(ALAN_MESAJ.tckn[1], $('tckn'));
     if (!$('onayYetki').checked) return fail('Devam etmek için tarama yetkisi beyanını onaylayın.', $('onayYetki'));
     if (!$('onayOnBilgi').checked) return fail('Devam etmek için Ön Bilgilendirme Formu\'nu onaylayın.', $('onayOnBilgi'));

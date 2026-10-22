@@ -469,6 +469,46 @@ function fakeRes() {
       fs.readFileSync(path.join(__dirname, '..', 'api', '_lib', 'db.js'), 'utf8')),
     true);
 
+  /* ---- 10a. Fatura formu: ülke kodu ve TC/vergi no (tek kaynak billing-form.js) ---- */
+  {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const B = require('../billing-form.js');
+    const b = require('../api/_lib/billing-details.js');
+    const tam = { ad: 'Ali Veli Kaya', gsm: '5554443322', adres: 'Atatürk Cad. No: 1 Daire 2', il: 'İstanbul', ulke: 'Türkiye' };
+    const k = function (x) { return b.buildCustomer(Object.assign({}, tam, x), 'a@b.co', checkout.customerName); };
+    sina('TR: yalnızca numara → +90', k({}).customer.gsmNumber, '+905554443322');
+    sina('Almanya: yerel 0151… → +49', k({ ulke: 'Almanya', gsm: '0151 23456789', il: 'Berlin' }).customer.gsmNumber, '+4915123456789');
+    sina('Birleşik Krallık: 07911… → +44', k({ ulke: 'Birleşik Krallık', gsm: '07911 123456', il: 'London' }).customer.gsmNumber, '+447911123456');
+    sina('ABD: +1', k({ ulke: 'ABD', gsm: '202 555 0143', il: 'Washington' }).customer.gsmNumber, '+12025550143');
+    /* Ulusal önek ülkeye göre (PR #118 incelemesi). */
+    sina('Rusya: 8 912 345 67 89 → +79123456789', k({ ulke: 'Rusya', gsm: '8 912 345 67 89', il: 'Moskova' }).customer.gsmNumber, '+79123456789');
+    sina('Rusya: önek olmadan da', k({ ulke: 'Rusya', gsm: '912 345 67 89', il: 'Moskova' }).customer.gsmNumber, '+79123456789');
+    sina('ABD: 1 202 555 0143 → +12025550143', k({ ulke: 'ABD', gsm: '1 202 555 0143', il: 'Washington' }).customer.gsmNumber, '+12025550143');
+    sina('Kanada: 1 416… → +1416…', k({ ulke: 'Kanada', gsm: '1 416 555 0199', il: 'Toronto' }).customer.gsmNumber, '+14165550199');
+    sina('İtalya: 0 numaranın parçası, atılmaz', k({ ulke: 'İtalya', gsm: '06 1234 5678', il: 'Roma' }).customer.gsmNumber, '+390612345678');
+    sina('İtalya cep: 3xx', k({ ulke: 'İtalya', gsm: '312 345 6789', il: 'Roma' }).customer.gsmNumber, '+393123456789');
+    sina('kod sunucu tablosundan (istemci öneki yok sayılır)', k({ ulke: 'Almanya', gsm: '151 23456789', il: 'Berlin', gsmPrefix: '+90' }).customer.gsmNumber, '+4915123456789');
+    sina('Diğer ülke: +kodla yazılırsa kabul', [k({ ulke: B.OTHER, ulkeDiger: 'Japonya', gsm: '+81 90 1234 5678', il: 'Tokyo' }).customer.gsmNumber,
+      k({ ulke: B.OTHER, ulkeDiger: 'Japonya', gsm: '+81 90 1234 5678', il: 'Tokyo' }).customer.billingAddress.country], ['+819012345678', 'Japonya']);
+    sina('Diğer ülke: +kod yoksa gsm hatası', k({ ulke: B.OTHER, ulkeDiger: 'Japonya', gsm: '90 1234 5678', il: 'Tokyo' }).field, 'gsm');
+    sina('çok kısa yabancı numara reddedilir', k({ ulke: 'Almanya', gsm: '1512', il: 'Berlin' }).field, 'gsm');
+    sina('geçerli vergi no (10 hane) iyzico\'ya gidiyor', k({ tckn: '1234567890' }).customer.identityNumber, '1234567890');
+    sina('sağlaması tutmayan vergi no reddedilir', k({ tckn: '1234567891' }).field, 'tckn');
+    sina('geçerli TC (11 hane)', k({ tckn: '10000000146' }).customer.identityNumber, '10000000146');
+    sina('9 hane reddedilir', k({ tckn: '123456789' }).field, 'tckn');
+    sina('boş kimlik → 11111111111', k({ tckn: '' }).customer.identityNumber, '11111111111');
+    sina('VKN örnekleri (GİB algoritması)', ['1234567890', '9876543217', '0000000001'].map(B.isValidVkn), [true, true, true]);
+    sina('sunucu ve tarayıcı aynı kural dosyasını kullanıyor',
+      /require\('\.\.\/\.\.\/billing-form\.js'\)/.test(fs.readFileSync(path.join(__dirname, '..', 'api', '_lib', 'billing-details.js'), 'utf8')), true);
+    ['odeme.html', 'fix-checkout.html'].forEach(function (f) {
+      const h = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+      sina(f + ': ülke listesi + telefon öneki + TC/Vergi etiketi',
+        /<select id="ulke" name="ulke"/.test(h) && /id="gsmPrefix"/.test(h) && /TC Kimlik No \/ Vergi No/.test(h) && /pattern="\[0-9\]\{10,11\}"/.test(h), true);
+      sina(f + ': billing-form.js form betiğinden önce', h.indexOf('/billing-form.js') !== -1 && h.indexOf('/billing-form.js') < h.indexOf(f === 'odeme.html' ? '/odeme.js' : '/fix-checkout.js'), true);
+    });
+  }
+
   /* ---- 10b. "Biz düzeltelim" tek seferlik iyzico ödemesi ----
      Gösterilen = çekilen = KDV dahil; tutar veritabanındaki siparişten;
      dönüşte iyzico sonucu sipariş ve tutarla karşılaştırılıyor. */

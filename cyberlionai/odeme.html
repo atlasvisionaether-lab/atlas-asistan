@@ -73,9 +73,9 @@
     background:rgba(0,212,255,.06);color:var(--text-white);margin:0 0 22px}
   .field{margin-bottom:16px}
   label{display:block;font-size:.85rem;color:var(--text-white);margin-bottom:6px}
-  input[type=text],input[type=email]{width:100%;font:inherit;font-size:.95rem;color:var(--text-white);
+  input[type=text],input[type=email],input[type=tel],select#ulke{width:100%;font:inherit;font-size:.95rem;color:var(--text-white);
     background:rgba(255,255,255,.04);border:1px solid var(--hairline);border-radius:10px;padding:12px 14px}
-  input[type=text]:focus,input[type=email]:focus{outline:none;border-color:var(--gold-primary)}
+  input[type=text]:focus,input[type=email]:focus,input[type=tel]:focus,select#ulke:focus{outline:none;border-color:var(--gold-primary)}
   input[readonly]{opacity:.75}
   .hint{font-size:.78rem;margin:6px 0 0}
   /* Kart alanı BİLEREK yok: kart bilgileri iyzico'nun barındırılan ödeme
@@ -119,6 +119,10 @@
   .field--row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media (max-width:480px){.field--row{grid-template-columns:1fr}}
   .opt{font-weight:400;opacity:.7;font-size:.85em}
+  .tel{display:flex;align-items:stretch}
+  .tel__code{display:flex;align-items:center;padding:0 12px;border:1px solid var(--hairline,rgba(255,255,255,.2));border-right:0;border-radius:8px 0 0 8px;font-weight:700;min-width:3.2em;justify-content:center;white-space:nowrap}
+  .tel input{border-radius:0 8px 8px 0 !important;flex:1;min-width:0}
+  select#ulke option{color:#111}
 </style>
 </head>
 <body>
@@ -176,8 +180,18 @@
               <p class="hint" id="epostaHint">Abonelik Cyber Lion AI hesabınıza bağlanır. Giriş yapmadıysanız ödemeden önce giriş ekranına yönlendirilirsiniz.</p>
             </div>
             <div class="field">
+              <label for="ulke">Ülke</label>
+              <select id="ulke" name="ulke" autocomplete="country-name" required></select>
+            </div>
+            <div class="field" id="ulkeDigerWrap" hidden>
+              <label for="ulkeDiger">Ülke adı</label>
+              <input type="text" id="ulkeDiger" name="ulkeDiger" autocomplete="country-name" maxlength="56" />
+            </div>
+            <div class="field">
               <label for="gsm">Cep Telefonu</label>
-              <input type="tel" id="gsm" name="gsm" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="0555 444 33 33" required />
+              <div class="tel"><span class="tel__code" id="gsmPrefix" aria-hidden="true">+90</span>
+                <input type="tel" id="gsm" name="gsm" autocomplete="tel-national" inputmode="tel" maxlength="20" placeholder="555 444 33 22" required /></div>
+              <p class="hint">Ülke kodu seçtiğiniz ülkeye göre otomatik eklenir; yalnızca numaranızı yazın.</p>
             </div>
             <div class="field">
               <label for="adres">Fatura Adresi</label>
@@ -194,13 +208,9 @@
               </div>
             </div>
             <div class="field">
-              <label for="ulke">Ülke</label>
-              <input type="text" id="ulke" name="ulke" autocomplete="country-name" maxlength="56" value="Türkiye" required />
-            </div>
-            <div class="field">
-              <label for="tckn">TC Kimlik No <span class="opt">(Fatura için - İsteğe bağlı)</span></label>
-              <input type="text" id="tckn" name="tckn" inputmode="numeric" autocomplete="off" maxlength="11" pattern="[0-9]{11}" />
-              <p class="hint">Faturanızın kimlik numaranızla kesilmesini istiyorsanız yazın. Boş bırakabilirsiniz. Bu bilgiler yalnızca ödeme kuruluşu iyzico'ya iletilir, sunucularımızda saklanmaz.</p>
+              <label for="tckn">TC Kimlik No / Vergi No <span class="opt">(Fatura için - İsteğe bağlı)</span></label>
+              <input type="text" id="tckn" name="tckn" inputmode="numeric" autocomplete="off" maxlength="11" pattern="[0-9]{10,11}" />
+              <p class="hint">11 haneli TC kimlik ya da 10 haneli vergi numarası. Faturanızın bu numarayla kesilmesini istiyorsanız yazın. Boş bırakabilirsiniz. Bu bilgiler yalnızca ödeme kuruluşu iyzico'ya iletilir, sunucularımızda saklanmaz.</p>
             </div>
 
             <div class="cardnote">
@@ -287,6 +297,7 @@
     </div>
   </footer>
 
+  <script src="/billing-form.js" defer></script>
   <script src="/odeme.js" defer></script>
   <script src="/mail-links.js" defer></script>
 </body>
