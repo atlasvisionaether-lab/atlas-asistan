@@ -289,6 +289,21 @@ async function main() {
   dogru('asılı embed süre sınırında kesilir', Date.now() - t0 < 1000);
   Object.assign(embed.LIMITS, eskiSure);
 
+  /* requireTranslation (tools/embed-backfill.js): çevirisiz vektör üretmez. */
+  ceviriDurum = 503;
+  let embedOnce = istekler.embed.length;
+  let katiHata = null;
+  try { await embed.embed(['SSL kalıcı'], { requireTranslation: true }); } catch (e) { katiHata = e.message; }
+  esit('kati mod: çeviri düşerse fırlatır, embed çağrılmaz', [katiHata, istekler.embed.length - embedOnce], ['embed_translate_required', 0]);
+  ceviriDurum = 200;
+  const katiV = await embed.embed(['SSL kalıcı'], { requireTranslation: true });
+  esit('kati mod: çeviri varsa çeviriden vektör', [katiV.length, istekler.embed[istekler.embed.length - 1].govde.input], [1, ['EN: SSL kalıcı']]);
+  const dsYok = process.env.DEEPSEEK_API_KEY; delete process.env.DEEPSEEK_API_KEY;
+  katiHata = null;
+  try { await embed.embed(['SSL'], { requireTranslation: true }); } catch (e) { katiHata = e.message; }
+  esit('kati mod: DeepSeek anahtarı yoksa fırlatır', katiHata, 'embed_translate_required');
+  process.env.DEEPSEEK_API_KEY = dsYok;
+
   let say = istekler.ceviri.length;
   process.env.EMBED_TRANSLATE = 'off';
   await embed.embed(['SSL']);
@@ -314,6 +329,9 @@ async function main() {
   embedDurum = 200;
   const eskiSir = process.env.EMBED_SHARED_SECRET; delete process.env.EMBED_SHARED_SECRET;
   esit('sır yoksa yapılandırılmamış', embed.isConfigured(), false);
+  process.env.EMBED_SHARED_SECRET = '  ' + eskiSir + '\n';
+  await embed.embed(['SSL']);
+  esit('sırdaki boşluk/satır sonu kırpılır', istekler.embed[istekler.embed.length - 1].headers['x-cl-embed-secret'], eskiSir);
   process.env.EMBED_SHARED_SECRET = eskiSir;
 
   /* ================= Anlamsal hafıza ↔ asistan ================= */

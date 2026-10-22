@@ -121,6 +121,13 @@ anlamsal hafıza (embedding sağlayıcısı = yeni veri işleyen, KVKK metni ger
   supabase sağlayıcısında her metin önce DeepSeek flash ile İngilizceye çevrilir
   (akışsız, sıcaklık 0, 6 sn zaman aşımı); çeviri düşerse özgün metin kullanılır.
   `EMBED_TRANSLATE=off` kapatır. openai sağlayıcısı çok dilli, çeviri yapılmaz.
+- **Vektörsüz satırlar:** embed düşerse (ör. 2026-10-21'deki sır uyuşmazlığı,
+  401) mesaj vektörsüz yazılır ve anlamsal aramada görünmez.
+  `node tools/embed-backfill.js` sayar, `--apply` yalnızca hafızası hâlâ açık
+  kullanıcıların satırlarını `embedding=is.null` koşuluyla doldurur; çeviri
+  zorunlu (`requireTranslation`), çevirisiz kalıcı vektör yazılmaz. Sır
+  değerleri (`EMBED_SHARED_SECRET`, `TELEGRAM_*`) okunurken kırpılır; bozuk
+  Telegram belirteci `telegram skipped: bad_token_format` olarak loglanır.
 - **Arama:** `db/migrations/012` — `embedding vector(384)` + `cl_match_assistant_messages`
   (yalnız servis rolü). Yaklaşık indeks yok: kullanıcı başına ≤1000 satırda tam arama.
 - **Bağlam:** son 6 mesaj + son mesajlardan eski, benzerliği ≥0.3 en yakın 5 mesaj
