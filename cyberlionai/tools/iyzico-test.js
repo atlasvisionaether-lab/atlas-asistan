@@ -193,6 +193,18 @@ sina('benzer görünen host reddediliyor',
 sina('şifresiz adres reddediliyor',
   iyzico.formUrlOf({ checkoutFormUrl: 'http://cpp.iyzipay.com/form' }), null);
 sina('adres yoksa uydurulmuyor', iyzico.formUrlOf({}), null);
+sina('paymentPageUrl okunuyor',
+  iyzico.formUrlOf({ paymentPageUrl: 'https://cpp.iyzipay.com?token=abc&lang=tr' }), 'https://cpp.iyzipay.com/?token=abc&lang=tr');
+sina('data altındaki adres okunuyor',
+  iyzico.formUrlOf({ data: { paymentPageUrl: 'https://sandbox-cpp.iyzipay.com?token=abc' } }), 'https://sandbox-cpp.iyzipay.com/?token=abc');
+sina('data altındaki yabancı host yine reddediliyor',
+  iyzico.formUrlOf({ data: { paymentPageUrl: 'https://kotu-site.example/?token=abc' } }), null);
+sina('token biçimi doğrulanıyor', [iyzico.tokenOf({ token: '<script>alert(1)</script>' }), iyzico.tokenOf({ token: 'kisa' }),
+  iyzico.tokenOf({ data: { token: 'f1e2d3c4-b5a6-7890-abcd-ef1234567890' } })], [null, null, 'f1e2d3c4-b5a6-7890-abcd-ef1234567890']);
+sina('token yoksa adres kurulmuyor', iyzico.hostedUrlFromToken(null), null);
+sina('yanıt biçimi değer içermiyor',
+  iyzico.responseShape({ token: 'gizli-token-degeri-1234', checkoutFormContent: '<script>x</script>', tokenExpireTime: 1800, data: { a: 'b' } }),
+  'checkoutFormContent:str(18) data:{a:str(1)} token:str(23) tokenExpireTime:number');
 sina('ayrıştırılamayan adres reddediliyor',
   iyzico.formUrlOf({ checkoutFormUrl: 'bu bir adres degil' }), null);
 
@@ -456,6 +468,44 @@ function fakeRes() {
     /on_conflict=iyzico_subscription_ref/.test(
       fs.readFileSync(path.join(__dirname, '..', 'api', '_lib', 'db.js'), 'utf8')),
     true);
+
+  /* ---- 11b. Form başlatma: canlıda başarılı yanıtta adres beklenen
+     alanlarda değildi (iyzico_form_url_missing, 2026-10-22). Yanıtta yalnızca
+     token + checkoutFormContent varken CPP adresi token'dan kuruluyor;
+     istek ACTIVE ile gidiyor; yanıt biçimi değersiz loglanıyor. */
+  {
+    const eskiFetch = global.fetch;
+    const eskiWarn = console.warn;
+    const uyarilar = [];
+    console.warn = function () { uyarilar.push(Array.prototype.slice.call(arguments).join(' ')); };
+    process.env.IYZICO_API_KEY = SANDBOX_API_KEY;
+    process.env.IYZICO_SECRET_KEY = SANDBOX_SECRET;
+    let govde = null;
+    const TOKEN = 'f1e2d3c4-b5a6-7890-abcd-ef1234567890';
+    global.fetch = async function (u, o) {
+      govde = JSON.parse(o.body);
+      return { ok: true, status: 200, json: async function () {
+        return { status: 'success', systemTime: 1, token: TOKEN, checkoutFormContent: '<script>iyzi</script>', tokenExpireTime: 1800 };
+      } };
+    };
+    const r = await iyzico.initializeCheckoutForm({ callbackUrl: 'https://www.cyberlionai.com/api/checkout-return',
+      pricingPlanRef: 'ref', customer: { name: 'A' } });
+    sina('abonelik ACTIVE ile başlatılıyor (PENDING yükseltmezdi)', govde.subscriptionInitialStatus, 'ACTIVE');
+    sina('callbackUrl gidiyor', govde.callbackUrl, 'https://www.cyberlionai.com/api/checkout-return');
+    sina('adres alanı yokken token\'dan sandbox CPP adresi',
+      [r.ok, r.url, r.token], [true, 'https://sandbox-cpp.iyzipay.com/?token=' + TOKEN + '&lang=tr', TOKEN]);
+    const sekil = uyarilar.join('\n');
+    sina('yanıt biçimi loglanıyor', /iyzico checkoutform shape .*token:str\(36\)/.test(sekil), true);
+    sina('logda token değeri yok', sekil.indexOf(TOKEN) === -1 && sekil.indexOf('iyzi</script>') === -1, true);
+
+    global.fetch = async function () {
+      return { ok: true, status: 200, json: async function () { return { status: 'success', checkoutFormContent: '<script></script>' }; } };
+    };
+    const yok = await iyzico.initializeCheckoutForm({ callbackUrl: 'x', pricingPlanRef: 'r', customer: {} });
+    sina('ne adres ne token: form_url_missing', yok.reason, 'iyzico_form_url_missing');
+    global.fetch = eskiFetch;
+    console.warn = eskiWarn;
+  }
 
   /* ---- 12. iyzico hata ayrıntısı ve süre sınırı (canlı 401, 2026-10-22) ----
      Canlıda yalnızca "401 … 8" loglandı; sebep görünmüyordu. Açıklama artık
