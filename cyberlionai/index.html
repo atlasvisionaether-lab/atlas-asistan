@@ -5562,7 +5562,8 @@
         var plan = null;
         try {
           var v = JSON.parse(localStorage.getItem('cl_checkout_plan') || 'null');
-          if (v && (v.plan === 'pro' || v.plan === 'enterprise') && Date.now() - v.at < 3600000) plan = v.plan;
+          /* plan × dönem (pro_yearly …) ya da eski pro/enterprise; bkz. panel.html. */
+          if (v && /^(pro|enterprise)(_(monthly|yearly))?$/.test(String(v.plan)) && Date.now() - v.at < 3600000) plan = v.plan;
           localStorage.removeItem('cl_checkout_plan');
         } catch (e) {}
         try {
