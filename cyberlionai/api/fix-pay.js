@@ -13,14 +13,15 @@
  *     → grossTry (KDV dahil, karttan çekilen).
  *   - Fatura bilgileri abonelikteki gibi (billing-details.js): gövdede gelir,
  *     loglanmaz, veritabanına yazılmaz, yalnızca iyzico'ya gider.
- *   - iyzico'nun dönüşü siteler arası POST (SameSite=Lax çerez gelmez):
- *     token → { sipariş, hesap, tutar } depoda tutulur; fix-pay-return
- *     sonucu iyzico'ya sorup bu kayıtla karşılaştırır.
+ *   - iyzico'nun dönüşü siteler arası POST (SameSite=Lax çerez gelmez).
+ *     Önbellekte eşleme TUTULMUYOR: iyzico'nun sonucu basketId (= sipariş)
+ *     taşıyor; fix-pay-return siparişi ve beklenen tutarı VERİTABANINDAN
+ *     okur (PR #115 incelemesi: eşleme yazılamazsa ödeme alınıp sipariş
+ *     ödenmemiş kalıyordu).
  */
 
 const auth = require('./_lib/auth.js');
 const db = require('./_lib/db.js');
-const store = require('./_lib/store.js');
 const iyzico = require('./_lib/iyzico.js');
 const billing = require('./_lib/billing-details.js');
 const pricing = require('./_lib/fixpricing.js');
@@ -29,8 +30,6 @@ const { clientIp } = require('./_lib/session.js');
 const { formBody, customerName } = require('./checkout.js');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const PENDING_PREFIX = 'cl:fixpay:pending:';
-const PENDING_TTL_SECONDS = 2 * 3600;
 
 function back(res, orderId, durum, alan) {
   res.setHeader('Location', '/fix-checkout?orderId=' + encodeURIComponent(orderId || '')
@@ -94,18 +93,9 @@ async function handler(req, res) {
       { type: 'alert', priority: true });
     return back(res, orderId, 'unavailable');
   }
-  if (init.token && store.isConfigured()) {
-    try {
-      await store.cacheSet(PENDING_PREFIX + init.token,
-        { orderId: order.id, userId: user.id, email: user.email || '', amount: tutar }, PENDING_TTL_SECONDS);
-    } catch (err) {
-      if (console && console.warn) console.warn('fix-pay: pending_map_failed');
-    }
-  }
   res.setHeader('Location', init.url);
   return res.status(303).end();
 }
 
 module.exports = tg.ucuSar(handler, '/api/fix-pay');
-module.exports.PENDING_PREFIX = PENDING_PREFIX;
 module.exports.callbackUrl = callbackUrl;

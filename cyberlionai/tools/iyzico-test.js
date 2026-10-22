@@ -510,20 +510,33 @@ function fakeRes() {
     console.warn = eskiWarn;
 
     const { verify } = require('../api/fix-pay-return.js');
-    const bekl = { orderId: SIP, amount: 3000 };
-    sina('başarılı ödeme doğrulanıyor', verify({ status: 'success', paymentStatus: 'SUCCESS', basketId: SIP, price: '3000.0' }, bekl).ok, true);
-    sina('tutar farklıysa REDDEDİLİYOR', verify({ status: 'success', paymentStatus: 'SUCCESS', basketId: SIP, price: '2500.0' }, bekl).reason, 'amount_mismatch');
-    sina('başka sepet REDDEDİLİYOR', verify({ status: 'success', paymentStatus: 'SUCCESS', basketId: 'baska', price: '3000' }, bekl).reason, 'basket_mismatch');
-    sina('ödeme başarısızsa REDDEDİLİYOR', verify({ status: 'success', paymentStatus: 'FAILURE', basketId: SIP, price: '3000' }, bekl).reason, 'payment_failure');
-    sina('iyzico failure REDDEDİLİYOR', verify({ status: 'failure' }, bekl).ok, false);
+    /* Sipariş veritabanından: KDV hariç 2.500 → beklenen 3.000. */
+    const sip = { id: SIP, status: 'pending', price_discounted: 2500 };
+    const ok = { status: 'success', paymentStatus: 'SUCCESS', fraudStatus: 1, basketId: SIP, price: '3000.0' };
+    const v = function (fark, s2) { return verify(Object.assign({}, ok, fark), s2 === undefined ? sip : s2); };
+    sina('başarılı ve fraud onaylı ödeme doğrulanıyor', v({}).ok, true);
+    sina('tutar farklıysa REDDEDİLİYOR', v({ price: '2500.0' }).reason, 'amount_mismatch');
+    sina('başka sepet REDDEDİLİYOR', v({ basketId: 'baska' }).reason, 'basket_mismatch');
+    sina('ödeme başarısızsa REDDEDİLİYOR', v({ paymentStatus: 'FAILURE' }).reason, 'payment_failure');
+    sina('iyzico failure REDDEDİLİYOR', verify({ status: 'failure' }, sip).ok, false);
+    /* PR #115 incelemesi: fraud incelemesindeki ödeme hizmeti başlatmamalı. */
+    sina('fraud incelemesinde (0) ödendi SAYILMIYOR', [v({ fraudStatus: 0 }).reason, v({ fraudStatus: 0 }).review], ['fraud_review', true]);
+    sina('fraud durumu yoksa da incelemede sayılıyor', v({ fraudStatus: undefined }).reason, 'fraud_review');
+    sina('fraud reddi (-1)', v({ fraudStatus: -1 }).reason, 'fraud_rejected');
+    sina('sipariş yoksa REDDEDİLİYOR', v({}, null).reason, 'order_not_found');
+    sina('zaten ödenmiş sipariş tekrar ödendi yapılmıyor', v({}, Object.assign({}, sip, { status: 'paid' })).reason, 'order_not_pending');
 
     const kok = path.join(__dirname, '..');
     const payJs = fs.readFileSync(path.join(kok, 'api', 'fix-pay.js'), 'utf8');
     sina('tutar veritabanındaki siparişten (istemciden değil)',
       /grossTry\(order\.price_discounted\)/.test(payJs) && !/params\.(amount|price|tutar)/.test(payJs), true);
     sina('yalnızca bekleyen sipariş ödenebiliyor', /order\.status !== 'pending'/.test(payJs), true);
+    /* PR #115 incelemesi: eşleme yazılamazsa ödeme alınıp sipariş ödenmemiş
+       kalıyordu. Artık önbellek yok; dönüş siparişi basketId ile VT'den okur. */
+    sina('ödeme ucu önbellek eşlemesine bağlı değil', /store\.|cacheSet/.test(payJs), false);
     const retJs = fs.readFileSync(path.join(kok, 'api', 'fix-pay-return.js'), 'utf8');
     sina('dönüş yalnızca pending siparişi paid yapıyor (tekrar dönüş etkisiz)', /status=eq\.pending/.test(retJs), true);
+    sina('dönüş siparişi iyzico basketId ile veritabanından okuyor', /data\.basketId/.test(retJs) && /fix_orders\?id=eq\./.test(retJs) && !/cacheGet/.test(retJs), true);
     const fc = fs.readFileSync(path.join(kok, 'fix-checkout.html'), 'utf8');
     sina('/fix-checkout formu POST /api/fix-pay', /<form[^>]*id="payForm"[^>]*method="post"[^>]*action="\/api\/fix-pay"/.test(fc), true);
     sina('/fix-checkout "Güvenli Öde - iyzico ile"', /Güvenli Öde - iyzico ile/.test(fc), true);
