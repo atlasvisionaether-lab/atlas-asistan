@@ -27,6 +27,7 @@
 const db = require('../_lib/db.js');
 const auth = require('../_lib/auth.js');
 const { PLANS } = require('../_lib/plans.js');
+const iyzicoPlans = require('../_lib/iyzico-plans.js');
 const { planFromSubscriptions } = require('../_lib/entitlement.js');
 const ownership = require('../_lib/ownership.js');
 
@@ -99,9 +100,16 @@ module.exports = async function handler(req, res) {
      "Pro" yazıp taramada free sınırı uygulamak mümkün olmasın. */
   const planId = planFromSubscriptions(rows);
 
+  /* Dönem, planı veren aktif satırın fiyat planı referansından (yıllık
+     abonede aylık fiyat göstermemek için). Eşleşmezse aylık sayılır. */
+  const satir = active.filter(function (r) { return r.plan === planId; })[0];
+  const secenek = satir ? iyzicoPlans.optionOfRef(satir.iyzico_plan_ref) : null;
+  const period = secenek ? secenek.period : 'monthly';
+
   return res.status(200).json({
     plan: planId,
-    priceTry: PLANS[planId] ? PLANS[planId].priceTry : 0,
+    period: period,
+    priceTry: secenek ? secenek.priceTry : (PLANS[planId] ? PLANS[planId].priceTry : 0),
     subscriptions: active.map(function (r) {
       return {
         domain: r.domain,

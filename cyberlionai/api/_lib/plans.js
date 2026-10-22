@@ -43,13 +43,24 @@ const PLANS = {
     id: 'pro',
     priceTry: 249,
     tr: { price: '₺249/ay', gross: 'KDV dahil', period: 'Aylık, istediğiniz zaman iptal' },
-    en: { price: '₺249/mo', gross: 'incl. VAT', period: 'Monthly, cancel anytime' }
+    en: { price: '₺249/mo', gross: 'incl. VAT', period: 'Monthly, cancel anytime' },
+    /* Yıllık: 10 aylık bedel (2 ay bedava); iyzico'daki yıllık planla aynı, KDV dahil. */
+    yearly: {
+      priceTry: 2490,
+      tr: { price: '₺2.490/yıl', gross: 'KDV dahil', period: 'Yıllık, 2 ay bedava' },
+      en: { price: '₺2,490/yr', gross: 'incl. VAT', period: 'Yearly, 2 months free' }
+    }
   },
   enterprise: {
     id: 'enterprise',
     priceTry: 1990,
     tr: { price: '₺1.990/ay', gross: 'KDV dahil', period: 'Aylık, istediğiniz zaman iptal' },
-    en: { price: '₺1,990/mo', gross: 'incl. VAT', period: 'Monthly, cancel anytime' }
+    en: { price: '₺1,990/mo', gross: 'incl. VAT', period: 'Monthly, cancel anytime' },
+    yearly: {
+      priceTry: 19900,
+      tr: { price: '₺19.900/yıl', gross: 'KDV dahil', period: 'Yıllık, 2 ay bedava' },
+      en: { price: '₺19,900/yr', gross: 'incl. VAT', period: 'Yearly, 2 months free' }
+    }
   }
 };
 
@@ -64,4 +75,26 @@ function plan(id) {
   return Object.prototype.hasOwnProperty.call(PLANS, id) ? PLANS[id] : null;
 }
 
-module.exports = { VAT_RATE, PLANS, PAID_PLAN_IDS, isPaidPlan, plan };
+/* Ödeme seçenekleri: plan × dönem. Plan kimliği (pro/enterprise) yetkiyi
+   belirler ve veritabanına o yazılır; dönem yalnızca ödenen tutarı ve
+   yenileme aralığını değiştirir. */
+const PERIODS = ['monthly', 'yearly'];
+const CHECKOUT_KEYS = ['pro_monthly', 'pro_yearly', 'enterprise_monthly', 'enterprise_yearly'];
+
+/**
+ * Ödeme seçeneğini çözer. Eski bağlantılar (`plan=pro`, satış teklifi) aylık
+ * sayılır. Bilinmeyen, ücretsiz ya da biçimsiz değer → null.
+ *   'pro_yearly' → { key: 'pro_yearly', id: 'pro', period: 'yearly', priceTry: 2490 }
+ */
+function checkoutOption(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  const m = /^(pro|enterprise)(?:_(monthly|yearly))?$/.exec(s);
+  if (!m) return null;
+  const id = m[1];
+  const period = m[2] || 'monthly';
+  const def = PLANS[id];
+  const priceTry = period === 'yearly' ? def.yearly.priceTry : def.priceTry;
+  return { key: id + '_' + period, id: id, period: period, priceTry: priceTry };
+}
+
+module.exports = { VAT_RATE, PLANS, PAID_PLAN_IDS, PERIODS, CHECKOUT_KEYS, isPaidPlan, plan, checkoutOption };

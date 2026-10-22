@@ -784,11 +784,13 @@
        önce orada alınıyor. */
     var CHECKOUT_KEY = 'cl_checkout_plan';
     var CHECKOUT_TTL_MS = 60 * 60 * 1000;
-    var CHECKOUT_PLANS = ['pro', 'enterprise'];
+    /* Ödeme seçeneği: plan × dönem (pro_yearly …) ya da eski pro/enterprise
+       (aylık). Liste değil kalıp: yeni dönem seçimi girişte kaybolmasın. */
+    var CHECKOUT_PLAN_RE = /^(pro|enterprise)(_(monthly|yearly))?$/;
 
     function rememberCheckout() {
       var plan = String(new URLSearchParams(location.search).get('checkout') || '').toLowerCase();
-      if (CHECKOUT_PLANS.indexOf(plan) === -1) return;
+      if (!CHECKOUT_PLAN_RE.test(plan)) return;
       try { localStorage.setItem(CHECKOUT_KEY, JSON.stringify({ plan: plan, at: Date.now() })); } catch (e) {}
       var note = el('dash-checkout-note');
       if (note) note.hidden = false;
@@ -797,7 +799,7 @@
     function pendingCheckout() {
       try {
         var v = JSON.parse(localStorage.getItem(CHECKOUT_KEY) || 'null');
-        if (v && CHECKOUT_PLANS.indexOf(v.plan) !== -1 && Date.now() - v.at < CHECKOUT_TTL_MS) return v.plan;
+        if (v && CHECKOUT_PLAN_RE.test(String(v.plan)) && Date.now() - v.at < CHECKOUT_TTL_MS) return v.plan;
         localStorage.removeItem(CHECKOUT_KEY);
       } catch (e) {}
       return null;

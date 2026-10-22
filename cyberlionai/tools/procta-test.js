@@ -45,7 +45,21 @@ sina('en az üç yükseltme çağrısı var', proCtalar.length >= 3, true);
 /* Pro satırı önce /odeme özet ve onay sayfasına gider; oradaki "Güvenli Öde"
    düğmesi /api/checkout'a yönlendirir (odeme.js). */
 sina('Pro satırı ödeme sayfasına bakıyor',
-  /href="\/odeme\?plan=pro"[^>]*data-pro-intent/.test(html), true);
+  /href="\/odeme\?plan=pro_monthly"[^>]*data-pro-intent/.test(html), true);
+/* PR #109 incelemesi: giriş sonrası ödemeye dönüş yeni dönemli anahtarları
+   reddediyordu (girişsiz yıllık alıcı seçimini kaybediyordu). */
+const panelHtml = fs.readFileSync(path.join(__dirname, '..', 'panel.html'), 'utf8');
+const dondurAna = /function continueCheckout\(\)[\s\S]*?\.test\(String\(v\.plan\)\)/.exec(html);
+['pro_yearly', 'enterprise_yearly', 'pro_monthly', 'pro', 'enterprise'].forEach(function (k) {
+  const panelRe = new Function('return ' + /CHECKOUT_PLAN_RE = (\/[^;]+\/);/.exec(panelHtml)[1])();
+  const anaRe = new Function('return ' + /(\/\^\(pro\|enterprise\)[^/]*\/)\.test\(String\(v\.plan\)\)/.exec(html)[1])();
+  sina('girişten sonra ödemeye dönüş "' + k + '" seçimini koruyor (panel + ana sayfa)', panelRe.test(k) && anaRe.test(k), true);
+});
+sina('girişten sonra dönüş free/bilinmeyen seçeneği kabul etmiyor',
+  ['free', 'pro_weekly', 'x'].some(function (k) { return /CHECKOUT_PLAN_RE = (\/[^;]+\/);/.test(panelHtml) && new Function('return ' + /CHECKOUT_PLAN_RE = (\/[^;]+\/);/.exec(panelHtml)[1])().test(k); }), false);
+sina('ana sayfada continueCheckout kalıpla doğruluyor', Boolean(dondurAna), true);
+sina('Pro yıllık satırı da ödeme sayfasına bakıyor',
+  /href="\/odeme\?plan=pro_yearly"[^>]*data-pro-intent/.test(html), true);
 sina('ödeme sayfası beyan ve sözleşme onayını gönderiyor',
   /&declaration=1&agreements=1/.test(fs.readFileSync(path.join(__dirname, '..', 'odeme.js'), 'utf8')), true);
 sina('ödeme sayfası ödeme ucuna gidiyor',

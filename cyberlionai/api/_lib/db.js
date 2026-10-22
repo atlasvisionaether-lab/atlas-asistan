@@ -713,7 +713,7 @@ async function enterpriseScanTargets(limit) {
 
 const SUBS_TABLE = 'cl_subscriptions';
 const SUB_SELECT = 'id,domain,plan,active,status,iyzico_env,'
-  + 'iyzico_subscription_ref,iyzico_customer_ref,created_at,updated_at';
+  + 'iyzico_subscription_ref,iyzico_customer_ref,iyzico_plan_ref,created_at,updated_at';
 
 /** Hesabın kendi abonelikleri. Başkasının satırı bu sorgudan ÇIKAMAZ. */
 async function listSubscriptions(userId) {

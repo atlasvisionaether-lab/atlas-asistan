@@ -15,7 +15,7 @@ Web: https://www.cyberlionai.com
 Cyber Lion AI dijital bir SaaS hizmetidir.
 
 **İptal:**
-Paneldeki "İptal Talebi" bağlantısıyla ya da destek@cyberlionai.com adresine e-posta göndererek aboneliğinizi iptal edebilirsiniz. İptal sonrası bir sonraki ay yenileme yapılmaz, mevcut dönem sonuna kadar kullanım devam eder.
+Paneldeki "İptal Talebi" bağlantısıyla ya da destek@cyberlionai.com adresine e-posta göndererek aboneliğinizi iptal edebilirsiniz. İptal sonrası bir sonraki dönemde (aylık ya da yıllık, seçtiğiniz döneme göre) yenileme yapılmaz, mevcut dönem sonuna kadar kullanım devam eder.
 
 **İade:**
 - Dijital hizmet anında ifa edildiği için, tarama yapıldıktan sonra iade yapılamaz (Mesafeli Sözleşmeler Yönetmeliği Madde 15/ğ).

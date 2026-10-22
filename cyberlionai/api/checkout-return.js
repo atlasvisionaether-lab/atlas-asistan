@@ -35,7 +35,7 @@
 const db = require('./_lib/db.js');
 const auth = require('./_lib/auth.js');
 const iyzico = require('./_lib/iyzico.js');
-const { plan: planDef } = require('./_lib/plans.js');
+const iyzicoPlans = require('./_lib/iyzico-plans.js');
 const tg = require('./_lib/telegram.js');
 const n8n = require('./_lib/n8n.js');
 
@@ -103,9 +103,11 @@ async function handler(req, res) {
     return backToPanel(res, 'pending');
   }
 
-  /* Plan, fiyat planı referansından değil iyzico'nun cevabından okunuyor;
-     hangi plana abone olduğunu müşterinin isteği söylemiyor. */
-  const planId = planOf(data);
+  /* Plan, isteğin söylediğinden değil iyzico'nun cevabındaki fiyat planı
+     referansından okunuyor (dört seçenek: plan × dönem). Veritabanına plan
+     kimliği (pro/enterprise) yazılır; dönem referansta saklı. */
+  const option = optionOf(data);
+  const planId = option ? option.id : null;
   if (!planId) {
     if (console && console.warn) console.warn('checkout-return: plan_unresolved');
     await bildirBasarisiz(res, user, 'plan_unresolved');
@@ -145,9 +147,8 @@ async function handler(req, res) {
     subscriptionRef: subscriptionRef,
   });
   if (await tg.tekSefer('pay:' + subscriptionRef + ':' + (aktif ? 'active' : 'pending'), 7 * 86400)) {
-    const tanim = planDef(planId);
     await tg.sendTelegram(aktif
-      ? tg.mesaj.odemeBasarili(user.email, planId, subscriptionRef, tanim && tanim.priceTry)
+      ? tg.mesaj.odemeBasarili(user.email, option.key, subscriptionRef, option.priceTry)
       : tg.mesaj.odemeBeklemede(user.email, planId, status || 'unknown'),
       { type: 'payment', priority: true });
   }
@@ -159,16 +160,20 @@ async function handler(req, res) {
 module.exports = tg.ucuSar(handler, '/api/checkout-return');
 
 /**
- * iyzico'nun cevabındaki fiyat planı referansını bizim plan kimliğimize
- * çevirir. Eşleşme env üzerinden: referans kodları sandbox ile canlıda farklı.
+ * iyzico'nun cevabındaki fiyat planı referansını ödeme seçeneğine çevirir.
+ * Eşleşme env üzerinden (bkz. _lib/iyzico-plans.js): referans kodları
+ * sandbox ile canlıda farklı.
  */
+function optionOf(data) {
+  return iyzicoPlans.optionOfRef(data && data.pricingPlanReferenceCode);
+}
+
+/** Plan kimliği (pro/enterprise); eşleşmezse null. */
 function planOf(data) {
-  const ref = String((data && data.pricingPlanReferenceCode) || '').trim();
-  if (!ref) return null;
-  if (ref === String(process.env.IYZICO_PRICING_PLAN_PRO || '').trim()) return 'pro';
-  if (ref === String(process.env.IYZICO_PRICING_PLAN_ENTERPRISE || '').trim()) return 'enterprise';
-  return null;
+  const opt = optionOf(data);
+  return opt ? opt.id : null;
 }
 
 module.exports.readToken = readToken;
 module.exports.planOf = planOf;
+module.exports.optionOf = optionOf;

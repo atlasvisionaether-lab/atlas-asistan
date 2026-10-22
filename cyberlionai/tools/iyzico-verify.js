@@ -119,7 +119,9 @@ function kod(y) { return y.govde && y.govde.error ? y.govde.error.code : null; }
      sırası YAPILANDIRMA → PLAN REFERANSI → OTURUM. O hâli ayrı bir durum
      olarak adlandırmak gerekiyordu; uç doğru davranıyordu, ölçüt eksikti. */
   const acik = d.enabled === true;
-  const planVar = Array.isArray(d.plans) && d.plans.indexOf('pro') !== -1;
+  /* Durum ucu ödeme seçeneklerini listeler (pro_monthly, pro_yearly, …);
+     eski sürüm yalnızca 'pro' diyordu. İkisi de "Pro ödenebilir" demek. */
+  const planVar = Array.isArray(d.plans) && (d.plans.indexOf('pro_monthly') !== -1 || d.plans.indexOf('pro') !== -1);
   const hazir = acik && planVar;      /* ödeme gerçekten başlatılabilir */
 
   if (!acik) {

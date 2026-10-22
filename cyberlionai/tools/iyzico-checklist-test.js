@@ -58,6 +58,8 @@ const CHECKOUT = oku('api/checkout.js');
 const RETURN = oku('api/checkout-return.js');
 const WEBHOOK = oku('api/webhooks/iyzico.js');
 const LIB = oku('api/_lib/iyzico.js');
+/* Seçenek ↔ referans eşlemesi (plan × dönem) bu modülde. */
+const PLAN_MAP = oku('api/_lib/iyzico-plans.js');
 const VERIFY = oku('tools/iyzico-verify.js');
 const SETUP = oku('tools/iyzico-plan-setup.js');
 const DOC = oku('docs/iyzico-sandbox.md');
@@ -114,7 +116,7 @@ dene('webhook imzasız isteği reddediyor (ölçülen 401 gerçek)', function ()
 process.stdout.write(KALIN + 'Kodun okuduğu her IYZICO_* değişkeni belgede yazılı' + SIFIRLA + '\n');
 
 const KODDAKI = Array.from(new Set(
-  (CHECKOUT + LIB + RETURN + WEBHOOK).match(/IYZICO_[A-Z_]+/g) || []
+  (CHECKOUT + LIB + RETURN + WEBHOOK + PLAN_MAP).match(/IYZICO_[A-Z_]+/g) || []
 )).sort();
 
 dene('koddan en az beş IYZICO_* değişkeni okundu (okuma çalışıyor)', function () {
