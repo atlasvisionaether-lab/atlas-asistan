@@ -281,14 +281,55 @@ async function initializeCheckoutForm(opts) {
     locale: 'tr',
     callbackUrl: opts.callbackUrl,
     pricingPlanReferenceCode: opts.pricingPlanRef,
-    subscriptionInitialStatus: 'PENDING',
+    /* ACTIVE: ödeme alınınca abonelik başlar. PENDING ile başlatılan
+       abonelik ayrıca etkinleştirilene kadar beklemede kalır ve dönüş ucu
+       (yalnızca ACTIVE'i açık sayar) müşteriyi yükseltmezdi. */
+    subscriptionInitialStatus: 'ACTIVE',
     customer: opts.customer
   });
   if (!result.ok) return result;
 
-  const url = formUrlOf(result.data);
+  /* Yanıtın biçimi (alan adı + tür + uzunluk; DEĞER YOK). Canlıda ilk
+     başarılı yanıtta adres beklenen alanlarda değildi (form_url_missing);
+     hangi alanların geldiğini görmek için. */
+  if (console && console.warn) {
+    console.warn('iyzico checkoutform shape', responseShape(result.data));
+  }
+
+  const url = formUrlOf(result.data) || hostedUrlFromToken(tokenOf(result.data));
   if (!url) return { ok: false, reason: 'iyzico_form_url_missing' };
-  return { ok: true, url: url, token: (result.data && result.data.token) || null };
+  return { ok: true, url: url, token: tokenOf(result.data) };
+}
+
+/** Yanıtta token (üst düzeyde ya da `data` altında); biçimsizse null. */
+function tokenOf(data) {
+  const t = (data && data.token) || (data && data.data && data.data.token);
+  return typeof t === 'string' && /^[A-Za-z0-9_-]{10,128}$/.test(t) ? t : null;
+}
+
+/**
+ * Adres alanı yoksa token'dan barındırılan ödeme sayfası: iyzico'nun ortak
+ * ödeme sayfası (CPP) `?token=` ile açılıyor — standart ödeme formunun
+ * `paymentPageUrl`'i bu biçimde. Host ortamdan seçilir, token biçimi
+ * doğrulanmış; yine de ALLOWED_FORM_HOSTS içinde.
+ */
+function hostedUrlFromToken(token) {
+  if (!token) return null;
+  const host = isSandbox() ? 'sandbox-cpp.iyzipay.com' : 'cpp.iyzipay.com';
+  return 'https://' + host + '/?token=' + encodeURIComponent(token) + '&lang=tr';
+}
+
+/** Değer içermeyen biçim özeti: `token:str(36) data:{a:num,…}`. */
+function responseShape(data, depth) {
+  if (!data || typeof data !== 'object') return typeof data;
+  return Object.keys(data).sort().map(function (k) {
+    const v = data[k];
+    if (v === null) return k + ':null';
+    if (typeof v === 'string') return k + ':str(' + v.length + ')';
+    if (Array.isArray(v)) return k + ':arr(' + v.length + ')';
+    if (typeof v === 'object') return k + ':' + ((depth || 0) < 1 ? '{' + responseShape(v, 1) + '}' : 'obj');
+    return k + ':' + typeof v;
+  }).join(' ');
 }
 
 /**
@@ -297,11 +338,14 @@ async function initializeCheckoutForm(opts) {
  * sağlayıcıdan gelen bir alan, açık yönlendirme fırsatına çevrilmemeli.
  */
 function formUrlOf(data) {
-  const candidates = [
-    data && data.checkoutFormUrl,
-    data && data.payWithIyzicoPageUrl,
-    data && data.formUrl
-  ];
+  /* Alan adları sağlayıcı sürümüne göre değişebiliyor; üst düzey ve `data`
+     altı ikisi de deneniyor. `paymentPageUrl` iyzico ödeme formunun adı. */
+  const yerler = [data, data && data.data];
+  const adlar = ['paymentPageUrl', 'checkoutFormUrl', 'payWithIyzicoPageUrl', 'formUrl'];
+  const candidates = [];
+  yerler.forEach(function (o) {
+    if (o && typeof o === 'object') adlar.forEach(function (a) { candidates.push(o[a]); });
+  });
   for (let i = 0; i < candidates.length; i++) {
     const raw = candidates[i];
     if (typeof raw !== 'string' || !raw) continue;
@@ -432,7 +476,7 @@ module.exports = {
   config, isConfigured, isEnabled, environmentName, isSandbox,
   formatPrice, authorizationHeader, request, errorDetail, LIMITS,
   createProduct, createPricingPlan, createCustomer,
-  initializeCheckoutForm, formUrlOf, getSubscription,
+  initializeCheckoutForm, formUrlOf, getSubscription, tokenOf, hostedUrlFromToken, responseShape,
   hmacSignature, signatureMatches, isActiveStatus,
   getCheckoutForm, webhookSignedData, verifyWebhookSignature, subscriptionRefOf,
   ALLOWED_FORM_HOSTS, KNOWN_STATUSES, MIN_KEY_LENGTH
