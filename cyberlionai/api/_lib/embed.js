@@ -108,10 +108,13 @@ async function toEnglish(ds, text) {
 }
 
 /* Metinleri paralel çevirir; düşen metin özgün hâliyle kalır. Metin loglanmaz. */
-async function translateAll(ds, texts) {
+async function translateAll(ds, texts, strict) {
   return Promise.all(texts.map(function (t) {
     return toEnglish(ds, t).catch(function (err) {
       console.error(JSON.stringify({ ev: 'embed_translate_fail', code: String(err && err.message).slice(0, 40) }));
+      /* strict: kalıcı yazım (tools/embed-backfill.js) çevirisiz vektörü
+         kabul etmez; canlı yol ise özgün metinle sürer. */
+      if (strict) throw new Error('embed_translate_required');
       return t;
     });
   }));
@@ -132,7 +135,9 @@ function config() {
   }
   const url = env.SUPABASE_URL;
   const key = env.SUPABASE_SERVICE_ROLE_KEY;
-  const secret = env.EMBED_SHARED_SECRET;
+  /* Panele yapıştırılan değerde sondaki boşluk/satır sonu, Edge Function'ın
+     sabit zamanlı karşılaştırmasında 401 demek (canlıda 2026-10-21). */
+  const secret = String(env.EMBED_SHARED_SECRET || '').trim();
   if (!url || !key || !secret || secret.length < 16) return null;
   return {
     provider: 'supabase',
@@ -148,7 +153,10 @@ function validVector(v) {
   return Array.isArray(v) && v.length === DIM && v.every(function (x) { return typeof x === 'number' && isFinite(x); });
 }
 
-async function embed(texts) {
+/* opts.requireTranslation: çeviri yapılamazsa (anahtar yok ya da çeviri
+   düştü) vektör üretmek yerine fırlatır. */
+async function embed(texts, opts) {
+  const strict = Boolean(opts && opts.requireTranslation);
   const cfg = config();
   if (!cfg) throw new Error('embed_unconfigured');
   const input = (texts || []).map(function (t) { return String(t || '').slice(0, MAX_CHARS); });
@@ -157,7 +165,8 @@ async function embed(texts) {
   }
 
   const ds = translator(cfg.provider);
-  const body = { input: ds ? await translateAll(ds, input) : input };
+  if (strict && !ds) throw new Error('embed_translate_required');
+  const body = { input: ds ? await translateAll(ds, input, strict) : input };
   if (cfg.provider === 'openai') { body.model = cfg.model; body.dimensions = DIM; }
 
   const json = await postJson(cfg.url, cfg.headers, body, LIMITS.timeoutMs, 'embed');

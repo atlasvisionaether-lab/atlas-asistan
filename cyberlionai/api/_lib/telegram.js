@@ -79,18 +79,31 @@ const ONEK = '[CyberLion]';
 /** Uyarı sayılan türler: ayrı sohbete gider ve sessiz gönderilmez. */
 const UYARI_TURLERI = ['error', 'alert'];
 
+/* Bozuk belirteç uyarısı örnek (instance) başına bir kez: her istekte log
+   kirletmesin, ama ilk istekte görünsün. */
+let bozukBelirtecBildirildi = false;
+
 function config() {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chat = process.env.TELEGRAM_CHAT_ID;
+  /* Panele yapıştırılan değerin sonunda boşluk/satır sonu kalabiliyor
+     (canlıda 2026-10-21): kırpılır. */
+  const token = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
+  const chat = String(process.env.TELEGRAM_CHAT_ID || '').trim();
+  /* İkisi de yoksa bilinçli olarak kapalı (yerel/önizleme): sessiz. */
   if (!token || !chat) return null;
-  /* 20 karakterden kısa belirteç yapılandırma hatası; sessizce denemek yerine
-     kapalı sayılıyor. Gerçek biçim "<sayı>:<~35 karakter>". */
-  if (String(token).length < 20) return null;
-  if (!/^\d{3,}:[A-Za-z0-9_-]{20,}$/.test(String(token))) return null;
+  /* Gerçek biçim "<sayı>:<~35 karakter>". Uymayan belirteçle denemek yerine
+     kapalı sayılır, ama SESSİZ DEĞİL: canlıda belirteç bozukken bildirimler
+     hiçbir iz bırakmadan kayboldu. Belirtecin kendisi loglanmaz. */
+  if (!/^\d{3,}:[A-Za-z0-9_-]{20,}$/.test(token)) {
+    if (!bozukBelirtecBildirildi && console && console.error) {
+      bozukBelirtecBildirildi = true;
+      console.error('telegram skipped: bad_token_format');
+    }
+    return null;
+  }
   return {
-    token: String(token),
-    chat: String(chat),
-    uyariChat: String(process.env.TELEGRAM_ALERT_CHAT_ID || chat)
+    token: token,
+    chat: chat,
+    uyariChat: String(process.env.TELEGRAM_ALERT_CHAT_ID || '').trim() || chat
   };
 }
 

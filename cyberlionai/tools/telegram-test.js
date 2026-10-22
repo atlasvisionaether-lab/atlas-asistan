@@ -145,6 +145,27 @@ async function kos() {
     y = tgYukle(TAM_ENV);
     esit('geçerli belirteç + sohbet açık', y.tg.isConfigured(), true);
     y.geriAl();
+
+    /* Panelden yapıştırılan değerin sonundaki boşluk/satır sonu kırpılır. */
+    y = tgYukle({ TELEGRAM_BOT_TOKEN: ' ' + BELIRTEC + '\n', TELEGRAM_CHAT_ID: '-1001234567890 ' });
+    esit('boşluklu belirteç + sohbet kırpılıp açık', y.tg.isConfigured(), true);
+    y.geriAl();
+
+    /* Bozuk belirteç sessiz kalmaz: örnek başına BİR uyarı, belirteç logda yok. */
+    const kayit = logYakala();
+    y = tgYukle({ TELEGRAM_BOT_TOKEN: '123:kisa-ve-gizli', TELEGRAM_CHAT_ID: '1' });
+    y.tg.isConfigured(); y.tg.isConfigured();
+    kayit.geriAl();
+    y.geriAl();
+    esit('bozuk belirteç tek uyarı', kayit.satirlar.join('|'), 'telegram skipped: bad_token_format');
+    dogru('uyarıda belirteç yok', kayit.satirlar.join(' ').indexOf('kisa-ve-gizli') === -1);
+
+    const sessiz = logYakala();
+    y = tgYukle({});
+    y.tg.isConfigured();
+    sessiz.geriAl();
+    y.geriAl();
+    esit('hiç yapılandırılmamışsa uyarı yok', sessiz.satirlar.length, 0);
   }
 
   /* ---- 2. Mesaj biçimleri ---- */
