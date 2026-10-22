@@ -42,14 +42,15 @@
  *
  * API anahtarı, gizli anahtar, imza, randomKey, barındırılan form adresi ve
  * form jetonu LOGLANMIYOR. Hata kayıtlarına yalnızca HTTP durumu, iyzico'nun
- * `errorCode`'u ve uç adı giriyor. 20 karakterden kısa bir anahtar
+ * `errorCode`/`errorMessage`'ı (anahtarlar maskelenmiş, kısa) ve uç adı giriyor. 20 karakterden kısa bir anahtar
  * yapılandırılmamış sayılıyor: kırpılmış ya da yer tutucu bir değerle
  * iyzico'ya istek atmak, hatayı "ödeme bozuk" olarak müşteriye yansıtırdı.
  */
 
 const crypto = require('node:crypto');
 
-const TIMEOUT_MS = 10000;
+/* Sınama kısaltabilsin diye nesnede; isteğin tamamını (başlık + gövde) kapsar. */
+const LIMITS = { timeoutMs: 10000 };
 const MIN_KEY_LENGTH = 20;
 const CLIENT_VERSION = 'cyberlionai-1';
 
@@ -155,6 +156,24 @@ function authorizationHeader(cfg, uriPath, bodyJson, rnd) {
  *
  * @returns {{ok: true, data: object} | {ok: false, reason: string, status?: number}}
  */
+/**
+ * iyzico'nun hata cevabından loga yazılacak kısa açıklama: errorCode,
+ * errorGroup, errorMessage. Canlıda yalnızca kod ("8") loglanınca 401'in
+ * sebebi (yanlış anahtar mı, imza mı, ortam mı) görülemedi. Açıklamada
+ * anahtar ya da gizli anahtar geçerse maskelenir; 200 karakterle sınırlı.
+ * İstek gövdesi, başlıklar ve imza yine LOGLANMIYOR.
+ */
+function errorDetail(data, cfg) {
+  if (!data || typeof data !== 'object') return '';
+  let s = [data.errorCode, data.errorGroup, data.errorMessage]
+    .filter(function (v) { return v !== undefined && v !== null && v !== ''; })
+    .map(String).join(' | ');
+  [cfg && cfg.apiKey, cfg && cfg.secretKey].forEach(function (k) {
+    if (k) s = s.split(k).join('[key]');
+  });
+  return s.replace(/\s+/g, ' ').slice(0, 200);
+}
+
 async function request(method, uriPath, bodyObject) {
   const cfg = config();
   if (!cfg) return { ok: false, reason: 'iyzico_unconfigured' };
@@ -164,9 +183,13 @@ async function request(method, uriPath, bodyObject) {
   const rnd = randomKey();
 
   const controller = new AbortController();
-  const timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
+  const timer = setTimeout(function () { controller.abort(); }, LIMITS.timeoutMs);
 
+  /* Süre sınırı gövde okunana kadar sürüyor: fetch başlıklar gelince döner;
+     zamanlayıcı orada temizlenirse gövdeyi bekleten bir cevap ödeme
+     sayfasını süresiz asar (aynı hata embed.js'te PR #105'te düzeltildi). */
   let response;
+  let data = null;
   try {
     response = await fetch(cfg.baseUrl + uriPath, {
       method: method,
@@ -184,29 +207,34 @@ async function request(method, uriPath, bodyObject) {
     clearTimeout(timer);
     return { ok: false, reason: 'iyzico_unreachable' };
   }
-  clearTimeout(timer);
 
-  let data = null;
   try {
     data = await response.json();
   } catch (err) {
     data = null;
+    if (controller.signal.aborted) {
+      clearTimeout(timer);
+      return { ok: false, reason: 'iyzico_timeout' };
+    }
   }
+  clearTimeout(timer);
 
   if (!response.ok) {
-    /* İstek gövdesi ve başlıklar LOGLANMIYOR: yalnızca durum ve iyzico'nun
-       hata kodu. */
+    /* İstek gövdesi ve başlıklar LOGLANMIYOR: durum, uç ve iyzico'nun
+       (maskelenmiş, kısa) hata açıklaması. */
     if (console && console.error) {
-      console.error('iyzico http error', response.status, uriPath,
-        (data && data.errorCode) || '');
+      console.error('iyzico http error', response.status, uriPath, errorDetail(data, cfg));
     }
-    return { ok: false, reason: 'iyzico_http_' + response.status, status: response.status };
+    return {
+      ok: false, reason: 'iyzico_http_' + response.status, status: response.status,
+      errorCode: (data && data.errorCode) || null
+    };
   }
 
   /* iyzico 200 içinde de hata döndürebiliyor: `status: "failure"`. */
   if (data && data.status && data.status !== 'success') {
     if (console && console.error) {
-      console.error('iyzico failure', uriPath, (data && data.errorCode) || '');
+      console.error('iyzico failure', uriPath, errorDetail(data, cfg));
     }
     return { ok: false, reason: 'iyzico_failure', errorCode: data.errorCode || null };
   }
@@ -402,7 +430,7 @@ function subscriptionRefOf(body) {
 
 module.exports = {
   config, isConfigured, isEnabled, environmentName, isSandbox,
-  formatPrice, authorizationHeader, request,
+  formatPrice, authorizationHeader, request, errorDetail, LIMITS,
   createProduct, createPricingPlan, createCustomer,
   initializeCheckoutForm, formUrlOf, getSubscription,
   hmacSignature, signatureMatches, isActiveStatus,

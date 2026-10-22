@@ -387,6 +387,55 @@ function fakeRes() {
       fs.readFileSync(path.join(__dirname, '..', 'api', '_lib', 'db.js'), 'utf8')),
     true);
 
+  /* ---- 12. iyzico hata ayrıntısı ve süre sınırı (canlı 401, 2026-10-22) ----
+     Canlıda yalnızca "401 … 8" loglandı; sebep görünmüyordu. Açıklama artık
+     loglanıyor, anahtarlar maskeli; gövdesi gelmeyen cevap asmıyor. */
+  {
+    const eskiFetch = global.fetch;
+    const eskiHata = console.error;
+    const loglar = [];
+    console.error = function () { loglar.push(Array.prototype.slice.call(arguments).map(String).join(' ')); };
+    process.env.IYZICO_API_KEY = SANDBOX_API_KEY;
+    process.env.IYZICO_SECRET_KEY = SANDBOX_SECRET;
+    global.fetch = async function () {
+      return { ok: false, status: 401, json: async function () {
+        return { status: 'failure', errorCode: '1001', errorGroup: 'AUTH',
+          errorMessage: 'api bilgileri bulunamadı ' + SANDBOX_API_KEY + ' / ' + SANDBOX_SECRET };
+      } };
+    };
+    const r401 = await iyzico.request('POST', '/v2/subscription/checkoutform/initialize', { a: 1 });
+    sina('401 sebebi korunuyor', [r401.reason, r401.errorCode], ['iyzico_http_401', '1001']);
+    const satir = loglar.join('\n');
+    sina('logda iyzico açıklaması var', /1001 \| AUTH \| api bilgileri bulunamadı/.test(satir), true);
+    sina('logda API anahtarı yok (maskeli)', satir.indexOf(SANDBOX_API_KEY) === -1 && /\[key\]/.test(satir), true);
+    sina('logda gizli anahtar yok', satir.indexOf(SANDBOX_SECRET) === -1, true);
+    sina('logda istek gövdesi yok', satir.indexOf('"a":1') === -1, true);
+    sina('açıklama 200 karakterle sınırlı',
+      iyzico.errorDetail({ errorMessage: 'x'.repeat(500) }, {}).length, 200);
+
+    /* Başlık gelir, gövde gelmez: süre sınırında kesilir. */
+    const eskiSure = iyzico.LIMITS.timeoutMs;
+    iyzico.LIMITS.timeoutMs = 50;
+    let sinyal = null;
+    global.fetch = async function (u, o) {
+      sinyal = o.signal;
+      return { ok: true, status: 200, json: function () {
+        return new Promise(function (_, red) { o.signal.addEventListener('abort', function () { red(new Error('aborted')); }); });
+      } };
+    };
+    const t0 = Date.now();
+    const asili = await Promise.race([
+      iyzico.request('POST', '/v2/subscription/checkoutform/initialize', {}),
+      new Promise(function (ok) { setTimeout(function () { ok({ reason: 'TAKILDI' }); }, 2000); })
+    ]);
+    sina('gövdesi gelmeyen cevap süre sınırında kesilir', asili.reason, 'iyzico_timeout');
+    sina('asılı istek hızlı bitiyor', Date.now() - t0 < 1000, true);
+    sina('asılı bağlantı iptal edildi', Boolean(sinyal && sinyal.aborted), true);
+    iyzico.LIMITS.timeoutMs = eskiSure;
+    global.fetch = eskiFetch;
+    console.error = eskiHata;
+  }
+
   console.log(hata === 0 ? '\nTümü geçti.' : '\n' + hata + ' sınama BAŞARISIZ.');
   process.exit(hata === 0 ? 0 : 1);
 })();
