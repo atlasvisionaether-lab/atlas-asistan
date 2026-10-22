@@ -247,7 +247,7 @@ async function kos() {
   esit('taslaklı talep 200', res.statusCode, 200);
   const g = sonGovde[0];
   dogru('Telegram metninde önerilen cevap (pricing)', /Önerilen cevap \(pricing\)/.test(g.text));
-  dogru('önerilen cevap fiyat bilgisini içeriyor', g.text.indexOf('₺299') !== -1);
+  dogru('önerilen cevap fiyat bilgisini içeriyor', g.text.indexOf('₺249') !== -1);
   const gmailDugme = g.reply_markup && g.reply_markup.inline_keyboard[0][0];
   dogru('Gmail düğmesi var', gmailDugme && /^https:\/\/mail\.google\.com\/mail\/\?/.test(gmailDugme.url));
   const p = new URL(gmailDugme.url).searchParams;

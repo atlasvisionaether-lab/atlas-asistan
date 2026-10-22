@@ -80,27 +80,38 @@ sina('/pricing ödemenin iyzico ile alındığını yazıyor', /iyzico/.test(pri
 sina('/pricing artık Stripe demiyor', /Stripe/.test(pricing), false);
 sina('ana sayfa Stripe demiyor', /Stripe/.test(index), false);
 
-/* ---- 5. KDV dahil tutarlar ve /odeme ----
-   KDV dahil tutar plans.js'te elle yazılı; burada priceTry × (1 + VAT_RATE)
-   ile aynı olduğu ve sayfalarda geçtiği sınanıyor. /odeme tutarı tarayıcıda
-   odeme.js hesaplıyor; oradaki net fiyat ve oran da aynı olmalı. */
+/* ---- 5. KDV dahil fiyat ve /odeme ----
+   2026-10-22: abonelik fiyatı KDV DAHİL (priceTry = iyzico planı = karttan
+   çekilen). Sayfada fiyatın altında yalnızca "KDV dahil" ibaresi var; /odeme
+   özetinde net + KDV dökümünü odeme.js hesaplıyor ve toplam fiyata kuruşu
+   kuruşuna eşit olmalı. Eski "₺X + KDV" fiyatları hiçbir yerde kalmamalı. */
 const { VAT_RATE } = require('../api/_lib/plans.js');
 const odemeJs = fs.readFileSync(path.join(ROOT, 'odeme.js'), 'utf8');
 ['pro', 'enterprise'].forEach(function (planId) {
   const p = PLANS[planId];
-  const brut = Math.round(p.priceTry * (1 + VAT_RATE) * 100) / 100;
-  const trBeklenen = '₺' + brut.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
-  sina(planId + ' KDV dahil tutar oranla tutarlı', p.tr.gross, trBeklenen);
-  sina(planId + ' KDV dahil tutar ana sayfada (tr)', index.indexOf(p.tr.gross) !== -1, true);
-  sina(planId + ' KDV dahil tutar ana sayfada (en)', index.indexOf(p.en.gross) !== -1, true);
-  sina(planId + ' KDV dahil tutar /pricing sayfasında', pricing.indexOf(p.tr.gross) !== -1, true);
-  sina(planId + ' net fiyat odeme.js ile aynı',
+  sina(planId + ' fiyat tam lira (iyzico planı)', Number.isInteger(p.priceTry), true);
+  sina(planId + ' "KDV dahil" ibaresi (tr/en)', [p.tr.gross, p.en.gross], ['KDV dahil', 'incl. VAT']);
+  sina(planId + ' "KDV dahil" ana sayfada', index.indexOf('pricing.' + (planId === 'pro' ? 'pro' : 'ent') + '.gross">KDV dahil<') !== -1, true);
+  sina(planId + ' KDV dahil fiyat odeme.js ile aynı',
     new RegExp('\\b' + planId + ': ' + p.priceTry + '\\b').test(odemeJs), true);
+  /* odeme.js'in dökümü: net = round(gross / 1.2, 2), KDV = gross − net. */
+  const net = Math.round(p.priceTry / (1 + VAT_RATE) * 100) / 100;
+  const kdv = Math.round(p.priceTry * 100 - net * 100) / 100;
+  sina(planId + ' döküm toplamı fiyata eşit', Math.round((net + kdv) * 100), p.priceTry * 100);
   sina(planId + ' butonu /odeme sayfasına gidiyor (ana sayfa)',
     index.indexOf('href="/odeme?plan=' + planId + '"') !== -1, true);
   sina(planId + ' butonu /odeme sayfasına gidiyor (/pricing)',
     pricing.indexOf('href="/odeme?plan=' + planId + '"') !== -1, true);
 });
+/* Eski KDV hariç fiyatlar (₺299 / ₺2.499 ve KDV dahil karşılıkları) satış
+   sayfalarında, ödeme sayfasında ve yayındaki yasal metinlerde kalmamalı. */
+['index.html', 'pricing.html', 'odeme.html', 'checkout.html', 'mesafeli-satis-sozlesmesi.html',
+  'pages/on-bilgilendirme-formu.html', 'data/knowledge.json'].forEach(function (f) {
+  const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  sina(f + ': eski abonelik fiyatı yok', /₺ ?(299|2[.,]499)\b|358[,.]80|2[.,]998[,.]80|\b(299|2\.499) TL/.test(t), false);
+});
+const odemeHtml = fs.readFileSync(path.join(ROOT, 'odeme.html'), 'utf8');
+sina('odeme.html varsayılan özeti Pro dökümü', ['₺207,50', '₺41,50', '₺249,00'].every(function (s) { return odemeHtml.indexOf(s) !== -1; }), true);
 sina('odeme.js KDV oranı plans.js ile aynı',
   new RegExp('VAT_RATE = ' + String(VAT_RATE).replace('.', '\\.') + '0?;').test(odemeJs), true);
 
