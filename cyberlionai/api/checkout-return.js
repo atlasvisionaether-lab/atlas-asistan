@@ -36,6 +36,9 @@ const db = require('./_lib/db.js');
 const auth = require('./_lib/auth.js');
 const iyzico = require('./_lib/iyzico.js');
 const iyzicoPlans = require('./_lib/iyzico-plans.js');
+const store = require('./_lib/store.js');
+/* checkout.js ile aynı: ödeme formu token'ı → hesap. */
+const PENDING_PREFIX = 'cl:checkout:pending:';
 const tg = require('./_lib/telegram.js');
 const n8n = require('./_lib/n8n.js');
 
@@ -77,15 +80,24 @@ async function handler(req, res) {
     return backToPanel(res, 'unavailable');
   }
 
-  const user = await auth.resolveUser(req, res);
+  /* Token önce: iyzico'nun dönüşü siteler arası POST, SameSite=Lax oturum
+     çerezi gelmez (canlı deneme 2026-10-22: hiçbir iz kalmadan 'login'e
+     düşüyordu). Kullanıcı çerezden, yoksa ödeme başlarken kaydedilen
+     token → hesap eşlemesinden bulunur. Hiçbir değer loglanmaz. */
+  const token = readToken(req);
+  const sessionUser = await auth.resolveUser(req, res);
+  const user = sessionUser || await pendingUser(token);
+  if (console && console.warn) {
+    console.warn('checkout-return: received method=' + req.method + ' token=' + (token ? 'yes' : 'no')
+      + ' session=' + (sessionUser ? 'yes' : 'no') + ' user=' + (user ? 'yes' : 'no'));
+  }
+  if (!token) return backToPanel(res, 'invalid');
   if (!user) {
-    /* Oturum düşmüşse abonelik satırı açılamaz; müşteri girişe gidiyor ve
-       webhook durumu zaten iyzico tarafında duruyor. */
+    /* Ne çerez ne eşleme: ödeme başlatılırken depo yazılamadı ya da süre
+       doldu. Müşteri girişe gider; ödeme alındıysa elle eşleme gerekir. */
+    await bildirBasarisiz(res, null, 'user_unresolved');
     return backToPanel(res, 'login');
   }
-
-  const token = readToken(req);
-  if (!token) return backToPanel(res, 'invalid');
 
   /* Tek doğru kaynak: iyzico. */
   const result = await iyzico.getCheckoutForm(token);
@@ -96,6 +108,12 @@ async function handler(req, res) {
   }
 
   const data = result.data || {};
+  /* Sonucun durum alanları (değer değil kimlik bilgisi taşımıyor). */
+  if (console && console.warn) {
+    console.warn('checkout-return: iyzico result status=' + String(data.status || '-')
+      + ' subscriptionStatus=' + String(data.subscriptionStatus || (data.data && data.data.subscriptionStatus) || '-')
+      + ' shape=' + iyzico.responseShape(data));
+  }
   const subscriptionRef = iyzico.subscriptionRefOf(data);
   if (!subscriptionRef) {
     if (console && console.warn) console.warn('checkout-return: subscription_ref_missing');
@@ -174,6 +192,18 @@ function planOf(data) {
   return opt ? opt.id : null;
 }
 
+/** Ödeme başlarken kaydedilen token → hesap eşlemesi; yoksa null. */
+async function pendingUser(token) {
+  if (!token || !store.isConfigured()) return null;
+  try {
+    const v = await store.cacheGet(PENDING_PREFIX + token);
+    return v && typeof v.id === 'string' && v.id ? { id: v.id, email: typeof v.email === 'string' ? v.email : '' } : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 module.exports.readToken = readToken;
+module.exports.pendingUser = pendingUser;
 module.exports.planOf = planOf;
 module.exports.optionOf = optionOf;

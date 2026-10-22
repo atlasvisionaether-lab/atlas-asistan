@@ -55,6 +55,12 @@
 const { PLANS, checkoutOption } = require('./_lib/plans.js');
 const iyzicoPlans = require('./_lib/iyzico-plans.js');
 const billing = require('./_lib/billing-details.js');
+const store = require('./_lib/store.js');
+
+/* Ödeme formu token'ı → hesap eşlemesi (bkz. checkout-return.js). iyzico
+   token'ı 30 dk geçerli; pay bırakıldı. */
+const PENDING_TTL_SECONDS = 2 * 3600;
+const PENDING_PREFIX = 'cl:checkout:pending:';
 const iyzico = require('./_lib/iyzico.js');
 const auth = require('./_lib/auth.js');
 const tg = require('./_lib/telegram.js');
@@ -248,6 +254,20 @@ async function handler(req, res) {
     return unavailable(req, res, init.reason, planId, user);
   }
 
+  /* iyzico'nun dönüşü cpp.iyzipay.com'dan siteler arası POST: SameSite=Lax
+     oturum çerezi o istekte GÖNDERİLMİYOR, dönüş ucu kullanıcıyı çerezden
+     tanıyamaz. Token → hesap eşlemesi sunucuda tutuluyor; dönüş ucu
+     kullanıcıyı buradan bulur, sonucu yine iyzico'ya sorarak doğrular.
+     Depo yazılamazsa ödeme durmaz (çerez geldiyse dönüş yine çalışır). */
+  if (init.token && store.isConfigured()) {
+    try {
+      await store.cacheSet(PENDING_PREFIX + init.token,
+        { id: user.id, email: user.email || '' }, PENDING_TTL_SECONDS);
+    } catch (err) {
+      if (console && console.warn) console.warn('checkout: pending_map_failed');
+    }
+  }
+
   await tg.sendTelegram(tg.mesaj.odemeBasladi(option.key, user.email, option.priceTry),
     { type: 'payment', priority: true });
 
@@ -264,6 +284,7 @@ module.exports.pricingPlanRef = pricingPlanRef;
 module.exports.wantsHtml = wantsHtml;
 module.exports.customerName = customerName;
 module.exports.formBody = formBody;
+module.exports.PENDING_PREFIX = PENDING_PREFIX;
 module.exports.callbackUrl = callbackUrl;
 module.exports.PLAN_REF_ENV = PLAN_REF_ENV;
 module.exports.PLANS = PLANS;
