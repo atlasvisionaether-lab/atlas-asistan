@@ -4792,6 +4792,17 @@
       });
     }
 
+    /* ?site=ornek.com ile gelinirse (ör. /araclar/* sonuç sayfası) kutu
+       önceden doldurulur. Tarama kendiliğinden BAŞLATILMAZ: paylaşılan bir
+       bağlantı ziyaretçinin ücretsiz hakkını harcamamalı, izin kutusunu da
+       kullanıcı kendisi işaretlemeli. Geçersiz değer sessizce yok sayılır. */
+    if (scanInput) {
+      var siteParam = null;
+      try { siteParam = new URLSearchParams(window.location.search).get('site'); } catch (e) {}
+      var siteDomain = siteParam ? normalizeDomain(siteParam) : null;
+      if (siteDomain && !scanInput.value) scanInput.value = siteDomain;
+    }
+
     /* İlerleme adımları: eşzamanlı taramada kaba tahmin, kuyruk tabanlı
        taramada (Task 1) gerçek progress/current_step değerleriyle eşlenir.
        %100 yalnızca sunucu yanıtı geldiğinde renderScanResult yazar. */

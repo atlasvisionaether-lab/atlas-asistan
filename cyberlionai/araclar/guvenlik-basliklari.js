@@ -61,6 +61,9 @@
       ? '+' + r.hiddenFailures + ' bulgu daha var. Hepsini, düzeltme kodlarıyla birlikte tam taramada görün.'
       : '';
 
+    // Ana sayfa formu ?site= ile önceden dolar; tarama yine kullanıcıyla başlar.
+    document.getElementById('ctaScan').href = '/?site=' + encodeURIComponent(r.host) + '#scanForm';
+
     var fix = document.getElementById('ctaFix');
     var fiyatlar = r.top.map(function (f) { return f.fixPrice; }).filter(Boolean);
     if (fiyatlar.length) {
