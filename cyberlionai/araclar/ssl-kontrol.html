@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SSL Sertifika Kontrolü (Ücretsiz) | Cyber Lion AI</title>
+  <meta name="description" content="SSL sertifikanızı ücretsiz kontrol edin: bitiş tarihi ve kalan gün, ara sertifika zinciri, alan adı uyumu, TLS 1.2/1.3 desteği ve HSTS. Kayıt gerekmez, sonuç saniyeler içinde." />
+  <link rel="canonical" href="https://www.cyberlionai.com/araclar/ssl-kontrol" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SSL Sertifika Kontrolü (Ücretsiz)" />
+  <meta property="og:description" content="Sertifikanızın süresi, zinciri, alan adı uyumu ve TLS sürümü saniyeler içinde kontrol edilsin." />
+  <meta property="og:url" content="https://www.cyberlionai.com/araclar/ssl-kontrol" />
+  <meta property="og:image" content="https://www.cyberlionai.com/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" href="/favicon-32.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"SSL Sertifika Kontrolü","url":"https://www.cyberlionai.com/araclar/ssl-kontrol","applicationCategory":"SecurityApplication","operatingSystem":"Web","inLanguage":"tr","offers":{"@type":"Offer","price":"0","priceCurrency":"TRY"},"provider":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"SSL sertifikamın süresi dolarsa ne olur?","acceptedAnswer":{"@type":"Answer","text":"Tarayıcılar sitenizi açmak yerine tam sayfa bir güvenlik uyarısı gösterir ve ziyaretçilerin çoğu geri döner. Let's Encrypt sertifikaları 90 gün geçerlidir ve bu süre kısalıyor; yenilemenin otomatik çalıştığını düzenli kontrol etmek gerekir."}},{"@type":"Question","name":"Ara sertifika (zincir) neden önemli?","acceptedAnswer":{"@type":"Answer","text":"Sunucu yalnızca kendi sertifikasını gönderip ara sertifikayı göndermezse bazı tarayıcılar ve özellikle mobil uygulamalar, ödeme altyapıları ve API istemcileri bağlantıyı reddeder. Masaüstü tarayıcıda sorun görünmeyebilir; bu yüzden gözden kaçar."}},{"@type":"Question","name":"Bu test siteme zarar verir mi?","acceptedAnswer":{"@type":"Answer","text":"Hayır. Araç sıradan bir tarayıcı gibi sitenize bağlanır, sertifikayı okur ve eski TLS sürümlerinin kabul edilip edilmediğini dener. Saldırı denemesi yapmaz. Aynı site için sonuç bir saat önbellekte tutulur."}},{"@type":"Question","name":"TLS 1.0 ve 1.1 neden kapatılmalı?","acceptedAnswer":{"@type":"Answer","text":"Bu sürümler bilinen kriptografik zayıflıklar taşır ve 2020'den beri büyük tarayıcılar tarafından desteklenmez. Açık kalmaları yalnızca saldırgana sürüm düşürme imkânı verir; yalnızca TLS 1.2 ve 1.3 açık kalmalıdır."}}]}]}</script>
+  <style>
+  :root{--primary-black:#0a0a0f;--card-black:#1a1a24;
+    --gold-primary:#d4af37;--gold-light:#ffdf00;--text-white:#f0f0f0;--text-gray:#a0a0b0;
+    --glass-bg:rgba(26,26,36,.7);--glass-border:rgba(212,175,55,.2);--hairline:rgba(255,255,255,.08);
+    --ok:#5fd98a;--warn:#ffd166;--bad:#ff8f87;
+    --font-heading:'Orbitron','Segoe UI',sans-serif;--font-body:'Space Grotesk','Segoe UI',sans-serif}
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--primary-black);color:var(--text-white);font-family:var(--font-body);
+    font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(60% 40% at 50% -10%,rgba(212,175,55,.08),transparent 70%)}
+  a{color:var(--gold-primary)}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--gold-light);outline-offset:3px;border-radius:4px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+  .container{width:100%;max-width:760px;margin:0 auto;padding:0 16px}
+  header.top{border-bottom:1px solid var(--glass-border);background:var(--glass-bg);backdrop-filter:blur(16px)}
+  header.top .container{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;padding-bottom:14px;max-width:1120px}
+  .brand{font-family:var(--font-heading);font-weight:800;letter-spacing:.08em;text-decoration:none;color:var(--gold-primary)}
+  .crumb{color:var(--text-gray);font-size:.85rem;margin:28px 0 0}
+  .crumb a{color:var(--text-gray)}
+  h1{font-family:var(--font-heading);font-size:1.6rem;letter-spacing:.04em;line-height:1.3;margin:8px 0 8px}
+  h2{font-family:var(--font-heading);font-size:1.05rem;letter-spacing:.06em;color:var(--gold-primary);margin:32px 0 10px}
+  h3{font-size:1rem;margin:20px 0 6px}
+  .lead{color:var(--text-gray);margin:0 0 22px}
+  .card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:20px;margin-bottom:18px}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .input{flex:1 1 220px;min-width:0;padding:12px 14px;border-radius:10px;border:1px solid var(--hairline);
+    background:rgba(255,255,255,.03);color:var(--text-white);font:inherit}
+  .btn{display:inline-block;padding:12px 18px;border-radius:10px;border:1px solid var(--gold-primary);background:var(--gold-primary);
+    color:var(--primary-black);font:inherit;font-weight:600;cursor:pointer;text-decoration:none;text-align:center}
+  .btn--ghost{background:transparent;color:var(--gold-primary)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .note{color:var(--text-gray);font-size:.85rem;margin:10px 0 0}
+  .msg{margin:12px 0 0;font-size:.92rem;color:var(--text-gray)}
+  .msg--bad{color:var(--bad)}
+  .score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .score b{font-family:var(--font-heading);font-size:2.4rem;line-height:1}
+  .score--good b{color:var(--ok)} .score--mid b{color:var(--warn)} .score--bad b{color:var(--bad)}
+  .score span{color:var(--text-gray)}
+  .finding{border-top:1px solid var(--hairline);padding:14px 0 4px}
+  .finding__head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .finding__head strong{font-size:1rem}
+  .sev{font-size:.75rem;padding:2px 9px;border-radius:999px;border:1px solid currentColor;flex:0 0 auto}
+  .sev--critical,.sev--high{color:var(--bad)} .sev--medium{color:var(--warn)} .sev--low{color:var(--text-gray)}
+  .finding p{margin:6px 0;color:var(--text-gray);font-size:.93rem}
+  .finding code{display:block;padding:10px 12px;border-radius:8px;background:var(--primary-black);border:1px solid var(--hairline);
+    color:var(--gold-primary);font-size:.82rem;overflow-wrap:anywhere;white-space:pre-wrap}
+  .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .cta .btn{flex:1 1 220px}
+  .pass-all{color:var(--ok);margin:10px 0 0}
+  article p,article li{color:#d6d6de}
+  article ul{padding-left:20px}
+  article code{color:var(--gold-primary);font-size:.9em}
+  details{border-top:1px solid var(--hairline);padding:12px 0}
+  details summary{cursor:pointer;font-weight:600}
+  details p{margin:8px 0 0}
+  .st{font-size:.75rem;padding:2px 9px;border-radius:999px;border:1px solid currentColor;flex:0 0 auto}
+  .st--pass{color:var(--ok)} .st--fail{color:var(--bad)} .st--skipped{color:var(--text-gray)}
+  .finding .rec{color:var(--text-white)}
+  .finding .rec-label{font-size:.8rem;color:var(--text-gray);margin:10px 0 4px}
+  .facts{display:grid;grid-template-columns:minmax(0,11rem) minmax(0,1fr);gap:8px 14px;margin:14px 0 4px;font-size:.93rem}
+  .facts dt{color:var(--text-gray)}
+  .facts dd{margin:0;overflow-wrap:anywhere}
+  .facts .ok{color:var(--ok)} .facts .bad{color:var(--bad)} .facts .unk{color:var(--text-gray)}
+  @media (max-width:520px){.facts{grid-template-columns:1fr;gap:2px}.facts dd{margin-bottom:8px}}
+  footer{color:var(--text-gray);font-size:.82rem;text-align:center;padding:40px 16px 30px}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="/">CYBER LION AI</a>
+      <a class="btn btn--ghost" href="/#scanForm">Tam tarama</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="crumb"><a href="/">Ana sayfa</a> › Ücretsiz araçlar › SSL kontrolü</p>
+    <h1>SSL Sertifika Kontrolü</h1>
+    <p class="lead">Sertifikanızın ne zaman sona ereceğini, ara sertifika zincirinin tam olup olmadığını, alan adınızla uyuştuğunu, TLS 1.2/1.3 desteğini ve HSTS başlığını ücretsiz kontrol edin. Kayıt gerekmez.</p>
+
+    <section class="card">
+      <form class="row" id="form" novalidate>
+        <label class="sr-only" for="site">Site adresi</label>
+        <input class="input" id="site" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="ornek.com" required />
+        <button class="btn" id="btn" type="submit">Sertifikayı kontrol et</button>
+      </form>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" id="result" hidden aria-live="polite">
+      <div class="score" id="score"><b id="scoreNum"></b><span id="scoreText"></span></div>
+      <p class="note" id="summary"></p>
+      <dl class="facts" id="facts"></dl>
+      <div id="findings"></div>
+      <p class="pass-all" id="passAll" hidden>Sertifikanız, TLS yapılandırmanız ve HSTS başlığınız yerinde. Güvenlik başlıkları, çerezler ve e-posta güvenliği için tam taramayı deneyin.</p>
+      <p class="note" id="hidden"></p>
+      <div class="cta">
+        <a class="btn" id="ctaScan" href="/#scanForm">Tüm sitemi ücretsiz tara</a>
+        <a class="btn btn--ghost" id="ctaFix" href="/pricing" hidden></a>
+      </div>
+    </section>
+
+    <article>
+      <h2>Ne kontrol ediliyor?</h2>
+      <h3>Bitiş tarihi</h3>
+      <p>Süresi dolmuş sertifikada tarayıcı sitenizi hiç açmaz. 15 günden az kalmışsa da bulgu olarak gösteriyoruz: otomatik yenileme kuruluysa bile son çalışmasının başarılı olduğundan emin olun.</p>
+      <h3>Sertifika zinciri</h3>
+      <p>Sitenizin sertifikasını bir ara sertifika makamı imzalar. Sunucu bu ara sertifikayı da göndermelidir. Nginx'te <code>fullchain.pem</code> yerine <code>cert.pem</code> kullanmak en sık rastlanan hatadır: masaüstü tarayıcı çoğu zaman eksik parçayı kendisi tamamlar, ama mobil uygulamalar, ödeme altyapıları ve API istemcileri bağlantıyı reddeder.</p>
+      <h3>Alan adı uyumu</h3>
+      <p>Sertifika, ziyaretçinin yazdığı adı (CN veya SAN listesinde) içermelidir. <code>ornek.com</code> ve <code>www.ornek.com</code> ikisi de kullanılıyorsa ikisi de sertifikada yer almalıdır.</p>
+      <h3>TLS sürümü</h3>
+      <p>Sunucu TLS 1.2 veya 1.3 ile konuşmalı, TLS 1.0 ve 1.1'i ise reddetmelidir. Eski sürümler açık kaldığında saldırgan bağlantıyı zayıf bir sürüme düşürmeyi deneyebilir.</p>
+      <h3>HSTS</h3>
+      <p><code>Strict-Transport-Security</code> başlığı tarayıcıya sitenizi bir süre boyunca yalnızca HTTPS ile açmasını söyler. Bu başlık yoksa ilk istek şifresiz gidebilir. Sertifika geçersizse tarayıcı HSTS'yi zaten dikkate almaz; bu durumda HSTS'yi "ölçülemedi" olarak gösteriyoruz.</p>
+
+      <h2>Sık sorulan sorular</h2>
+      <details>
+        <summary>SSL sertifikamın süresi dolarsa ne olur?</summary>
+        <p>Tarayıcılar sitenizi açmak yerine tam sayfa bir güvenlik uyarısı gösterir ve ziyaretçilerin çoğu geri döner. Let's Encrypt sertifikaları 90 gün geçerlidir ve bu süre kısalıyor; yenilemenin otomatik çalıştığını düzenli kontrol etmek gerekir.</p>
+      </details>
+      <details>
+        <summary>Ara sertifika (zincir) neden önemli?</summary>
+        <p>Sunucu yalnızca kendi sertifikasını gönderip ara sertifikayı göndermezse bazı tarayıcılar ve özellikle mobil uygulamalar, ödeme altyapıları ve API istemcileri bağlantıyı reddeder. Masaüstü tarayıcıda sorun görünmeyebilir; bu yüzden gözden kaçar.</p>
+      </details>
+      <details>
+        <summary>Bu test siteme zarar verir mi?</summary>
+        <p>Hayır. Araç sıradan bir tarayıcı gibi sitenize bağlanır, sertifikayı okur ve eski TLS sürümlerinin kabul edilip edilmediğini dener. Saldırı denemesi yapmaz. Aynı site için sonuç bir saat önbellekte tutulur.</p>
+      </details>
+      <details>
+        <summary>TLS 1.0 ve 1.1 neden kapatılmalı?</summary>
+        <p>Bu sürümler bilinen kriptografik zayıflıklar taşır ve 2020'den beri büyük tarayıcılar tarafından desteklenmez. Açık kalmaları yalnızca saldırgana sürüm düşürme imkânı verir; yalnızca TLS 1.2 ve 1.3 açık kalmalıdır.</p>
+      </details>
+    </article>
+  </main>
+
+  <footer>© Cyber Lion AI · <a href="/kullanim-kosullari">Kullanım Şartları</a> · <a href="/gizlilik-politikasi">Gizlilik</a> · <a href="/pages/tarama-yetkisi">Tarama Yetkisi</a></footer>
+
+  <script src="/araclar/ssl-kontrol.js" defer></script>
+</body>
+</html>

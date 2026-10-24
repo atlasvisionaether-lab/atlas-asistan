@@ -411,4 +411,4 @@ function reportFilename(scan) {
   return 'cyberlionai-security-report-' + host + '-' + date + '.pdf';
 }
 
-module.exports = { buildReport, reportFilename, riskOf, RISK_BANDS, CHECKS };
+module.exports = { buildReport, reportFilename, riskOf, RISK_BANDS, CHECKS, NOTE_FIX };

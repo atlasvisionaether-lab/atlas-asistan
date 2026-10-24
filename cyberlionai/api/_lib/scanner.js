@@ -133,10 +133,14 @@ function chainLength(cert) {
   return n;
 }
 
-function inspectTls(host, port) {
+/* `address` verilirse bağlantı o IP'ye kurulur, SNI ve ad doğrulaması yine
+   `host` ile yapılır (Node checkServerIdentity servername'i kullanır). Ücretsiz
+   SSL aracı guard.assertPublicHost'un ONAYLADIĞI adresi veriyor: ad yeniden
+   çözülseydi DNS yeniden bağlama ile iç ağa el sıkışma yaptırılabilirdi. */
+function inspectTls(host, port, address) {
   return new Promise(function (resolve) {
     const socket = tls.connect({
-      host: host, port: port, servername: host,
+      host: address || host, port: port, servername: host,
       rejectUnauthorized: false,          // sertifika hatalı olsa da bilgi toplarız
       ALPNProtocols: ['http/1.1']
     });
@@ -166,19 +170,22 @@ function inspectTls(host, port) {
         issuer: cert && cert.issuer ? (cert.issuer.O || cert.issuer.CN || null) : null,
         validTo: expiry && !isNaN(expiry) ? expiry.toISOString() : null,
         daysLeft: expiry && !isNaN(expiry) ? Math.floor((expiry - Date.now()) / 86400000) : null,
-        chainLength: chainLength(cert)
+        chainLength: chainLength(cert),
+        /* Ad uyumu AYRICA ölçülüyor: zincir hatası varsa Node ad kontrolüne
+           hiç geçmiyor, authorizationError yalnızca ilk hatayı söylüyor. */
+        hostnameMatch: cert && cert.subject ? !tls.checkServerIdentity(host, cert) : null
       });
     });
   });
 }
 
 /** Yalnızca eski bir protokolle bağlanmayı dener; başarı = sunucu hâlâ kabul ediyor. */
-function probeLegacyTls(host, port, version) {
+function probeLegacyTls(host, port, version, address) {
   return new Promise(function (resolve) {
     let socket;
     try {
       socket = tls.connect({
-        host: host, port: port, servername: host,
+        host: address || host, port: port, servername: host,
         rejectUnauthorized: false,
         minVersion: version, maxVersion: version,
         // OpenSSL güvenlik seviyesi varsayılanda eski protokolleri istemci
@@ -269,6 +276,26 @@ function scoreOf(checks) {
    Giriş noktası
    ============================================================ */
 
+/** TLS el sıkışması + eski sürüm yoklaması (tam tarama ve /araclar/ssl). */
+async function measureTls(host, port, address) {
+  // Paralel çalıştırılır: sıralı yapılsaydı en kötü durumda üç el sıkışma
+  // arka arkaya beklenir ve fonksiyon zaman aşımına yaklaşırdı.
+  const [inspected, legacy11] = await Promise.all([
+    inspectTls(host, port, address),
+    probeLegacyTls(host, port, 'TLSv1.1', address)
+  ]);
+  let legacyInfo = null;
+  if (inspected.ok) {
+    legacyInfo = legacy11;
+    // 1.1 kabul edilmiyorsa 1.0 ayrıca denenir; kabul ediliyorsa gerek yok.
+    if (legacy11.tested && !legacy11.accepted) {
+      const legacy10 = await probeLegacyTls(host, port, 'TLSv1', address);
+      if (legacy10.tested && legacy10.accepted) legacyInfo = legacy10;
+    }
+  }
+  return { tls: inspected, legacy: legacyInfo };
+}
+
 async function scanSite(rawUrl, options) {
   const target = normalizeTarget(rawUrl);
   if (target.error) throw new Error(target.error);
@@ -303,22 +330,9 @@ async function scanSite(rawUrl, options) {
   let tlsInfo = null;
   let legacyInfo = null;
   if (isHttps) {
-    // Paralel çalıştırılır: sıralı yapılsaydı en kötü durumda üç el sıkışma
-    // arka arkaya beklenir ve fonksiyon zaman aşımına yaklaşırdı.
-    const [inspected, legacy11] = await Promise.all([
-      inspectTls(host, port),
-      probeLegacyTls(host, port, 'TLSv1.1')
-    ]);
-    tlsInfo = inspected;
-
-    if (tlsInfo.ok) {
-      legacyInfo = legacy11;
-      // 1.1 kabul edilmiyorsa 1.0 ayrıca denenir; kabul ediliyorsa gerek yok.
-      if (legacy11.tested && !legacy11.accepted) {
-        const legacy10 = await probeLegacyTls(host, port, 'TLSv1');
-        if (legacy10.tested && legacy10.accepted) legacyInfo = legacy10;
-      }
-    }
+    const olcum = await measureTls(host, port);
+    tlsInfo = olcum.tls;
+    legacyInfo = olcum.legacy;
   }
 
   const mailInfo = await mailSozu;
@@ -423,4 +437,4 @@ async function scanSite(rawUrl, options) {
 /* buildChecks ve scoreOf, kalibrasyon sinamasi icin disari aciliyor
    (tools/calibration-test.js). Skorun dogrulugu ancak bilinen girdilerle
    olculebilir; agdan gecen bir sinama bunu yapamaz. */
-module.exports = { scanSite, buildChecks, runEngines, ORDER, scoreOf, WEIGHTS, SCANNER_VERSION, REPORT_VERSION, guardedFetch };
+module.exports = { scanSite, buildChecks, runEngines, ORDER, scoreOf, WEIGHTS, SCANNER_VERSION, REPORT_VERSION, guardedFetch, measureTls };

@@ -1,8 +1,8 @@
 'use strict';
 
 /**
- * Ücretsiz tek konulu araçlar (/araclar/*): güvenlik başlıkları ('headers')
- * ve e-posta kimlik doğrulaması ('email': SPF + DMARC).
+ * Ücretsiz tek konulu araçlar (/araclar/*): güvenlik başlıkları ('headers'),
+ * e-posta kimlik doğrulaması ('email': SPF + DMARC) ve SSL/TLS ('ssl').
  *
  * Tam taramanın KOPYASI değil: aynı motoru (engines/header-scanner.js) ve
  * aynı SSRF kapısını (scanner.guardedFetch → guard.assertPublicHost)
@@ -16,15 +16,16 @@
 
 const scanner = require('./scanner.js');
 const headerEngine = require('./engines/header-scanner.js');
-const { normalizeTarget } = require('./guard.js');
-const { CHECKS } = require('./report.js');
+const tlsEngine = require('./engines/tls-scanner.js');
+const { normalizeTarget, assertPublicHost } = require('./guard.js');
+const { CHECKS, NOTE_FIX } = require('./report.js');
 const fixpricing = require('./fixpricing.js');
 const mail = require('./mail.js');
 const net = require('net');
 
 const HEADER_IDS = ['https', 'hsts', 'csp', 'xframe', 'nosniff', 'referrer', 'permissions', 'disclosure'];
 const TOP_N = 3;
-const TYPES = ['headers', 'email'];
+const TYPES = ['headers', 'email', 'ssl'];
 
 /** Bağlamdan (headers + finalUrl) araç sonucunu üretir. Saf: ağ yok. */
 function headersReport(context) {
@@ -158,6 +159,130 @@ async function emailRun(host, deps) {
   return Object.assign({ ok: true }, emailReport(k));
 }
 
+/* --- SSL / TLS -------------------------------------------------------------
+   Sıra BİLİNÇLİ: önce TLS, sonra sayfa. Node fetch'i geçersiz sertifikada
+   (süresi dolmuş, eksik zincir, kendinden imzalı, ad uyumsuz) bağlantıyı
+   reddediyor — fetch önce gelseydi araç tam da göstermesi gereken durumda
+   "ulaşılamadı" derdi (ölçüldü: badssl.com alt alanları). TLS el sıkışması
+   rejectUnauthorized:false ile her durumda bilgi topluyor; sayfa yalnızca
+   HSTS başlığı için isteniyor ve düşerse yalnız HSTS "ölçülemedi" olur.
+
+   Bağlantı guard.assertPublicHost'un onayladığı adrese kuruluyor (bkz.
+   scanner.inspectTls). Kontrol mantığı motorlarınki (tls-scanner, header-
+   scanner); burada yalnızca alt küme ve sunum var. */
+const SSL_IDS = ['tls_cert', 'tls_protocol', 'tls_legacy', 'hsts'];
+
+/* Modern el sıkışma "protokol desteklenmiyor" ile düştüyse sunucu TLS 1.2/1.3
+   konuşmuyor demektir: bu bir ölçüm, "ulaşılamadı" değil. */
+const ESKI_PROTOKOL = /UNSUPPORTED_PROTOCOL|WRONG_VERSION_NUMBER|VERSION_TOO_LOW|PROTOCOL_VERSION/i;
+
+/* Zincirin durumu, sertifika hatasının sebebinden. Süre veya ad hatası
+   zinciri söylemiyor: OpenSSL ilk hatada duruyor; 'unknown' dürüst cevap. */
+function zincirDurumu(t) {
+  if (t.authorized) return 'ok';
+  const sebep = tlsEngine.certSebebi(t);
+  if (sebep === 'chain_incomplete' || sebep === 'self_signed' || sebep === 'untrusted') return sebep;
+  if (sebep === 'hostname_mismatch') return 'ok';   // zincir doğrulandı, ad kontrolüne geçildi
+  return 'unknown';
+}
+
+/** Ölçümlerden araç sonucunu üretir. Saf: ağ yok. */
+function sslReport(host, tlsInfo, legacyInfo, headers) {
+  const finalUrl = new URL('https://' + host + '/');
+  let checks;
+  if (!tlsInfo.ok && ESKI_PROTOKOL.test(tlsInfo.reason || '')) {
+    checks = [
+      { id: 'tls_cert', severity: 'high', status: 'skipped', detail: null, note: 'not_measured' },
+      { id: 'tls_protocol', severity: 'high', status: 'fail', detail: 'TLS 1.2/1.3 yok' },
+      { id: 'tls_legacy', severity: 'high', status: 'skipped', detail: null, note: 'not_measured' }
+    ];
+  } else {
+    checks = tlsEngine.analyze({ finalUrl: finalUrl, tls: tlsInfo, legacyTls: legacyInfo }, 'tr').checks;
+  }
+  if (headers) {
+    checks = checks.concat(headerEngine.analyze({ headers: headers, finalUrl: finalUrl, html: null }, 'tr')
+      .checks.filter(function (c) { return c.id === 'hsts'; }));
+  } else {
+    checks.push({ id: 'hsts', severity: 'high', status: 'skipped', detail: null, note: 'not_measured' });
+  }
+
+  const failed = checks.filter(function (c) { return c.status === 'fail'; }).sort(function (a, b) {
+    return (scanner.WEIGHTS[b.severity] - scanner.WEIGHTS[a.severity])
+      || (SSL_IDS.indexOf(a.id) - SSL_IDS.indexOf(b.id));
+  });
+  const top = failed.slice(0, TOP_N).map(function (c) {
+    const m = CHECKS.tr[c.id] || [c.id, '', ''];
+    return {
+      id: c.id, severity: c.severity, detail: c.detail, note: c.note || null,
+      name: m[0], risk: m[1], fix: (c.note && NOTE_FIX.tr[c.note]) || m[2],
+      fixPrice: fixpricing.TIERS[fixpricing.tierOf(c.id)]
+    };
+  });
+
+  const t = tlsInfo.ok ? tlsInfo : null;
+  return {
+    type: 'ssl',
+    host: host,
+    score: scanner.scoreOf(checks),
+    summary: {
+      total: checks.length,
+      pass: checks.filter(function (c) { return c.status === 'pass'; }).length,
+      fail: failed.length
+    },
+    /* Kullanıcının istediği beş soru, bulgulardan bağımsız olarak. */
+    cert: {
+      validTo: t ? t.validTo : null,
+      daysLeft: t ? t.daysLeft : null,
+      issuer: t ? t.issuer : null,
+      chain: t ? zincirDurumu(t) : null,
+      chainLength: t ? t.chainLength : null,
+      hostnameMatch: t && typeof t.hostnameMatch === 'boolean' ? t.hostnameMatch : null,
+      protocol: t ? t.protocol : null,
+      modernTls: t ? (t.protocol === 'TLSv1.3' || t.protocol === 'TLSv1.2') : (ESKI_PROTOKOL.test(tlsInfo.reason || '') ? false : null),
+      legacyAccepted: legacyInfo && legacyInfo.tested ? !!legacyInfo.accepted : null,
+      /* null + hstsMeasured:true → başlık YOK; hstsMeasured:false → ölçülemedi. */
+      hsts: headers ? (headers.get('strict-transport-security') || null) : null,
+      hstsMeasured: !!headers
+    },
+    top: top,
+    hiddenFailures: failed.length - top.length,
+    checkedAt: new Date().toISOString()
+  };
+}
+
+async function sslRun(target, deps) {
+  const host = target.url.hostname.replace(/^\[|\]$/g, '');
+  const port = target.url.protocol === 'https:' && target.url.port ? Number(target.url.port) : 443;
+  const guardFn = (deps && deps.guard) || assertPublicHost;
+  const measureFn = (deps && deps.measure) || scanner.measureTls;
+  const fetchFn = (deps && deps.fetch) || scanner.guardedFetch;
+
+  let adresler;
+  try {
+    adresler = await guardFn(host);
+  } catch (err) {
+    return { ok: false, code: errorCode(err) };
+  }
+  const olcum = await measureFn(host, port, adresler[0]);
+  if (!olcum.tls.ok && !ESKI_PROTOKOL.test(olcum.tls.reason || '')) {
+    return { ok: false, code: olcum.tls.reason === 'timeout' ? 'timeout' : 'no_https' };
+  }
+
+  /* HSTS: yalnızca https adresinin yanıt başlıkları. Sertifika geçersizse
+     fetch düşer; o zaman HSTS ölçülemedi (tarayıcı da zaten yok sayar). */
+  let headers = null;
+  if (olcum.tls.ok && olcum.tls.authorized) {
+    try {
+      const url = new URL('https://' + target.url.host + '/');
+      const sonuc = await fetchFn(url, {});
+      try { if (sonuc.response.body) await sonuc.response.body.cancel(); } catch (e) { /* yok say */ }
+      // Yönlendirme sonrası son yanıtın başlıkları — tam taramayla aynı.
+      headers = sonuc.response.headers;
+    } catch (err) { headers = null; }
+  }
+  return Object.assign({ ok: true }, sslReport(host, olcum.tls, olcum.legacy, headers));
+}
+
 function errorCode(err) {
   const m = err && err.message;
   if (m === 'timeout' || m === 'blocked_target' || m === 'dns_failed') return m;
@@ -176,6 +301,7 @@ async function run(type, rawUrl, deps) {
   const target = normalizeTarget(rawUrl);
   if (target.error) return { ok: false, code: target.error };
   if (type === 'email') return emailRun(target.host, deps);
+  if (type === 'ssl') return sslRun(target, deps);
   const fetchFn = (deps && deps.fetch) || scanner.guardedFetch;
   let sonuc;
   try {
@@ -188,4 +314,4 @@ async function run(type, rawUrl, deps) {
     headersReport({ headers: sonuc.response.headers, finalUrl: sonuc.finalUrl, html: null }));
 }
 
-module.exports = { run, headersReport, emailReport, HEADER_IDS, EMAIL_IDS, TOP_N, TYPES };
+module.exports = { run, headersReport, emailReport, sslReport, HEADER_IDS, EMAIL_IDS, SSL_IDS, TOP_N, TYPES };
