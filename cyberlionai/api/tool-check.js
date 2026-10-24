@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * POST /api/tool-check { type: 'headers', url }  → ücretsiz araç sonucu
+ * POST /api/tool-check { type: 'headers' | 'email', url }  → ücretsiz araç sonucu
  *
  * Anonim. PASİF okuma (bkz. _lib/toolcheck.js); her istek tarama günlüğüne
  * yazılıyor (seviye: passive). Ana ücretsiz tarama kotasını HARCAMAZ; kendi
@@ -20,6 +20,9 @@ const { clientIp, ipKey } = require('./_lib/session.js');
 const DAY_SECONDS = 86400;
 const DAILY_MAX = 10;
 const CACHE_SECONDS = 3600;
+/* Kullanıcının girdisinden kaynaklanan hatalar 400; geri kalanı hedefe veya
+   DNS'e ulaşılamadı demek (502). */
+const HATALI_GIRDI = ['blocked_target', 'bad_domain', 'domain_not_found'];
 
 async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -63,7 +66,7 @@ async function handler(req, res) {
 
   const result = await toolcheck.run(type, target.url);
   if (!result.ok) {
-    const status = result.code === 'blocked_target' ? 400 : 502;
+    const status = HATALI_GIRDI.indexOf(result.code) !== -1 ? 400 : 502;
     return res.status(status).json({ error: { code: result.code } });
   }
   if (store.isConfigured()) {
