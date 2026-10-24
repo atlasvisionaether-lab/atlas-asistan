@@ -206,5 +206,38 @@ dene('eksik zincir düzeltmesi fullchain diyor, "yenileyin" DEMİYOR', function 
   assert.ok(/cert\.pem/.test(satir), 'cert.pem uyarısı yok');
 });
 
+/* --- Kalan süre metni: eksi gün yazılmaz --- */
+const tg = require(path.join(__dirname, '..', 'api', '_lib', 'telegram.js'));
+const mailer = require(path.join(__dirname, '..', 'api', '_lib', 'mailer.js'));
+
+dene('süresi dolmuş sertifika: "-4213 gün" değil "4213 gün önce doldu"', function () {
+  const c = tlsEngine.analyze({ headers: new Headers(), finalUrl: new URL('https://ornek.com/'),
+    tls: { ok: true, protocol: 'TLSv1.2', authorized: false, authorizationError: 'CERT_HAS_EXPIRED', daysLeft: -4213, chainLength: 3 } }, 'tr')
+    .checks.filter(function (x) { return x.id === 'tls_cert'; })[0];
+  assert.strictEqual(c.detail, '4213 gün önce doldu');
+  assert.strictEqual(c.note, 'expired');
+});
+
+dene('geçerli sertifika: "N gün kaldı"; İngilizce rapor İngilizce', function () {
+  assert.strictEqual(tlsEngine.gunMetni(36, 'tr'), '36 gün kaldı');
+  assert.strictEqual(tlsEngine.gunMetni(0, 'tr'), '0 gün kaldı');
+  assert.strictEqual(tlsEngine.gunMetni(36, 'en'), '36 days left');
+  assert.strictEqual(tlsEngine.gunMetni(-2, 'en'), 'expired 2 days ago');
+});
+
+dene('izleme uyarısı (Telegram) süresi geçmişte eksi gün yazmıyor', function () {
+  const dolmus = tg.mesaj.izlemeUyarisi('ssl_expiry', 'ornek.com', { daysLeft: -5 });
+  assert.ok(/5 gün önce/.test(dolmus) && !/-5/.test(dolmus), dolmus);
+  const yakin = tg.mesaj.izlemeUyarisi('ssl_expiry', 'ornek.com', { daysLeft: 7 });
+  assert.ok(/7 gün kaldı/.test(yakin), yakin);
+  const alan = tg.mesaj.izlemeUyarisi('domain_expiry', 'ornek.com', { daysLeft: -1 });
+  assert.ok(/1 gün önce/.test(alan) && !/-1/.test(alan), alan);
+});
+
+dene('izleme özeti (e-posta) süresi geçmişte eksi gün yazmıyor', function () {
+  const e = mailer.digestEmail([{ domain: 'ornek.com', kind: 'ssl_expiry', severity: 'critical', data: { daysLeft: -5 } }]);
+  assert.ok(/5 gün önce doldu/.test(e.text) && !/-5 gün/.test(e.text), e.text);
+});
+
 process.stdout.write('\nGeçen: ' + gecti + '   Kalan: ' + kalan + '\n');
 process.exit(kalan === 0 ? 0 : 1);

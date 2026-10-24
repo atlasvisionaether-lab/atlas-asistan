@@ -412,7 +412,8 @@ async function main() {
 
   /* ================= Teklif ================= */
   const o = offer.buildOffer('tr');
-  dogru('teklif fiyatı plans.js', o.text.indexOf('₺299/ay') !== -1 && o.text.indexOf('₺358,80') !== -1);
+  /* Fiyatlar KDV DAHİL (2026-10-22): eski '₺299 + KDV = ₺358,80' modeli yok. */
+  dogru('teklif fiyatı plans.js', o.text.indexOf('₺249/ay') !== -1 && o.text.indexOf('KDV dahil') !== -1 && o.text.indexOf('358,80') === -1);
   dogru('teklifte yanıltıcı vaat yok', !/29\s*\$|\$\s*29|otomatik (olarak )?kapat|7\/24|tam otomatik/i.test(o.text + offer.buildOffer('en').text));
   esit('teklif adresi', o.url, '/odeme?plan=pro');
 

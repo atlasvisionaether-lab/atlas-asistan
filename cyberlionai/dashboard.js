@@ -145,6 +145,8 @@
       al_score_drop: 'Skor düştü: {from} → {to}',
       al_ssl_expiry: 'SSL sertifikasının bitmesine {daysLeft} gün kaldı',
       al_domain_expiry: 'Alan adı kaydının bitmesine {daysLeft} gün kaldı',
+      al_ssl_expired: 'SSL sertifikasının süresi {daysAgo} gün önce doldu',
+      al_domain_expired: 'Alan adı kaydının süresi {daysAgo} gün önce doldu',
       al_blacklist: 'Kara listede görünüyor ({source})',
       al_downtime: 'Site erişilemiyor ({reason})',
       al_recovered: 'Site yeniden erişilebilir',
@@ -281,6 +283,8 @@
       al_score_drop: 'Score dropped: {from} → {to}',
       al_ssl_expiry: 'SSL certificate expires in {daysLeft} days',
       al_domain_expiry: 'Domain registration expires in {daysLeft} days',
+      al_ssl_expired: 'SSL certificate expired {daysAgo} days ago',
+      al_domain_expired: 'Domain registration expired {daysAgo} days ago',
       al_blacklist: 'Appears on a blacklist ({source})',
       al_downtime: 'Site unreachable ({reason})',
       al_recovered: 'Site reachable again',
@@ -1087,7 +1091,14 @@
         dot.setAttribute('aria-hidden', 'true');
         var body = document.createElement('span');
         if (!a.read) body.className = 'unread';
-        body.textContent = a.domain + ' — ' + fill(t('al_' + a.kind) || a.kind, a.data || {});
+        /* Süre geçmişse "-5 gün kaldı" yerine "5 gün önce doldu". */
+        var veri = a.data || {};
+        var anahtar = 'al_' + a.kind;
+        if ((a.kind === 'ssl_expiry' || a.kind === 'domain_expiry') && Number(veri.daysLeft) < 0) {
+          anahtar = a.kind === 'ssl_expiry' ? 'al_ssl_expired' : 'al_domain_expired';
+          veri = Object.assign({}, veri, { daysAgo: -Number(veri.daysLeft) });
+        }
+        body.textContent = a.domain + ' — ' + fill(t(anahtar) || a.kind, veri);
         var when = document.createElement('time');
         when.dateTime = a.createdAt;
         try { when.textContent = new Date(a.createdAt).toLocaleString(lang === 'en' ? 'en-GB' : 'tr-TR'); } catch (err) { when.textContent = a.createdAt; }
