@@ -25,7 +25,7 @@ const MAX_REDIRECTS = 4;
 
 /* Rapor ve motor sürümü: kaydedilen her taramaya ve PDF'e yazılır, böylece
    eski bir sonuç hangi kural setiyle üretildiği bilinerek okunabilir. */
-const SCANNER_VERSION = '1.4.0-owasp-lite';
+const SCANNER_VERSION = '1.4.1-owasp-lite';
 const REPORT_VERSION = '1';
 
 /* ============================================================

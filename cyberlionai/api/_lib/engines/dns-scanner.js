@@ -15,6 +15,15 @@ const { fixCodeFor } = require('./fixes.js');
 const mail = require('../mail');
 const caaModul = require('../caa.js');
 
+/* Kayıt listesi boş ama sorgu TAMAMLANMADI mı (zaman aşımı, SERVFAIL)?
+   O zaman "kayıt yok" demek ölçüm değil tahmin olur: google.com'un TXT
+   sorgusu zaman aşımına uğruyor ve kaydı olmasına rağmen "SPF yok"
+   görünüyordu (bkz. mail.js → KESIN_YOK). verify-dns.js ve /araclar/spf-dmarc
+   aynı kuralı izliyor. Alan yoksa (eski bağlam) ölçülmüş sayılır. */
+function olculemedi(sorgu) {
+  return !!sorgu && sorgu.kesin === false;
+}
+
 function analyze(context, lang) {
   const h = context.headers;
   const checks = [];
@@ -37,7 +46,9 @@ function analyze(context, lang) {
     });
   } else {
     const spf = mail.spfDegerlendir(m.spf);
-    if (spf.durum === 'none') {
+    if (spf.durum === 'none' && olculemedi(m.spfSorgu)) {
+      checks.push(check('spf', 'info', 'skipped', null, { note: 'not_measured' }));
+    } else if (spf.durum === 'none') {
       /* Yokluk BURADA başarısızlıktır ve bu, COOP/COEP'ten bilinçli bir
          ayrım: orada yokluk zararsız bir eksik katmandı, burada yokluk
          "herkes bu alan adı adına e-posta gönderebilir" demek. Üstelik
@@ -49,7 +60,9 @@ function analyze(context, lang) {
     }
 
     const dmarc = mail.dmarcDegerlendir(m.dmarc);
-    if (dmarc.durum === 'none') {
+    if (dmarc.durum === 'none' && olculemedi(m.dmarcSorgu)) {
+      checks.push(check('dmarc', 'info', 'skipped', null, { note: 'not_measured' }));
+    } else if (dmarc.durum === 'none') {
       checks.push(check('dmarc', 'info', 'fail', null, { note: 'dmarc_missing' }));
     } else {
       checks.push(check('dmarc', 'info', dmarc.durum, dmarc.detay || null,
