@@ -26,6 +26,7 @@ const KALIN = '\x1b[1m';
 const SIFIRLA = '\x1b[0m';
 
 const mail = require(path.join(__dirname, '..', 'api', '_lib', 'mail.js'));
+const dnsEngine = require(path.join(__dirname, '..', 'api', '_lib', 'engines', 'dns-scanner.js'));
 
 let gecti = 0;
 let kalan = 0;
@@ -213,6 +214,50 @@ dene('gerçek çok seviyeli alan adı korunuyor (anadolu.edu.tr)', function () {
   /* Ölçüldü: kayıtlar tam olarak bu isimde duruyor. */
   assert.strictEqual(mail.alanAdi('www.anadolu.edu.tr'), 'anadolu.edu.tr');
   assert.strictEqual(mail.ustAlan('anadolu.edu.tr'), null);
+});
+
+/* --- Tam tarama motoru: ölçülemeyen sorgu "yok" sayılmaz --- */
+function motor(ek) {
+  const ctx = { headers: new Headers(), finalUrl: new URL('https://ornek.com/'),
+    mail: Object.assign({ ok: true, alan: 'ornek.com', spf: [], dmarc: [] }, ek) };
+  const out = {};
+  dnsEngine.analyze(ctx, 'tr').checks.forEach(function (c) { out[c.id] = c; });
+  return out;
+}
+const ZAMAN_ASIMI = { ok: false, kesin: false, kod: 'ETIMEOUT' };
+const KAYIT_YOK = { ok: false, kesin: true, kod: 'ENODATA' };
+
+dene('motor: SPF sorgusu zaman aşımı → ölçülemedi, "yok" değil', function () {
+  const c = motor({ spfSorgu: ZAMAN_ASIMI, dmarcSorgu: KAYIT_YOK });
+  assert.strictEqual(c.spf.status, 'skipped');
+  assert.strictEqual(c.spf.note, 'not_measured');
+  assert.strictEqual(c.dmarc.status, 'fail');
+  assert.strictEqual(c.dmarc.note, 'dmarc_missing');
+});
+
+dene('motor: DMARC sorgusu SERVFAIL → ölçülemedi', function () {
+  const c = motor({ spfSorgu: KAYIT_YOK, dmarcSorgu: { ok: false, kesin: false, kod: 'ESERVFAIL' } });
+  assert.strictEqual(c.dmarc.status, 'skipped');
+  assert.strictEqual(c.dmarc.note, 'not_measured');
+  assert.strictEqual(c.spf.note, 'spf_missing');
+});
+
+dene('motor: kesin ENODATA → yok (fail)', function () {
+  const c = motor({ spfSorgu: KAYIT_YOK, dmarcSorgu: KAYIT_YOK });
+  assert.strictEqual(c.spf.status, 'fail');
+  assert.strictEqual(c.dmarc.status, 'fail');
+});
+
+dene('motor: sorgu bilgisi olmayan eski bağlam eskisi gibi', function () {
+  const c = motor({});
+  assert.strictEqual(c.spf.note, 'spf_missing');
+  assert.strictEqual(c.dmarc.note, 'dmarc_missing');
+});
+
+dene('motor: kayıt varsa sorgu durumu kararı değiştirmez', function () {
+  const c = motor({ spf: ['v=spf1 -all'], dmarc: ['v=DMARC1; p=reject'], spfSorgu: ZAMAN_ASIMI });
+  assert.strictEqual(c.spf.status, 'pass');
+  assert.strictEqual(c.dmarc.status, 'pass');
 });
 
 process.stdout.write('\nGeçen: ' + gecti + '   Kalan: ' + kalan + '\n');
