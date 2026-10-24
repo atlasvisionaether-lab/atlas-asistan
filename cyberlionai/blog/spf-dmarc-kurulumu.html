@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SPF ve DMARC Kaydı Nasıl Oluşturulur? Adım Adım Rehber | Cyber Lion AI</title>
+  <meta name="description" content="Alan adınız adına sahte e-posta gönderilmesini SPF ve DMARC ile engelleyin. Google Workspace ve Microsoft 365 örnekleri, sık yapılan hatalar ve p=none'dan p=reject'e güvenli geçiş." />
+  <link rel="canonical" href="https://www.cyberlionai.com/blog/spf-dmarc-kurulumu" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="SPF ve DMARC Kaydı Nasıl Oluşturulur? Adım Adım Rehber" />
+  <meta property="og:description" content="Alan adınız adına sahte e-posta gönderilmesini SPF ve DMARC ile engelleyin. Google Workspace ve Microsoft 365 örnekleri, sık yapılan hatalar ve p=none'dan p=reject'e güvenli geçiş." />
+  <meta property="og:url" content="https://www.cyberlionai.com/blog/spf-dmarc-kurulumu" />
+  <meta property="og:image" content="https://www.cyberlionai.com/og-image.png" />
+  <meta property="og:locale" content="tr_TR" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/blog/blog.css" />
+  <link rel="icon" href="/favicon-32.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","headline":"SPF ve DMARC Kaydı Nasıl Oluşturulur? Adım Adım Rehber","description":"Alan adınız adına sahte e-posta gönderilmesini SPF ve DMARC ile engelleyin. Google Workspace ve Microsoft 365 örnekleri, sık yapılan hatalar ve p=none'dan p=reject'e güvenli geçiş.","url":"https://www.cyberlionai.com/blog/spf-dmarc-kurulumu","mainEntityOfPage":"https://www.cyberlionai.com/blog/spf-dmarc-kurulumu","datePublished":"2026-10-25","dateModified":"2026-10-25","inLanguage":"tr","image":"https://www.cyberlionai.com/og-image.png","author":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"},"publisher":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana sayfa","item":"https://www.cyberlionai.com/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://www.cyberlionai.com/blog/"},{"@type":"ListItem","position":3,"name":"SPF ve DMARC Kaydı Nasıl Oluşturulur? Adım Adım Rehber","item":"https://www.cyberlionai.com/blog/spf-dmarc-kurulumu"}]}]}</script>
+</head>
+<body>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="/">CYBER LION AI</a>
+      <nav class="nav"><a href="/blog/">Blog</a><a class="btn btn--ghost" href="/#scanForm">Ücretsiz tara</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="crumb"><a href="/">Ana sayfa</a> › <a href="/blog/">Blog</a></p>
+    <article class="post">
+      <h1>SPF ve DMARC Kaydı Nasıl Oluşturulur? Adım Adım Rehber</h1>
+      <p class="meta"><time datetime="2026-10-25">25 Ekim 2026</time> · Cyber Lion AI</p>
+<p>E-postadaki "Kimden" satırı, zarfın üzerindeki gönderen adresi gibidir: herkes istediğini yazabilir. Bir dolandırıcı <code>muhasebe@sirketiniz.com</code> adresinden müşterilerinize "IBAN'ımız değişti" diye e-posta gönderebilir. Alıcının posta sunucusunun bunu sahte diye eleyebilmesi için iki DNS kaydına ihtiyaç vardır: <strong>SPF</strong> ve <strong>DMARC</strong>.</p>
+<p>Gmail ve Yahoo, 2024'ten beri toplu gönderim yapan alan adlarından (Gmail için günde 5.000'den fazla ileti) SPF, DKIM ve DMARC istiyor; daha az gönderenlerden de en az SPF veya DKIM bekliyor. Kayıtlarınız eksikse kendi meşru e-postalarınız da spam klasörüne düşebilir.</p>
+
+<h2>1. Adım: SPF kaydı</h2>
+<p>SPF, alan adınız adına e-posta gönderebilecek sunucuları listeleyen bir TXT kaydıdır ve alan adının köküne (<code>@</code>) eklenir.</p>
+<table>
+  <thead><tr><th>Posta hizmeti</th><th>SPF kaydı</th></tr></thead>
+  <tbody>
+    <tr><td>Google Workspace</td><td><code>v=spf1 include:_spf.google.com -all</code></td></tr>
+    <tr><td>Microsoft 365</td><td><code>v=spf1 include:spf.protection.outlook.com -all</code></td></tr>
+    <tr><td>İkisi birden</td><td><code>v=spf1 include:_spf.google.com include:spf.protection.outlook.com -all</code></td></tr>
+  </tbody>
+</table>
+<p>Barındırma firmanızın e-posta hizmetini ya da bir bülten aracını kullanıyorsanız, onların verdiği <code>include:</code> ifadesini de aynı kayda ekleyin.</p>
+<h3>Sık yapılan SPF hataları</h3>
+<ul>
+  <li><strong>İki ayrı SPF kaydı:</strong> alan adı başına yalnızca bir <code>v=spf1</code> kaydı olabilir. İki kayıt varsa alıcı ikisini de geçersiz sayar. Yeni bir hizmet eklerken yeni kayıt açmayın, var olana <code>include:</code> ekleyin.</li>
+  <li><strong><code>+all</code> veya <code>?all</code>:</strong> <code>+all</code> herkese izin verir; kaydın hiç olmamasından da kötüdür. <code>?all</code> alıcıya hiçbir şey söylemez. <code>-all</code> (reddet) ya da geçiş döneminde <code>~all</code> (şüpheli say) kullanın.</li>
+  <li><strong>10 DNS sorgusu sınırı:</strong> SPF değerlendirmesi en fazla 10 DNS sorgusuna izin verir (RFC 7208). Çok sayıda <code>include:</code> bu sınırı aşabilir ve kayıt geçersiz olur.</li>
+</ul>
+
+<h2>2. Adım: DKIM</h2>
+<p>DKIM, giden e-postayı imzalar. Anahtarı posta sağlayıcınızın yönetim panelinden alır, verilen adla (<code>seçici._domainkey</code>) DNS'e TXT kaydı olarak eklersiniz. Google Workspace'te Yönetici Konsolu'ndaki Gmail ayarlarında (<em>E-postanın kimliğini doğrulama</em>), Microsoft 365'te Microsoft Defender portalındaki e-posta kimlik doğrulama ayarlarında (DKIM sekmesi) bulunur.</p>
+
+<h2>3. Adım: DMARC kaydı</h2>
+<p>DMARC, SPF veya DKIM doğrulamasından geçemeyen iletiye ne yapılacağını söyler. <code>_dmarc</code> adıyla bir TXT kaydı eklenir. Önerilen yol üç aşamalıdır:</p>
+<ol>
+  <li><strong>İzleme:</strong> <code>v=DMARC1; p=none; rua=mailto:dmarc@ornek.com</code><br>Hiçbir ileti engellenmez; size hangi sunucuların adınıza gönderdiğini gösteren raporlar gelir. Birkaç hafta bu raporları izleyin ve meşru göndericileri SPF/DKIM'e ekleyin.</li>
+  <li><strong>Karantina:</strong> <code>v=DMARC1; p=quarantine; rua=mailto:dmarc@ornek.com</code><br>Doğrulanamayan iletiler spam klasörüne gider.</li>
+  <li><strong>Ret:</strong> <code>v=DMARC1; p=reject; rua=mailto:dmarc@ornek.com</code><br>Sahte iletiler teslim edilmez. Hedef budur.</li>
+</ol>
+<p><code>p=none</code>'da kalmak yaygın bir hatadır: kayıt var görünür ama sahte e-posta yine teslim edilir. Aynı şekilde <code>pct=</code> değeri 100'ün altındaysa politika iletilerin yalnızca bir kısmına uygulanır.</p>
+
+<h2>Kontrol edin</h2>
+<p>Kayıtları ekledikten sonra DNS'in yayılması birkaç dakika ile birkaç saat sürebilir. <a href="/araclar/spf-dmarc">SPF ve DMARC kontrol aracımız</a> kayıtlarınızı yayındaki hâliyle gösterir ve sorun varsa hangi satırın nasıl düzeltileceğini yazar.</p>
+
+    <aside class="cta-box">
+      <p class="cta-box__title">Ücretsiz SPF ve DMARC kontrolü</p>
+      <p>Alan adınızın SPF ve DMARC kayıtlarını, yayındaki hâliyle ve düzeltme önerisiyle görün. Kayıt gerekmez.</p>
+      <a class="btn" href="/araclar/spf-dmarc">Hemen kontrol et</a>
+    </aside>
+    </article>
+    <section class="related">
+      <h2>İlgili yazılar</h2>
+      <ul>
+        <li><a href="/blog/hsts-nedir">HSTS Nedir? Strict-Transport-Security Başlığı Nasıl Eklenir?</a></li>
+        <li><a href="/blog/ssl-sertifikasi-suresi-doldu">SSL Sertifikasının Süresi Doldu: Ne Olur, Nasıl Yenilenir?</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>© Cyber Lion AI · <a href="/blog/">Blog</a> · <a href="/kullanim-kosullari">Kullanım Şartları</a> · <a href="/gizlilik-politikasi">Gizlilik</a> · <a href="/pages/tarama-yetkisi">Tarama Yetkisi</a></footer>
+</body>
+</html>

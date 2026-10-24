@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HSTS Nedir? Strict-Transport-Security Başlığı Nasıl Eklenir? | Cyber Lion AI</title>
+  <meta name="description" content="HSTS, tarayıcıya sitenizi yalnızca HTTPS ile açmasını söyler ve SSL stripping saldırılarını engeller. Nginx, Apache, Cloudflare ve Vercel için ekleme, max-age seçimi ve preload riskleri." />
+  <link rel="canonical" href="https://www.cyberlionai.com/blog/hsts-nedir" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="HSTS Nedir? Strict-Transport-Security Başlığı Nasıl Eklenir?" />
+  <meta property="og:description" content="HSTS, tarayıcıya sitenizi yalnızca HTTPS ile açmasını söyler ve SSL stripping saldırılarını engeller. Nginx, Apache, Cloudflare ve Vercel için ekleme, max-age seçimi ve preload riskleri." />
+  <meta property="og:url" content="https://www.cyberlionai.com/blog/hsts-nedir" />
+  <meta property="og:image" content="https://www.cyberlionai.com/og-image.png" />
+  <meta property="og:locale" content="tr_TR" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/blog/blog.css" />
+  <link rel="icon" href="/favicon-32.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","headline":"HSTS Nedir? Strict-Transport-Security Başlığı Nasıl Eklenir?","description":"HSTS, tarayıcıya sitenizi yalnızca HTTPS ile açmasını söyler ve SSL stripping saldırılarını engeller. Nginx, Apache, Cloudflare ve Vercel için ekleme, max-age seçimi ve preload riskleri.","url":"https://www.cyberlionai.com/blog/hsts-nedir","mainEntityOfPage":"https://www.cyberlionai.com/blog/hsts-nedir","datePublished":"2026-10-25","dateModified":"2026-10-25","inLanguage":"tr","image":"https://www.cyberlionai.com/og-image.png","author":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"},"publisher":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana sayfa","item":"https://www.cyberlionai.com/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://www.cyberlionai.com/blog/"},{"@type":"ListItem","position":3,"name":"HSTS Nedir? Strict-Transport-Security Başlığı Nasıl Eklenir?","item":"https://www.cyberlionai.com/blog/hsts-nedir"}]}]}</script>
+</head>
+<body>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="/">CYBER LION AI</a>
+      <nav class="nav"><a href="/blog/">Blog</a><a class="btn btn--ghost" href="/#scanForm">Ücretsiz tara</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="crumb"><a href="/">Ana sayfa</a> › <a href="/blog/">Blog</a></p>
+    <article class="post">
+      <h1>HSTS Nedir? Strict-Transport-Security Başlığı Nasıl Eklenir?</h1>
+      <p class="meta"><time datetime="2026-10-25">25 Ekim 2026</time> · Cyber Lion AI</p>
+<p>Siteniz HTTPS kullanıyor ve HTTP isteklerini HTTPS'e yönlendiriyor. Yeterli mi? Tam değil. Bir ziyaretçi adres çubuğuna yalnızca <code>ornek.com</code> yazdığında tarayıcının ilk isteği hâlâ şifresiz HTTP ile gider. Aynı kafe Wi-Fi'ındaki bir saldırgan tam bu ilk isteğe araya girip bağlantıyı HTTP'de tutabilir (<em>SSL stripping</em>). <strong>HSTS</strong> bu açığı kapatır.</p>
+
+<h2>HSTS ne yapar?</h2>
+<p><code>Strict-Transport-Security</code> başlığını gören tarayıcı, belirtilen süre boyunca o siteyi <strong>yalnızca HTTPS ile</strong> açar; kullanıcı <code>http://</code> yazsa bile isteği kendisi HTTPS'e çevirir. Sertifika hatası olduğunda da kullanıcının "yine de devam et" seçeneğini kaldırır.</p>
+
+<h2>Önerilen değer</h2>
+<pre><code>Strict-Transport-Security: max-age=63072000; includeSubDomains</code></pre>
+<ul>
+  <li><strong><code>max-age</code></strong>: saniye cinsinden süre. 63072000 iki yıldır. İlk kez ekliyorsanız kısa bir değerle (ör. <code>max-age=300</code>) başlayıp sorun olmadığını gördükten sonra yükseltmek güvenli bir yoldur.</li>
+  <li><strong><code>includeSubDomains</code></strong>: tüm alt alan adlarını da kapsar. <strong>Dikkat:</strong> HTTPS sunmayan bir alt alan adınız varsa (eski bir panel, bir test sunucusu) o adres tarayıcıda açılmaz hâle gelir. Emin değilseniz bu kısmı çıkarın.</li>
+</ul>
+<p>Başlık yalnızca HTTPS yanıtlarında etkilidir; HTTP yanıtına eklenen HSTS tarayıcılar tarafından yok sayılır.</p>
+
+<h2>Nasıl eklenir?</h2>
+<h3>Nginx</h3>
+<pre><code>add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;</code></pre>
+<p>Satırı HTTPS <code>server</code> bloğuna ekleyin. <code>always</code>, başlığın hata sayfalarında da gönderilmesini sağlar. Not: bir <code>location</code> bloğunda başka bir <code>add_header</code> varsa, Nginx üst bloktaki başlıkları o blokta göndermez; satırı oraya da eklemeniz gerekir.</p>
+<h3>Apache</h3>
+<pre><code>Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"</code></pre>
+<p><code>mod_headers</code> modülünün açık olması gerekir (<code>a2enmod headers</code>).</p>
+<h3>Cloudflare</h3>
+<p><em>SSL/TLS › Edge Certificates › HTTP Strict Transport Security (HSTS)</em> ekranından açabilirsiniz.</p>
+<h3>Vercel</h3>
+<p>Vercel, kendi alan adlarında HSTS'yi varsayılan olarak gönderir. Özel bir değer istiyorsanız <code>vercel.json</code> içindeki <code>headers</code> bölümüne ekleyebilirsiniz.</p>
+
+<h2>Preload: dikkatli olun</h2>
+<p><code>preload</code> ifadesi ve hstspreload.org'a başvuru, alan adınızı tarayıcıların içine gömülü listeye ekletir; böylece ilk ziyaret bile HTTPS olur. Ancak listeden çıkmak aylar sürebilir ve tüm alt alan adlarınızın kalıcı olarak HTTPS sunması gerekir. Önce <code>includeSubDomains</code> ile uzun bir süre sorunsuz çalıştığınızdan emin olun.</p>
+
+<h2>Kontrol edin</h2>
+<p><a href="/araclar/guvenlik-basliklari">Güvenlik başlıkları testimiz</a> HSTS'yi ve diğer yedi güvenlik başlığını tek seferde kontrol eder.</p>
+
+    <aside class="cta-box">
+      <p class="cta-box__title">Ücretsiz güvenlik başlıkları testi</p>
+      <p>HSTS, CSP, X-Frame-Options ve diğer başlıklarınızı tek tıkla kontrol edin. Kayıt gerekmez.</p>
+      <a class="btn" href="/araclar/guvenlik-basliklari">Hemen kontrol et</a>
+    </aside>
+    </article>
+    <section class="related">
+      <h2>İlgili yazılar</h2>
+      <ul>
+        <li><a href="/blog/ssl-sertifikasi-suresi-doldu">SSL Sertifikasının Süresi Doldu: Ne Olur, Nasıl Yenilenir?</a></li>
+        <li><a href="/blog/tls-1-0-1-1-kapatma">TLS 1.0 ve TLS 1.1 Nasıl Kapatılır? Nginx, Apache, IIS, Cloudflare</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>© Cyber Lion AI · <a href="/blog/">Blog</a> · <a href="/kullanim-kosullari">Kullanım Şartları</a> · <a href="/gizlilik-politikasi">Gizlilik</a> · <a href="/pages/tarama-yetkisi">Tarama Yetkisi</a></footer>
+</body>
+</html>
