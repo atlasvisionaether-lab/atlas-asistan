@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TLS 1.0 ve TLS 1.1 Nasıl Kapatılır? Nginx, Apache, IIS, Cloudflare | Cyber Lion AI</title>
+  <meta name="description" content="TLS 1.0 ve 1.1 bilinen zayıflıklar taşır ve tarayıcılar 2020'den beri desteklemiyor. Sunucunuzda hâlâ açık mı, nasıl kapatılır ve kapatınca kim etkilenir?" />
+  <link rel="canonical" href="https://www.cyberlionai.com/blog/tls-1-0-1-1-kapatma" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="TLS 1.0 ve TLS 1.1 Nasıl Kapatılır? Nginx, Apache, IIS, Cloudflare" />
+  <meta property="og:description" content="TLS 1.0 ve 1.1 bilinen zayıflıklar taşır ve tarayıcılar 2020'den beri desteklemiyor. Sunucunuzda hâlâ açık mı, nasıl kapatılır ve kapatınca kim etkilenir?" />
+  <meta property="og:url" content="https://www.cyberlionai.com/blog/tls-1-0-1-1-kapatma" />
+  <meta property="og:image" content="https://www.cyberlionai.com/og-image.png" />
+  <meta property="og:locale" content="tr_TR" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/blog/blog.css" />
+  <link rel="icon" href="/favicon-32.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","headline":"TLS 1.0 ve TLS 1.1 Nasıl Kapatılır? Nginx, Apache, IIS, Cloudflare","description":"TLS 1.0 ve 1.1 bilinen zayıflıklar taşır ve tarayıcılar 2020'den beri desteklemiyor. Sunucunuzda hâlâ açık mı, nasıl kapatılır ve kapatınca kim etkilenir?","url":"https://www.cyberlionai.com/blog/tls-1-0-1-1-kapatma","mainEntityOfPage":"https://www.cyberlionai.com/blog/tls-1-0-1-1-kapatma","datePublished":"2026-10-25","dateModified":"2026-10-25","inLanguage":"tr","image":"https://www.cyberlionai.com/og-image.png","author":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"},"publisher":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana sayfa","item":"https://www.cyberlionai.com/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://www.cyberlionai.com/blog"},{"@type":"ListItem","position":3,"name":"TLS 1.0 ve TLS 1.1 Nasıl Kapatılır? Nginx, Apache, IIS, Cloudflare","item":"https://www.cyberlionai.com/blog/tls-1-0-1-1-kapatma"}]}]}</script>
+</head>
+<body>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="/">CYBER LION AI</a>
+      <nav class="nav"><a href="/blog">Blog</a><a class="btn btn--ghost" href="/#scanForm">Ücretsiz tara</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="crumb"><a href="/">Ana sayfa</a> › <a href="/blog">Blog</a></p>
+    <article class="post">
+      <h1>TLS 1.0 ve TLS 1.1 Nasıl Kapatılır? Nginx, Apache, IIS, Cloudflare</h1>
+      <p class="meta"><time datetime="2026-10-25">25 Ekim 2026</time> · Cyber Lion AI</p>
+<p>Siteniz TLS 1.3 ile çalışıyor olabilir; ama sunucu hâlâ TLS 1.0 ve 1.1 bağlantılarını <em>kabul ediyorsa</em>, bir saldırgan bağlantıyı bu eski sürümlere düşürmeyi deneyebilir. Bu sürümler bilinen kriptografik zayıflıklar taşır, IETF tarafından 2021'de resmî olarak kullanımdan kaldırılmıştır (RFC 8996) ve büyük tarayıcılar 2020'den beri desteklemez. PCI DSS de kart verisi işleyen sistemlerde bu sürümlerin kapatılmasını şart koşar.</p>
+
+<h2>Sunucumda açık mı?</h2>
+<p><a href="/araclar/ssl-kontrol">SSL kontrol aracımız</a> sunucunuzun TLS 1.0/1.1 bağlantılarını kabul edip etmediğini dener ve sonucu "eski TLS 1.0/1.1 kapalı" ya da "açık" olarak gösterir. Komut satırında:</p>
+<pre><code>openssl s_client -connect ornek.com:443 -servername ornek.com -tls1_1 &lt;/dev/null</code></pre>
+<p>Bağlantı kurulursa TLS 1.1 açıktır. Not: yeni OpenSSL sürümleri eski protokolleri istemci tarafında kendiliğinden engelleyebilir; bu durumda "no protocols available" hatası sunucu hakkında bir şey söylemez.</p>
+
+<h2>Nasıl kapatılır?</h2>
+<h3>Nginx</h3>
+<pre><code>ssl_protocols TLSv1.2 TLSv1.3;</code></pre>
+<p>Satırı <code>http</code> bloğuna ya da tüm HTTPS <code>server</code> bloklarına ekleyin; ardından <code>sudo nginx -t &amp;&amp; sudo systemctl reload nginx</code>. Aynı IP ve portu paylaşan sanal sunucularda protokol ayarı ilk (varsayılan) sunucudan gelebilir; ayarı hepsinde aynı tutun.</p>
+<h3>Apache</h3>
+<pre><code>SSLProtocol -all +TLSv1.2 +TLSv1.3</code></pre>
+<p>Genellikle <code>ssl.conf</code> veya sanal sunucu dosyasındadır; ardından <code>sudo apachectl configtest &amp;&amp; sudo systemctl reload apache2</code>.</p>
+<h3>Windows / IIS</h3>
+<p>IIS'te protokoller Windows kayıt defterindeki SCHANNEL ayarlarıyla yönetilir. Grafik bir araçla (ör. IIS Crypto) TLS 1.0 ve 1.1'i kapatıp sunucuyu yeniden başlatmak en güvenli yoldur. Yeni Windows Server sürümlerinde bu sürümler varsayılan olarak zaten kapalıdır.</p>
+<h3>Cloudflare</h3>
+<p><em>SSL/TLS › Edge Certificates › Minimum TLS Version</em> ayarını <strong>TLS 1.2</strong> yapın. Bu ayar ziyaretçi ile Cloudflare arasındaki bağlantıyı belirler; kaynak sunucunuzu ayrıca yapılandırmanız gerekir.</p>
+
+<h2>Kapatınca kim etkilenir?</h2>
+<p>Güncel tarayıcıların ve işletim sistemlerinin tamamı TLS 1.2'yi destekler. Etkilenebilecek olanlar çok eski cihazlar (ör. Android 4.4 ve öncesi, Windows 7'de güncellenmemiş eski tarayıcılar) ve bakımı yapılmamış eski entegrasyonlardır. Bir iş ortağınızın sistemi sunucunuza bağlanıyorsa, değişiklikten önce TLS 1.2 desteklediğini teyit edin.</p>
+
+    <aside class="cta-box">
+      <p class="cta-box__title">Ücretsiz SSL kontrolü</p>
+      <p>Sertifikanızın bitiş tarihini, zincirini, alan adı uyumunu ve TLS sürümünü saniyeler içinde görün. Kayıt gerekmez.</p>
+      <a class="btn" href="/araclar/ssl-kontrol">Hemen kontrol et</a>
+    </aside>
+    </article>
+    <section class="related">
+      <h2>İlgili yazılar</h2>
+      <ul>
+        <li><a href="/blog/ara-sertifika-eksik">Ara Sertifika Eksik (Incomplete Chain) Hatası ve Çözümü</a></li>
+        <li><a href="/blog/hsts-nedir">HSTS Nedir? Strict-Transport-Security Başlığı Nasıl Eklenir?</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>© Cyber Lion AI · <a href="/blog">Blog</a> · <a href="/kullanim-kosullari">Kullanım Şartları</a> · <a href="/gizlilik-politikasi">Gizlilik</a> · <a href="/pages/tarama-yetkisi">Tarama Yetkisi</a></footer>
+</body>
+</html>

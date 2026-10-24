@@ -153,7 +153,10 @@ BAGLAR.forEach(function (yol) {
   dene('bağlantı çözülüyor: ' + yol, function () {
     const hedef = YON[yol] || yol;
     const dosya = /\.html$/.test(hedef) ? hedef : hedef + '.html';
-    assert.ok(fs.existsSync(path.join(KOK, dosya.replace(/^\//, ''))),
+    /* Vercel /blog için blog/index.html'i de sunar (cleanUrls). */
+    const dizin = hedef.replace(/\/$/, '') + '/index.html';
+    assert.ok(fs.existsSync(path.join(KOK, dosya.replace(/^\//, '')))
+      || (!/\.html$/.test(hedef) && fs.existsSync(path.join(KOK, dizin.replace(/^\//, '')))),
       'dosya yok: ' + dosya + ' — altbilgideki yasal bağlantı 404 veriyor');
   });
 });
