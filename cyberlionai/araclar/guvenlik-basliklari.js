@@ -22,6 +22,7 @@
     dns_failed: 'Alan adı çözülemedi. Yazımı kontrol edin.',
     timeout: 'Site zamanında yanıt vermedi. Biraz sonra tekrar deneyin.',
     unreachable: 'Siteye ulaşılamadı.',
+    cert_invalid: 'Sitenizin SSL sertifikası geçersiz; tarayıcılar ziyaretçilere uyarı gösteriyor. Önce sertifikayı düzeltin: SSL kontrolü sebebini ve çözümünü gösterir.',
     rate_limited: 'Bugünkü ücretsiz kontrol hakkınız doldu. Yarın tekrar deneyin veya tam taramayı kullanın.'
   };
 
@@ -93,6 +94,11 @@
         var code = r.body && r.body.error && r.body.error.code;
         msg.className = 'msg msg--bad';
         msg.textContent = HATA[code] || 'Bir sorun oluştu. Lütfen tekrar deneyin.';
+        if (code === 'cert_invalid') {
+          var link = el('a', null, ' SSL kontrolüne git →');
+          link.href = '/araclar/ssl-kontrol';
+          msg.appendChild(link);
+        }
         return;
       }
       msg.textContent = '';

@@ -11,6 +11,8 @@
  */
 
 const tls = require('node:tls');
+const https = require('node:https');
+const { Readable } = require('node:stream');
 const { normalizeTarget, assertPublicHost } = require('./guard.js');
 const geo = require('./geo.js');
 const mail = require('./mail');
@@ -25,7 +27,7 @@ const MAX_REDIRECTS = 4;
 
 /* Rapor ve motor sürümü: kaydedilen her taramaya ve PDF'e yazılır, böylece
    eski bir sonuç hangi kural setiyle üretildiği bilinerek okunabilir. */
-const SCANNER_VERSION = '1.4.1-owasp-lite';
+const SCANNER_VERSION = '1.4.2-owasp-lite';
 const REPORT_VERSION = '1';
 
 /* ============================================================
@@ -37,6 +39,51 @@ const REPORT_VERSION = '1';
  * fetch'in kendi redirect:'follow' davranışı, ilk adresi doğrulasak bile
  * sonraki adımda özel bir IP'ye gitmemizi engellemez.
  */
+/* Sertifika DOĞRULAMA hataları (fetch → err.cause.code). Bunlar "siteye
+   ulaşılamadı" değil: sunucu yanıt veriyor, yalnızca sertifikası geçersiz.
+   Önceden hepsi `unreachable` oluyordu ve tam tarama tam da sertifika
+   bulgusunu göstermesi gereken sitelerde düşüyordu (ölçüldü: badssl.com'un
+   expired / incomplete-chain / self-signed / wrong.host alt alanları). */
+const SERTIFIKA_HATASI = [
+  'CERT_HAS_EXPIRED', 'CERT_NOT_YET_VALID', 'CERT_REVOKED', 'CERT_UNTRUSTED',
+  'UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'UNABLE_TO_GET_ISSUER_CERT', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+  'DEPTH_ZERO_SELF_SIGNED_CERT', 'SELF_SIGNED_CERT_IN_CHAIN', 'ERR_TLS_CERT_ALTNAME_INVALID'
+];
+
+/**
+ * fetch'in yerine geçen, sertifikayı DOĞRULAMAYAN tek istek. Yalnızca
+ * guardedFetch({ insecure: true }) kullanır, o da yalnızca sertifika hatası
+ * alındıktan sonra: bir ziyaretçinin uyarıyı geçip gördüğü sayfayı okumak
+ * için. Bağlantı guard'ın onayladığı adrese sabitlenir (ad yeniden
+ * çözülmez). Dönüş fetch Response'unun kullandığımız alt kümesi.
+ */
+function guvensizIstek(href, init, adres) {
+  return new Promise(function (resolve, reject) {
+    const u = new URL(href);
+    const aile = adres && adres.indexOf(':') !== -1 ? 6 : 4;
+    const req = https.request(u, {
+      method: init.method || 'GET',
+      headers: init.headers,
+      rejectUnauthorized: false,
+      servername: u.hostname,
+      signal: init.signal,
+      lookup: adres ? function (ad, secenek, cb) {
+        if (secenek && secenek.all) return cb(null, [{ address: adres, family: aile }]);
+        return cb(null, adres, aile);
+      } : undefined
+    }, function (res) {
+      const headers = new Headers();
+      const ham = res.rawHeaders;
+      for (let i = 0; i + 1 < ham.length; i += 2) {
+        try { headers.append(ham[i], ham[i + 1]); } catch (e) { /* geçersiz başlık yok sayılır */ }
+      }
+      resolve({ status: res.statusCode, headers: headers, body: Readable.toWeb(res) });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 async function guardedFetch(startUrl, options) {
   let current = startUrl;
   const chain = [];
@@ -50,21 +97,30 @@ async function guardedFetch(startUrl, options) {
     const controller = new AbortController();
     const timer = setTimeout(function () { controller.abort(); }, FETCH_TIMEOUT_MS);
 
+    const init = {
+      method: (options && options.method) || 'GET',
+      redirect: 'manual',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'CyberLionAI-Scanner/1.0 (+https://cyberlionai.com)',
+        'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
+        'Accept-Language': 'tr,en;q=0.8'
+      }
+    };
     let response;
     try {
-      response = await fetch(current.href, {
-        method: (options && options.method) || 'GET',
-        redirect: 'manual',
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'CyberLionAI-Scanner/1.0 (+https://cyberlionai.com)',
-          'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
-          'Accept-Language': 'tr,en;q=0.8'
-        }
-      });
+      response = (options && options.insecure && current.protocol === 'https:')
+        ? await guvensizIstek(current.href, init, adresler[0])
+        : await fetch(current.href, init);
     } catch (err) {
       clearTimeout(timer);
       if (err && err.name === 'AbortError') throw new Error('timeout');
+      const kod = err && err.cause && err.cause.code;
+      if (kod && SERTIFIKA_HATASI.indexOf(kod) !== -1) {
+        const e = new Error('cert_invalid');
+        e.certCode = kod;
+        throw e;
+      }
       throw new Error('unreachable');
     }
     clearTimeout(timer);
@@ -302,7 +358,20 @@ async function scanSite(rawUrl, options) {
   const opts = options || {};
 
   const started = Date.now();
-  const { response, finalUrl, chain, addresses } = await guardedFetch(target.url, {});
+  /* Sertifika geçersizse sayfa bir kez daha, doğrulamasız okunur: tarama
+     düşmesin, sertifika bulgusu (tls-scanner, inspectTls'in ölçümü) ve
+     sayfanın geri kalanı raporlansın. Doğrulamasız okuma da guard'dan geçer
+     ve onaylanan adrese sabitlenir. İkinci deneme de düşerse eski davranış. */
+  let ilk;
+  try {
+    ilk = await guardedFetch(target.url, {});
+  } catch (err) {
+    if (!err || err.message !== 'cert_invalid') throw err;
+    ilk = await guardedFetch(target.url, { insecure: true }).catch(function (e2) {
+      throw new Error(e2 && e2.message === 'timeout' ? 'timeout' : 'unreachable');
+    });
+  }
+  const { response, finalUrl, chain, addresses } = ilk;
 
   const contentType = response.headers.get('content-type') || '';
   const html = /html|xml|text\/plain/i.test(contentType) ? await readBodyCapped(response) : null;

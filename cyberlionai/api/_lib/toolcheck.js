@@ -285,7 +285,9 @@ async function sslRun(target, deps) {
 
 function errorCode(err) {
   const m = err && err.message;
-  if (m === 'timeout' || m === 'blocked_target' || m === 'dns_failed') return m;
+  /* cert_invalid: sunucu yanıt veriyor ama sertifikası geçersiz — "ulaşılamadı"
+     değil. Başlık aracı kullanıcıyı SSL aracına yönlendiriyor. */
+  if (m === 'timeout' || m === 'blocked_target' || m === 'dns_failed' || m === 'cert_invalid') return m;
   return 'unreachable';
 }
 

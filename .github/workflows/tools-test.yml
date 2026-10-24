@@ -292,6 +292,9 @@ jobs:
       - name: Ücretsiz araçlar (tool-check)
         run: node cyberlionai/tools/tool-check-test.js
 
+      - name: Geçersiz sertifikada tam tarama
+        run: node cyberlionai/tools/scan-cert-test.js
+
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
 
