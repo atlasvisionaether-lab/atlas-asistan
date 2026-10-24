@@ -129,8 +129,16 @@ async function sendCertificate(to, code, scopes) {
 
 const KIND_TR = {
   score_drop: function (d) { return 'Skor düştü: ' + Number(d.from) + ' → ' + Number(d.to); },
-  ssl_expiry: function (d) { return 'SSL sertifikasının bitmesine ' + Number(d.daysLeft) + ' gün kaldı'; },
-  domain_expiry: function (d) { return 'Alan adı kaydının bitmesine ' + Number(d.daysLeft) + ' gün kaldı'; },
+  ssl_expiry: function (d) {
+    return Number(d.daysLeft) < 0
+      ? 'SSL sertifikasının süresi ' + (-Number(d.daysLeft)) + ' gün önce doldu'
+      : 'SSL sertifikasının bitmesine ' + Number(d.daysLeft) + ' gün kaldı';
+  },
+  domain_expiry: function (d) {
+    return Number(d.daysLeft) < 0
+      ? 'Alan adı kaydının süresi ' + (-Number(d.daysLeft)) + ' gün önce doldu'
+      : 'Alan adı kaydının bitmesine ' + Number(d.daysLeft) + ' gün kaldı';
+  },
   blacklist: function (d) { return 'Kara listede görünüyor (' + String(d.source || '') + ')'; },
   downtime: function (d) { return 'Site erişilemedi (' + String(d.reason || '') + ')'; },
   recovered: function () { return 'Site yeniden erişilebilir oldu'; },

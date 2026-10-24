@@ -46,6 +46,13 @@ function certSebebi(t) {
   return 'untrusted';
 }
 
+/* Kalan süre metni. Eskiden `daysLeft + ' gün'` yazılıyordu: süresi dolmuş
+   sertifikada rapor "-4213 gün" gösteriyordu. Dil de sabit Türkçeydi. */
+function gunMetni(gun, lang) {
+  if (lang === 'en') return gun < 0 ? 'expired ' + (-gun) + ' days ago' : gun + ' days left';
+  return gun < 0 ? (-gun) + ' gün önce doldu' : gun + ' gün kaldı';
+}
+
 function analyze(context, lang) {
   const h = context.headers;
   const checks = [];
@@ -66,7 +73,7 @@ function analyze(context, lang) {
     else if (t.daysLeft !== null && t.daysLeft < 0) { certStatus = 'fail'; certNote = 'expired'; }
     else if (t.daysLeft !== null && t.daysLeft < 15) { certStatus = 'fail'; certNote = 'expiring_soon'; }
     checks.push(check('tls_cert', 'high', certStatus,
-      t.daysLeft !== null ? t.daysLeft + ' gün' : null,
+      t.daysLeft !== null ? gunMetni(t.daysLeft, lang) : null,
       { note: certNote, issuer: t.issuer }));
   }
 
@@ -83,4 +90,4 @@ function analyze(context, lang) {
   return { checks: checks, findings: [], fixCode: fixCodeFor(checks, lang) };
 }
 
-module.exports = { analyze, certSebebi, IDS: ["tls_protocol", "tls_cert", "tls_legacy"] };
+module.exports = { analyze, certSebebi, gunMetni, IDS: ["tls_protocol", "tls_cert", "tls_legacy"] };

@@ -349,8 +349,17 @@ const mesaj = {
     const d = data || {};
     const a = alan(domain);
     if (tur === 'score_drop') return ONEK + ' 📉 Skor düştü: ' + a + ' ' + Number(d.from) + ' → ' + Number(d.to);
-    if (tur === 'ssl_expiry') return ONEK + ' 🔒 SSL bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
-    if (tur === 'domain_expiry') return ONEK + ' 📅 Alan adı kaydı bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
+    /* Süre geçmişse (daysLeft < 0) "-5 gün kaldı" değil "5 gün önce doldu". */
+    if (tur === 'ssl_expiry') {
+      return Number(d.daysLeft) < 0
+        ? ONEK + ' 🔒 SSL süresi doldu: ' + a + ' — ' + (-Number(d.daysLeft)) + ' gün önce'
+        : ONEK + ' 🔒 SSL bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
+    }
+    if (tur === 'domain_expiry') {
+      return Number(d.daysLeft) < 0
+        ? ONEK + ' 📅 Alan adı kaydı doldu: ' + a + ' — ' + (-Number(d.daysLeft)) + ' gün önce'
+        : ONEK + ' 📅 Alan adı kaydı bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
+    }
     if (tur === 'blacklist') return ONEK + ' ☣️ Kara listede: ' + a + ' (' + kod(d.source) + ': ' + kod(d.match) + ')';
     if (tur === 'downtime') return ONEK + ' 🔴 Erişilemiyor: ' + a + ' (' + kod(d.reason) + ')';
     if (tur === 'new_findings') return ONEK + ' 🆕 Yeni bulgu: ' + a + ' — ' + Number(d.count) + ' adet'
