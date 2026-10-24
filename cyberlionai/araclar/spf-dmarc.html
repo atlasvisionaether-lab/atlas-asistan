@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SPF ve DMARC Kontrolü (Ücretsiz) | Cyber Lion AI</title>
+  <meta name="description" content="Alan adınızın SPF ve DMARC kayıtlarını ücretsiz kontrol edin: başkası sizin adınıza sahte e-posta gönderebiliyor mu? Kayıt gerekmez, sonuç saniyeler içinde." />
+  <link rel="canonical" href="https://www.cyberlionai.com/araclar/spf-dmarc" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SPF ve DMARC Kontrolü (Ücretsiz)" />
+  <meta property="og:description" content="Alan adınız adına sahte e-posta gönderilebiliyor mu? SPF ve DMARC kayıtlarınızı saniyeler içinde kontrol edin." />
+  <meta property="og:url" content="https://www.cyberlionai.com/araclar/spf-dmarc" />
+  <meta property="og:image" content="https://www.cyberlionai.com/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" href="/favicon-32.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"SPF ve DMARC Kontrolü","url":"https://www.cyberlionai.com/araclar/spf-dmarc","applicationCategory":"SecurityApplication","operatingSystem":"Web","inLanguage":"tr","offers":{"@type":"Offer","price":"0","priceCurrency":"TRY"},"provider":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"SPF nedir?","acceptedAnswer":{"@type":"Answer","text":"SPF (Sender Policy Framework), alan adınız adına hangi sunucuların e-posta gönderebileceğini DNS'te bir TXT kaydıyla ilan eder. Alıcı sunucu gelen iletinin bu listedeki bir sunucudan gelip gelmediğine bakar."}},{"@type":"Question","name":"DMARC nedir?","acceptedAnswer":{"@type":"Answer","text":"DMARC, SPF veya DKIM doğrulamasından geçemeyen iletilere alıcı sunucunun ne yapacağını söyler: teslim et (p=none), spam klasörüne at (p=quarantine) veya reddet (p=reject). Ayrıca size rapor gönderilmesini sağlar."}},{"@type":"Question","name":"Bu test siteme veya e-postama dokunur mu?","acceptedAnswer":{"@type":"Answer","text":"Hayır. Araç sitenize hiç istek göndermez; yalnızca herkese açık DNS kayıtlarınızı okur. E-posta gönderilmez, posta sunucunuza bağlanılmaz."}},{"@type":"Question","name":"p=none yeterli değil mi?","acceptedAnswer":{"@type":"Answer","text":"p=none yalnızca izleme modudur: sahte e-posta yine teslim edilir. Başlangıç için doğru adımdır, ama raporlar meşru gönderimlerin geçtiğini gösterdiğinde p=quarantine veya p=reject'e geçmelisiniz."}}]}]}</script>
+  <style>
+  :root{--primary-black:#0a0a0f;--card-black:#1a1a24;
+    --gold-primary:#d4af37;--gold-light:#ffdf00;--text-white:#f0f0f0;--text-gray:#a0a0b0;
+    --glass-bg:rgba(26,26,36,.7);--glass-border:rgba(212,175,55,.2);--hairline:rgba(255,255,255,.08);
+    --ok:#5fd98a;--warn:#ffd166;--bad:#ff8f87;
+    --font-heading:'Orbitron','Segoe UI',sans-serif;--font-body:'Space Grotesk','Segoe UI',sans-serif}
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--primary-black);color:var(--text-white);font-family:var(--font-body);
+    font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(60% 40% at 50% -10%,rgba(212,175,55,.08),transparent 70%)}
+  a{color:var(--gold-primary)}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--gold-light);outline-offset:3px;border-radius:4px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+  .container{width:100%;max-width:760px;margin:0 auto;padding:0 16px}
+  header.top{border-bottom:1px solid var(--glass-border);background:var(--glass-bg);backdrop-filter:blur(16px)}
+  header.top .container{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;padding-bottom:14px;max-width:1120px}
+  .brand{font-family:var(--font-heading);font-weight:800;letter-spacing:.08em;text-decoration:none;color:var(--gold-primary)}
+  .crumb{color:var(--text-gray);font-size:.85rem;margin:28px 0 0}
+  .crumb a{color:var(--text-gray)}
+  h1{font-family:var(--font-heading);font-size:1.6rem;letter-spacing:.04em;line-height:1.3;margin:8px 0 8px}
+  h2{font-family:var(--font-heading);font-size:1.05rem;letter-spacing:.06em;color:var(--gold-primary);margin:32px 0 10px}
+  h3{font-size:1rem;margin:20px 0 6px}
+  .lead{color:var(--text-gray);margin:0 0 22px}
+  .card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:20px;margin-bottom:18px}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .input{flex:1 1 220px;min-width:0;padding:12px 14px;border-radius:10px;border:1px solid var(--hairline);
+    background:rgba(255,255,255,.03);color:var(--text-white);font:inherit}
+  .btn{display:inline-block;padding:12px 18px;border-radius:10px;border:1px solid var(--gold-primary);background:var(--gold-primary);
+    color:var(--primary-black);font:inherit;font-weight:600;cursor:pointer;text-decoration:none;text-align:center}
+  .btn--ghost{background:transparent;color:var(--gold-primary)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .note{color:var(--text-gray);font-size:.85rem;margin:10px 0 0}
+  .msg{margin:12px 0 0;font-size:.92rem;color:var(--text-gray)}
+  .msg--bad{color:var(--bad)}
+  .score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .score b{font-family:var(--font-heading);font-size:2.4rem;line-height:1}
+  .score--good b{color:var(--ok)} .score--mid b{color:var(--warn)} .score--bad b{color:var(--bad)}
+  .score span{color:var(--text-gray)}
+  .finding{border-top:1px solid var(--hairline);padding:14px 0 4px}
+  .finding__head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .finding__head strong{font-size:1rem}
+  .sev{font-size:.75rem;padding:2px 9px;border-radius:999px;border:1px solid currentColor;flex:0 0 auto}
+  .sev--critical,.sev--high{color:var(--bad)} .sev--medium{color:var(--warn)} .sev--low{color:var(--text-gray)}
+  .finding p{margin:6px 0;color:var(--text-gray);font-size:.93rem}
+  .finding code{display:block;padding:10px 12px;border-radius:8px;background:var(--primary-black);border:1px solid var(--hairline);
+    color:var(--gold-primary);font-size:.82rem;overflow-wrap:anywhere;white-space:pre-wrap}
+  .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .cta .btn{flex:1 1 220px}
+  .pass-all{color:var(--ok);margin:10px 0 0}
+  article p,article li{color:#d6d6de}
+  article ul{padding-left:20px}
+  article code{color:var(--gold-primary);font-size:.9em}
+  details{border-top:1px solid var(--hairline);padding:12px 0}
+  details summary{cursor:pointer;font-weight:600}
+  details p{margin:8px 0 0}
+  .st{font-size:.75rem;padding:2px 9px;border-radius:999px;border:1px solid currentColor;flex:0 0 auto}
+  .st--pass{color:var(--ok)} .st--fail{color:var(--bad)} .st--skipped{color:var(--text-gray)}
+  .finding .rec{color:var(--text-white)}
+  .finding .rec-label{font-size:.8rem;color:var(--text-gray);margin:10px 0 4px}
+  footer{color:var(--text-gray);font-size:.82rem;text-align:center;padding:40px 16px 30px}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="/">CYBER LION AI</a>
+      <a class="btn btn--ghost" href="/#scanForm">Tam tarama</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="crumb"><a href="/">Ana sayfa</a> › Ücretsiz araçlar › SPF ve DMARC</p>
+    <h1>SPF ve DMARC Kontrolü</h1>
+    <p class="lead">Başkası sizin alan adınızdan sahte e-posta gönderebilir mi? SPF ve DMARC kayıtlarınızı ücretsiz kontrol edin. Kayıt gerekmez; araç sitenize hiç istek göndermez, yalnızca herkese açık DNS kayıtlarını okur.</p>
+
+    <section class="card">
+      <form class="row" id="form" novalidate>
+        <label class="sr-only" for="site">Alan adı</label>
+        <input class="input" id="site" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="ornek.com" required />
+        <button class="btn" id="btn" type="submit">Kayıtları kontrol et</button>
+      </form>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" id="result" hidden aria-live="polite">
+      <div class="score" id="score"><b id="scoreNum"></b><span id="scoreText"></span></div>
+      <p class="note" id="summary"></p>
+      <div id="findings"></div>
+      <p class="pass-all" id="passAll" hidden>SPF ve DMARC doğru yapılandırılmış. Sitenizin sertifikası, güvenlik başlıkları ve DNSSEC için tam taramayı deneyin.</p>
+      <div class="cta">
+        <a class="btn" id="ctaScan" href="/#scanForm">Tüm sitemi ücretsiz tara</a>
+        <a class="btn btn--ghost" id="ctaFix" href="/pricing" hidden></a>
+      </div>
+    </section>
+
+    <article>
+      <h2>Neden önemli?</h2>
+      <p>E-postada "Kimden" satırı, zarfın üzerindeki gönderen adresi gibidir: herkes istediğini yazabilir. SPF ve DMARC olmadan bir dolandırıcı <code>fatura@sirketiniz.com</code> adresinden müşterilerinize sahte ödeme talebi gönderebilir ve alıcının posta sunucusunun bunu eleyecek bir dayanağı olmaz.</p>
+      <p>Gmail ve Yahoo, 2024'ten beri toplu gönderim yapan alan adlarından SPF, DKIM ve DMARC istiyor. Kayıtlar eksikse kendi meşru e-postalarınız da spam klasörüne düşebilir.</p>
+
+      <h2>SPF kaydı</h2>
+      <p>Alan adınızın kökünde bir TXT kaydıdır ve sizin adınıza e-posta gönderebilecek sunucuları listeler. Kayıt <code>-all</code> (listede olmayanı reddet) veya geçiş döneminde <code>~all</code> (şüpheli say) ile bitmelidir. <code>+all</code> herkese izin verir ve kaydın hiç olmamasından da kötüdür. Alan adı başına yalnızca <strong>bir</strong> SPF kaydı olabilir; iki kayıt varsa alıcı ikisini de geçersiz sayar.</p>
+      <p>Örnek (Google Workspace): <code>v=spf1 include:_spf.google.com -all</code></p>
+
+      <h2>DMARC kaydı</h2>
+      <p><code>_dmarc.ornek.com</code> adında bir TXT kaydıdır. SPF veya DKIM doğrulamasından geçemeyen iletiye ne yapılacağını söyler. Önerilen yol: <code>p=none</code> ile başlayıp <code>rua</code> raporlarını birkaç hafta izlemek, meşru gönderimlerin geçtiğini görünce <code>p=quarantine</code> ve ardından <code>p=reject</code>'e geçmek.</p>
+      <p>Örnek: <code>v=DMARC1; p=quarantine; rua=mailto:dmarc@ornek.com</code></p>
+
+      <h2>DKIM ne olacak?</h2>
+      <p>DKIM, iletiyi imzalayan üçüncü katmandır. Seçici adları DNS'ten listelenemediği için bu araç DKIM'i kontrol etmez; tam tarama yaygın seçicileri dener. DKIM kaydını posta sağlayıcınızın yönetim panelinden alıp DNS'e eklersiniz.</p>
+
+      <h2>Sık sorulan sorular</h2>
+      <details>
+        <summary>SPF nedir?</summary>
+        <p>SPF (Sender Policy Framework), alan adınız adına hangi sunucuların e-posta gönderebileceğini DNS'te bir TXT kaydıyla ilan eder. Alıcı sunucu gelen iletinin bu listedeki bir sunucudan gelip gelmediğine bakar.</p>
+      </details>
+      <details>
+        <summary>DMARC nedir?</summary>
+        <p>DMARC, SPF veya DKIM doğrulamasından geçemeyen iletilere alıcı sunucunun ne yapacağını söyler: teslim et (p=none), spam klasörüne at (p=quarantine) veya reddet (p=reject). Ayrıca size rapor gönderilmesini sağlar.</p>
+      </details>
+      <details>
+        <summary>Bu test siteme veya e-postama dokunur mu?</summary>
+        <p>Hayır. Araç sitenize hiç istek göndermez; yalnızca herkese açık DNS kayıtlarınızı okur. E-posta gönderilmez, posta sunucunuza bağlanılmaz.</p>
+      </details>
+      <details>
+        <summary>p=none yeterli değil mi?</summary>
+        <p>p=none yalnızca izleme modudur: sahte e-posta yine teslim edilir. Başlangıç için doğru adımdır, ama raporlar meşru gönderimlerin geçtiğini gösterdiğinde p=quarantine veya p=reject'e geçmelisiniz.</p>
+      </details>
+    </article>
+  </main>
+
+  <footer>© Cyber Lion AI · <a href="/kullanim-kosullari">Kullanım Şartları</a> · <a href="/gizlilik-politikasi">Gizlilik</a> · <a href="/pages/tarama-yetkisi">Tarama Yetkisi</a></footer>
+
+  <script src="/araclar/spf-dmarc.js" defer></script>
+</body>
+</html>

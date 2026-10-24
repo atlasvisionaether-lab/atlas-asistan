@@ -2,10 +2,13 @@
 
 /**
  * Ücretsiz araç sınaması (api/_lib/toolcheck.js + api/tool-check.js). Ağ yok.
- * Sabitlenen: yalnız başlık kontrolleri döner; en fazla 3 bulgu, önem
+ * Sabitlenen (headers): yalnız başlık kontrolleri döner; en fazla 3 bulgu, önem
  * sırasıyla; kalan bulgu sayısı ayrıca verilir; fiyat fixpricing'den gelir;
  * SSRF hatası 400; IP sınırı ana kotadan ayrı ve 10'da keser; önbellek
  * hedefe yeniden gitmez.
+ * Sabitlenen (email): SPF + DMARC mail.js ile aynı kararı verir; ham kayıt
+ * döner; sorgu tamamlanmadıysa "yok" değil "ölçülemedi"; IP ve var olmayan
+ * alan adı 400; ayrı önbellek anahtarı.
  */
 const path = require('node:path');
 const Module = require('node:module');
@@ -21,6 +24,15 @@ function yanit(basliklar, url) {
 }
 
 const toolcheck = require(path.join(API, '_lib', 'toolcheck.js'));
+
+const KESIN = { ok: true, kesin: true, kod: null };
+function posta(spf, dmarc, ek) {
+  return async function (host) {
+    return Object.assign({ ok: true, alan: String(host).replace(/^www\./, ''), spf: spf, dmarc: dmarc,
+      dmarcAd: '_dmarc.ornek.com', spfSorgu: KESIN, dmarcSorgu: KESIN }, ek || {});
+  };
+}
+const POSTA_SAGLAM = posta(['google-site-verification=x', 'v=spf1 include:_spf.google.com -all'], ['v=DMARC1; p=reject']);
 
 const CIPLAK = yanit({ server: 'nginx/1.18.0' });
 const SAGLAM = yanit({
@@ -59,6 +71,38 @@ const SAGLAM = yanit({
   const kopan = await toolcheck.run('headers', 'ornek.com', { fetch: async function () { throw new Error('ECONNRESET'); } });
   esit('bilinmeyen hata → unreachable', kopan.code, 'unreachable');
 
+  /* --- E-posta --- */
+  const e1 = await toolcheck.run('email', 'https://www.ornek.com/yol', { mail: POSTA_SAGLAM });
+  esit('e-posta ok', e1.ok, true);
+  esit('e-posta www soyuldu', e1.host, 'ornek.com');
+  esit('iki kontrol', e1.checks.map(function (c) { return c.id; }).join(','), 'spf,dmarc');
+  esit('sağlam: ikisi geçti', e1.summary.pass, 2);
+  esit('yalnız SPF kaydı gösterilir', e1.checks[0].records.join('|'), 'v=spf1 include:_spf.google.com -all');
+  esit('geçen kontrolde fiyat yok', e1.checks[0].fixPrice, null);
+
+  const e2 = await toolcheck.run('email', 'ornek.com', { mail: posta([], []) });
+  esit('SPF yok → fail', e2.checks[0].status, 'fail');
+  esit('SPF yok notu', e2.checks[0].note, 'spf_missing');
+  esit('DMARC yok notu', e2.checks[1].note, 'dmarc_missing');
+  esit('DMARC düzeltme önerisi', e2.checks[1].fix.indexOf('v=DMARC1') !== -1, true);
+  esit('DNS düzeltme fiyatı ₺1.000', e2.checks[0].fixPrice, 1000);
+
+  const e3 = await toolcheck.run('email', 'ornek.com', { mail: posta(['v=spf1 +all'], ['v=DMARC1; p=none']) });
+  esit('+all → nota özel düzeltme', e3.checks[0].fix.indexOf('+all') !== -1, true);
+  esit('p=none → izleme notu', e3.checks[1].note, 'dmarc_monitor_only');
+
+  const e4 = await toolcheck.run('email', 'ornek.com', { mail: posta([], [], {
+    spfSorgu: { ok: false, kesin: false, kod: 'ETIMEOUT' }, dmarcSorgu: { ok: false, kesin: false, kod: 'ESERVFAIL' } }) });
+  esit('zaman aşımı "yok" değil', e4.checks[0].status, 'skipped');
+  esit('zaman aşımı notu', e4.checks[1].note, 'not_measured');
+  esit('ölçülemeyen başarısız sayılmaz', e4.summary.fail, 0);
+  esit('ölçülemeyende fiyat yok', e4.checks[0].fixPrice, null);
+
+  esit('IP → bad_domain', (await toolcheck.run('email', '1.2.3.4', { mail: POSTA_SAGLAM })).code, 'bad_domain');
+  esit('IPv6 → bad_domain', (await toolcheck.run('email', 'http://[2001:db8::1]/', { mail: POSTA_SAGLAM })).code, 'bad_domain');
+  esit('alan yok', (await toolcheck.run('email', 'yok.com', { mail: async function () { return { ok: false, sebep: 'domain_not_found' }; } })).code, 'domain_not_found');
+  esit('çözücü çöktü → dns_failed', (await toolcheck.run('email', 'ornek.com', { mail: async function () { throw new Error('x'); } })).code, 'dns_failed');
+
   /* --- Uç nokta --- */
   const sayac = {}; const onbellek = {}; let hedefeGidis = 0; let gunluk = 0;
   sapla('_lib/store.js', {
@@ -70,7 +114,7 @@ const SAGLAM = yanit({
   sapla('_lib/ownership.js', { logScan: async function () { gunluk += 1; return true; } });
   sapla('_lib/toolcheck.js', {
     TYPES: toolcheck.TYPES,
-    run: async function (t, u) { hedefeGidis += 1; return toolcheck.run(t, u, { fetch: CIPLAK }); }
+    run: async function (t, u) { hedefeGidis += 1; return toolcheck.run(t, u, { fetch: CIPLAK, mail: POSTA_SAGLAM }); }
   });
   const handler = require(path.join(API, 'tool-check.js'));
 
@@ -95,6 +139,11 @@ const SAGLAM = yanit({
   const r2 = await istek({ type: 'headers', url: 'https://ornek.com/' });
   esit('ikinci istek önbellekten', r2.body.cached, true);
   esit('hedefe tek gidiş', hedefeGidis, 1);
+
+  const p1 = await istek({ type: 'email', url: 'ornek.com' });
+  esit('e-posta 200', p1.statusCode, 200);
+  esit('e-posta ayrı önbellek', p1.body.cached, undefined);
+  esit('e-posta IP → 400', (await istek({ type: 'email', url: '1.2.3.4' })).statusCode, 400);
 
   let son;
   for (let i = 0; i < handler.DAILY_MAX + 2; i++) son = await istek({ type: 'headers', url: 'ornek.com' }, '9.9.9.9');
