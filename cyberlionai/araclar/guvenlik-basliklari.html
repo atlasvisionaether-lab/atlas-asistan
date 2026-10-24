@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HTTP Güvenlik Başlıkları Testi (Ücretsiz) | Cyber Lion AI</title>
+  <meta name="description" content="Sitenizin HTTP güvenlik başlıklarını ücretsiz test edin: HSTS, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy ve Permissions-Policy. Kayıt gerekmez, sonuç saniyeler içinde." />
+  <link rel="canonical" href="https://www.cyberlionai.com/araclar/guvenlik-basliklari" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="HTTP Güvenlik Başlıkları Testi (Ücretsiz)" />
+  <meta property="og:description" content="HSTS, CSP, X-Frame-Options ve diğer güvenlik başlıklarınızı saniyeler içinde kontrol edin." />
+  <meta property="og:url" content="https://www.cyberlionai.com/araclar/guvenlik-basliklari" />
+  <meta property="og:image" content="https://www.cyberlionai.com/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" href="/favicon-32.png" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"HTTP Güvenlik Başlıkları Testi","url":"https://www.cyberlionai.com/araclar/guvenlik-basliklari","applicationCategory":"SecurityApplication","operatingSystem":"Web","inLanguage":"tr","offers":{"@type":"Offer","price":"0","priceCurrency":"TRY"},"provider":{"@type":"Organization","name":"Cyber Lion AI","url":"https://www.cyberlionai.com/"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"HTTP güvenlik başlıkları nedir?","acceptedAnswer":{"@type":"Answer","text":"Sunucunuzun her yanıtla birlikte tarayıcıya gönderdiği, sayfanın nasıl korunacağını söyleyen talimatlardır. Örneğin HSTS tarayıcıya siteyi yalnızca HTTPS ile açmasını, X-Frame-Options sayfanın başka sitelere gömülmemesini söyler."}},{"@type":"Question","name":"Bu test siteme zarar verir mi?","acceptedAnswer":{"@type":"Answer","text":"Hayır. Araç, sıradan bir ziyaretçinin tarayıcısı gibi ana sayfanıza tek bir istek gönderir ve yalnızca yanıt başlıklarını okur. Saldırı denemesi veya gizli yol taraması yapmaz."}},{"@type":"Question","name":"Content-Security-Policy eklemek sitemi bozar mı?","acceptedAnswer":{"@type":"Answer","text":"Doğrudan uygulanırsa bozabilir: satır içi script, yazı tipi veya analitik araçlar engellenebilir. Önce Content-Security-Policy-Report-Only adıyla ekleyip tarayıcı konsolundaki ihlallere göre politikayı uyarlamanızı öneririz."}},{"@type":"Question","name":"Hangi başlıklar kontrol ediliyor?","acceptedAnswer":{"@type":"Answer","text":"HTTPS kullanımı, Strict-Transport-Security (HSTS), Content-Security-Policy, çerçeveleme koruması (X-Frame-Options veya frame-ancestors), X-Content-Type-Options, Referrer-Policy, Permissions-Policy ve sunucu sürüm bilgisi ifşası."}}]}]}</script>
+  <style>
+  :root{--primary-black:#0a0a0f;--card-black:#1a1a24;
+    --gold-primary:#d4af37;--gold-light:#ffdf00;--text-white:#f0f0f0;--text-gray:#a0a0b0;
+    --glass-bg:rgba(26,26,36,.7);--glass-border:rgba(212,175,55,.2);--hairline:rgba(255,255,255,.08);
+    --ok:#5fd98a;--warn:#ffd166;--bad:#ff8f87;
+    --font-heading:'Orbitron','Segoe UI',sans-serif;--font-body:'Space Grotesk','Segoe UI',sans-serif}
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--primary-black);color:var(--text-white);font-family:var(--font-body);
+    font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(60% 40% at 50% -10%,rgba(212,175,55,.08),transparent 70%)}
+  a{color:var(--gold-primary)}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--gold-light);outline-offset:3px;border-radius:4px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+  .container{width:100%;max-width:760px;margin:0 auto;padding:0 16px}
+  header.top{border-bottom:1px solid var(--glass-border);background:var(--glass-bg);backdrop-filter:blur(16px)}
+  header.top .container{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;padding-bottom:14px;max-width:1120px}
+  .brand{font-family:var(--font-heading);font-weight:800;letter-spacing:.08em;text-decoration:none;color:var(--gold-primary)}
+  .crumb{color:var(--text-gray);font-size:.85rem;margin:28px 0 0}
+  .crumb a{color:var(--text-gray)}
+  h1{font-family:var(--font-heading);font-size:1.6rem;letter-spacing:.04em;line-height:1.3;margin:8px 0 8px}
+  h2{font-family:var(--font-heading);font-size:1.05rem;letter-spacing:.06em;color:var(--gold-primary);margin:32px 0 10px}
+  h3{font-size:1rem;margin:20px 0 6px}
+  .lead{color:var(--text-gray);margin:0 0 22px}
+  .card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:20px;margin-bottom:18px}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .input{flex:1 1 220px;min-width:0;padding:12px 14px;border-radius:10px;border:1px solid var(--hairline);
+    background:rgba(255,255,255,.03);color:var(--text-white);font:inherit}
+  .btn{display:inline-block;padding:12px 18px;border-radius:10px;border:1px solid var(--gold-primary);background:var(--gold-primary);
+    color:var(--primary-black);font:inherit;font-weight:600;cursor:pointer;text-decoration:none;text-align:center}
+  .btn--ghost{background:transparent;color:var(--gold-primary)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .note{color:var(--text-gray);font-size:.85rem;margin:10px 0 0}
+  .msg{margin:12px 0 0;font-size:.92rem;color:var(--text-gray)}
+  .msg--bad{color:var(--bad)}
+  .score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .score b{font-family:var(--font-heading);font-size:2.4rem;line-height:1}
+  .score--good b{color:var(--ok)} .score--mid b{color:var(--warn)} .score--bad b{color:var(--bad)}
+  .score span{color:var(--text-gray)}
+  .finding{border-top:1px solid var(--hairline);padding:14px 0 4px}
+  .finding__head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .finding__head strong{font-size:1rem}
+  .sev{font-size:.75rem;padding:2px 9px;border-radius:999px;border:1px solid currentColor;flex:0 0 auto}
+  .sev--critical,.sev--high{color:var(--bad)} .sev--medium{color:var(--warn)} .sev--low{color:var(--text-gray)}
+  .finding p{margin:6px 0;color:var(--text-gray);font-size:.93rem}
+  .finding code{display:block;padding:10px 12px;border-radius:8px;background:var(--primary-black);border:1px solid var(--hairline);
+    color:var(--gold-primary);font-size:.82rem;overflow-wrap:anywhere;white-space:pre-wrap}
+  .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .cta .btn{flex:1 1 220px}
+  .pass-all{color:var(--ok);margin:10px 0 0}
+  article p,article li{color:#d6d6de}
+  article ul{padding-left:20px}
+  article code{color:var(--gold-primary);font-size:.9em}
+  details{border-top:1px solid var(--hairline);padding:12px 0}
+  details summary{cursor:pointer;font-weight:600}
+  details p{margin:8px 0 0}
+  footer{color:var(--text-gray);font-size:.82rem;text-align:center;padding:40px 16px 30px}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="/">CYBER LION AI</a>
+      <a class="btn btn--ghost" href="/#scanForm">Tam tarama</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <p class="crumb"><a href="/">Ana sayfa</a> › Ücretsiz araçlar › Güvenlik başlıkları</p>
+    <h1>HTTP Güvenlik Başlıkları Testi</h1>
+    <p class="lead">Sitenizin HSTS, Content-Security-Policy, X-Frame-Options ve diğer güvenlik başlıklarını ücretsiz kontrol edin. Kayıt gerekmez; araç ana sayfanıza tek bir istek gönderir ve yalnızca yanıt başlıklarını okur.</p>
+
+    <section class="card">
+      <form class="row" id="form" novalidate>
+        <label class="sr-only" for="site">Site adresi</label>
+        <input class="input" id="site" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="ornek.com" required />
+        <button class="btn" id="btn" type="submit">Başlıkları kontrol et</button>
+      </form>
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card" id="result" hidden aria-live="polite">
+      <div class="score" id="score"><b id="scoreNum"></b><span id="scoreText"></span></div>
+      <p class="note" id="summary"></p>
+      <div id="findings"></div>
+      <p class="pass-all" id="passAll" hidden>Kontrol edilen tüm güvenlik başlıkları yerinde. Sertifika, DNS, çerez ve e-posta güvenliği için tam taramayı deneyin.</p>
+      <p class="note" id="hidden"></p>
+      <div class="cta">
+        <a class="btn" id="ctaScan" href="/#scanForm">Tüm sitemi ücretsiz tara</a>
+        <a class="btn btn--ghost" id="ctaFix" href="/pricing" hidden></a>
+      </div>
+    </section>
+
+    <article>
+      <h2>Güvenlik başlıkları neden önemli?</h2>
+      <p>Bir ziyaretçi sitenizi açtığında sunucunuz sayfayla birlikte görünmeyen bir dizi talimat da gönderir. Bunlara <strong>HTTP yanıt başlıkları</strong> denir. Güvenlik başlıkları, tarayıcıya sayfanızı nasıl koruyacağını söyler: yalnızca HTTPS ile mi açılsın, başka bir sitenin içine gömülebilir mi, hangi kaynaklardan script yüklenebilir?</p>
+      <p>Bu başlıklar eksik olduğunda kodunuzda hiçbir hata olmasa bile siteniz <em>clickjacking</em>, <em>SSL stripping</em> ve XSS gibi saldırılara karşı daha savunmasız kalır. İyi haber şu: çoğu başlık sunucu veya barındırma ayarına eklenen tek bir satırdır.</p>
+
+      <h2>Kontrol ettiğimiz başlıklar</h2>
+      <h3>Strict-Transport-Security (HSTS)</h3>
+      <p>Tarayıcıya sitenizi belirli bir süre boyunca yalnızca HTTPS ile açmasını söyler. HSTS yoksa ziyaretçinin ilk isteği şifresiz gidebilir ve araya giren biri bağlantıyı HTTP'ye düşürebilir. Önerilen değer: <code>max-age=63072000; includeSubDomains</code>. Tüm alt alan adlarınız HTTPS sunmuyorsa <code>includeSubDomains</code> kısmını çıkarın.</p>
+      <h3>Content-Security-Policy (CSP)</h3>
+      <p>Sayfanızda hangi kaynaklardan script, stil ve görsel yüklenebileceğini belirler. Bir XSS açığı olsa bile saldırganın kendi script'ini çalıştırmasını büyük ölçüde engeller. En güçlü ama en dikkatli eklenmesi gereken başlıktır: önce <code>Content-Security-Policy-Report-Only</code> adıyla ekleyip tarayıcı konsolundaki ihlallere göre uyarlayın. <code>'unsafe-inline'</code> içeren bir script-src politikası korumanın çoğunu boşa çıkarır.</p>
+      <h3>X-Frame-Options / frame-ancestors</h3>
+      <p>Sayfanızın başka bir sitenin <code>iframe</code>'i içine gömülmesini engeller. Saldırgan sayfanızı görünmez bir çerçeveye koyup kullanıcıyı farkında olmadan düğmelere tıklatabilir (clickjacking). <code>X-Frame-Options: DENY</code> veya CSP içinde <code>frame-ancestors 'none'</code> yeterlidir.</p>
+      <h3>X-Content-Type-Options</h3>
+      <p><code>nosniff</code> değeri, tarayıcının dosya türünü tahmin etmesini engeller. Böylece yüklenen bir metin dosyası script gibi çalıştırılamaz.</p>
+      <h3>Referrer-Policy ve Permissions-Policy</h3>
+      <p>Referrer-Policy, ziyaretçi başka bir siteye geçtiğinde adres çubuğundaki bilginin ne kadarının paylaşılacağını belirler; <code>strict-origin-when-cross-origin</code> dengeli bir seçimdir. Permissions-Policy ise kamera, mikrofon ve konum gibi yetenekleri kullanmadığınız durumda kapatmanızı sağlar.</p>
+      <h3>Sunucu sürüm bilgisi</h3>
+      <p><code>Server: nginx/1.18.0</code> gibi sürüm numarası içeren başlıklar, saldırgana o sürümün bilinen açıklarını hedefleme kolaylığı verir. Nginx'te <code>server_tokens off;</code>, Apache'de <code>ServerTokens Prod</code> ile gizleyebilirsiniz.</p>
+
+      <h2>Puan nasıl hesaplanıyor?</h2>
+      <p>Her kontrolün bir önem derecesi var: kritik, yüksek, orta veya düşük. Puan, ölçülebilen kontrollerin ağırlıkları üzerinden hesaplanır; eksik bir kritik başlık düşük önemli bir başlıktan çok daha fazla puan götürür. Bu sayfadaki puan yalnızca başlıkları kapsar. TLS sertifikası, DNS (SPF, DMARC, DNSSEC), çerez bayrakları ve kara liste kontrollerini de içeren genel puan için tam taramayı kullanın.</p>
+
+      <h2>Sık sorulan sorular</h2>
+      <details>
+        <summary>Bu test siteme zarar verir mi?</summary>
+        <p>Hayır. Araç, sıradan bir ziyaretçinin tarayıcısı gibi ana sayfanıza tek bir istek gönderir ve yalnızca yanıt başlıklarını okur. Saldırı denemesi veya gizli yol taraması yapmaz. Aynı site için sonuç bir saat önbellekte tutulur.</p>
+      </details>
+      <details>
+        <summary>Content-Security-Policy eklemek sitemi bozar mı?</summary>
+        <p>Doğrudan uygulanırsa bozabilir: satır içi script, yazı tipi veya analitik araçlar engellenebilir. Önce Report-Only modunda deneyip ihlallere göre politikayı uyarlamanızı öneririz.</p>
+      </details>
+      <details>
+        <summary>Başlıkları nereye ekliyorum?</summary>
+        <p>Barındırma türünüze göre değişir: Nginx'te <code>add_header</code>, Apache'de <code>.htaccess</code> içinde <code>Header set</code>, Vercel ve Netlify'da yapılandırma dosyası, Cloudflare kullanıyorsanız Transform Rules. İsterseniz bu düzeltmeyi sizin için biz yapabiliriz.</p>
+      </details>
+      <details>
+        <summary>Neden yalnızca 3 bulgu görüyorum?</summary>
+        <p>Sizi en önemli sorunlarla başlatmak için bulgular önem sırasına göre listelenir ve ilk üçü gösterilir. Tüm bulgular, düzeltme kodları ve PDF rapor ücretsiz tam taramada yer alır.</p>
+      </details>
+    </article>
+  </main>
+
+  <footer>© Cyber Lion AI · <a href="/kullanim-kosullari">Kullanım Şartları</a> · <a href="/gizlilik-politikasi">Gizlilik</a> · <a href="/pages/tarama-yetkisi">Tarama Yetkisi</a></footer>
+
+  <script src="/araclar/guvenlik-basliklari.js" defer></script>
+</body>
+</html>

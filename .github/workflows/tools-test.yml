@@ -289,6 +289,9 @@ jobs:
       - name: Güven kontrolü (trustcheck)
         run: node cyberlionai/tools/trust-test.js
 
+      - name: Ücretsiz araçlar (tool-check)
+        run: node cyberlionai/tools/tool-check-test.js
+
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
 
