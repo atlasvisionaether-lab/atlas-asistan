@@ -83,4 +83,4 @@ function analyze(context, lang) {
   return { checks: checks, findings: [], fixCode: fixCodeFor(checks, lang) };
 }
 
-module.exports = { analyze, IDS: ["tls_protocol", "tls_cert", "tls_legacy"] };
+module.exports = { analyze, certSebebi, IDS: ["tls_protocol", "tls_cert", "tls_legacy"] };

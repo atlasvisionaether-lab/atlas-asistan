@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * POST /api/tool-check { type: 'headers' | 'email', url }  → ücretsiz araç sonucu
+ * POST /api/tool-check { type: 'headers' | 'email' | 'ssl', url }  → ücretsiz araç sonucu
  *
  * Anonim. PASİF okuma (bkz. _lib/toolcheck.js); her istek tarama günlüğüne
  * yazılıyor (seviye: passive). Ana ücretsiz tarama kotasını HARCAMAZ; kendi

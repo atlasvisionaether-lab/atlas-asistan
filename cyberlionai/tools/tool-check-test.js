@@ -9,6 +9,10 @@
  * Sabitlenen (email): SPF + DMARC mail.js ile aynı kararı verir; ham kayıt
  * döner; sorgu tamamlanmadıysa "yok" değil "ölçülemedi"; IP ve var olmayan
  * alan adı 400; ayrı önbellek anahtarı.
+ * Sabitlenen (ssl): TLS fetch'ten ÖNCE ölçülür (geçersiz sertifikada araç
+ * düşmez); onaylanan adrese bağlanılır; sertifika sebebi notla gelir; ad
+ * uyumu ve zincir ayrı; yalnız TLS 1.0 sunan sunucu bulgu, hata değil;
+ * HSTS ölçülemezse başarısız sayılmaz.
  */
 const path = require('node:path');
 const Module = require('node:module');
@@ -63,7 +67,7 @@ const SAGLAM = yanit({
   esit('sağlam site 100 puan', s.score, 100);
   esit('çıplak site puanı düşük', c.score < 50, true);
 
-  esit('bilinmeyen tür', (await toolcheck.run('ssl', 'ornek.com', { fetch: SAGLAM })).code, 'invalid_type');
+  esit('bilinmeyen tür', (await toolcheck.run('whois', 'ornek.com', { fetch: SAGLAM })).code, 'invalid_type');
   esit('boş adres', (await toolcheck.run('headers', '', { fetch: SAGLAM })).code, 'empty');
   esit('özel IP kapıda', (await toolcheck.run('headers', 'http://127.0.0.1', { fetch: SAGLAM })).code, 'blocked_target');
   const dusen = await toolcheck.run('headers', 'ornek.com', { fetch: async function () { throw new Error('blocked_target'); } });
@@ -102,6 +106,78 @@ const SAGLAM = yanit({
   esit('IPv6 → bad_domain', (await toolcheck.run('email', 'http://[2001:db8::1]/', { mail: POSTA_SAGLAM })).code, 'bad_domain');
   esit('alan yok', (await toolcheck.run('email', 'yok.com', { mail: async function () { return { ok: false, sebep: 'domain_not_found' }; } })).code, 'domain_not_found');
   esit('çözücü çöktü → dns_failed', (await toolcheck.run('email', 'ornek.com', { mail: async function () { throw new Error('x'); } })).code, 'dns_failed');
+
+  /* --- SSL --- */
+  const GUNLER = 60;
+  function tlsOlc(ek, legacy) {
+    return async function (host, port, adres) {
+      tlsOlc.son = { host: host, port: port, adres: adres };
+      return { tls: Object.assign({ ok: true, protocol: 'TLSv1.3', authorized: true, authorizationError: null,
+        issuer: "Let's Encrypt", validTo: '2026-12-24T00:00:00.000Z', daysLeft: GUNLER, chainLength: 3, hostnameMatch: true }, ek || {}),
+        legacy: legacy || { tested: true, accepted: false } };
+    };
+  }
+  const KAPI = async function () { return ['93.184.216.34']; };
+  const HSTS_VAR = yanit({ 'strict-transport-security': 'max-age=63072000; includeSubDomains' });
+  let fetchSayisi = 0;
+  const SAYAN = async function (u, o) { fetchSayisi += 1; return HSTS_VAR(u, o); };
+
+  const s1 = await toolcheck.run('ssl', 'http://www.ornek.com/yol', { guard: KAPI, measure: tlsOlc(), fetch: SAYAN });
+  esit('ssl ok', s1.ok, true);
+  esit('ssl onaylanan adrese bağlanır', tlsOlc.son.adres, '93.184.216.34');
+  esit('ssl http girilse de 443', tlsOlc.son.port, 443);
+  esit('ssl SNI girilen ad', tlsOlc.son.host, 'www.ornek.com');
+  esit('ssl sağlam: bulgu yok', s1.top.length, 0);
+  esit('ssl sağlam: 100', s1.score, 100);
+  esit('ssl dört kontrol', s1.summary.total, 4);
+  esit('ssl kalan gün', s1.cert.daysLeft, GUNLER);
+  esit('ssl zincir tam', s1.cert.chain, 'ok');
+  esit('ssl modern TLS', s1.cert.modernTls, true);
+  esit('ssl HSTS değeri', s1.cert.hsts, 'max-age=63072000; includeSubDomains');
+
+  fetchSayisi = 0;
+  const s2 = await toolcheck.run('ssl', 'ornek.com', { guard: KAPI, fetch: SAYAN,
+    measure: tlsOlc({ authorized: false, authorizationError: 'CERT_HAS_EXPIRED', daysLeft: -3 }) });
+  esit('süresi dolmuş: sonuç var (hata değil)', s2.ok, true);
+  esit('süresi dolmuş: ilk bulgu sertifika', s2.top[0].id, 'tls_cert');
+  esit('süresi dolmuş: not', s2.top[0].note, 'expired');
+  esit('süresi dolmuş: nota özel düzeltme', s2.top[0].fix.indexOf('yenileyin') !== -1, true);
+  esit('süresi dolmuş: sertifika fiyatı ₺1.000', s2.top[0].fixPrice, 1000);
+  esit('geçersiz sertifikada sayfa istenmez', fetchSayisi, 0);
+  esit('geçersiz sertifikada HSTS ölçülmedi', s2.cert.hstsMeasured, false);
+  esit('HSTS ölçülemedi, başarısız değil', s2.summary.fail, 1);
+  esit('süre hatası zinciri söylemez', s2.cert.chain, 'unknown');
+
+  const s3 = await toolcheck.run('ssl', 'ornek.com', { guard: KAPI, fetch: SAYAN,
+    measure: tlsOlc({ authorized: false, authorizationError: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE', chainLength: 1 }) });
+  esit('eksik zincir', s3.cert.chain, 'chain_incomplete');
+  esit('eksik zincir notu', s3.top[0].note, 'chain_incomplete');
+
+  const s4 = await toolcheck.run('ssl', 'ornek.com', { guard: KAPI, fetch: SAYAN,
+    measure: tlsOlc({ authorized: false, authorizationError: 'ERR_TLS_CERT_ALTNAME_INVALID', hostnameMatch: false }) });
+  esit('ad uyumsuz', s4.cert.hostnameMatch, false);
+  esit('ad uyumsuzda zincir tam', s4.cert.chain, 'ok');
+
+  const s5 = await toolcheck.run('ssl', 'ornek.com', { guard: KAPI, fetch: yanit({}),
+    measure: tlsOlc({}, { tested: true, accepted: true, protocol: 'TLSv1' }) });
+  esit('HSTS yok + eski TLS: iki bulgu', s5.top.map(function (f) { return f.id; }).join(','), 'tls_legacy,hsts');
+  esit('HSTS fiyatı ₺500', s5.top[1].fixPrice, 500);
+  esit('eski TLS kabul', s5.cert.legacyAccepted, true);
+
+  const s6 = await toolcheck.run('ssl', 'ornek.com', { guard: KAPI, fetch: SAYAN,
+    measure: async function () { return { tls: { ok: false, reason: 'ERR_SSL_UNSUPPORTED_PROTOCOL' }, legacy: null }; } });
+  esit('yalnız eski TLS: bulgu', s6.ok, true);
+  esit('yalnız eski TLS: protokol başarısız', s6.top[0].id, 'tls_protocol');
+  esit('yalnız eski TLS: modernTls false', s6.cert.modernTls, false);
+
+  const s7 = await toolcheck.run('ssl', 'ornek.com', { guard: KAPI, fetch: SAYAN,
+    measure: async function () { return { tls: { ok: false, reason: 'ECONNREFUSED' }, legacy: null }; } });
+  esit('HTTPS yok → no_https', s7.code, 'no_https');
+  const s8 = await toolcheck.run('ssl', 'ornek.com', { guard: async function () { throw new Error('blocked_target'); }, measure: tlsOlc(), fetch: SAYAN });
+  esit('ssl özel IP → blocked_target', s8.code, 'blocked_target');
+  const s9 = await toolcheck.run('ssl', 'ornek.com', { guard: KAPI, measure: tlsOlc(), fetch: async function () { throw new Error('timeout'); } });
+  esit('sayfa düşerse HSTS ölçülemedi', s9.cert.hstsMeasured, false);
+  esit('sayfa düşerse yine sonuç', s9.ok && s9.summary.fail, 0);
 
   /* --- Uç nokta --- */
   const sayac = {}; const onbellek = {}; let hedefeGidis = 0; let gunluk = 0;
