@@ -32,7 +32,8 @@ const TOPICS = [
         screen: 'ai',
         facts: [
           'Menüde "AI Asistan Ayarları" ekranında "System Prompt" (asistanın talimat metni) alanı vardır; asistanın üslubunu ve neye cevap verip vermeyeceğini bu metin belirler.',
-          'Aynı ekranda "Karşılama Mesajı" alanı da kaydedilir, ancak otomatik cevaplar şu an bu alanı KULLANMIYOR; selamlamayı da System Prompt belirler.',
+          'Aynı ekranda "Karşılama Mesajı" alanı vardır: yeni bir müşteri ilk kez yazdığında bu mesaj BİR KEZ gönderilir. Müşteri bir soru da sorduysa asistan karşılamanın ardından sorusunu cevaplar.',
+          'Karşılama mesajını boş bırakırsanız karşılama gönderilmez; asistan doğrudan cevap verir.',
           '"Fallback" mesajı, asistanın cevap üretemediği durumlarda ve çalışma saatleri dışında gönderilen hazır mesajdır.',
           'Değişiklikler "Kaydet" ile kaydedilir.'
         ]
@@ -43,10 +44,10 @@ const TOPICS = [
         facts: [
           'Menüde "Otomasyonlar" ekranında "Genel & Çalışma Saatleri" bölümü vardır.',
           '"Çalışma saatleri (içinde AI cevap verir)" alanı asistanın hangi saatlerde (Türkiye saatiyle) otomatik cevap vereceğini belirler.',
-          'Çalışma saatleri dışında asistan cevap üretmez; bunun yerine "Fallback / Anlamadım mesajı" gönderilir. Bu alan boşsa mesai dışında müşteriye hiç cevap gitmez, mesaj Gelen Kutusu\'nda bekler.',
-          'Ekrandaki "Çalışma saatleri dışı mesajı" alanı şu an otomatik cevapta KULLANILMIYOR; mesai dışı için Fallback mesajını doldurun.',
+          'Çalışma saatleri dışında asistan cevap üretmez; bunun yerine "Çalışma saatleri dışı mesajı" gönderilir.',
+          '"Çalışma saatleri dışı mesajı" boşsa "Fallback / Anlamadım mesajı" gönderilir; ikisi de boşsa mesai dışında müşteriye cevap gitmez, mesaj Gelen Kutusu\'nda bekler.',
           'Aynı ekranda "AI otomatik cevap" açılıp kapatılabilir ve anahtar kelime kuralları eklenebilir.',
-          'Yüksek riskli (sağlık, şikâyet) olarak işaretlenen mesajlara asistan cevap üretmez; konuşma ekibinize (insana) bırakılır.',
+          'Yüksek riskli (sağlık, şikâyet) olarak işaretlenen mesajlara asistan cevap üretmez; yalnızca "ekibimiz size dönecek" notu gönderir ve konuşma ekibinize (insana) bırakılır.',
           'Bir müşteri insan temsilciye aktarıldıysa asistan o müşteriye artık otomatik cevap vermez.'
         ]
       },
@@ -138,8 +139,8 @@ const TOPICS = [
         facts: [
           'Bu adım için WhatsApp numaranızın bağlanmış olması gerekir (Kurulum ekranında 3. adım "tamam").',
           'Kendi kişisel telefonunuzdan, kliniğin bağlanan numarasına WhatsApp\'tan "Merhaba" yazın.',
-          'Çalışma saatleri içindeyse ve "AI otomatik cevap" açıksa asistan birkaç saniye içinde cevap verir.',
-          'Çalışma saatleri dışındaysanız asistan yerine Fallback mesajı gelir (boşsa hiç cevap gelmez). Testi mesai saatinde yapın ya da çalışma saatlerini geçici olarak genişletin.'
+          'Çalışma saatleri içindeyse ve "AI otomatik cevap" açıksa önce Karşılama Mesajınız gelir (yeni müşteriye bir kez). Yalnızca "Merhaba" yazdıysanız cevap bu kadardır; soru sorduysanız asistan ardından sorunuzu cevaplar.',
+          'Çalışma saatleri dışındaysanız "Çalışma saatleri dışı mesajı" gelir. Asistanın cevabını denemek için testi mesai saatinde yapın ya da çalışma saatlerini geçici olarak genişletin.'
         ]
       },
       {

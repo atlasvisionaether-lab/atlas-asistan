@@ -99,7 +99,7 @@
    return t;
   }
   var sys = ta("System Prompt", s.system_prompt, 6);
-  var greet = ta("Karşılama Mesajı", s.greeting_message, 3);
+  var greet = ta("Karşılama Mesajı — yeni müşteri ilk kez yazdığında bir kez gönderilir", s.greeting_message, 3);
   var fallb = ta("Fallback", s.fallback_message, 3);
   form.appendChild(ui.el("label",{text:"Model"}));
   var modelSel = ui.el("select");
@@ -134,9 +134,8 @@
    };
    if (payload.system_prompt.length > 8000){ err.textContent = "System prompt çok uzun (maks. 8000 karakter)."; return; }
    if (payload.temperature < 0 || payload.temperature > 1 || isNaN(payload.temperature)){ err.textContent = "Temperature 0 ile 1 arasında olmalı."; return; }
-   var op = rowId ? sb.from("assistant_settings").update(payload).eq("id", rowId)
-                  : sb.from("assistant_settings").insert(payload);
-   op.then(function(res){
+   // Kurum başına tek satır (organization_id unique): ilk kayıtta ekler, sonra günceller.
+   sb.from("assistant_settings").upsert(payload, { onConflict: "organization_id" }).then(function(res){
     if (res.error){ err.textContent = "Kaydedilemedi: " + res.error.message; return; }
     ui.toast("Ayarlar kaydedildi.");
     status.textContent = "Kaydedildi: " + new Date().toLocaleString("tr-TR");

@@ -70,7 +70,7 @@
   var row = ui.el("div",{class:"auto-row"}); var en = ui.el("input",{type:"checkbox"}); en.checked = settings.auto_reply_enabled!==false; var enLbl = ui.el("span",{text: en.checked?"AÇIK":"KAPALI"}); en.addEventListener("change", function(){ enLbl.textContent = en.checked?"AÇIK":"KAPALI"; }); row.appendChild(en); row.appendChild(enLbl); left.appendChild(row);
   left.appendChild(ui.el("label",{text:"Çalışma saatleri (içinde AI cevap verir)"}));
   var hr = ui.el("div",{class:"auto-row"}); var s1=ui.el("input",{type:"time", value:(settings.working_hours&&settings.working_hours.start)||"09:00"}); var s2=ui.el("input",{type:"time", value:(settings.working_hours&&settings.working_hours.end)||"18:00"}); hr.appendChild(s1); hr.appendChild(ui.el("span",{text:"—"})); hr.appendChild(s2); left.appendChild(hr);
-  left.appendChild(ui.el("label",{text:"Çalışma saatleri dışı mesajı (satışta kritik)"})); var after = ui.el("textarea"); after.value = settings.after_hours_message || "Şu an kapalıyız, sabah 09:00'da ilk iş size döneceğiz. Acil randevu için web sitemizden oluşturabilirsiniz."; after.placeholder="Kapalıyız mesajı"; left.appendChild(after);
+  left.appendChild(ui.el("label",{text:"Çalışma saatleri dışı mesajı — mesai dışında yazan müşteriye gider (boşsa Fallback mesajı)"})); var after = ui.el("textarea"); after.value = settings.after_hours_message || "Şu an kapalıyız, sabah 09:00'da ilk iş size döneceğiz. Acil randevu için web sitemizden oluşturabilirsiniz."; after.placeholder="Kapalıyız mesajı"; left.appendChild(after);
   left.appendChild(ui.el("label",{text:"Fallback / Anlamadım mesajı"})); var fb=ui.el("textarea"); fb.value=settings.fallback_message||""; left.appendChild(fb);
   left.appendChild(ui.el("label",{text:"AI model"})); var model=ui.el("select"); [["small","small (hızlı)"],["medium","medium (gelişmiş)"]].forEach(function(o){ var op=ui.el("option",{value:o[0],text:o[1]}); if((settings.model||"small")===o[0]) op.selected=true; model.appendChild(op); }); left.appendChild(model);
   grid.appendChild(left);
@@ -103,9 +103,12 @@
     automation_rules: rulesState.get(),
     updated_at: new Date().toISOString()
    };
-   sb.from("assistant_settings").update(payload).eq("organization_id", orgId).then(function(res){
+   // Kurum başına tek satır: upsert. Eskiden update + "satır yoksa ekle" vardı ama
+   // update .select() olmadan data döndürmediği için satırı olmayan (yeni) kurumda
+   // hiçbir şey yazılmadan "Kaydedildi" deniyordu.
+   payload.organization_id = orgId;
+   sb.from("assistant_settings").upsert(payload, { onConflict: "organization_id" }).then(function(res){
     if(res.error){ err.textContent="Kaydedilemedi: "+res.error.message; return; }
-    if(res.data && res.data.length===0){ payload.organization_id = orgId; sb.from("assistant_settings").insert(payload).then(function(r2){ if(r2.error) err.textContent="Insert hatası: "+r2.error.message; else { ok.textContent="Kaydedildi."; ui.toast("Otomasyonlar canlıya alındı"); } }); return; }
     ok.textContent="Kaydedildi."; ui.toast("Otomasyonlar canlıya alındı");
    });
   });

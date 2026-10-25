@@ -4,8 +4,11 @@
 // Koşul: channel IN ('whatsapp','web_widget') AND is_from_customer = true.
 // AI sağlayıcısı: Lovable AI Gateway (LOVABLE_API_KEY) — yoksa OpenAI (OPENAI_API_KEY) fallback'i.
 // Sağlık/şikâyet (risk_flag = 'yüksek') mesajlarına otomatik yanıt ÜRETİLMEZ; insan devralma korunur.
+// Karşılama mesajı yeni müşteriye bir kez; mesai dışında "Çalışma saatleri dışı mesajı"
+// (boşsa Fallback). Saf kurallar: ./rules.ts.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { afterHoursText, greetedNote, greetingText, isPureGreeting } from "./rules.ts";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +36,8 @@ interface ServiceRow {
 interface AssistantSettingsRow {
   system_prompt: string;
   fallback_message: string;
+  greeting_message?: string | null;
+  after_hours_message?: string | null;
   model: string;
   temperature: number;
   kb_enabled?: boolean;
@@ -84,6 +89,7 @@ async function generateReply(
   services: ServiceRow[],
   settings: AssistantSettingsRow | null,
   knowledge: KbRow[] = [],
+  extraSystem = "",
 ): Promise<string | null> {
   const systemPrompt = settings?.system_prompt || DEFAULT_SYSTEM_PROMPT;
   const fallback = settings?.fallback_message ||
@@ -94,7 +100,7 @@ async function generateReply(
     ? "Hizmetler ve fiyatlar:\n" +
       services.map((s) => `- ${s.name}: ${s.price ?? "fiyat bilgisi yok"}`).join("\n")
     : "Hizmet listesi henüz boş.";
-  const systemContent = [systemPrompt, serviceList, knowledgeBlock(knowledge)].filter(Boolean).join("\n\n");
+  const systemContent = [systemPrompt, serviceList, knowledgeBlock(knowledge), extraSystem].filter(Boolean).join("\n\n");
 
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const openaiKey = Deno.env.get("OPENAI_API_KEY");
@@ -153,6 +159,16 @@ async function generateReply(
   }
 }
 
+/** customers.last_message_at; hata akışı bozmaz (cevap zaten yazıldı). */
+// deno-lint-ignore no-explicit-any
+async function touchCustomer(db: any, customerId: string) {
+  const { error } = await db
+    .from("customers")
+    .update({ last_message_at: new Date().toISOString() })
+    .eq("id", customerId);
+  if (error) console.warn("last_message_at güncellenemedi:", error.message);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
@@ -206,10 +222,11 @@ Deno.serve(async (req) => {
   }
 
   // —— BAYRAK KONTROLLERİ (0013) ————————————————————————————————
-  // 1) Org'un asistan ayarları: auto_reply_enabled + working_hours + fallback.
+  // 1) Org'un asistan ayarları: auto_reply_enabled + working_hours + karşılama +
+  //    mesai dışı + fallback. "*": 0019 uygulanmadan önce de okunabilsin.
   const { data: flagRows } = await db
     .from("assistant_settings")
-    .select("auto_reply_enabled, working_hours, fallback_message")
+    .select("*")
     .eq("organization_id", orgId)
     .limit(1);
   const flags = (flagRows && flagRows[0]) || null;
@@ -230,8 +247,8 @@ Deno.serve(async (req) => {
     return jsonResponse({ skipped: true, reason: "handled_by_human" });
   }
 
-  // 1c) Çalışma saatleri dışındaysa AI modeli ÇAĞRILMAZ;
-  //     assistant_settings.fallback_message gönderilir (yoksa sessiz geç).
+  // 1c) Çalışma saatleri dışındaysa AI modeli ÇAĞRILMAZ; after_hours_message
+  //     gönderilir, boşsa fallback_message, o da boşsa sessiz geç (rules.ts).
   let outsideWorkingHours = false;
   if (flags && flags.working_hours && flags.working_hours.start && flags.working_hours.end) {
     const nowTR = new Date().toLocaleTimeString("tr-TR", {
@@ -249,7 +266,7 @@ Deno.serve(async (req) => {
     outsideWorkingHours = curMin < startMin || curMin >= endMin;
   }
   if (outsideWorkingHours) {
-    const fb = (flags && flags.fallback_message) || "";
+    const fb = afterHoursText(flags);
     if (!fb) {
       return jsonResponse({ skipped: true, reason: "outside_working_hours" });
     }
@@ -267,7 +284,47 @@ Deno.serve(async (req) => {
     if (fbErr) {
       return jsonResponse({ error: "fallback insert failed: " + fbErr.message }, 500);
     }
-    return jsonResponse({ ok: true, replied: true, fallback: true, customer_id: customerId });
+    return jsonResponse({ ok: true, replied: true, after_hours: true, customer_id: customerId });
+  }
+
+  // 1d) Karşılama: yeni müşteriye BİR KEZ. customers.greeted_at (0019) koşullu
+  //     güncellemeyle alınır: aynı anda gelen iki mesaj iki karşılama göndermez.
+  //     Yüksek riskli mesajda gönderilmez (devralma notu gider). Sütun yoksa
+  //     (0019 uygulanmadı) karşılama atlanır, cevap akışı sürer.
+  let greeting = "";
+  let greetingId: string | null = null;
+  if (!highRisk && greetingText(flags)) {
+    const { data: claimed, error: claimErr } = await db
+      .from("customers")
+      .update({ greeted_at: new Date().toISOString() })
+      .eq("id", customerId)
+      .is("greeted_at", null)
+      .select("id");
+    if (claimErr) {
+      console.warn("karşılama işareti yazılamadı:", claimErr.message);
+    } else if (claimed && claimed.length) {
+      greeting = greetingText(flags);
+      const { data: g, error: gErr } = await db.from("messages").insert({
+        organization_id: orgId,
+        customer_id: customerId,
+        content: greeting,
+        channel: record.channel,
+        direction: "out",
+        is_from_customer: false,
+        sender_type: "ai",
+        risk_flag: "normal",
+        unread: false,
+      }).select("id").single();
+      if (gErr) {
+        return jsonResponse({ error: "greeting insert failed: " + gErr.message }, 500);
+      }
+      greetingId = g?.id ?? null;
+      // Müşteri yalnızca selam verdiyse karşılama yeter; ikinci mesaj gönderilmez.
+      if (isPureGreeting(record.content)) {
+        await touchCustomer(db, customerId);
+        return jsonResponse({ ok: true, replied: true, greeting: true, customer_id: customerId });
+      }
+    }
   }
   // ————————————————————————————————————————————————————————
 
@@ -281,7 +338,9 @@ Deno.serve(async (req) => {
   if (recentErr) {
     return jsonResponse({ error: "context fetch failed: " + recentErr.message }, 500);
   }
-  const context = (recent || []).slice().reverse().map((m: MessageRow) => ({
+  // Az önce gönderilen karşılama bağlamdan çıkarılır (modele "assistant" ile biten
+  // sohbet gitmesin); karşılama bilgisi sistem istemine not olarak eklenir.
+  const context = (recent || []).filter((m: MessageRow) => m.id !== greetingId).slice().reverse().map((m: MessageRow) => ({
     role: m.is_from_customer ? "user" : "assistant",
     content: String(m.content ?? ""),
   }));
@@ -321,7 +380,9 @@ Deno.serve(async (req) => {
   }
 
   // d) Cevap üretimi (yüksek riskte üretilmez, devralma notu yazılır).
-  const reply = highRisk ? HEALTHY_HANDOVER : await generateReply(context, services || [], settings, knowledge);
+  const reply = highRisk ? HEALTHY_HANDOVER : await generateReply(
+      context, services || [], settings, knowledge, greeting ? greetedNote(greeting) : "",
+    );
   if (!reply) {
     return jsonResponse({ skipped: true, reason: "empty reply" });
   }
@@ -343,14 +404,7 @@ Deno.serve(async (req) => {
   }
 
   // f) customers.last_message_at güncelle.
-  const { error: custErr } = await db
-    .from("customers")
-    .update({ last_message_at: new Date().toISOString() })
-    .eq("id", customerId);
-  if (custErr) {
-    // Cevap yazıldı; last_message_at hatası akışı bozmaz.
-    console.warn("last_message_at güncellenemedi:", custErr.message);
-  }
+  await touchCustomer(db, customerId);
 
   return jsonResponse({ ok: true, replied: true, customer_id: customerId, high_risk: highRisk });
 });
