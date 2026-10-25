@@ -50,3 +50,11 @@ Bu demo panel, ayrı atlas-asistan-panel-preview Vercel projesinde yalnızca pre
 - **Doğruluk:** model yalnızca adımın `facts` listesini anlatır (`api/_atlas/guide-content.js`); ürün değişince önce orası güncellenir. Model cevap veremezse panel aynı bilgileri düz liste gösterir.
 - **Maliyet:** kullanıcı başına 24 saatte `GUIDE_DAILY_LIMIT` (varsayılan 60) istek; sayaç `supabase/migrations/0018_guide_usage.sql`.
 - Gerekli env (atlasasistan-static): `DEEPSEEK_API_KEY`. Test: `node tools/atlas-guide-test.js`.
+
+## Uzay teması — 3B yıldız haritası ve cam arayüz (2026-10-26)
+
+- **Tek kaynak `space/`** (kök) → `panel/space/` birebir kopya (panel ayrı Vercel projesi). Değiştirince kopyala; `node tools/space-sync-test.js` ayrışmayı yakalar.
+- `space.js`: Three.js 0.160.0 (importmap, jsDelivr; derleme yok). 50.000 yıldız (mobil 10.000), twinkle, galaksi bandı, iki katmanlı fbm nebula, kayan yıldızlar, fare paralaksı, Bloom + renk sapması + vinyet + film greni. Uyarlanır kalite: `#space3d[data-quality]` (0 = tam). `prefers-reduced-motion`: tek sabit kare.
+- `space-ui.js`: yıldız imleç (yalnız fare), düğmelerde parçacık patlaması, ekran geçişi (View Transitions; yalnız `.sx-page`).
+- `space.css`: jetonlar (Fraunces + Manrope, altın/cyan), `.sx-glass` cam + altın/gümüş kenar parlaması.
+- WebGL/CDN yoksa: sitede eski 2B yıldızlar, panelde CSS nebula degradesi kalır.

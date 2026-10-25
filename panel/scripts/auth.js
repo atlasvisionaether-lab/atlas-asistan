@@ -22,6 +22,8 @@ let recovering = false;   // şifre yenileme bağlantısıyla gelindi
 function setSignoutVisible(on) {
   const b = document.getElementById("signout");
   if (b) b.hidden = !on;
+  // Oturum yokken kenar çubuğu (boş menü) gizlenir; giriş kartı ortada tek başına durur.
+  document.documentElement.classList.toggle("sx-authed", on);
 }
 
 function clearMain() { while (main.firstChild) main.removeChild(main.firstChild); }
@@ -30,7 +32,8 @@ function gate(html) {
   clearMain();
   const box = document.createElement("section");
   box.className = "auth-gate";
-  box.innerHTML = html;
+  // Marka küresi (sitedeki logoyla aynı dil); yalnız süs, ekran okuyucudan gizli.
+  box.innerHTML = '<div class="auth-brand" aria-hidden="true"><span class="auth-orb"></span></div>' + html;
   main.appendChild(box);
   return box;
 }

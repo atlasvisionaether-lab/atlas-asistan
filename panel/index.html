@@ -4,12 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#03020a">
 <title>Atlas Asistan — Panel</title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="alternate icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="space/space.css">
 <link rel="stylesheet" href="styles/app.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
+<canvas id="space3d" data-space="panel" aria-hidden="true"></canvas>
 <a class="skip-link" href="#main">İçeriğe geç</a>
 <div class="app">
   <aside class="sidebar">
@@ -17,13 +24,14 @@
     <nav id="nav" aria-label="Panel menüsü"></nav>
     <div class="sidebar-foot"><button class="btn ghost" type="button" id="signout" hidden>Çıkış yap</button></div>
   </aside>
-  <main id="main" class="content" aria-live="polite"><p>Panel yükleniyor…</p></main>
+  <main id="main" class="content sx-page" aria-live="polite"><p>Panel yükleniyor…</p></main>
 </div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <script src="scripts/supabase-config.js"></script>
 <script src="scripts/data/mock.js"></script>
 <script src="scripts/store.js"></script>
 <script src="scripts/ui.js"></script>
+<script src="space/space-ui.js"></script>
 <script src="scripts/inbox.js"></script>
 <script src="scripts/services.js"></script>
 <script src="scripts/knowledge.js"></script>
@@ -41,6 +49,7 @@
 <script src="scripts/guide.js"></script>
 <script src="scripts/app.js"></script>
 <script type="module" src="scripts/auth.js"></script>
+<script type="module" src="space/space.js"></script>
 <script>document.getElementById("signout").addEventListener("click",function(){if(window.atlasSignOut)window.atlasSignOut()});</script>
 <script src="./scripts/fix_websocket_500.js"></script>
 </body>

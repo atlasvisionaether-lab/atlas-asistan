@@ -49,6 +49,11 @@
   ]
 }
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/space/space.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <style>
   :root{
     --bg:#05010f;
@@ -66,8 +71,8 @@
     --radius:22px;
     --grad-gold:linear-gradient(95deg,#fde68a 0%,#fbbf24 45%,#f59e0b 100%);
     --grad-neon:linear-gradient(95deg,#22d3ee 0%,#818cf8 50%,#e879f9 100%);
-    --serif:Georgia,"Times New Roman",serif;
-    --sans:"Segoe UI",system-ui,-apple-system,sans-serif;
+    --serif:var(--sx-serif);
+    --sans:var(--sx-sans);
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -92,10 +97,9 @@
   @keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
   .loader-core span{font-size:.82rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
 
-  /* ---------- ÖZEL İMLEÇ ---------- */
-  #cursor{position:fixed;z-index:99;width:26px;height:26px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(251,191,36,.9),rgba(232,121,249,.4) 60%,transparent 75%);mix-blend-mode:screen;transform:translate(-50%,-50%);transition:width .2s,height .2s,opacity .3s}
-  #cursor.big{width:52px;height:52px}
-  @media(pointer:coarse){#cursor{display:none}}
+  /* ---------- 3B YILDIZ HARİTASI (space/space.js) ----------
+     Hazır olunca 2B tuval ve CSS nebula bulutları çekilir; WebGL yoksa onlar kalır. */
+  html.space-3d #stars,html.space-3d .nebula{display:none}
 
   /* ---------- NAV ---------- */
   nav{position:sticky;top:0;z-index:50;background:rgba(11,6,32,.55);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.07)}
@@ -125,6 +129,12 @@
 
   /* ---------- HERO ---------- */
   .hero{position:relative;padding:110px 0 100px;overflow:hidden}
+  /* Sinematik ufuk: hero'nun altında altın/cyan kenar ışığı alan dev bir gezegen yayı */
+  .hero::after{content:"";position:absolute;left:50%;bottom:-62vw;width:150vw;height:80vw;transform:translateX(-50%);border-radius:50%;pointer-events:none;z-index:0;
+    background:radial-gradient(closest-side,rgba(3,2,10,.96) 97%,transparent 100%);
+    box-shadow:0 -2px 0 rgba(253,230,138,.55),0 -10px 40px rgba(251,191,36,.35),0 -40px 120px rgba(34,211,238,.25),0 -90px 200px rgba(124,58,237,.22)}
+  .hero h1{text-shadow:0 2px 40px rgba(0,0,0,.6)}
+  @media(max-width:640px){.hero::after{bottom:-90vw;width:220vw;height:110vw}}
   .hero-inner{max-width:820px;margin:0 auto;text-align:center;position:relative;z-index:2}
   .kicker{display:inline-flex;align-items:center;gap:9px;font-size:.74rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-light);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);padding:9px 18px;border-radius:999px;margin-bottom:26px}
   .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold);animation:pulse 1.8s infinite}
@@ -265,11 +275,11 @@
 
   /* ---------- HERO İSTATİSTİK + WHATSAPP KARTI (canlı site içeriği) ---------- */
   .hero-stats{margin-top:32px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-  .hstat{text-align:center;background:var(--glass);border:1px solid var(--glass-border);border-radius:16px;padding:14px 22px;min-width:112px}
+  .hstat{text-align:center;padding:14px 22px;min-width:118px;--sx-radius:16px}
   .hstat b{display:block;font-family:var(--serif);font-size:1.5rem;font-weight:700}
   .hstat span{font-size:.74rem;color:var(--muted)}
   .hstat .c{color:var(--cyan)} .hstat .g{color:#4ade80} .hstat .p{color:var(--pink)}
-  .hero-chat{margin:52px auto 0;max-width:430px;text-align:left;background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(16px);border-radius:var(--radius);padding:22px}
+  .hero-chat{margin:52px auto 0;max-width:430px;text-align:left;padding:22px;--sx-radius:var(--radius)}
   .hc-head{display:flex;align-items:center;gap:11px;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.1)}
   .hc-av{width:40px;height:40px;border-radius:999px;background:linear-gradient(135deg,rgba(0,209,178,.2),rgba(47,128,255,.2));border:1px solid rgba(47,128,255,.3);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
   .hc-who b{display:block;font-size:.9rem}
@@ -314,11 +324,11 @@
 </head>
 <body>
 
+<canvas id="space3d" data-space="hero" aria-hidden="true"></canvas>
 <canvas id="stars"></canvas>
 <div class="nebula n1"></div>
 <div class="nebula n2"></div>
 <div class="nebula n3"></div>
-<div id="cursor"></div>
 <div id="loader"><div class="loader-core"><div class="orb"></div><span>Yıldız haritası hazırlanıyor</span></div></div>
 <div id="toast"></div>
 
@@ -350,11 +360,11 @@
       <a class="btn btn-glass" href="#iletisim">Ücretsiz Ön Görüşme</a>
     </div>
     <div class="hero-stats">
-      <div class="hstat"><b class="c">%94</b><span>Mesaj Yanıtlama</span></div>
-      <div class="hstat"><b class="g">3.2x</b><span>Randevu Artışı</span></div>
-      <div class="hstat"><b class="p">7/24</b><span>Otonom Çalışma</span></div>
+      <div class="hstat sx-glass"><b class="c">%94</b><span>Mesaj Yanıtlama</span></div>
+      <div class="hstat sx-glass"><b class="g">3.2x</b><span>Randevu Artışı</span></div>
+      <div class="hstat sx-glass"><b class="p">7/24</b><span>Otonom Çalışma</span></div>
     </div>
-    <div class="hero-chat reveal">
+    <div class="hero-chat reveal sx-glass">
       <div class="hc-head">
         <div class="hc-av">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="8" width="16" height="12" rx="3"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><path d="M12 8V4M8 4h8"/></svg>
@@ -1456,7 +1466,12 @@ Randevu hatırlatması WhatsApp'tan gönderilecektir.<time>02:15</time></div>
 
   var lastShooter = 0;
 
+  /* 3B yıldız haritası (space/space.js) çizmeye başlayınca 2B döngü durur;
+     WebGL bağlamı kaybolursa (space:lost) yeniden başlar. */
+  var drawing = true;
+  window.addEventListener("space:lost", function () { if (!drawing) { drawing = true; requestAnimationFrame(draw); } });
   function draw(t) {
+    if (window.__space3d) { drawing = false; ctx.clearRect(0, 0, W, H); return; }
     ctx.clearRect(0, 0, W, H);
     // yumuşak mouse parallax
     mx += (tx - mx) * 0.045;
@@ -1509,19 +1524,7 @@ Randevu hatırlatması WhatsApp'tan gönderilecektir.<time>02:15</time></div>
   }
   requestAnimationFrame(draw);
 
-  /* ================= ÖZEL İMLEÇ ================= */
-  var cursor = document.getElementById("cursor");
-  var cx = -100, cy = -100, gx = -100, gy = -100;
-  document.addEventListener("mousemove", function (e) { cx = e.clientX; cy = e.clientY; });
-  (function cursorLoop() {
-    gx += (cx - gx) * 0.16; gy += (cy - gy) * 0.16;
-    cursor.style.transform = "translate(" + gx + "px," + gy + "px) translate(-50%,-50%)";
-    requestAnimationFrame(cursorLoop);
-  })();
-  document.querySelectorAll("a,button,input,summary").forEach(function (el) {
-    el.addEventListener("mouseenter", function () { cursor.classList.add("big"); });
-    el.addEventListener("mouseleave", function () { cursor.classList.remove("big"); });
-  });
+  /* Özel imleç: space/space-ui.js (yıldız imleç + düğme parçacık patlaması). */
 
   /* ================= YÜKLENME EKRANI ================= */
   window.addEventListener("load", function () {
@@ -1566,5 +1569,7 @@ Randevu hatırlatması WhatsApp'tan gönderilecektir.<time>02:15</time></div>
 
   document.getElementById("year").textContent = new Date().getFullYear();
 </script>
+<script src="/space/space-ui.js" defer></script>
+<script type="module" src="/space/space.js"></script>
 </body>
 </html>
