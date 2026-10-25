@@ -22,6 +22,8 @@ Web: https://www.cyberlionai.com
 
 **Aktarım:** iyzico'ya ödeme için, muhasebe için mali müşavire, yetkili kurumlara talep halinde; hizmetin sunulması için altyapı sağlayıcılarına (Vercel, Cloudflare, Supabase). Bu sağlayıcıların sunucuları yurt dışında bulunabilir. Canlı Asistan'ın yapay zekâ katmanını kullanırsanız, açık rızanıza dayanarak gizlenmiş soru metniniz ve sohbet bağlamınız yapay zekâ hizmet sağlayıcılarına (DeepSeek – Çin, yedek olarak Anthropic – ABD) aktarılır. Kayıt onayı, giriş bağlantısı, şifre sıfırlama, silme sertifikası ve izleme özeti gibi işlem e-postaları için e-posta adresiniz e-posta gönderim sağlayıcısına (Resend – ABD) aktarılır. Kara liste kontrolü için taranan sitenin adresi (alan adı ve yol; sorgu dizesi hariç), Google'ın zararlı yazılım ve oltalama listelerinde aranmak üzere Google Web Risk hizmetine (Google Cloud – ABD) aktarılır; bu aktarımda IP adresiniz, e-posta adresiniz veya hesap bilgileriniz yer almaz.
 
+**Yurt Dışına Aktarım:** Yapay zekâ hizmet sağlayıcılarına (DeepSeek – Çin, Anthropic – ABD) ve Google Web Risk hizmetine (Google Cloud – ABD) yapılan aktarımlar, KVKK m.9 uyarınca Kişisel Verileri Koruma Kurulu'nca ilan edilen standart sözleşmeler imzalanarak gerçekleştirilir.
+
 **Saklama Süresi:** Abonelik süresince + 10 yıl (Vergi Usul Kanunu)
 
 **Haklarınız:** KVKK 11. madde uyarınca bilgi talep etme, düzeltme, silme, itiraz haklarınız vardır. Başvuru: destek@cyberlionai.com - 30 gün içinde yanıtlanır.
