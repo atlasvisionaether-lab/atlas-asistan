@@ -17,17 +17,17 @@
 
  function steps(s, waNumber){
   return [
-   { done: s.info, title: "Hizmet ve fiyatlarınızı ekleyin",
+   { done: s.info, guide: ["hizmetler", 0], title: "Hizmet ve fiyatlarınızı ekleyin",
      body: "Asistan, müşterilerinize yalnızca buraya yazdığınız hizmet ve fiyatları söyler.",
      cta: "Hizmetlere git", href: "#services" },
-   { done: s.payment, title: "Paketinizi seçin ve ödeyin",
+   { done: s.payment, guide: ["kurulum", 3], title: "Paketinizi seçin ve ödeyin",
      body: "Paketinizi seçin, fatura bilgilerinizi girin ve iyzico'nun güvenli sayfasında kartla ödeyin. Ödeme kliniğinize otomatik bağlanır.",
      cta: "Paket seç ve öde", href: "#odeme" },
-   { done: s.whatsapp, title: "WhatsApp numaranızı bağlayın",
+   { done: s.whatsapp, guide: ["whatsapp", 0], title: "WhatsApp numaranızı bağlayın",
      body: s.whatsapp ? "Bağlı numara: " + (waNumber || "tanımlı")
       : "Numaranız henüz bağlı değil. Ödemeden sonra numaranızı kliniğinize biz bağlıyoruz; bağlanınca bu adım kendiliğinden tamamlanır.",
      cta: null },
-   { done: s.test, title: "İlk test mesajını gönderin",
+   { done: s.test, guide: ["test", 0], title: "İlk test mesajını gönderin",
      body: "Kendi telefonunuzdan klinik numaranıza \"Merhaba\" yazın; mesaj Gelen Kutusu'nda görünür ve asistan cevaplar.",
      cta: "Gelen Kutusu", href: "#inbox" }
   ];
@@ -58,6 +58,11 @@
    var a = ui.el("a", { class: "btn" + (isNext ? "" : " ghost"), href: step.href, text: step.cta });
    if (step.external){ a.setAttribute("target", "_blank"); a.setAttribute("rel", "noopener"); }
    c.appendChild(a);
+  }
+  if (!step.done && step.guide && window.ATLAS_GUIDE){
+   var how = ui.el("button", { class: "btn ghost onb-how", type: "button", text: "Nasıl yapılır? Rehbere sor" });
+   how.addEventListener("click", function(){ window.ATLAS_GUIDE.open(step.guide[0], step.guide[1]); });
+   c.appendChild(how);
   }
   return c;
  }
