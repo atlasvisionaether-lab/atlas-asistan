@@ -3,7 +3,9 @@
 /**
  * Dünya haritası verisi.
  *
- *   GET /api/worldmap
+ *   GET /api/worldmap              harita verisi
+ *   GET /api/worldmap?summary=1    yalnızca { ready, sites, countries } —
+ *                                  ana sayfa bölümü göstermeye karar verirken
  *
  * Tarayıcı üçüncü taraf beslemelere DOĞRUDAN çıkmaz: CSP `connect-src 'self'`
  * dar kalsın diye istekler burada, sunucuda yapılır. Bu uç, haritanın tek veri
@@ -19,6 +21,7 @@
 const store = require('./_lib/store.js');
 const db = require('./_lib/db.js');
 const feeds = require('./_lib/feeds.js');
+const ownmap = require('./_lib/ownmap.js');
 const geo = require('./_lib/geo.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
 
@@ -38,7 +41,10 @@ const BROWSER_CACHE_SECONDS = 150;
    hala sisik sayilari tutuyordu ve phishtank'in TTL'i 6 saat: duzeltme
    dagitildiktan sonra saatlerce eski sayi gosterilecekti. Surum ekiyle eski
    kayitlar hicbir zaman okunmuyor, kendiliklerinden suresi dolup siliniyor. */
-const CACHE_VERSION = 'v3';
+/* v4: harita kendi taramalarımızdan besleniyor; abuse.ch/PhishTank kaldırıldı. */
+const CACHE_VERSION = 'v4';
+/* Kendi tarama özeti için önbellek: her harita isteği 2000 satır okumasın. */
+const OWN_TTL = 10 * 60;
 function cacheKey(id) { return 'cl:wm:' + CACHE_VERSION + ':' + id; }
 
 /**
@@ -67,6 +73,33 @@ async function loadCached(source) {
   return fresh;
 }
 
+/**
+ * Kendi taramalarımızın ülke özeti (bkz. _lib/ownmap.js), önbellekli. Bir
+ * besleme kaynağı gibi döner; böylece işaretler, zaman filtresi ve bulgu
+ * filtresi mevcut yoldan geçer. Düşerse ok:false — harita yine çizilir.
+ */
+async function loadOwn() {
+  const base = { id: 'cyberlion', label: 'Cyber Lion AI taramaları', attribution: 'Cyber Lion AI',
+    geo: true, geoSource: 'native', supportsWindows: true };
+  if (!db.isConfigured()) return Object.assign(base, { ok: false, error: 'db_not_configured', fetchedAt: new Date().toISOString() });
+  const key = cacheKey('cyberlion');
+  try {
+    const cached = await store.cacheGet(key);
+    if (cached) return Object.assign(cached, { cached: true });
+  } catch (err) { /* önbellek okunamadı; taze hesaplanır */ }
+  let fresh;
+  try {
+    const data = ownmap.aggregate(await db.recentScansForMap(), Date.now());
+    fresh = Object.assign(base, { ok: true, fetchedAt: new Date().toISOString(), data: data, ready: ownmap.ready(data) });
+  } catch (err) {
+    if (console && console.error) console.error('worldmap own query failed:', err.message);
+    return Object.assign(base, { ok: false, error: 'query_failed', fetchedAt: new Date().toISOString() });
+  }
+  try { await store.cacheSet(key, fresh, OWN_TTL); } catch (err) { /* önemli değil */ }
+  fresh.cached = false;
+  return fresh;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'public, max-age=' + BROWSER_CACHE_SECONDS);
 
@@ -76,9 +109,9 @@ module.exports = async function handler(req, res) {
   }
 
   /* Depo burada isteğe bağlı DEĞİL. Redis düştüğünde yalnızca hız sınırı
-     kalkmaz; önbellek de kalkar. İkisi birden gittiğinde her istek abuse.ch'ye
-     taze bir çekim demektir ve bunu sınırlayan hiçbir şey kalmaz. Ücretsiz
-     hizmet veren bir kaynağa bu yükü bindirmektense ucu kapatmak doğru. */
+     kalkmaz; önbellek de kalkar. İkisi birden gittiğinde her istek Tor
+     Project'e taze bir çekim ve veritabanına 2000 satırlık bir okuma demektir.
+     Bunu sınırsız bırakmaktansa ucu kapatmak doğru. */
   if (!store.isConfigured()) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(503).json({ error: { code: 'worldmap_unavailable' } });
@@ -100,7 +133,19 @@ module.exports = async function handler(req, res) {
   /* Kaynaklar paralel ve BİRBİRİNDEN BAĞIMSIZ yüklenir. loadSource hata
      fırlatmaz, başarısızlığı sonuç nesnesine yazar; bu yüzden allSettled
      gerekmez ve bir beslemenin düşmesi diğerlerini götürmez. */
-  const results = await Promise.all(feeds.SOURCES.map(loadCached));
+  const query = req.query || {};
+  if (query.summary === '1') {
+    /* Ana sayfa bölümü göstermeye bu cevapla karar veriyor; besleme çekilmez. */
+    const own = await loadOwn();
+    return res.status(200).json({
+      ready: own.ok === true && own.ready === true,
+      sites: own.ok && own.data ? own.data.total : 0,
+      countries: own.ok && own.data ? own.data.countries.length : 0,
+      thresholds: { sites: ownmap.HAZIR_SITE, countries: ownmap.HAZIR_ULKE }
+    });
+  }
+
+  const results = (await Promise.all(feeds.SOURCES.map(loadCached))).concat([await loadOwn()]);
 
   /* Harita işaretleri ülke taşıyan kaynaklardan üretilir. Ülke ya beslemenin
      kendi alanından (`native`) ya da IP→ülke tablosundan (`resolved`) gelir;
@@ -140,26 +185,6 @@ module.exports = async function handler(req, res) {
         count: c.count, online: c.online, malware: c.malware, threats: c.threats,
         windows: c.windows
       });
-    }
-  }
-
-  /* Kendi tarama etkinligimiz. Beslemelerden BAGIMSIZ: bu sorgu duserse
-     harita yine cizilir, yalnizca bu katman kapanir. Bu yuzden ayri bir
-     try/catch icinde ve hatasi yutulmuyor, sebebi disari yaziliyor. */
-  let ownActivity = { available: false, reason: 'db_not_configured', countries: [] };
-  if (db.isConfigured()) {
-    try {
-      const own = await db.countryCounts();
-      ownActivity = {
-        available: own.countries.length > 0,
-        reason: own.countries.length > 0 ? null : 'no_located_scans',
-        total: own.total,
-        truncated: own.truncated,
-        countries: own.countries
-      };
-    } catch (err) {
-      if (console && console.error) console.error('ownActivity query failed:', err.message);
-      ownActivity = { available: false, reason: 'query_failed', countries: [] };
     }
   }
 
@@ -221,13 +246,8 @@ module.exports = async function handler(req, res) {
       };
     }),
 
-    /* Kendi tarama etkinliğimiz. 006 göçünden sonra `cl_scans` ISO-2 ülke
-       tutuyor; bu katman artık gerçek veriyle doluyor. Sayılar SAHİPSİZ ve
-       KİMLİKSİZ: yalnızca ülke başına tarama adedi. Host, IP, kullanıcı ya da
-       oturum bilgisi bu yanıtta YOK.
-
-       Depo yapılandırılmamışsa ya da sorgu düşerse katman `available: false`
-       ile kapanır — sebebi de yazılır. Haritanın kalanı bundan etkilenmez. */
-    ownActivity: ownActivity
+    /* Ayrı "kendi etkinlik" katmanı artık YOK: kendi taramalarımız işaretlerin
+       kaynağı (id: cyberlion). Eski arayüz kodu bu alanı okuyorsa kapalı görsün. */
+    ownActivity: { available: false, reason: 'merged_into_markers', countries: [] }
   });
 };

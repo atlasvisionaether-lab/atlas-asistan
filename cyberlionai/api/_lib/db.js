@@ -112,43 +112,18 @@ async function saveScan(result, owner, versions) {
   return rows && rows[0] ? rows[0].id : null;
 }
 
-/* Haritadaki "kendi tarama etkinligimiz" katmani icin ulke sayilari.
-
-   SAHIPSIZ ve KIMLIKSIZ bir toplam: hangi kullanicinin neyi taradigi buradan
-   cikmiyor, yalnizca ulke basina kac tarama yapildigi. Host da donmuyor.
-
-   Neden SQL tarafinda GROUP BY degil: PostgREST'in toplama (aggregate) destegi
-   surume bagli ve bu depoda "surum tahmin etme" kurali var. Ulke sutunu tek
-   basina cekilip burada sayiliyor; sayim tam ve dogru, yalnizca UST SINIRA
-   kadar. Sinira dayanildiginda bunu SAKLAMIYORUZ: `truncated` ile disari
-   bildiriliyor ve o noktada isin dogrusu bir veritabani gorunumu/RPC'ye
-   gecmektir. Bugun tabloda avuc ici kadar kayit var. */
-const OWN_ACTIVITY_LIMIT = 10000;
-
-async function countryCounts() {
-  const query = TABLE
-    + '?select=country'
+/* Tarama haritası için en yeni taramalar (bkz. _lib/ownmap.js). Bulgular
+   kayıtta zaten sadeleştirilmiş (id/severity/status/note); host yalnızca
+   aynı siteyi bir kez saymak için okunur, yanıta YAZILMAZ. Satır başına
+   ~3 KB: sınır yanıtı birkaç MB'ta tutuyor; özet Redis'te önbelleklenir. */
+const MAP_SCAN_LIMIT = 2000;
+async function recentScansForMap() {
+  const rows = await request(TABLE
+    + '?select=host,country,scanned_at,findings'
     + '&country=not.is.null'
-    + '&limit=' + (OWN_ACTIVITY_LIMIT + 1);
-
-  const rows = await request(query, {});
-  const list = Array.isArray(rows) ? rows : [];
-  const truncated = list.length > OWN_ACTIVITY_LIMIT;
-  const sayilan = truncated ? list.slice(0, OWN_ACTIVITY_LIMIT) : list;
-
-  const sayac = new Map();
-  sayilan.forEach(function (r) {
-    const cc = r && typeof r.country === 'string' ? r.country : null;
-    if (cc && /^[A-Z]{2}$/.test(cc)) sayac.set(cc, (sayac.get(cc) || 0) + 1);
-  });
-
-  return {
-    total: sayilan.length,
-    truncated: truncated,
-    countries: Array.from(sayac.entries())
-      .map(function (p) { return { country: p[0], count: p[1] }; })
-      .sort(function (a, b) { return b.count - a.count; })
-  };
+    + '&order=scanned_at.desc'
+    + '&limit=' + MAP_SCAN_LIMIT, {});
+  return Array.isArray(rows) ? rows : [];
 }
 
 function ownerFilter(owner) {
@@ -326,7 +301,7 @@ async function saveAutofixFinding(jobId, domain, fixType, ruleId) {
    KENDİSİ dışarı çıkmıyor (yalnızca benzersiz sayısı için sayılıyor) ve
    kullanıcı/oturum bilgisi bu yanıtta yok.
 
-   Neden SQL tarafında COUNT/AVG değil: `countryCounts` ile aynı sebep —
+   Neden SQL tarafında COUNT/AVG değil: `recentScansForMap` ile aynı sebep —
    PostgREST'in toplama desteği sürüme bağlı ve bu depoda "sürüm tahmin etme"
    kuralı var. Gereken sütunlar ÜST SINIRA kadar çekilip burada sayılıyor.
    Sınıra dayanıldığında bu SAKLANMIYOR: `truncated` ile dışarı bildiriliyor
@@ -1134,14 +1109,14 @@ async function deleteScanHistory(userId) {
   return { silinen: silinen, anonimlestirilen: anonimlestirilen, atlanan: atlanan };
 }
 
-module.exports = {
+module.exports = { recentScansForMap,
   deleteScanHistory,
   saveDeviceToken, deleteDeviceToken, deviceTokensForJob, dropDeviceToken,
   jobsPendingNotify,
 
 
   saveAiReport, latestAiReport, aiReportOf, jobsMissingAiReport,
-  isConfigured, request, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, countryCounts, listScans, getScan, deleteScan, deleteAllScans,
+  isConfigured, request, saveScan, saveOwaspJob, saveAutofixJob, saveAutofixFinding, listScans, getScan, deleteScan, deleteAllScans,
   sanitizeFindings, claimAnonymousScans, scanStats,
   listJobs, jobScoreTrend, getJob, getJobWithFindings, SEVERITY_ORDER,
   enterpriseScanTargets,

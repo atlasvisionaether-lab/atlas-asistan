@@ -26,11 +26,6 @@ jobs:
       - name: Kimlik duvarı algılaması
         run: bash cyberlionai/tools/wall-test.sh
 
-      # Akis sayaci girdi basina mi sayiyor. Bu bozulursa haritadaki sayi
-      # sessizce sisir ve ulke siralamasi bozulur.
-      - name: Akış sayacı (girdi başına sayım)
-        run: node cyberlionai/tools/counter-test.js
-
       # Capraz koken kontrolleri. Yanlis alarm burada yalnizca gurultu degil:
       # Observatory ile sahte bir mutabakatsizlik uretirdi.
       - name: Çapraz köken kontrolleri (COOP/COEP/CORP/CORS/SRI)
@@ -46,15 +41,11 @@ jobs:
       - name: Harita doğrulamasının karar mantığı
         run: bash cyberlionai/tools/worldmap-verify-test.sh
 
-      # Zaman penceresi: ayristirici ulke basina pencere uretiyor mu ve on yuz
-      # onu gercekten tuketiyor mu. Bu bozulursa filtre yine sessizce olur.
-      - name: Zaman penceresi filtresi
-        run: node cyberlionai/tools/window-test.js
-
-      # Kendi tarama etkinligimiz katmani: gizlilik (yalnizca ulke disari
-      # cikiyor), bicim ve iki sayinin birbirine karismamasi.
-      - name: Kendi tarama etkinliği katmanı
-        run: node cyberlionai/tools/ownactivity-test.js
+      # Tarama haritasi: tek dis kaynak Tor (sayac), isaretler kendi
+      # taramalarimizdan; gizlilik esigi, zaman pencereleri, hazirlik esigi ve
+      # veritabani duserken haritanin cizilmeye devam etmesi.
+      - name: Tarama haritası
+        run: node cyberlionai/tools/worldmap-test.js
 
       # SPF/DMARC/DKIM ayristiricilari. Ornekler gercek alan adlarindan
       # olculdu; sinama o olcumu sabit tutuyor.

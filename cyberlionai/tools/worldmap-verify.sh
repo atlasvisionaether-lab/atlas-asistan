@@ -104,11 +104,12 @@ head1 "3. Bütün kaynaklar bildiriliyor"
 BEKLENEN="$(node -e '
   try {
     var f = require("'"$(cd "$(dirname "$0")/.." && pwd)"'/api/_lib/feeds.js");
-    process.stdout.write(f.SOURCES.map(function (s) { return s.id; }).join(" "));
+    /* cyberlion (kendi taramalarimiz) feeds.js icinde degil, ucta ekleniyor. */
+    process.stdout.write(f.SOURCES.map(function (s) { return s.id; }).concat(["cyberlion"]).join(" "));
   } catch (e) { process.exit(1); }
 ' 2>/dev/null)" || BEKLENEN=""
 if [ -z "$BEKLENEN" ]; then
-  BEKLENEN="feodo urlhaus torexit phishtank"
+  BEKLENEN="torexit cyberlion"
   printf '  \033[33mNOT\033[0m  feeds.js okunamadı; son bilinen liste kullanılıyor.\n'
 fi
 TOPLAM=0
@@ -131,23 +132,28 @@ if [ "$AYAKTA" -gt 0 ]
   then pass "en az bir besleme ayakta ($AYAKTA/$TOPLAM)"
   else fail "BÜTÜN beslemeler düştü ($TOPLAM/$TOPLAM)"; fi
 
-head1 "4. feodo hâlâ ülke taşıyor"
-# Olcum feodo'nun .country tasidigini soyluyordu. Besleme bicim degistirirse
-# harita sessizce bosalir; bu kontrol tam da onu yakalar.
-FEODO_OK="$(jq -r 'any(.sources[]; .id=="feodo" and .ok)' "$BODY")"
-if [ "$FEODO_OK" = "true" ]; then
+head1 "4. Kendi taramalarımız işaret üretiyor"
+# Isaretler artik yalnizca kendi taramalarimizdan (cyberlion). Kaynak ayakta
+# ve tarama sayiyor ama isaret yoksa toplama bozulmus demektir. Tor sayactir,
+# isaret uretmez (anonimlik agi).
+OWN_OK="$(jq -r 'any(.sources[]; .id=="cyberlion" and .ok)' "$BODY")"
+if [ "$OWN_OK" = "true" ]; then
+  OWN_SITE="$(jq -r '[.sources[] | select(.id=="cyberlion") | .summary.total // 0][0]' "$BODY")"
   ADET="$(jq '.markers | length' "$BODY")"
   if [ "$ADET" -gt 0 ]; then
-    pass "harita işareti üretildi ($ADET ülke)"
+    pass "harita işareti üretildi ($ADET ülke, $OWN_SITE site)"
     KOTU="$(jq -r '[.markers[] | select(.country | test("^[A-Z]{2}$") | not)] | length' "$BODY")"
     check "$KOTU" "0" "tüm ülke kodları ISO-2"
+    TOR_ISARET="$(jq -r '[.markers[].sources[]? | select(.id=="torexit")] | length' "$BODY")"
+    check "$TOR_ISARET" "0" "Tor işaretlere karışmıyor"
     printf '  ilk üç: %s\n' "$(jq -r '[.markers[0:3][] | "\(.country)=\(.total)"] | join(", ")' "$BODY")"
+  elif [ "${OWN_SITE:-0}" -gt 0 ]; then
+    fail "kendi taramalarımız $OWN_SITE site sayıyor ama HİÇ işaret yok — toplama bozulmuş olabilir"
   else
-    fail "feodo ayakta ama HİÇ işaret yok — besleme biçimi değişmiş olabilir"
-    printf '  tools/feeds-probe.sh çalıştırıp şemayı yeniden ölçün.\n'
+    printf '  \033[33mATLANDI\033[0m  henüz konumu bilinen tarama yok.\n'
   fi
 else
-  printf '  \033[33mATLANDI\033[0m  feodo şu an ulaşılamıyor; işaret kontrolü yapılamadı.\n'
+  printf '  \033[33mATLANDI\033[0m  kendi tarama özeti şu an okunamıyor; işaret kontrolü yapılamadı.\n'
 fi
 
 head1 "4b. Zaman filtresinin verisi yerinde"

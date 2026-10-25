@@ -63,15 +63,15 @@ cat > "$KOK/sayfa.html" <<'HTML'
 HTML
 
 # --- Gövde üreteci --------------------------------------------------------
-# $1: feodo ok, $2: urlhaus ok, $3: torexit ok, $4: phishtank ok
-# $5 (istege bagli): pencere bicimi — 'normal' (varsayilan), 'yok', 'bozuk'
+# $1: torexit ok, $2: cyberlion ok
+# $3 (istege bagli): pencere bicimi — 'normal' (varsayilan), 'yok', 'bozuk'
 govde() {
   local dosya="$KOK/govde.json"
   python3 - "$dosya" "$@" <<'PY'
 import json, sys
 dosya = sys.argv[1]
-durum = dict(zip(['feodo', 'urlhaus', 'torexit', 'phishtank'], sys.argv[2:6]))
-pencere = sys.argv[6] if len(sys.argv) > 6 else 'normal'
+durum = dict(zip(['torexit', 'cyberlion'], sys.argv[2:4]))
+pencere = sys.argv[4] if len(sys.argv) > 4 else 'normal'
 # ownActivity katmani: canlida ACIK (veri var), ama kapali da olabilir. Ucu de
 # sinanıyor, cunku eskiden betik yalnizca 'kapali'yi kabul ediyordu.
 import os
@@ -90,9 +90,10 @@ else:
     oa = {'available': False, 'reason': 'no_geo_in_scan_history', 'countries': []}
 kaynaklar = []
 for kid, ok in durum.items():
-    # ÖLÇÜLDÜ: zaman filtresini yalnızca urlhaus destekliyor.
-    destekli = (kid == 'urlhaus') and pencere != 'yok'
-    k = {'id': kid, 'label': kid, 'geo': True, 'ok': ok == '1', 'cached': True,
+    # Zaman filtresini yalnızca kendi taramalarımız destekliyor (scanned_at);
+    # Tor sayaçtır, haritada işaret değil.
+    destekli = (kid == 'cyberlion') and pencere != 'yok'
+    k = {'id': kid, 'label': kid, 'geo': kid == 'cyberlion', 'ok': ok == '1', 'cached': True,
          'supportsWindows': destekli}
     if ok != '1':
         k['error'] = 'feed_status_503'
@@ -101,7 +102,8 @@ for kid, ok in durum.items():
     kaynaklar.append(k)
 
 def isaret(ulke, toplam, yogunluk):
-    m = {'country': ulke, 'total': toplam, 'intensity': yogunluk}
+    m = {'country': ulke, 'total': toplam, 'intensity': yogunluk,
+         'sources': [{'id': 'cyberlion', 'count': toplam}]}
     if pencere == 'normal':
         m['windows'] = {'h1': 1, 'h24': 5, 'd7': min(20, toplam)}
     elif pencere == 'bozuk':
@@ -109,7 +111,7 @@ def isaret(ulke, toplam, yogunluk):
         m['windows'] = {'h1': 9, 'h24': 2, 'd7': min(20, toplam)}
     return m
 
-isaretler = [] if all(v != '1' for v in durum.values()) else [
+isaretler = [] if durum.get('cyberlion') != '1' else [
     isaret('US', 120, 1.0),
     isaret('NL', 40, 0.7),
     isaret('CN', 12, 0.4),
@@ -128,7 +130,7 @@ PY
   printf '%s' "$dosya"
 }
 
-kos() {  # <feodo> <urlhaus> <torexit> <phishtank> [pencere bicimi]
+kos() {  # <torexit> <cyberlion> [pencere bicimi]
   local g; g="$(OA_BICIM="${OA_BICIM:-kapali}" govde "$@")"
   rm -f "$KOK/durum.txt"
   PATH="$KOK/bin:$PATH" \
@@ -140,7 +142,7 @@ kos() {  # <feodo> <urlhaus> <torexit> <phishtank> [pencere bicimi]
   return $KOD
 }
 
-dene() {  # <ad> <beklenen durum> <beklenen cikis kodu> <feodo> <urlhaus> <torexit> <phishtank>
+dene() {  # <ad> <beklenen durum> <beklenen cikis kodu> <torexit> <cyberlion>
   local ad="$1" bdurum="$2" bkod="$3"; shift 3
   kos "$@"; local kod=$?
   local durum; durum="$(grep '^durum=' "$KOK/durum.txt" 2>/dev/null | cut -d= -f2)"
@@ -155,10 +157,10 @@ dene() {  # <ad> <beklenen durum> <beklenen cikis kodu> <feodo> <urlhaus> <torex
 }
 
 printf '\033[1mDurum ayrımı\033[0m\n'
-dene 'bütün kaynaklar ayakta → temiz'          temiz     0 1 1 1 1
-dene 'bir kaynak düştü → uyarı, iş kırmızı değil' uyari  0 0 1 1 1
-dene 'iki kaynak düştü → yine uyarı'           uyari     0 0 0 1 1
-dene 'bütün kaynaklar düştü → başarısız'       basarisiz 1 0 0 0 0
+dene 'bütün kaynaklar ayakta → temiz'          temiz     0 1 1
+dene 'Tor düştü → uyarı, iş kırmızı değil'     uyari     0 0 1
+dene 'kendi özetimiz düştü → uyarı'            uyari     0 1 0
+dene 'bütün kaynaklar düştü → başarısız'       basarisiz 1 0 0
 
 printf '\033[1mownActivity katmanı\033[0m\n'
 # NEDEN: bu bolum bir zamanlar 'available' icin 'false' bekliyordu. Katman
@@ -167,15 +169,15 @@ printf '\033[1mownActivity katmanı\033[0m\n'
 # Bir fonksiyon cagrisinin onune yazilan atama bash'te fonksiyona tasinmaz;
 # bu yuzden acikca export edilip sonra temizleniyor.
 dene_oa() { export OA_BICIM="$1"; shift; dene "$@"; unset OA_BICIM; }
-dene_oa acik            'ownActivity açık → temiz'                       temiz     0 1 1 1 1
-dene_oa kapali          'kapalı ama sebebi yazılı → temiz'               temiz     0 1 1 1 1
-dene_oa kapali_sebepsiz 'kapalı ve sebepsiz → başarısız'                 basarisiz 1 1 1 1 1
-dene_oa bozuk           'available boolean değil → başarısız'            basarisiz 1 1 1 1 1
-dene_oa acik_bozuk_ulke 'açık ama ülke kodu ISO-2 değil → başarısız'     basarisiz 1 1 1 1 1
+dene_oa acik            'ownActivity açık → temiz'                       temiz     0 1 1
+dene_oa kapali          'kapalı ama sebebi yazılı → temiz'               temiz     0 1 1
+dene_oa kapali_sebepsiz 'kapalı ve sebepsiz → başarısız'                 basarisiz 1 1 1
+dene_oa bozuk           'available boolean değil → başarısız'            basarisiz 1 1 1
+dene_oa acik_bozuk_ulke 'açık ama ülke kodu ISO-2 değil → başarısız'     basarisiz 1 1 1
 
 printf '\033[1mUyarı metni düşen kaynağı adıyla söylüyor\033[0m\n'
-kos 0 1 1 1 >/dev/null 2>&1
-if grep -q 'düşen kaynak: feodo' "$KOK/cikti.txt"; then
+kos 0 1 >/dev/null 2>&1
+if grep -q 'düşen kaynak: torexit' "$KOK/cikti.txt"; then
   GECTI=$((GECTI + 1)); printf '  \033[32mGEÇTİ\033[0m  düşen kaynağın adı çıktıda\n'
 else
   KALAN=$((KALAN + 1)); printf '  \033[31mKALDI\033[0m  düşen kaynağın adı çıktıda yok\n'
@@ -187,19 +189,19 @@ else
 fi
 
 printf '\033[1mKaynak listesi koddan türetiliyor\033[0m\n'
-# feeds.js dort kaynak beyan ediyor; betik dordunu de aramali. Elle yazilmis
-# uc kaynakli liste geri gelirse bu sinama kalir.
-kos 1 1 1 1 >/dev/null 2>&1
+# feeds.js Tor'u beyan ediyor, kendi taramalarimiz ucta ekleniyor; betik ikisini
+# de aramali. Elle yazilmis liste geri gelirse bu sinama kalir.
+kos 1 1 >/dev/null 2>&1
 EKSIK=""
-for k in feodo urlhaus torexit phishtank; do
+for k in torexit cyberlion; do
   grep -q "PASS.*$k listede" "$KOK/cikti.txt" || EKSIK="$EKSIK $k"
 done
 if [ -z "$EKSIK" ]; then
-  GECTI=$((GECTI + 1)); printf '  \033[32mGEÇTİ\033[0m  dört kaynağın dördü de aranıyor\n'
+  GECTI=$((GECTI + 1)); printf '  \033[32mGEÇTİ\033[0m  iki kaynağın ikisi de aranıyor\n'
 else
   KALAN=$((KALAN + 1)); printf '  \033[31mKALDI\033[0m  aranmayan kaynak:%s\n' "$EKSIK"
 fi
-if grep -q 'ayakta (4/4)' "$KOK/cikti.txt"; then
+if grep -q 'ayakta (2/2)' "$KOK/cikti.txt"; then
   GECTI=$((GECTI + 1)); printf '  \033[32mGEÇTİ\033[0m  toplam sabit değil, listeden geliyor\n'
 else
   KALAN=$((KALAN + 1)); printf '  \033[31mKALDI\033[0m  toplam yanlış\n'
@@ -209,17 +211,17 @@ fi
 printf '\033[1mZaman filtresinin verisi kontrol ediliyor\033[0m\n'
 # Filtre bir kez sessizce islevsiz kalmisti. Verinin uctan kayboldugu durum
 # artik UYARI uretmeli; sessiz gecmemeli.
-dene 'pencere verisi yoksa uyarı' uyari 0 1 1 1 1 yok
-dene 'pencereler bozuksa (h1 > h24) BAŞARISIZ' basarisiz 1 1 1 1 1 bozuk
+dene 'pencere verisi yoksa uyarı' uyari 0 1 1 yok
+dene 'pencereler bozuksa (h1 > h24) BAŞARISIZ' basarisiz 1 1 1 bozuk
 
-kos 1 1 1 1 yok >/dev/null 2>&1
+kos 1 1 yok >/dev/null 2>&1
 if grep -q 'hiçbir kaynak zaman filtresini desteklemiyor' "$KOK/cikti.txt"; then
   GECTI=$((GECTI + 1)); printf '  \033[32mGEÇTİ\033[0m  uyarı metni sebebi söylüyor\n'
 else
   KALAN=$((KALAN + 1)); printf '  \033[31mKALDI\033[0m  uyarı metni yok\n'
 fi
 
-kos 1 1 1 1 >/dev/null 2>&1
+kos 1 1 >/dev/null 2>&1
 if grep -q 'işaretlerde pencere kırılımı var' "$KOK/cikti.txt"; then
   GECTI=$((GECTI + 1)); printf '  \033[32mGEÇTİ\033[0m  sağlam veride kırılım doğrulanıyor\n'
 else
