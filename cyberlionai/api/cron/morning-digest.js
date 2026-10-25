@@ -28,17 +28,41 @@ const auth = require('../_lib/auth.js');
 const store = require('../_lib/store.js');
 const mailer = require('../_lib/mailer.js');
 const cronauth = require('../_lib/cronauth.js');
+const webrisk = require('../_lib/webrisk.js');
 
 const WINDOW_HOURS = 24;
 const MAX_ALERTS = 2000;
 const MAX_USERS = 150;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * Kara liste uyarıları Google'a YENİDEN sorulur. Web Risk koşulları süresi
+ * geçmiş bir eşleşmeyle uyarı göstermeyi yasaklıyor; uyarı gece oluşmuş,
+ * özet sabah gidiyor. Hâlâ eşleşiyorsa taze tür ve süreyle gönderilir,
+ * eşleşmiyorsa ya da sorulamıyorsa özetten çıkarılır (panelde kalır).
+ */
+async function tazeKaraListe(alerts, lookup) {
+  const sonuc = {};
+  const out = [];
+  for (const a of alerts) {
+    if (a.kind !== 'blacklist') { out.push(a); continue; }
+    if (!(a.domain in sonuc)) {
+      try { sonuc[a.domain] = await lookup('https://' + a.domain + '/'); } catch (e) { sonuc[a.domain] = null; }
+    }
+    const r = sonuc[a.domain];
+    if (r && r.ok && r.threats && r.threats.length) {
+      out.push(Object.assign({}, a, { data: Object.assign({}, a.data, { threats: r.threats, expireTime: r.expireTime }) }));
+    }
+  }
+  return out;
+}
+
 function istanbulDay(now) {
   return new Date(now).toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
 }
 
-async function run(now) {
+async function run(now, deps) {
+  deps = deps || {};
   const since = new Date(now - WINDOW_HOURS * 3600 * 1000).toISOString();
   const rows = await db.request('monitor_alerts?created_at=gte.' + encodeURIComponent(since)
     + '&select=user_id,domain,kind,severity,data,created_at&order=created_at.asc&limit=' + MAX_ALERTS);
@@ -56,7 +80,9 @@ async function run(now) {
     let email = null;
     try { email = await auth.adminGetUserEmail(userId); } catch (e) { email = null; }
     if (!email) { out.failed += 1; continue; }
-    const m = mailer.digestEmail(byUser[userId]);
+    const olaylar = await tazeKaraListe(byUser[userId], deps.lookup || webrisk.lookup);
+    if (!olaylar.length) { out.skipped += 1; continue; }
+    const m = mailer.digestEmail(olaylar);
     const r = await mailer.send({ to: email, subject: m.subject, text: m.text, html: m.html });
     if (r.ok) out.sent += 1; else out.failed += 1;
   }
@@ -87,3 +113,4 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports.run = run;
+module.exports.tazeKaraListe = tazeKaraListe;

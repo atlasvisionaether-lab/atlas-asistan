@@ -54,10 +54,9 @@ module.exports = async function handler(req, res) {
   });
 
   const due = await monitor.claimDue(targets, MAX_SCANS_PER_TICK);
-  const blacklist = due.length ? await monitor.loadBlacklist() : new Set();
   const scans = [];
   for (const t of due) {
-    scans.push(await monitor.dailyCheck(t, { blacklist: blacklist, scanSite: scanSite, saveJob: saveJob }));
+    scans.push(await monitor.dailyCheck(t, { scanSite: scanSite, saveJob: saveJob }));
   }
 
   return res.status(200).json({

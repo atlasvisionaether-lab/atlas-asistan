@@ -360,7 +360,7 @@ const mesaj = {
         ? ONEK + ' 📅 Alan adı kaydı doldu: ' + a + ' — ' + (-Number(d.daysLeft)) + ' gün önce'
         : ONEK + ' 📅 Alan adı kaydı bitiyor: ' + a + ' — ' + Number(d.daysLeft) + ' gün kaldı';
     }
-    if (tur === 'blacklist') return ONEK + ' ☣️ Kara listede: ' + a + ' (' + kod(d.source) + ': ' + kod(d.match) + ')';
+    if (tur === 'blacklist') return ONEK + ' ☣️ Olası kara liste (Google Web Risk): ' + a + ' (' + (Array.isArray(d.threats) ? d.threats.map(kod).join(', ') : kod(d.source)) + ')';
     if (tur === 'downtime') return ONEK + ' 🔴 Erişilemiyor: ' + a + ' (' + kod(d.reason) + ')';
     if (tur === 'new_findings') return ONEK + ' 🆕 Yeni bulgu: ' + a + ' — ' + Number(d.count) + ' adet'
       + (d.first ? ' (' + kod(d.first) + ')' : '');

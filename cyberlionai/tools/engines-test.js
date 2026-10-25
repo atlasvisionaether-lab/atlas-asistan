@@ -56,11 +56,16 @@ dogru('fixCode dile göre (EN Cloudflare)', /In the Cloudflare dashboard/.test(h
 esit('geçen kontrolde fixCode yok', hdr.fixCode.https, undefined);
 
 const bl = require(path.join(E, 'blacklist-scanner.js'));
-const set = bl.parseHostfile('127.0.0.1\tkotu.example\n');
-esit('kara liste: alt alan yakalanır', bl.analyze({ finalUrl: new URL('https://cdn.kotu.example/'), blacklist: set }).checks[0].status, 'fail');
-esit('kara liste: indirilemedi → skipped', bl.analyze({ finalUrl: new URL('https://a.com/'), blacklist: null }).checks[0].status, 'skipped');
+const ESLESME = { ok: true, threats: ['MALWARE'], expireTime: '2030-01-01T00:00:00Z' };
+const blk = function (r) { return bl.analyze({ finalUrl: new URL('https://a.com/'), blacklist: r }).checks; };
+esit('kara liste: eşleşme → fail', blk(ESLESME)[0].status, 'fail');
+esit('kara liste: tehdit türü taşınır', blk(ESLESME)[0].threats.join(), 'MALWARE');
+esit('kara liste: süre taşınır', blk(ESLESME)[0].expireTime, '2030-01-01T00:00:00Z');
+esit('kara liste: temiz → pass', blk({ ok: true, threats: [] })[0].status, 'pass');
+esit('kara liste: sorgu düştü → skipped', blk(null)[0].status, 'skipped');
+esit('kara liste: anahtar yok → not_configured', blk({ ok: false, reason: 'not_configured' })[0].note, 'not_configured');
 esit('kara liste: sorulmadı → kontrol yok', bl.analyze({ finalUrl: new URL('https://a.com/') }).checks.length, 0);
-esit('kara liste: ağırlık info (skoru kaydırmaz)', bl.analyze({ finalUrl: new URL('https://kotu.example/'), blacklist: set }).checks[0].severity, 'info');
+esit('kara liste: ağırlık info (skoru kaydırmaz)', blk(ESLESME)[0].severity, 'info');
 
 if (hatalar.length) { console.error('Motor sınaması: ' + hatalar.length + ' KALDI'); hatalar.forEach(function (h) { console.error('  ✗ ' + h); }); process.exit(1); }
 console.log('Motor sınaması: ' + gecti + ' / ' + gecti + ' geçti');

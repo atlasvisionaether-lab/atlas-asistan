@@ -188,9 +188,17 @@ const SAGLAM = yanit({
     cacheSet: async function (k, v) { onbellek[k] = JSON.stringify(v); }
   });
   sapla('_lib/ownership.js', { logScan: async function () { gunluk += 1; return true; } });
+  let blSure = 120; let blSorgu = 0;
   sapla('_lib/toolcheck.js', {
     TYPES: toolcheck.TYPES,
-    run: async function (t, u) { hedefeGidis += 1; return toolcheck.run(t, u, { fetch: CIPLAK, mail: POSTA_SAGLAM }); }
+    cacheSecondsFor: toolcheck.cacheSecondsFor,
+    run: async function (t, u) {
+      hedefeGidis += 1;
+      return toolcheck.run(t, u, { fetch: CIPLAK, mail: POSTA_SAGLAM, webrisk: async function (adres) {
+        blSorgu += 1;
+        return { ok: true, uri: String(adres.href || adres), threats: ['MALWARE'], expireTime: new Date(Date.now() + blSure * 1000).toISOString() };
+      } });
+    }
   });
   const handler = require(path.join(API, 'tool-check.js'));
 
@@ -220,6 +228,24 @@ const SAGLAM = yanit({
   esit('e-posta 200', p1.statusCode, 200);
   esit('e-posta ayrı önbellek', p1.body.cached, undefined);
   esit('e-posta IP → 400', (await istek({ type: 'email', url: '1.2.3.4' })).statusCode, 400);
+
+  /* Kara liste: önbellek Google'ın verdiği süreyi aşmaz; süresi geçen gösterilmez. */
+  const b1 = await istek({ type: 'blacklist', url: 'kotu.example' }, '7.7.7.7');
+  esit('kara liste 200', b1.statusCode, 200);
+  esit('kara liste listede', b1.body.listed, true);
+  const b2 = await istek({ type: 'blacklist', url: 'kotu.example' }, '7.7.7.7');
+  esit('kara liste süre içinde önbellekten', b2.body.cached, true);
+  esit('kara liste tek sorgu', blSorgu, 1);
+  onbellek['cl:tool:blacklist:kotu.example/'] = JSON.stringify(Object.assign({}, b1.body, { expireTime: '2000-01-01T00:00:00Z' }));
+  const b3 = await istek({ type: 'blacklist', url: 'kotu.example' }, '7.7.7.7');
+  esit('süresi geçen önbellek gösterilmez', b3.body.cached, undefined);
+  esit('süresi geçince taze sorgu', blSorgu, 2);
+  blSure = 0;
+  const b4 = await istek({ type: 'blacklist', url: 'baska.example' }, '7.7.7.7');
+  esit('süresiz eşleşme önbelleğe yazılmaz', onbellek['cl:tool:blacklist:baska.example/'], undefined);
+  esit('süresiz eşleşme yine gösterilir', b4.body.listed, true);
+  const b5 = await istek({ type: 'blacklist', url: 'kotu.example/odeme' }, '7.7.7.7');
+  esit('farklı yol ayrı önbellek', b5.body.cached, undefined);
 
   let son;
   for (let i = 0; i < handler.DAILY_MAX + 2; i++) son = await istek({ type: 'headers', url: 'ornek.com' }, '9.9.9.9');

@@ -18,7 +18,7 @@
     "politikada: true ise gizlilik politikasında ADI GEÇMEK ZORUNDA (sınanıyor)."
   ],
   "surum": "1.0.0",
-  "olcumTarihi": "2026-10-21",
+  "olcumTarihi": "2026-10-25",
   "kalemler": [
     {
       "id": "eposta",
@@ -46,7 +46,7 @@
       "en": "Scan record (host, score, check results)",
       "kaynak": "cl_scans — db/migrations/003_scan_history.sql",
       "amac": "Tarama geçmişi, skor eğilimi, PDF rapor",
-      "not": "Yalnızca normalize edilmiş HOST saklanır; tam URL, yol, sorgu dizesi ve belirteçler YAZILMAZ. Kontrollerin yalnızca id/severity/status/note alanı tutulur, ham başlık değerleri tutulmaz.",
+      "not": "Yalnızca normalize edilmiş HOST saklanır; tam URL, yol, sorgu dizesi ve belirteçler YAZILMAZ. Kontrollerin yalnızca id/severity/status/note alanı tutulur, ham başlık değerleri tutulmaz. Kara liste kontrolü için taranan adres (köken + yol, sorgu dizesi hariç) Google Web Risk'e sorulur; Google bizim adımıza işleyen hizmet sağlayıcı (paylaşım değil). Kara liste eşleşmesinin geçerlilik süresi (expireTime) de saklanır — PDF süresi geçmiş uyarıyı basmasın diye; kişisel veri değil.",
       "playKategori": "App activity",
       "playTip": "Other user-generated content",
       "toplanir": true,
@@ -55,7 +55,8 @@
       "aktarimdaSifreli": true,
       "silinebilir": true,
       "ucuncuTaraf": [
-        "Supabase"
+        "Supabase",
+        "Google Web Risk"
       ],
       "politikada": true,
       "politikaAnahtari": "Tarama verileri"

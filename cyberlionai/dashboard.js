@@ -147,7 +147,10 @@
       al_domain_expiry: 'Alan adı kaydının bitmesine {daysLeft} gün kaldı',
       al_ssl_expired: 'SSL sertifikasının süresi {daysAgo} gün önce doldu',
       al_domain_expired: 'Alan adı kaydının süresi {daysAgo} gün önce doldu',
-      al_blacklist: 'Kara listede görünüyor ({source})',
+      al_blacklist: 'Olası kara liste kaydı: Google Web Risk bu siteyi olası {threats} kaynağı olarak işaretliyor',
+      al_blacklist_expired: 'Kara liste kontrolü bir eşleşme bildirmişti; bilginin geçerlilik süresi doldu. Güncel durum için sitenizi yeniden tarayın.',
+      wr_advisory: 'Advisory provided by Google', wr_more: 'Daha fazla bilgi',
+      wr_MALWARE: 'zararlı yazılım', wr_SOCIAL_ENGINEERING: 'oltalama (sosyal mühendislik)', wr_UNWANTED_SOFTWARE: 'istenmeyen yazılım',
       al_downtime: 'Site erişilemiyor ({reason})',
       al_recovered: 'Site yeniden erişilebilir',
       al_new_findings: 'Önceki taramada olmayan {count} yeni bulgu: {first}',
@@ -285,7 +288,10 @@
       al_domain_expiry: 'Domain registration expires in {daysLeft} days',
       al_ssl_expired: 'SSL certificate expired {daysAgo} days ago',
       al_domain_expired: 'Domain registration expired {daysAgo} days ago',
-      al_blacklist: 'Appears on a blacklist ({source})',
+      al_blacklist: 'Possible blacklist entry: Google Web Risk flags this site as a possible source of {threats}',
+      al_blacklist_expired: 'The blacklist check reported a match; that information has expired. Rescan your site for the current status.',
+      wr_advisory: 'Advisory provided by Google', wr_more: 'Learn more',
+      wr_MALWARE: 'malware', wr_SOCIAL_ENGINEERING: 'phishing (social engineering)', wr_UNWANTED_SOFTWARE: 'unwanted software',
       al_downtime: 'Site unreachable ({reason})',
       al_recovered: 'Site reachable again',
       al_new_findings: '{count} new finding(s) not seen in the previous scan: {first}',
@@ -1098,7 +1104,27 @@
           anahtar = a.kind === 'ssl_expiry' ? 'al_ssl_expired' : 'al_domain_expired';
           veri = Object.assign({}, veri, { daysAgo: -Number(veri.daysLeft) });
         }
+        /* Kara liste (Google Web Risk): koşullar gereği uyarı yalnızca Google'ın
+           verdiği geçerlilik süresi içinde, "olası" diliyle ve atıfla gösterilir;
+           süre dolduysa yalnızca yeniden tarama önerilir. */
+        var wrAtif = false;
+        if (a.kind === 'blacklist') {
+          var bitis = Date.parse(veri.expireTime || '');
+          if (!isNaN(bitis) && bitis > Date.now() && Array.isArray(veri.threats) && veri.threats.length) {
+            veri = Object.assign({}, veri, { threats: veri.threats.map(function (x) { return t('wr_' + x) || x; }).join(', ') });
+            wrAtif = true;
+          } else {
+            anahtar = 'al_blacklist_expired';
+          }
+        }
         body.textContent = a.domain + ' — ' + fill(t(anahtar) || a.kind, veri);
+        if (wrAtif) {
+          var atif = document.createElement('a');
+          atif.href = 'https://docs.cloud.google.com/web-risk/docs/advisory';
+          atif.target = '_blank'; atif.rel = 'noopener';
+          atif.textContent = ' · ' + t('wr_advisory');
+          body.appendChild(atif);
+        }
         var when = document.createElement('time');
         when.dateTime = a.createdAt;
         try { when.textContent = new Date(a.createdAt).toLocaleString(lang === 'en' ? 'en-GB' : 'tr-TR'); } catch (err) { when.textContent = a.createdAt; }
