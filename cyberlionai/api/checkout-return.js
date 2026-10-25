@@ -40,6 +40,7 @@ const store = require('./_lib/store.js');
 /* checkout.js ile aynı: ödeme formu token'ı → hesap. */
 const PENDING_PREFIX = 'cl:checkout:pending:';
 const tg = require('./_lib/telegram.js');
+const funnel = require('./_lib/funnel.js');
 const n8n = require('./_lib/n8n.js');
 
 /** Başarısız ödeme: öncelikli uyarı. Sarmalayıcının genel uyarısı bastırılır. */
@@ -176,6 +177,9 @@ async function handler(req, res) {
     subscriptionRef: subscriptionRef,
   });
   if (await tg.tekSefer('pay:' + subscriptionRef + ':' + (aktif ? 'active' : 'pending'), 7 * 86400)) {
+    /* Huni: başarı abonelik başına BİR kez (tekSefer), ödemenin başladığı
+       kaynakla. Kaynak bekleyen eşlemeden okunur; yoksa 'direct'. */
+    if (aktif) await funnel.record('checkout_success', await pendingKaynak(token));
     await tg.sendTelegram(aktif
       ? tg.mesaj.odemeBasarili(user.email, option.key, subscriptionRef, option.priceTry)
       : tg.mesaj.odemeBeklemede(user.email, planId, status || 'unknown'),
@@ -201,6 +205,17 @@ function optionOf(data) {
 function planOf(data) {
   const opt = optionOf(data);
   return opt ? opt.id : null;
+}
+
+/** Ödeme başlarken kaydedilen huni kaynağı; yoksa null ('direct' sayılır). */
+async function pendingKaynak(token) {
+  if (!token || !store.isConfigured()) return null;
+  try {
+    const v = await store.cacheGet(PENDING_PREFIX + token);
+    return v && typeof v.kaynak === 'string' ? v.kaynak : null;
+  } catch (err) {
+    return null;
+  }
 }
 
 /** Ödeme başlarken kaydedilen token → hesap eşlemesi; yoksa null. */

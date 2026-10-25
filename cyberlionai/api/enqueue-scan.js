@@ -26,6 +26,7 @@
  */
 
 const { startQueuedScan, isAvailable } = require('./_lib/queuestart.js');
+const funnel = require('./_lib/funnel.js');
 const store = require('./_lib/store.js');
 const { resolveOwner, clientIp, ipKey } = require('./_lib/session.js');
 const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
@@ -130,6 +131,8 @@ module.exports = async function handler(req, res) {
   if (!kuyruk.ok) {
     return res.status(kuyruk.status).json({ error: { code: kuyruk.code } });
   }
+
+  await funnel.record('scan', body && body.kaynak);
 
   /* Bitiş mesajı /api/scan-status'tan gidiyor (iş kimliği başına bir kez). */
   await tg.sendTelegram(tg.mesaj.taramaKuyruga(kuyruk.host || url), { type: 'scan' });

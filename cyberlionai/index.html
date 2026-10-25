@@ -2411,7 +2411,8 @@
       storageKeys: {
         lang: 'preferredLang',
         theme: 'preferredTheme',
-        cookie: 'cookieConsent',
+        /* Sürümlü: huni sayacı eklenince (Çerez Politikası §6) onay yeniden istendi. */
+        cookie: 'cookieConsent2',
         mode: 'preferredRemediationMode',
         quota: 'freeScansUsed',
         token: 'authToken',
@@ -4019,6 +4020,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: url, type: type || 'quick', mode: mode || null,
+            kaynak: window.clKaynak ? window.clKaynak() : '',
             consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true,
             /* İşaretsizse açıkça pasif. İşaretliyse seviye gönderilmez: sunucu
                ancak alan adı doğrulanmışsa aktif testleri açar, değilse pasif
@@ -4048,6 +4050,8 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: url,
+            /* Huni kaynağı (/kaynak.js): yalnızca araç adı, kimlik değil. */
+            kaynak: window.clKaynak ? window.clKaynak() : '',
             consent: document.getElementById('scanConsent') && document.getElementById('scanConsent').checked === true,
             /* İşaretsizse açıkça pasif. İşaretliyse seviye gönderilmez: sunucu
                ancak alan adı doğrulanmışsa aktif testleri açar, değilse pasif
@@ -6705,6 +6709,8 @@
 
     function answerCookie(value) {
       store.set(CONFIG.storageKeys.cookie, value);
+      /* Kabul anında adresteki huni kaynağını da sakla (bkz. /kaynak.js). */
+      if (value === 'accepted' && window.clKaynakOnay) window.clKaynakOnay();
       if (cookieBar) cookieBar.classList.remove('is-open');
       document.body.classList.remove('cookie-open');
     }
@@ -7509,6 +7515,7 @@
   })();
   </script>
 
+ <script src="/kaynak.js" defer></script>
  <script src="/mail-links.js" defer></script>
  <script src="/pricing-period.js" defer></script>
 </body>

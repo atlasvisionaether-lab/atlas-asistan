@@ -72,6 +72,11 @@ const RATE_SCRIPT =
   "return {c, redis.call('TTL', KEYS[1])}";
 
 /** Kota ayırma. Dönüş: [1, yeni kullanım] veya [-1, mevcut kullanım] */
+const COUNTER_SCRIPT =
+  "local n = redis.call('INCR', KEYS[1]) " +
+  "if n == 1 then redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1])) end " +
+  "return n";
+
 const QUOTA_RESERVE_SCRIPT =
   "local used = tonumber(redis.call('GET', KEYS[1]) or '0') " +
   "if used >= tonumber(ARGV[1]) then return {-1, used} end " +
@@ -84,6 +89,18 @@ const QUOTA_REFUND_SCRIPT =
   "local used = tonumber(redis.call('GET', KEYS[1]) or '0') " +
   "if used <= 0 then return 0 end " +
   "return redis.call('DECR', KEYS[1])";
+
+/** Günlük sayaç: artırır, ilk artışta ömür koyar (bkz. _lib/funnel.js). */
+async function incrCounter(key, ttlSeconds) {
+  return Number(await command(['EVAL', COUNTER_SCRIPT, '1', key, String(ttlSeconds)]));
+}
+
+/** Birden çok sayacı tek istekte okur; olmayan anahtar 0. */
+async function readCounters(keys) {
+  if (!keys.length) return [];
+  const values = await command(['MGET'].concat(keys));
+  return (values || []).map(function (v) { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; });
+}
 
 async function hitRateLimit(key, windowSeconds) {
   const result = await command(['EVAL', RATE_SCRIPT, '1', key, String(windowSeconds)]);
@@ -176,5 +193,5 @@ async function setOnce(key, ttlSeconds) {
 
 module.exports = {
   isConfigured, hitRateLimit, reserveQuota, refundQuota, readQuota,
-  addToQuota, quotaKey, cacheGet, cacheSet, setOnce
+  addToQuota, quotaKey, cacheGet, cacheSet, setOnce, incrCounter, readCounters
 };

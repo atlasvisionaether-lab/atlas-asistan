@@ -78,8 +78,9 @@
     }
 
     // Ana sayfa formu ?site= ile önceden dolar; tarama yine kullanıcıyla başlar.
-    document.getElementById('ctaScan').href = '/?site=' + encodeURIComponent(r.host) + '#scanForm';
+    document.getElementById('ctaScan').href = '/?site=' + encodeURIComponent(r.host) + '&kaynak=blacklist#scanForm';
     var fix = document.getElementById('ctaFix');
+    fix.href = '/pricing?kaynak=blacklist';
     if (r.listed && r.fixPrice) {
       fix.textContent = 'Temizliği biz yapalım — ' + tl(r.fixPrice);
       fix.hidden = false;

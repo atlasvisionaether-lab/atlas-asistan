@@ -289,6 +289,9 @@ jobs:
       - name: Kara liste (Google Web Risk)
         run: node cyberlionai/tools/webrisk-test.js
 
+      - name: Dönüşüm hunisi sayacı
+        run: node cyberlionai/tools/funnel-test.js
+
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
 

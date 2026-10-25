@@ -63,9 +63,10 @@
       : '';
 
     // Ana sayfa formu ?site= ile önceden dolar; tarama yine kullanıcıyla başlar.
-    document.getElementById('ctaScan').href = '/?site=' + encodeURIComponent(r.host) + '#scanForm';
+    document.getElementById('ctaScan').href = '/?site=' + encodeURIComponent(r.host) + '&kaynak=headers#scanForm';
 
     var fix = document.getElementById('ctaFix');
+    fix.href = '/pricing?kaynak=headers';
     var fiyatlar = r.top.map(function (f) { return f.fixPrice; }).filter(Boolean);
     if (fiyatlar.length) {
       fix.textContent = 'Bunu biz düzeltelim — ' + tl(Math.min.apply(null, fiyatlar)) + '’den başlayan fiyatlarla';

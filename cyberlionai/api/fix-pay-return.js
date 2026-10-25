@@ -25,6 +25,7 @@
 const db = require('./_lib/db.js');
 const iyzico = require('./_lib/iyzico.js');
 const tg = require('./_lib/telegram.js');
+const funnel = require('./_lib/funnel.js');
 const { readToken } = require('./checkout-return.js');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -133,6 +134,9 @@ async function handler(req, res) {
   }
   const row = rows && rows[0];
   if (row) {
+    /* Huni: yalnızca sipariş GERÇEKTEN pending → paid geçtiğinde (koşullu
+       güncelleme), yani sipariş başına bir kez. Kaynak dönüş adresinden. */
+    await funnel.record('fix_paid', req.query && req.query.kaynak);
     await tg.sendTelegram(tg.mesaj.fixOdendi(row.id, row.domain) + '\nÖdeme: ' + String(data.paymentId || '-')
       + ' · ' + String(data.paidPrice || data.price) + ' TL (KDV dahil, iyzico)', { type: 'payment', priority: true });
   }
