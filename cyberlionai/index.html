@@ -1628,7 +1628,7 @@
           <li><a class="nav__link" href="#hero" data-i18n="nav.home">Ana Sayfa</a></li>
           <li><a class="nav__link" href="#services" data-i18n="nav.services">Hizmetler</a></li>
           <li><a class="nav__link" href="#how" data-i18n="nav.how">Nasıl Çalışır</a></li>
-          <li><a class="nav__link" href="#worldmap" data-i18n="nav.map">Canlı Harita</a></li>
+          <li data-wm-nav hidden><a class="nav__link" href="#worldmap" data-i18n="nav.map">Canlı Harita</a></li>
           <li><a class="nav__link" href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
           <li><a class="nav__link" href="#contact" data-i18n="nav.contact">İletişim</a></li>
         </ul>
@@ -1675,7 +1675,7 @@
     <a href="#hero" data-i18n="nav.home">Ana Sayfa</a>
     <a href="#services" data-i18n="nav.services">Hizmetler</a>
     <a href="#how" data-i18n="nav.how">Nasıl Çalışır</a>
-    <a href="#worldmap" data-i18n="nav.map">Canlı Harita</a>
+    <a href="#worldmap" data-i18n="nav.map" data-wm-nav hidden>Canlı Harita</a>
     <a href="#pricing" data-i18n="nav.pricing">Fiyatlandırma</a>
     <a href="#contact" data-i18n="nav.contact">İletişim</a>
     <button type="button" class="btn btn--gold btn--block" data-open-modal data-pro-intent data-i18n="nav.upgrade">Pro'ya Geç</button>
@@ -1888,12 +1888,14 @@
          poligonlar. İşaretler enlem/boylamdan üretildiği için konum
          hizası doğru; kıyı şeridi ayrıntısı temsilîdir.
          ========================================================== -->
-    <section class="section section--alt wmap" id="worldmap">
+    <!-- Yeterli tarama verisi birikene kadar gizli; açılışta /api/worldmap?summary=1
+         sorulur (bkz. api/_lib/ownmap.js → ready). -->
+    <section class="section section--alt wmap" id="worldmap" hidden>
       <div class="container">
         <div class="section__head reveal">
-          <span class="section__eyebrow" data-i18n="map.eyebrow">Açık kaynak istihbarat</span>
-          <h2 class="section__title" data-i18n="map.title">KÖTÜ NİYETLİ ALTYAPI HARİTASI</h2>
-          <p class="section__subtitle" data-i18n="map.subtitle">Açık beslemelerden derlenen barındırma konumları. Sayılar kötü niyetli altyapının nerede <em>barındığını</em> gösterir; saldırganın nerede olduğunu değil.</p>
+          <span class="section__eyebrow" data-i18n="map.eyebrow">Kendi ölçümümüz</span>
+          <h2 class="section__title" data-i18n="map.title">TARAMA HARİTASI</h2>
+          <p class="section__subtitle" data-i18n="map.subtitle">Cyber Lion AI ile taranan sitelerin barındırıldığı ülkeler ve bu sitelerde en sık bulduğumuz güvenlik eksikleri. Sayılar taranan sitelerden derlenir; bir ülkenin genel güvenliğini temsil etmez.</em> gösterir; saldırganın nerede olduğunu değil.</p>
           <div class="gold-rule"></div>
         </div>
 
@@ -1902,8 +1904,8 @@
             <option value="" data-i18n="map.allCountries">Tüm ülkeler</option>
           </select>
 
-          <select id="wmThreat" aria-label="Tehdit türü filtresi" data-i18n-aria="map.filterThreat">
-            <option value="" data-i18n="map.allThreats">Tüm tehdit türleri</option>
+          <select id="wmThreat" aria-label="Bulgu türü filtresi" data-i18n-aria="map.filterThreat">
+            <option value="" data-i18n="map.allThreats">Tüm bulgu türleri</option>
           </select>
 
           <div class="wmap__seg" role="group" aria-label="Zaman aralığı" data-i18n-aria="map.range">
@@ -1923,8 +1925,8 @@
         <div class="wmap__layout">
           <div class="wmap__stage reveal">
             <svg class="wmap__svg" viewBox="0 0 1000 460" role="img" aria-labelledby="wmSvgTitle wmSvgDesc" preserveAspectRatio="xMidYMid meet">
-              <title id="wmSvgTitle" data-i18n="map.svgTitle">Ülke bazlı tehdit altyapısı haritası</title>
-              <desc id="wmSvgDesc" data-i18n="map.svgDesc">Stilize dünya haritası üzerinde, açık tehdit beslemelerinde kayıtlı altyapının bulunduğu ülkeler işaretlenir. Aynı bilgi haritanın yanındaki listede metin olarak da verilir.</desc>
+              <title id="wmSvgTitle" data-i18n="map.svgTitle">Ülke bazlı tarama haritası</title>
+              <desc id="wmSvgDesc" data-i18n="map.svgDesc">Stilize dünya haritası üzerinde, Cyber Lion AI ile taranan sitelerin barındırıldığı ülkeler işaretlenir. Aynı bilgi haritanın yanındaki listede metin olarak da verilir.</desc>
 
               <g class="wmap__grid" aria-hidden="true">
                 <path d="M0 76.7 H1000 M0 153.3 H1000 M0 230 H1000 M0 306.7 H1000 M0 383.3 H1000"/>
@@ -1958,7 +1960,7 @@
             </div>
 
             <div class="wmap__card reveal">
-              <h3 class="wmap__cardTitle" data-i18n="map.topTitle">En yoğun 10 ülke</h3>
+              <h3 class="wmap__cardTitle" data-i18n="map.topTitle">En çok site taranan 10 ülke</h3>
               <ol class="wmap__top" id="wmTop"></ol>
             </div>
 
@@ -1967,7 +1969,7 @@
               <div id="wmCounters" aria-busy="true">
                 <div class="skel" aria-hidden="true"><span></span><span></span><span></span></div>
               </div>
-              <p class="wmap__note" data-i18n="map.countersNote">Bu beslemelerde ülke bilgisi yok; haritada işaret olarak değil, sayaç olarak gösterilirler.</p>
+              <p class="wmap__note" data-i18n="map.countersNote">Tor çıkış düğümleri bir anonimlik ağıdır, kötü niyetli altyapı değildir; haritada işaret olarak değil, ayrı bir sayaç olarak gösterilir.</p>
             </div>
 
             <div class="wmap__card reveal">
@@ -1977,7 +1979,7 @@
           </div>
         </div>
 
-        <p class="wmap__note reveal" data-i18n="map.disclaimer">Harita, açık tehdit beslemelerinde kayıtlı altyapının bulunduğu ülkeleri gösterir; bir saldırının kaynağını veya hedefini göstermez. Kara parçaları temsilîdir. Kendi tarama etkinliğimiz gizlilik gereği konum bilgisi taşımadığından şimdilik haritada yer almaz.</p>
+        <p class="wmap__note reveal" data-i18n="map.disclaimer">Harita yalnızca Cyber Lion AI ile taranan sitelerden derlenir; site adresi, IP veya kullanıcı bilgisi gösterilmez. Üçten az site taranan ülkelerde bulgu dağılımı gösterilmez. Kara parçaları temsilîdir.</p>
       </div>
     </section>
 
@@ -2443,22 +2445,22 @@
           map: 'Canlı Harita'
         },
         map: {
-          eyebrow: 'Açık kaynak istihbarat',
-          title: 'KÖTÜ NİYETLİ ALTYAPI HARİTASI',
-          subtitle: 'Açık beslemelerden derlenen barındırma konumları. Sayılar kötü niyetli altyapının nerede barındığını gösterir; saldırganın nerede olduğunu değil.',
+          eyebrow: 'Kendi ölçümümüz',
+          title: 'TARAMA HARİTASI',
+          subtitle: 'Cyber Lion AI ile taranan sitelerin barındırıldığı ülkeler ve bu sitelerde en sık bulduğumuz güvenlik eksikleri. Sayılar taranan sitelerden derlenir; bir ülkenin genel güvenliğini temsil etmez.',
           filterCountry: 'Ülke filtresi',
           allCountries: 'Tüm ülkeler',
-          filterThreat: 'Tehdit türü filtresi',
-          allThreats: 'Tüm tehdit türleri',
-          topTitle: 'En çok barındıran 10 ülke',
+          filterThreat: 'Bulgu türü filtresi',
+          allThreats: 'Tüm bulgu türleri',
+          topTitle: 'En çok site taranan 10 ülke',
           range: 'Zaman aralığı',
           live: 'Canlı',
-          svgTitle: 'Ülke bazlı tehdit altyapısı haritası',
-          svgDesc: 'Stilize dünya haritası üzerinde, açık tehdit beslemelerinde kayıtlı altyapının bulunduğu ülkeler işaretlenir. Aynı bilgi haritanın yanındaki listede metin olarak da verilir.',
+          svgTitle: 'Ülke bazlı tarama haritası',
+          svgDesc: 'Stilize dünya haritası üzerinde, Cyber Lion AI ile taranan sitelerin barındırıldığı ülkeler işaretlenir. Aynı bilgi haritanın yanındaki listede metin olarak da verilir.',
           detailTitle: 'Ülke ayrıntısı',
           pickCountry: 'Haritadan bir işaret seçin.',
           countersTitle: 'Sayaçlar',
-          countersNote: 'Bu beslemelerde ülke bilgisi yok; haritada işaret olarak değil, sayaç olarak gösterilirler.',
+          countersNote: 'Tor çıkış düğümleri bir anonimlik ağıdır, kötü niyetli altyapı değildir; haritada işaret olarak değil, ayrı bir sayaç olarak gösterilir.',
           sourcesTitle: 'Kaynaklar',
           r1h: '1s', r24h: '24s', r7d: '7g', rAll: 'Tümü',
           rangeScope: 'Zaman filtresi yalnızca zaman damgası taşıyan kaynakları kapsar.',
@@ -2470,7 +2472,7 @@
           ownEmpty: 'Henüz konumu çözülmüş tarama yok.',
           ownRangeNote: 'Zaman filtresi bu katmanı kapsamıyor; yalnızca “Tümü” görünümünde gösterilir.',
           srcTorexit: 'Tor çıkış düğümleri',
-          disclaimer: 'Harita, açık tehdit beslemelerinde kayıtlı altyapının bulunduğu ülkeleri gösterir; bir saldırının kaynağını veya hedefini göstermez. Kara parçaları temsilîdir. Kendi tarama etkinliğimiz gizlilik gereği konum bilgisi taşımadığından şimdilik haritada yer almaz.'
+          disclaimer: 'Harita yalnızca Cyber Lion AI ile taranan sitelerden derlenir; site adresi, IP veya kullanıcı bilgisi gösterilmez. Üçten az site taranan ülkelerde bulgu dağılımı gösterilmez. Kara parçaları temsilîdir.'
         },
         hero: {
           badge: 'Tarama motoru aktif',
@@ -2936,22 +2938,22 @@
           map: 'Live Map'
         },
         map: {
-          eyebrow: 'Open-source intelligence',
-          title: 'MALICIOUS INFRASTRUCTURE MAP',
-          subtitle: 'Hosting locations compiled from open feeds. The counts show where malicious infrastructure is hosted — not where the attacker is.',
+          eyebrow: 'Our own measurements',
+          title: 'SCAN MAP',
+          subtitle: 'Countries hosting the sites scanned with Cyber Lion AI, and the security gaps we find most often on them. Counts come from scanned sites; they do not represent the overall security of a country.',
           filterCountry: 'Country filter',
           allCountries: 'All countries',
-          filterThreat: 'Threat type filter',
-          allThreats: 'All threat types',
-          topTitle: 'Top 10 hosting countries',
+          filterThreat: 'Finding type filter',
+          allThreats: 'All finding types',
+          topTitle: 'Top 10 countries by sites scanned',
           range: 'Time range',
           live: 'Live',
-          svgTitle: 'Threat infrastructure by country',
-          svgDesc: 'On a stylised world map, countries hosting infrastructure recorded in open threat feeds are marked. The same information is also given as text in the list beside the map.',
+          svgTitle: 'Scan map by country',
+          svgDesc: 'A stylised world map marking the countries that host sites scanned with Cyber Lion AI. The same information is given as text in the list next to the map.',
           detailTitle: 'Country detail',
           pickCountry: 'Select a marker on the map.',
           countersTitle: 'Counters',
-          countersNote: 'These feeds carry no country data, so they appear as counters rather than map markers.',
+          countersNote: 'Tor exit nodes belong to an anonymity network, not malicious infrastructure; they are shown as a separate counter, not as map markers.',
           sourcesTitle: 'Sources',
           r1h: '1h', r24h: '24h', r7d: '7d', rAll: 'All',
           rangeScope: 'The time filter covers only sources that carry timestamps.',
@@ -2963,7 +2965,7 @@
           ownEmpty: 'No scan with a resolved location yet.',
           ownRangeNote: 'The time filter does not cover this layer; it is shown only in the “All” view.',
           srcTorexit: 'Tor exit nodes',
-          disclaimer: 'The map shows countries hosting infrastructure recorded in open threat feeds; it does not show the source or target of an attack. Landmasses are stylised. Our own scan activity carries no location data by design, so it is not on the map yet.'
+          disclaimer: 'The map is compiled only from sites scanned with Cyber Lion AI; no site address, IP or user information is shown. Finding breakdowns are hidden for countries with fewer than three scanned sites. Land shapes are illustrative.'
         },
         hero: {
           badge: 'Scan engine online',
@@ -6802,7 +6804,7 @@
     /* Yalnızca bu blokta kullanılan metinler. Sayfanın data-i18n sözlüğü DOM'a
        bakıyor; JS'in ürettiği düğümler orada olmadığı için burada tutuluyor. */
     var T = {
-      tr: { srcTorexit:'Tor çıkış düğümleri', geoResolved:'ülke IP tablosundan çözüldü',
+      tr: { srcTorexit:'Tor çıkış düğümleri', srcCyberlion:'Cyber Lion AI taramaları', geoResolved:'ülke IP tablosundan çözüldü',
             geoNative:'ülke beslemenin kendi alanından', geoTable:'IP→ülke tablosu',
             countriesWord:'ülke', of:'/', hosts:'barındırma kaydı', online:'çevrimiçi', families:'Zararlı yazılım aileleri',
             unknown:'Konumu bilinmeyen kayıt', noGeo:'ülke bilgisi yok', failed:'ulaşılamadı',
@@ -6816,7 +6818,7 @@
             ownNote:'Müşterilerimizin taradığı hedeflerin barındırma ülkesi. Beslemelerden ayrı sayılır; iki sayı toplanmaz.',
             ownRangeNote:'Zaman filtresi bu katmanı kapsamıyor; yalnızca “Tümü” görünümünde gösterilir.',
             mapFail:'Harita çizilemedi; sayaçlar güncel.' },
-      en: { srcTorexit:'Tor exit nodes', geoResolved:'country resolved from IP table',
+      en: { srcTorexit:'Tor exit nodes', srcCyberlion:'Cyber Lion AI scans', geoResolved:'country resolved from IP table',
             geoNative:'country from the feed’s own field', geoTable:'IP→country table',
             countriesWord:'countries', of:'/', hosts:'hosting records', online:'online', families:'Malware families',
             unknown:'Records without a known location', noGeo:'no country data', failed:'unreachable',
@@ -6842,7 +6844,7 @@
     /* Kaynak adları sunucudan Türkçe sabit geliyor. Kimliği bilinen kaynaklar
        burada çevriliyor; bilinmeyen bir kimlik gelirse sunucunun verdiği ad
        olduğu gibi kullanılır — uydurma çeviri yapılmaz. */
-    var SRC_LABEL = { torexit: 'srcTorexit' };
+    var SRC_LABEL = { torexit: 'srcTorexit', cyberlion: 'srcCyberlion' };
     function srcLabel(s) {
       var key = SRC_LABEL[s.id];
       return key ? t(key) : s.label;
@@ -7476,17 +7478,34 @@
 
     /* Harita görünür alana girene kadar istek atılmaz: sayfanın altındaki bir
        bölüm için herkesin açılışta besleme tazelemesi gereksiz. */
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (entries) {
-        if (entries.some(function (e) { return e.isIntersecting; })) {
-          io.disconnect();
-          load(); startTimer();
-        }
-      }, { rootMargin: '200px' });
-      io.observe(stage);
-    } else {
-      load(); startTimer();
+    function baslat() {
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          if (entries.some(function (e) { return e.isIntersecting; })) {
+            io.disconnect();
+            load(); startTimer();
+          }
+        }, { rootMargin: '200px' });
+        io.observe(stage);
+      } else {
+        load(); startTimer();
+      }
     }
+
+    /* Bölüm, kendi tarama verimiz yeterince birikene kadar gizli (ölçüm
+       2026-10-25: 39 tarama, tek ülke — harita yanıltıcı derecede boştu).
+       Özet ucu önbellekten cevap verir; besleme çekmez. Hata ya da "hazır
+       değil" → bölüm ve menü bağlantıları gizli kalır. */
+    fetch('/api/worldmap?summary=1', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (o) {
+        if (!o || o.ready !== true) return;
+        var bolum = document.getElementById('worldmap');
+        if (bolum) bolum.hidden = false;
+        Array.prototype.forEach.call(document.querySelectorAll('[data-wm-nav]'), function (el) { el.hidden = false; });
+        baslat();
+      })
+      .catch(function () { /* gizli kalır */ });
   })();
   </script>
 
