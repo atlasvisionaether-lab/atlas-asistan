@@ -304,11 +304,63 @@ footer ul a:hover{color:var(--fg)}
 
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.3/dist/css/intlTelInput.min.css" integrity="sha384-khdvUrzJNN6Jw9yHboN6430RRijNf+nAlKcZv0a5IrkTjwZpwgJ9fzD3kjbqhOyZ" crossorigin="anonymous">
-<link rel="stylesheet" href="premium.css"></head>
+<link rel="stylesheet" href="premium.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/space/space.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<style id="uzay-temasi">
+/* Uzay teması (ana sayfa + panel ile aynı dil): premium.css'ten SONRA gelir, onu ezer. */
+:root{--bg:var(--sx-void);--fg:var(--sx-ink);--muted:var(--sx-muted);--border:rgba(255,255,255,.1);--secondary:rgba(255,255,255,.05);--card:transparent;--radius:20px}
+body{font-family:var(--sx-sans);color:var(--sx-ink);background:radial-gradient(1100px 760px at 85% -10%,rgba(109,40,217,.26),transparent 60%),radial-gradient(900px 700px at -10% 110%,rgba(14,116,144,.22),transparent 60%),var(--sx-void);line-height:1.6}
+h1,h2,h3,h4{font-family:var(--sx-serif);letter-spacing:-.01em}
+h1,h2{background:linear-gradient(95deg,#fff 0%,#fde68a 60%,#fbbf24 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+a{color:var(--sx-cyan)}
+::selection{background:rgba(251,191,36,.35);color:#fff}
+.nav{background:rgba(5,3,16,.55);-webkit-backdrop-filter:var(--sx-blur);backdrop-filter:var(--sx-blur);border-bottom:1px solid rgba(255,255,255,.07)}
+.nav-links a.plain:hover{color:#fff;text-shadow:0 0 14px rgba(34,211,238,.7)}
+/* Cam kartlar: Sipariş Özeti + Nasıl devam edilir? */
+.card{position:relative;background:var(--sx-glass),var(--sx-glass-solid);-webkit-backdrop-filter:var(--sx-blur);backdrop-filter:var(--sx-blur);border:0;border-radius:var(--sx-radius);box-shadow:0 30px 80px -32px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07);transition:box-shadow .5s var(--sx-ease)}
+.card::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;background:var(--sx-edge);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.65;transition:opacity .5s var(--sx-ease)}
+.card:hover{transform:none;box-shadow:0 30px 80px -32px rgba(0,0,0,.85),0 0 46px -16px rgba(251,191,36,.35),inset 0 1px 0 rgba(255,255,255,.1)}
+.card:hover::before{opacity:1}
+.card h3{font-family:var(--sx-serif);font-size:1.25rem;font-weight:600}
+.tagline{font-family:var(--sx-sans);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.62rem;color:var(--sx-gold-light);background:rgba(251,191,36,.08);border:1px solid rgba(253,230,138,.35)}
+.price b{font-family:var(--sx-serif);font-size:2.4rem;background:linear-gradient(95deg,#fde68a,#fbbf24 55%,#f59e0b);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(251,191,36,.3))}
+#planFeatures li{color:var(--sx-ink) !important;opacity:.88}
+.notice,.warn{position:relative;background:var(--sx-glass),rgba(12,9,30,.38);-webkit-backdrop-filter:var(--sx-blur);backdrop-filter:var(--sx-blur);border:0;border-radius:16px}
+.notice{box-shadow:inset 3px 0 0 var(--sx-cyan),0 20px 50px -30px rgba(0,0,0,.8)}
+.notice svg{color:var(--sx-cyan);filter:drop-shadow(0 0 6px rgba(34,211,238,.6))}
+.warn{box-shadow:inset 3px 0 0 var(--sx-gold),0 20px 50px -30px rgba(0,0,0,.8)}
+.warn h3{font-family:var(--sx-serif);color:var(--sx-gold-light)}
+.warn .tip{background:rgba(251,191,36,.07);box-shadow:inset 0 0 0 1px rgba(253,230,138,.2)}
+/* Adım numaraları: altın küre */
+.co-steps li::before{border:0;color:#1a1000;font-family:var(--sx-serif);background:radial-gradient(circle at 32% 28%,#fff,#fde68a 35%,#fbbf24 70%,#b45309);box-shadow:0 0 18px rgba(251,191,36,.55)}
+.co-steps b{font-family:var(--sx-serif);font-weight:600;font-size:1.02rem}
+/* Birincil düğme: altın */
+.btn.green{position:relative;overflow:hidden;color:#1a1000;font-weight:800;border-radius:999px;background:linear-gradient(95deg,#fde68a 0%,#fbbf24 50%,#f59e0b 100%);box-shadow:0 12px 34px -12px rgba(251,191,36,.85),inset 0 1px 0 rgba(255,255,255,.55);transition:transform .35s var(--sx-ease),box-shadow .35s var(--sx-ease)}
+.btn.green::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);transition:left .7s var(--sx-ease)}
+.btn.green:hover{background:linear-gradient(95deg,#fde68a 0%,#fbbf24 50%,#f59e0b 100%);transform:translateY(-2px);box-shadow:0 18px 44px -12px rgba(251,191,36,.95),0 0 0 1px rgba(253,230,138,.6)}
+.btn.green:hover::after{left:130%}
+.co-terms a,.consent a{color:var(--sx-gold-light)}
+footer{border-top:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,transparent,rgba(5,3,16,.6))}
+footer h4{font-family:var(--sx-serif);color:var(--sx-gold-light)}
+.foot-bottom{border-top-color:rgba(255,255,255,.07)}
+.foot-pay{margin-bottom:1.75rem}
+/* Üst menü: marka altın serif, Panelim cam + altın kenar */
+.nav .brand{font-family:var(--sx-serif);font-weight:600;letter-spacing:.03em;color:var(--sx-gold-light);text-shadow:0 0 18px rgba(251,191,36,.35)}
+.nav .brand img{box-shadow:0 0 18px rgba(251,191,36,.4),0 0 0 1px rgba(253,230,138,.35)}
+.btn.btn-panelim{color:var(--sx-ink);background:rgba(255,255,255,.05);border-radius:999px;box-shadow:inset 0 0 0 1px rgba(253,230,138,.45),0 0 24px -10px rgba(251,191,36,.6)}
+.btn.btn-panelim:hover{background:rgba(251,191,36,.1);box-shadow:inset 0 0 0 1px rgba(253,230,138,.8),0 0 30px -8px rgba(251,191,36,.7)}
+@media(prefers-reduced-motion:reduce){.card,.card::before,.btn.green,.btn.green::after{transition:none}}
+</style>
+</head>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <body>
+<canvas id="space3d" data-space="panel" aria-hidden="true"></canvas>
 
 <nav class="nav">
   <div class="container">
@@ -348,7 +400,8 @@ footer ul a:hover{color:var(--fg)}
         </div>
       </div>
 
-      <div style="margin:1rem 0;padding:.9rem 1rem;border:1px solid var(--border);border-radius:.75rem;display:flex;justify-content:center"><img src="/public/images/iyzico-logo-band-white.svg" alt="iyzico ile Öde — Mastercard, Visa, American Express, troy" width="456" height="32" style="max-width:100%;height:auto"></div>      <div class="warn">
+      <div class="sx-pay" style="margin:1.1rem 0"><span class="sx-pay-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fde68a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Güvenli ödeme</span><img src="/public/images/iyzico-logo-band-white.svg" alt="iyzico ile Öde — Mastercard, Visa, American Express, troy" width="456" height="32"></div>
+      <div class="warn">
         <h3>⚠️ WhatsApp Numaranız Hakkında Önemli Bilgi</h3>
         <p>Atlas Asistan, WhatsApp Business Cloud API altyapısı üzerinde çalışır. Kurulum sırasında vereceğiniz numara bu altyapıya kaydedilir.</p>
         <p><strong>Bunun anlamı:</strong></p>
@@ -429,7 +482,7 @@ footer ul a:hover{color:var(--fg)}
         </ul>
       </div>
     </div>
-    <div class="foot-pay" style="display:flex;justify-content:center;margin-bottom:1.5rem"><img src="/public/images/iyzico-logo-band-white.svg" alt="iyzico ile Öde — Mastercard, Visa, American Express, troy" width="456" height="32" loading="lazy" style="max-width:100%;height:auto"></div>
+    <div class="foot-pay" style="display:flex;justify-content:center"><div class="sx-pay"><span class="sx-pay-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fde68a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>256-bit SSL · iyzico</span><img src="/public/images/iyzico-logo-band-white.svg" alt="iyzico ile Öde — Mastercard, Visa, American Express, troy" width="456" height="32" loading="lazy"></div></div>
     <div class="foot-bottom">© Atlas Asistan AI — <a href="mailto:destek@atlasasistan.com" data-track="email_click">destek@atlasasistan.com</a> — <a href="https://atlasasistan.com">https://atlasasistan.com</a></div>
   </div>
 </footer>
@@ -452,7 +505,7 @@ footer ul a:hover{color:var(--fg)}
   p.features.forEach(function(f){
     var li = document.createElement('li');
     li.style.cssText = 'display:flex;align-items:center;gap:.5rem;font-size:.875rem;color:var(--muted)';
-    li.innerHTML = '<span class="check">✓</span> ' + f;
+    li.innerHTML = '<span class="sx-check" aria-hidden="true"></span> ' + f;
     ul.appendChild(li);
   });
 
@@ -665,5 +718,7 @@ footer ul a:hover{color:var(--fg)}
 })();
 </script>
 <script src="premium.js" defer></script>
+<script src="/space/space-ui.js" defer></script>
+<script type="module" src="/space/space.js"></script>
 </body>
 </html>

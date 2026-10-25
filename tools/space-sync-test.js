@@ -14,6 +14,7 @@ const ROOT = path.resolve(__dirname, '..');
 const FILES = ['space.js', 'space-ui.js', 'space.css'];
 const PAGES = [
   { file: 'index.html', base: '/space/' },
+  { file: 'checkout.html', base: '/space/' },
   { file: 'panel/index.html', base: 'space/' }
 ];
 
@@ -49,7 +50,7 @@ PAGES.forEach(function (pg) {
     sina(pg.file + ': ' + pg.base + f + ' bağlı', html.indexOf('"' + pg.base + f + '"') !== -1);
   });
 });
-sina('site ve panel aynı three sürümü', versions.length === 2 && versions[0] === versions[1], versions.join(' / '));
+sina('tüm sayfalar aynı three sürümü', versions.length === PAGES.length && versions.every(function (v) { return v === versions[0]; }), versions.join(' / '));
 
 const vercel = JSON.parse(read('vercel.json'));
 sina('kök vercel.json /space/* yönlendirmiyor', !(vercel.redirects || []).some(function (r) { return /^\/space(\/|$)/.test(r.source); }));
