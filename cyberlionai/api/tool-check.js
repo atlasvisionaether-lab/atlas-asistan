@@ -15,6 +15,7 @@ const ownership = require('./_lib/ownership.js');
 const toolcheck = require('./_lib/toolcheck.js');
 const { normalizeTarget } = require('./_lib/guard.js');
 const tg = require('./_lib/telegram.js');
+const funnel = require('./_lib/funnel.js');
 const { clientIp, ipKey } = require('./_lib/session.js');
 
 const DAY_SECONDS = 86400;
@@ -59,6 +60,7 @@ async function handler(req, res) {
       /* Kara liste eşleşmesi süresi geçtiyse önbellekten GÖSTERİLMEZ
          (Google Web Risk koşulları); taze sorgu yapılır. */
       if (cached && toolcheck.cacheSecondsFor(cached, CACHE_SECONDS) > 0) {
+        await funnel.record('tool_use', type);
         return res.status(200).json(Object.assign(cached, { cached: true }));
       }
     } catch (err) { /* önbellek yok sayılır */ }
@@ -80,6 +82,7 @@ async function handler(req, res) {
       try { await store.cacheSet(cacheKey, result, ttl); } catch (err) { /* yok say */ }
     }
   }
+  await funnel.record('tool_use', type);
   return res.status(200).json(result);
 }
 

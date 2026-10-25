@@ -180,12 +180,13 @@ const SAGLAM = yanit({
   esit('sayfa düşerse yine sonuç', s9.ok && s9.summary.fail, 0);
 
   /* --- Uç nokta --- */
-  const sayac = {}; const onbellek = {}; let hedefeGidis = 0; let gunluk = 0;
+  const sayac = {}; const onbellek = {}; const huni = {}; let hedefeGidis = 0; let gunluk = 0;
   sapla('_lib/store.js', {
     isConfigured: function () { return true; },
     hitRateLimit: async function (k) { sayac[k] = (sayac[k] || 0) + 1; return { count: sayac[k], ttl: 100 }; },
     cacheGet: async function (k) { return onbellek[k] ? JSON.parse(onbellek[k]) : null; },
-    cacheSet: async function (k, v) { onbellek[k] = JSON.stringify(v); }
+    cacheSet: async function (k, v) { onbellek[k] = JSON.stringify(v); },
+    incrCounter: async function (k) { huni[k] = (huni[k] || 0) + 1; return huni[k]; }
   });
   sapla('_lib/ownership.js', { logScan: async function () { gunluk += 1; return true; } });
   let blSure = 120; let blSorgu = 0;
@@ -246,6 +247,12 @@ const SAGLAM = yanit({
   esit('süresiz eşleşme yine gösterilir', b4.body.listed, true);
   const b5 = await istek({ type: 'blacklist', url: 'kotu.example/odeme' }, '7.7.7.7');
   esit('farklı yol ayrı önbellek', b5.body.cached, undefined);
+
+  /* Huni: başarılı her araç sonucu (önbellekten de) kendi türüyle sayılır. */
+  const huniAraci = function (tur) { return Object.keys(huni).filter(function (k) { return /:tool_use:/.test(k) && k.endsWith(':' + tur); }).reduce(function (a, k) { return a + huni[k]; }, 0); };
+  esit('huni: başlık aracı sayıldı', huniAraci('headers') >= 2, true);
+  esit('huni: kara liste aracı sayıldı', huniAraci('blacklist') >= 1, true);
+  esit('huni: hata dönen istek sayılmaz', Object.keys(huni).some(function (k) { return /:tool_use:direct$/.test(k); }), false);
 
   let son;
   for (let i = 0; i < handler.DAILY_MAX + 2; i++) son = await istek({ type: 'headers', url: 'ornek.com' }, '9.9.9.9');

@@ -39,6 +39,7 @@ const { startQueuedScan } = require('./_lib/queuestart.js');
 const db = require('./_lib/db.js');
 const store = require('./_lib/store.js');
 const tg = require('./_lib/telegram.js');
+const funnel = require('./_lib/funnel.js');
 const n8n = require('./_lib/n8n.js');
 const { resolveOwner, ownerRef, clientIp, ipKey } = require('./_lib/session.js');
 const { RATE_WINDOW_SECONDS, RATE_MAX } = require('./_lib/limits.js');
@@ -177,6 +178,8 @@ async function handler(req, res) {
 
     await tg.sendTelegram(tg.mesaj.taramaKuyruga(kuyruk.host || url), { type: 'scan' });
 
+    /* Huni: kaynak tarayıcının oturum belleğinden (bkz. /kaynak.js). */
+    await funnel.record('scan', body && body.kaynak);
     return res.status(202).json({
       jobId: kuyruk.jobId,
       status: 'queued',
@@ -252,6 +255,7 @@ async function handler(req, res) {
       userId: owner.userId || null,
     });
 
+    await funnel.record('scan', body && body.kaynak);
     return res.status(200).json(result);
   } catch (err) {
     const code = (err && err.message) || 'scan_failed';

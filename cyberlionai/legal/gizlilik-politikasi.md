@@ -40,6 +40,7 @@ Cyber Lion AI olarak gizliliğinize önem veriyoruz.
 - Dil/ülke tespiti: Barındırma sağlayıcımız Vercel'in her isteğe eklediği ülke bilgisi kullanılır; IP adresiniz bu amaçla başka bir üçüncü tarafa iletilmez
 - İç bildirimler: Telegram (e-posta adresi maskelenmiş olarak)
 - Bildirim: Google / Firebase Cloud Messaging (yalnızca cihaz jetonu ve bildirim içeriği)
+- Ziyaret ölçümü: yalnızca kendi sunucumuzda, günlük toplam sayılar (hangi ücretsiz araçtan kaç tam tarama ve ödeme başladığı). Kimlik, IP, alan adı veya hesap bilgisi tutulmaz; üçüncü taraf analitik aracı kullanılmaz. Ayrıntı: Çerez Politikası.
 - Hız sınırı sayaçları: Upstash (yalnızca IP özetinden türetilmiş süreli anahtar)
 - Yapay zekâ asistanı: DeepSeek (Çin) ve yedek olarak Anthropic (ABD); yalnızca açık rızanızla ve yalnızca gizlenmiş soru metni ile sohbet bağlamı
 - İşlem e-postaları: Resend (ABD). Hesap e-postaları (kayıt onayı, giriş bağlantısı, şifre sıfırlama), silme sertifikası ve ücretli planlarda sabah izleme özeti e-posta adresinize bu sağlayıcı üzerinden gönderilir; yalnızca e-posta adresiniz ve e-postanın içeriği iletilir

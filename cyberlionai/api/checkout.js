@@ -56,6 +56,7 @@ const { PLANS, checkoutOption } = require('./_lib/plans.js');
 const iyzicoPlans = require('./_lib/iyzico-plans.js');
 const billing = require('./_lib/billing-details.js');
 const store = require('./_lib/store.js');
+const funnel = require('./_lib/funnel.js');
 
 /* Ödeme formu token'ı → hesap eşlemesi (bkz. checkout-return.js). iyzico
    token'ı 30 dk geçerli; pay bırakıldı. */
@@ -261,8 +262,10 @@ async function handler(req, res) {
      Depo yazılamazsa ödeme durmaz (çerez geldiyse dönüş yine çalışır). */
   if (init.token && store.isConfigured()) {
     try {
+      /* `kaynak`: huni sayacı için (bkz. _lib/funnel.js); dönüşte başarı da
+         aynı kaynakla sayılır. Kimlik değil, izinli listeden bir araç adı. */
       await store.cacheSet(PENDING_PREFIX + init.token,
-        { id: user.id, email: user.email || '' }, PENDING_TTL_SECONDS);
+        { id: user.id, email: user.email || '', kaynak: funnel.source(params.kaynak) }, PENDING_TTL_SECONDS);
     } catch (err) {
       if (console && console.warn) console.warn('checkout: pending_map_failed');
     }
@@ -274,6 +277,8 @@ async function handler(req, res) {
   /* 303: tarayıcı GET ile izlesin; geri tuşu ödeme sayfasına değil fiyat
      sayfasına dönsün. Adresin host'u iyzico'nun kendi alan adı olduğu
      `formUrlOf` içinde zaten doğrulandı. */
+  await funnel.record('checkout_start', params.kaynak);
+
   res.setHeader('Location', init.url);
   return res.status(303).end();
 }
