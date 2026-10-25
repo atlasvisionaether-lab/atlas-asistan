@@ -4,25 +4,15 @@
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var isMobile = window.matchMedia('(max-width: 768px)').matches;
 
-  /* Panelim nav button (panel/ is an untouchable separate project — href placeholder) */
+  /* Panelim nav button → müşteri paneli (ayrı Vercel projesi; giriş/kayıt orada) */
   document.querySelectorAll('.nav-links').forEach(function (nav) {
     if (!nav.querySelector('.btn-panelim')) {
       var a = document.createElement('a');
-      a.href = '#';
+      a.href = 'https://atlas-asistan-panel-preview.vercel.app/';
       a.className = 'btn blue btn-panelim';
-      a.title = 'Panel (yakında)';
+      a.title = 'Panelinize giriş yapın';
       a.style.marginLeft = '.35rem';
       a.textContent = 'Panelim';
-      a.addEventListener('click', function (ev) {
-        ev.preventDefault();
-        var t = document.createElement('div');
-        t.textContent = 'Panel çok yakında';
-        t.setAttribute('role', 'status');
-        t.style.cssText = 'position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%);z-index:99999;background:rgba(5,7,10,.92);color:#E2E8F0;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.65rem 1.1rem;font-size:.875rem;box-shadow:0 12px 40px rgba(0,0,0,.5);backdrop-filter:blur(12px);pointer-events:none;opacity:0;transition:opacity .25s ease';
-        document.body.appendChild(t);
-        requestAnimationFrame(function(){ t.style.opacity = '1'; });
-        setTimeout(function(){ t.style.opacity = '0'; setTimeout(function(){ t.remove(); }, 300); }, 2200);
-      });
       var demo = nav.querySelector('.demo-al');
       if (demo && demo.nextSibling) nav.insertBefore(a, demo.nextSibling);
       else nav.appendChild(a);

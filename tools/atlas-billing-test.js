@@ -102,6 +102,13 @@ global.fetch = async function (url, opts) {
   const u = new URL(url);
   const govde = opts && opts.body ? JSON.parse(opts.body) : null;
   istekler.push({ host: u.host, path: u.pathname, search: u.search, method: (opts && opts.method) || 'GET', body: govde });
+  /* Panel oturumu: jeton Supabase Auth'a sorulur, kurum users tablosundan. */
+  if (u.host === 'atlas-test.supabase.co' && u.pathname === '/auth/v1/user') {
+    return opts.headers.Authorization === OTURUM ? json(200, { id: KULLANICI, email: 'ayse@ornek.com' }) : json(401, {});
+  }
+  if (u.host === 'atlas-test.supabase.co' && u.pathname === '/rest/v1/users') {
+    return json(200, [{ organization_id: KURUM, role: 'owner' }]);
+  }
   if (u.host === 'atlas-test.supabase.co') {
     const q = new URLSearchParams(u.search);
     const eslesir = function (row) {
@@ -136,9 +143,13 @@ function sahteRes() {
   res.end = function () { return res; };
   return res;
 }
+const OTURUM = 'Bearer ' + 'j'.repeat(40);
+const KULLANICI = '11111111-1111-4111-8111-111111111111';
+const KURUM = '33333333-3333-4333-8333-333333333333';
+const PANEL = 'https://atlas-asistan-panel-preview.vercel.app';
 async function cagir(handler, req) {
   const res = sahteRes();
-  await handler(Object.assign({ headers: { host: 'atlasasistan.com' }, query: {} }, req), res);
+  await handler(Object.assign({ headers: { host: 'atlasasistan.com', authorization: OTURUM }, query: {} }, req), res);
   return res;
 }
 
@@ -170,11 +181,12 @@ async function cagir(handler, req) {
   sina('müşteri: E.164, boş TC → 11111111111, ülke adı İngilizce', [abonelik.body.customer.gsmNumber, abonelik.body.customer.identityNumber, abonelik.body.customer.billingAddress.country], ['+905321234567', '11111111111', 'Türkiye']);
   sina('dönüş adresi', abonelik.body.callbackUrl, 'https://atlasasistan.com/api/atlas-checkout-return');
   const proRow = db[db.length - 1];
+  sina('sipariş oturumun kurumuna bağlı', proRow.organization_id, KURUM);
   sina('sipariş: tutar sunucudan (7900), pending, jeton düz değil', [proRow.amount_try, proRow.status, proRow.iyzico_token_hash, JSON.stringify(proRow).indexOf('tok-pro-1234567890')],
     [7900, 'pending', crypto.createHash('sha256').update('tok-pro-1234567890').digest('hex'), -1]);
 
   iyzicoCevap = { '*': { status: 'success', token: 'tok-vip-1234567890', paymentPageUrl: 'https://sandbox-cpp.iyzipay.com?token=tok-vip-1234567890' } };
-  res = await cagir(checkout, { method: 'POST', headers: { host: 'atlasasistan.com', 'x-vercel-forwarded-for': '203.0.113.9' }, body: siparis({ plan: 'vip', billing: { type: 'corporate', taxNo: '1234567890', taxOffice: 'Kadıköy' } }) });
+  res = await cagir(checkout, { method: 'POST', headers: { host: 'atlasasistan.com', authorization: OTURUM, 'x-vercel-forwarded-for': '203.0.113.9' }, body: siparis({ plan: 'vip', billing: { type: 'corporate', taxNo: '1234567890', taxOffice: 'Kadıköy' } }) });
   const kurulum = istekler.filter(function (i) { return i.host === 'sandbox-api.iyzipay.com'; }).pop();
   const vipRow = db[db.length - 1];
   sina('VIP → tek seferlik form, kurulum tutarı 24900', [res.statusCode, kurulum.path, kurulum.body.price, kurulum.body.basketId === vipRow.id], [200, '/payment/iyzipos/checkoutform/initialize/auth/ecom', '24900.0', true]);
@@ -186,30 +198,33 @@ async function cagir(handler, req) {
   res = await cagir(checkout, { method: 'POST', body: siparis({ plan: 'standart' }) });
   sina('iyzico reddi → 502, sipariş failed', [res.statusCode, db.length - once, db[db.length - 1].status], [502, 1, 'failed']);
 
+  res = await cagir(checkout, { method: 'POST', headers: { host: 'atlasasistan.com' }, body: siparis({ plan: 'standart' }) });
+  sina('oturumsuz POST → 401', [res.statusCode, res.body.error.code], [401, 'auth']);
+
   console.log('\n/api/atlas-checkout-return');
   iyzicoCevap = { '*': { status: 'success', paymentStatus: 'SUCCESS', fraudStatus: 1, basketId: vipRow.id, price: '24900.0', paidPrice: '24900.0', paymentId: 'pay-1' } };
   res = await cagir(ret, { method: 'POST', body: { token: 'tok-vip-1234567890' } });
-  sina('kurulum ödemesi doğrulandı → paid + success', [res.headers.location, vipRow.status, vipRow.iyzico_ref], ['/checkout?plan=vip&status=success', 'paid', 'pay-1']);
+  sina('kurulum ödemesi doğrulandı → paid + success', [res.headers.location, vipRow.status, vipRow.iyzico_ref], [PANEL + '/?odeme=success#onboarding', 'paid', 'pay-1']);
   res = await cagir(ret, { method: 'POST', body: { token: 'tok-vip-1234567890' } });
-  sina('ikinci dönüş: yine success, durum değişmez', [res.headers.location, vipRow.status], ['/checkout?plan=vip&status=success', 'paid']);
+  sina('ikinci dönüş: yine success, durum değişmez', [res.headers.location, vipRow.status], [PANEL + '/?odeme=success#onboarding', 'paid']);
 
   /* Tutar uyuşmazlığı: aynı VIP siparişini yeniden pending yapıp düşük tutarla. */
   vipRow.status = 'pending';
   iyzicoCevap = { '*': { status: 'success', paymentStatus: 'SUCCESS', fraudStatus: 1, basketId: vipRow.id, price: '1.0', paidPrice: '1.0' } };
   res = await cagir(ret, { method: 'POST', body: { token: 'tok-vip-1234567890' } });
-  sina('tutar uyuşmazlığı → failed', [res.headers.location, vipRow.status, vipRow.fail_reason], ['/checkout?plan=vip&status=failed', 'failed', 'amount_mismatch']);
+  sina('tutar uyuşmazlığı → failed', [res.headers.location, vipRow.status, vipRow.fail_reason], [PANEL + '/?odeme=failed#onboarding', 'failed', 'amount_mismatch']);
 
   iyzicoCevap = { '*': { status: 'success', data: { subscriptionStatus: 'ACTIVE', pricingPlanReferenceCode: 'ref-standart-0001', referenceCode: 'sub-1' } } };
   res = await cagir(ret, { method: 'GET', query: { token: 'tok-pro-1234567890' } });
-  sina('Pro siparişi Standart planıyla döndü → failed', [res.headers.location, proRow.status, proRow.fail_reason], ['/checkout?plan=pro&status=failed', 'failed', 'plan_mismatch']);
+  sina('Pro siparişi Standart planıyla döndü → failed', [res.headers.location, proRow.status, proRow.fail_reason], [PANEL + '/?odeme=failed#onboarding', 'failed', 'plan_mismatch']);
 
   proRow.status = 'pending';
   iyzicoCevap = { '*': { status: 'success', data: { subscriptionStatus: 'ACTIVE', pricingPlanReferenceCode: 'ref-pro-0000000002', referenceCode: 'sub-2' } } };
   res = await cagir(ret, { method: 'GET', query: { token: 'tok-pro-1234567890' } });
-  sina('abonelik ACTIVE → paid', [res.headers.location, proRow.status, proRow.iyzico_ref], ['/checkout?plan=pro&status=success', 'paid', 'sub-2']);
+  sina('abonelik ACTIVE → paid', [res.headers.location, proRow.status, proRow.iyzico_ref], [PANEL + '/?odeme=success#onboarding', 'paid', 'sub-2']);
 
   res = await cagir(ret, { method: 'POST', body: { token: 'tok-bilinmeyen-123456' } });
-  sina('bilinmeyen jeton → failed', res.headers.location, '/checkout?plan=&status=failed');
+  sina('bilinmeyen jeton → failed', res.headers.location, PANEL + '/?odeme=failed#onboarding');
 
   console.log(hata === 0 ? '\nTümü geçti.' : '\n' + hata + ' sınama BAŞARISIZ.');
   process.exit(hata === 0 ? 0 : 1);

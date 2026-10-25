@@ -43,7 +43,7 @@
       consentPpf: 'Devam etmek için ön bilgilendirme formunu ve mesafeli satış sözleşmesini onaylayın.',
       consentTransfer: 'Verilerinizin yurt dışına aktarımı için onay gerekiyor.',
       plan: 'Paket bulunamadı.',
-      unavailable: 'Çevrimiçi ödeme şu an kapalı. Siparişinizi WhatsApp ile tamamlayabilirsiniz.',
+      unavailable: 'Çevrimiçi ödeme şu an kapalı. Lütfen biraz sonra tekrar deneyin.',
       payment: 'Ödeme sayfası açılamadı. Lütfen tekrar deneyin.'
     },
     en: {
@@ -63,7 +63,7 @@
       consentPpf: 'Please accept the pre-information form and distance sales agreement.',
       consentTransfer: 'Consent to transfer your data abroad is required.',
       plan: 'Package not found.',
-      unavailable: 'Online payment is currently unavailable. You can complete your order on WhatsApp.',
+      unavailable: 'Online payment is currently unavailable. Please try again shortly.',
       payment: 'Could not open the payment page. Please try again.'
     }
   };

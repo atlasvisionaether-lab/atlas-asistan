@@ -5,10 +5,10 @@
  * bkz. supabase/migrations/0017_self_signup.sql); panel burada bir şey
  * işaretlemez, adımı tamamlayan iş (hizmet ekleme, ödeme, ilk mesaj)
  * durumu kendiliğinden değiştirir.
- * Sipariş geçmişi atlas_my_orders RPC'sinden: fatura bilgisi dönmez. */
+ * Sipariş geçmişi atlas_my_orders RPC'sinden: fatura bilgisi dönmez.
+ * Ödeme panel içinde (#odeme, checkout.js); WhatsApp'a yönlendirme yok. */
 (function(){
  var ui = window.ATLAS_UI;
- var SITE = "https://atlasasistan.com";
 
  var PLAN_NAMES = { standart: "Standart Asistan", pro: "Pro Asistan", starter: "Dijital Başlangıç Paketi", vip: "VIP Klinik Dönüşümü" };
  var STATUS = {
@@ -21,8 +21,8 @@
      body: "Asistan, müşterilerinize yalnızca buraya yazdığınız hizmet ve fiyatları söyler.",
      cta: "Hizmetlere git", href: "#services" },
    { done: s.payment, title: "Paketinizi seçin ve ödeyin",
-     body: "Ödemeyi bu panelde kullandığınız e-postayla yapın; ödeme hesabınıza otomatik bağlanır.",
-     cta: "Paketleri gör", href: SITE + "/checkout?plan=standart", external: true },
+     body: "Paketinizi seçin, fatura bilgilerinizi girin ve iyzico'nun güvenli sayfasında kartla ödeyin. Ödeme kliniğinize otomatik bağlanır.",
+     cta: "Paket seç ve öde", href: "#odeme" },
    { done: s.whatsapp, title: "WhatsApp numaranızı bağlayın",
      body: s.whatsapp ? "Bağlı numara: " + (waNumber || "tanımlı")
       : "Numaranız henüz bağlı değil. Ödemeden sonra numaranızı kliniğinize biz bağlıyoruz; bağlanınca bu adım kendiliğinden tamamlanır.",
@@ -78,6 +78,8 @@
    sb.from("organizations").select("whatsapp_number").eq("id", window.atlasOrgId).maybeSingle()
   ]); }).then(function(r){
    ui.clear(wrap);
+   var notice = window.ATLAS_CHECKOUT && window.ATLAS_CHECKOUT.resultNotice();
+   if (notice) wrap.appendChild(notice);
    if (r[0].error || !r[0].data || !r[0].data[0]){ failCard(wrap, "Kurulum durumu okunamadı" + (r[0].error ? ": " + r[0].error.message : ".")); return; }
    var org = r[1].data || {};
    var list = steps(r[0].data[0], org.whatsapp_number);
@@ -106,7 +108,7 @@
     sum.appendChild(ui.el("span", { class: "tag ok", text: active.sub_status ? "iyzico: " + active.sub_status : "aktif" }));
    } else {
     sum.appendChild(ui.el("p", { text: "Aktif aboneliğiniz yok." }));
-    sum.appendChild(ui.el("a", { class: "btn", href: SITE + "/checkout?plan=standart", target: "_blank", rel: "noopener", text: "Paket seç" }));
+    sum.appendChild(ui.el("a", { class: "btn", href: "#odeme", text: "Paket seç" }));
    }
    wrap.appendChild(sum);
 

@@ -3,13 +3,18 @@
 /**
  * atlasasistan.com sipariş formu → iyzico barındırılan ödeme sayfası.
  *
- *   GET  /api/atlas-checkout?mode=1   → { enabled, testMode }  (sayfa buna göre
- *                                       iyzico'ya mı WhatsApp'a mı gideceğini seçer)
- *   POST /api/atlas-checkout  (JSON)  → 200 { url } | 400 { errors } | 503 | 502
+ *   GET  /api/atlas-checkout?mode=1   → { enabled, testMode }  (panel ödeme
+ *                                       kapalıysa formu açmaz; WhatsApp'a düşülmez)
+ *   POST /api/atlas-checkout  (JSON)  → 200 { url } | 400 { errors, messages }
+ *                                       | 401 | 403 | 503 | 502
  *
- * Akış: gövde atlas-billing.js ile doğrulanır (tarayıcıyla aynı kural) →
- * atlas_orders'a 'pending' satır → iyzico formu başlatılır → jeton özeti
- * siparişe yazılır → tarayıcı iyzico'ya gider. Dönüş: atlas-checkout-return.
+ * Çağıran müşteri paneli (başka origin, CORS — bkz. _atlas/panel.js). Oturum
+ * ZORUNLU: Authorization: Bearer <Supabase jetonu>; sipariş jetonun kurumuna
+ * bağlanır (atlas_orders.organization_id). Yalnız owner/manager ödeme başlatır.
+ *
+ * Akış: gövde atlas-billing.js ile doğrulanır → atlas_orders'a 'pending' satır
+ * → iyzico formu başlatılır → jeton özeti siparişe yazılır → tarayıcı iyzico'ya
+ * gider. Dönüş: atlas-checkout-return → panelin Kurulum ekranı.
  *
  *   standart / pro  → abonelik (iyzico Subscription v2)
  *   starter / vip   → tek seferlik kurulum ödemesi; aylık ücret teslimde ayrı
@@ -30,6 +35,7 @@ const iyzico = require('../cyberlionai/api/_lib/iyzico.js');
 const { UNKNOWN_TCKN, buyerFrom } = require('../cyberlionai/api/_lib/billing-details.js');
 const { clientIp } = require('../cyberlionai/api/_lib/session.js');
 const tg = require('../cyberlionai/api/_lib/telegram.js');
+const panel = require('./_atlas/panel.js');
 
 function jsonBody(req) {
   const b = req.body;
@@ -84,15 +90,24 @@ function customerOf(v) {
   };
 }
 
+/** Hata kodlarını formun dilinde metne çevirir (panel aynı metni gösterir). */
+function messagesOf(errors, lang) {
+  const out = {};
+  Object.keys(errors).forEach(function (field) { out[field] = billingRules.msg(lang, errors[field]); });
+  return out;
+}
+
 async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  panel.cors(req, res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
 
   if (req.method === 'GET' && req.query && req.query.mode !== undefined) {
     const ready = isReady();
     return res.status(200).json({ enabled: ready, testMode: ready ? iyzico.isSandbox() : null });
   }
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'GET, POST');
+    res.setHeader('Allow', 'GET, POST, OPTIONS');
     return res.status(405).json({ error: { code: 'method_not_allowed' } });
   }
 
@@ -102,9 +117,14 @@ async function handler(req, res) {
   if (!plan) return res.status(400).json({ error: { code: 'plan' } });
 
   const checked = billingRules.validateOrder(body);
-  if (!checked.ok) return res.status(400).json({ error: { code: 'invalid' }, errors: checked.errors });
+  if (!checked.ok) {
+    return res.status(400).json({ error: { code: 'invalid' }, errors: checked.errors, messages: messagesOf(checked.errors, lang) });
+  }
 
   if (!isReady()) return res.status(503).json({ error: { code: 'unavailable' } });
+  const member = await panel.memberFromRequest(req);
+  if (!member) return res.status(401).json({ error: { code: 'auth' } });
+  if (!panel.canPay(member)) return res.status(403).json({ error: { code: 'role' } });
   const pricingPlanRef = plans.refOf(plan);
   if (plan.kind === 'subscription' && !pricingPlanRef) {
     console.warn('atlas-checkout: pricing_plan_ref_missing (plan=' + plan.id + ')');
@@ -112,7 +132,7 @@ async function handler(req, res) {
   }
 
   const v = checked.value;
-  const order = await orders.create(v, plan, lang);
+  const order = await orders.create(v, plan, lang, member.orgId);
   if (!order) throw new Error('order_create_failed');
 
   const customer = customerOf(v);

@@ -21,8 +21,8 @@ function tokenHash(token) {
   return crypto.createHash('sha256').update(String(token), 'utf8').digest('hex');
 }
 
-/** Doğrulanmış formdan 'pending' sipariş açar; satırı döndürür. */
-async function create(value, plan, lang) {
+/** Doğrulanmış formdan 'pending' sipariş açar (panel kurumuna bağlı); satırı döndürür. */
+async function create(value, plan, lang, organizationId) {
   const rows = await db.request('atlas_orders', {
     method: 'POST',
     headers: { Prefer: 'return=representation' },
@@ -41,7 +41,8 @@ async function create(value, plan, lang) {
       billing: value.billing,
       consent_ppf: value.consentPpf,
       consent_transfer: value.consentTransfer,
-      lang: lang === 'en' ? 'en' : 'tr'
+      lang: lang === 'en' ? 'en' : 'tr',
+      organization_id: organizationId || null
     }
   });
   return Array.isArray(rows) ? rows[0] : null;
