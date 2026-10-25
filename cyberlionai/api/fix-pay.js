@@ -27,6 +27,7 @@ const billing = require('./_lib/billing-details.js');
 const tg = require('./_lib/telegram.js');
 const { clientIp } = require('./_lib/session.js');
 const { formBody, customerName } = require('./checkout.js');
+const funnel = require('./_lib/funnel.js');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -40,12 +41,18 @@ function back(res, orderId, durum, alan) {
    "Geçersiz işlem") müşteri yine KENDİ siparişine döner ("Sipariş
    bulunamadı" yerine "ödeme tamamlanamadı"). Yalnızca yönlendirme için;
    ödemenin doğrulaması iyzico'nun yanıtına ve veritabanına dayanır. */
-function callbackUrl(req, orderId) {
+/* `kaynak` (isteğe bağlı): huni sayacı için ziyaretçinin geldiği araç (bkz.
+   _lib/funnel.js). iyzico dönüşte adresi olduğu gibi çağırıyor; böylece
+   kaynak saklanmadan dönüşe taşınıyor. Yalnızca izinli liste; 'direct' ya da
+   geçersizse adres eskisiyle birebir aynı kalır. */
+function callbackUrl(req, orderId, kaynak) {
   const configured = process.env.SITE_URL;
   const base = typeof configured === 'string' && /^https:\/\//.test(configured.trim())
     ? configured.trim().replace(/\/+$/, '')
     : 'https://' + String((req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '');
-  return base + '/api/fix-pay-return' + (orderId ? '?orderId=' + encodeURIComponent(orderId) : '');
+  const k = funnel.source(kaynak);
+  return base + '/api/fix-pay-return' + (orderId ? '?orderId=' + encodeURIComponent(orderId) : '')
+    + (orderId && k !== 'direct' ? '&kaynak=' + k : '');
 }
 
 async function handler(req, res) {
@@ -82,7 +89,7 @@ async function handler(req, res) {
   let init;
   try {
     init = await iyzico.initializePaymentForm({
-      orderId: order.id, priceTry: tutar, callbackUrl: callbackUrl(req, order.id),
+      orderId: order.id, priceTry: tutar, callbackUrl: callbackUrl(req, order.id, params.kaynak),
       buyer: alici.buyer, address: alici.address,
       itemName: 'Yazılım Güvenlik Düzeltme Hizmeti — ' + (order.type === 'full' ? 'tam paket' : 'seçili bulgular')
     });
@@ -95,6 +102,7 @@ async function handler(req, res) {
       { type: 'alert', priority: true });
     return back(res, orderId, 'unavailable');
   }
+  await funnel.record('fix_checkout_start', params.kaynak);
   res.setHeader('Location', init.url);
   return res.status(303).end();
 }

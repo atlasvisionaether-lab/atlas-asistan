@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   var AD = { headers: 'Güvenlik başlıkları', email: 'SPF / DMARC', ssl: 'SSL', blacklist: 'Kara liste', direct: 'Doğrudan' };
-  var OLAY = { tool_use: 'Araç kullanımı', scan: 'Tam tarama', checkout_start: 'Ödeme formu', checkout_success: 'Başarılı ödeme' };
+  var OLAY = { tool_use: 'Araç kullanımı', scan: 'Tam tarama', checkout_start: 'Abonelik formu', checkout_success: 'Abonelik ödendi',
+    fix_checkout_start: 'Düzeltme formu', fix_paid: 'Düzeltme ödendi' };
   var msg = document.getElementById('msg');
 
   function hucre(tr, tag, text, cls) {
@@ -17,7 +18,8 @@
     var t = document.getElementById('tablo');
     t.textContent = '';
     var bas = document.createElement('tr');
-    ['Kaynak', OLAY.tool_use, OLAY.scan, 'Araç → tarama', OLAY.checkout_start, OLAY.checkout_success, 'Araç → ödeme']
+    ['Kaynak', OLAY.tool_use, OLAY.scan, 'Araç → tarama', OLAY.checkout_start, OLAY.checkout_success,
+      OLAY.fix_checkout_start, OLAY.fix_paid, 'Araç → herhangi bir ödeme']
       .forEach(function (h) { hucre(bas, 'th', h); });
     t.appendChild(bas);
     r.sources.forEach(function (s) {
@@ -29,7 +31,9 @@
       hucre(tr, 'td', s === 'direct' ? '–' : oran(x.scan[s], x.tool_use[s]), 'oran');
       hucre(tr, 'td', String(x.checkout_start[s]));
       hucre(tr, 'td', String(x.checkout_success[s]));
-      hucre(tr, 'td', s === 'direct' ? '–' : oran(x.checkout_success[s], x.tool_use[s]), 'oran');
+      hucre(tr, 'td', String(x.fix_checkout_start[s]));
+      hucre(tr, 'td', String(x.fix_paid[s]));
+      hucre(tr, 'td', s === 'direct' ? '–' : oran(x.checkout_success[s] + x.fix_paid[s], x.tool_use[s]), 'oran');
       t.appendChild(tr);
     });
   }

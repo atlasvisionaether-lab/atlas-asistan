@@ -99,6 +99,7 @@
       <p class="msg" id="payMsg" role="alert" hidden></p>
       <form id="payForm" method="post" action="/api/fix-pay" novalidate>
         <input type="hidden" name="orderId" id="fOrder" />
+        <input type="hidden" name="kaynak" id="kaynakInput" value="" />
         <div class="field"><label for="adSoyad">Ad Soyad / Full name</label>
           <input type="text" id="adSoyad" name="ad" autocomplete="name" maxlength="100" required /></div>
         <div class="field"><label for="ulke">Ülke / Country</label>
@@ -131,6 +132,7 @@
   </main>
   <footer>© Cyber Lion AI · <a href="/kullanim-kosullari">Kullanım Şartları</a></footer>
   <script src="/billing-form.js" defer></script>
+  <script src="/kaynak.js" defer></script>
   <script src="/fix-checkout.js" defer></script>
 </body>
 </html>

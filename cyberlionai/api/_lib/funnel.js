@@ -7,6 +7,8 @@
  *   scan              tam tarama başladı (POST /api/scan, kota ayrıldıktan sonra)
  *   checkout_start    iyzico ödeme formuna gidildi (GET/POST /api/checkout)
  *   checkout_success  ödeme etkin aboneliğe döndü (/api/checkout-return)
+ *   fix_checkout_start "Biz düzeltelim" ödeme formuna gidildi (/api/fix-pay)
+ *   fix_paid          düzeltme siparişi ödendi (/api/fix-pay-return, sipariş başına bir kez)
  *
  * Her olay bir KAYNAKLA sayılır: ziyaretçinin geldiği araç ('headers',
  * 'email', 'ssl', 'blacklist') ya da 'direct'. Kaynak araç sayfasındaki
@@ -22,7 +24,7 @@
 
 const store = require('./store.js');
 
-const EVENTS = ['tool_use', 'scan', 'checkout_start', 'checkout_success'];
+const EVENTS = ['tool_use', 'scan', 'checkout_start', 'checkout_success', 'fix_checkout_start', 'fix_paid'];
 const SOURCES = ['headers', 'email', 'ssl', 'blacklist', 'direct'];
 const TTL_SECONDS = 400 * 86400;   // bir yıldan biraz uzun: yıllık karşılaştırma
 

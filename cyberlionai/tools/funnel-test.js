@@ -126,6 +126,22 @@ const funnel = require(path.join(API, '_lib', 'funnel.js'));
   esit('ödeme: yönlendirmeden hemen önce', /funnel\.record\('checkout_start', params\.kaynak\);\s*res\.setHeader\('Location', init\.url\)/.test(odeme), true);
   esit('ödeme: kaynak bekleyen eşlemeye yazılıyor', /kaynak: funnel\.source\(params\.kaynak\)/.test(odeme), true);
   esit('dönüş: başarı abonelik başına bir kez (tekSefer içinde)', /tekSefer\('pay:[\s\S]{0,400}if \(aktif\) await funnel\.record\('checkout_success'/.test(oku('checkout-return.js')), true);
+  /* "Biz düzeltelim": ilk gerçek ödeme (2026-10-25) bu türdendi. */
+  esit('düzeltme olayları tanımlı', funnel.EVENTS.indexOf('fix_checkout_start') !== -1 && funnel.EVENTS.indexOf('fix_paid') !== -1, true);
+  const fixPay = oku('fix-pay.js');
+  esit('düzeltme: iyzico yönlendirmesinden hemen önce', /funnel\.record\('fix_checkout_start', params\.kaynak\);\s*res\.setHeader\('Location', init\.url\)/.test(fixPay), true);
+  esit('düzeltme: ödendi yalnızca satır gerçekten güncellendiğinde', /const row = rows && rows\[0\];\s*if \(row\) \{[\s\S]{0,300}funnel\.record\('fix_paid', req\.query && req\.query\.kaynak\)/.test(oku('fix-pay-return.js')), true);
+  sapla('_lib/telegram.js', { ucuSar: function (h) { return h; }, sendTelegram: async function () {}, mesaj: {} });
+  process.env.SITE_URL = 'https://www.cyberlionai.com';
+  const fp = require(path.join(API, 'fix-pay.js'));
+  const SIP = '33333333-3333-4333-8333-333333333333';
+  esit('dönüş adresi kaynaksız eskisiyle aynı', fp.callbackUrl({ headers: {} }, SIP), 'https://www.cyberlionai.com/api/fix-pay-return?orderId=' + SIP);
+  esit('dönüş adresi kaynakla', fp.callbackUrl({ headers: {} }, SIP, 'blacklist'), 'https://www.cyberlionai.com/api/fix-pay-return?orderId=' + SIP + '&kaynak=blacklist');
+  esit('dönüş adresine izinsiz değer girmez', fp.callbackUrl({ headers: {} }, SIP, '&x=<y>'), 'https://www.cyberlionai.com/api/fix-pay-return?orderId=' + SIP);
+  esit('düzeltme sayfası: gizli alan ve betik', /name="kaynak" id="kaynakInput"[\s\S]*src="\/kaynak\.js"/.test(fs.readFileSync(path.join(__dirname, '..', 'fix-checkout.html'), 'utf8')), true);
+  await funnel.record('fix_paid', 'blacklist', T);
+  esit('raporda düzeltme ödemesi', (await funnel.report(1, T)).totals.fix_paid.blacklist, 1);
+
   const anaSayfa = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   esit('ana sayfa: iki tarama isteği de kaynak gönderiyor', (anaSayfa.match(/kaynak: window\.clKaynak \? window\.clKaynak\(\) : ''/g) || []).length, 2);
   esit('ana sayfa: onay anahtarı sürümlü', /cookie: 'cookieConsent2'/.test(anaSayfa), true);
