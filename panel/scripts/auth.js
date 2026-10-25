@@ -204,8 +204,13 @@ async function claimAndBoot(session, clinicName) {
   const s = status.data && status.data[0];
   const done = s && s.info && s.payment && s.whatsapp && s.test;
   // Doğrulama dönüşünde hash'te jeton parçası (access_token=…) kalabilir: ekran adı değil.
+  // #signup: atlasasistan.com/checkout'taki "Kayıt Ol ve Devam Et" bağlantısı.
   const h = location.hash.slice(1);
-  if (!done && (!h || h.indexOf("=") !== -1)) location.hash = "#onboarding";
+  if (!done && (!h || h === "signup" || h.indexOf("=") !== -1)) {
+    // Sitede paket seçilip gelindiyse ve ödeme yoksa doğrudan ödeme adımı.
+    const plan = window.ATLAS_CHECKOUT && window.ATLAS_CHECKOUT.storedPlan();
+    location.hash = s && !s.payment && plan ? "#odeme" : "#onboarding";
+  }
   if (typeof window.atlasBoot === "function") window.atlasBoot();
 }
 
@@ -245,7 +250,7 @@ function boot() {
         window.atlasOrgId = null;
         bootedFor = null;
         setSignoutVisible(false);
-        renderLogin();
+        if (location.hash === "#signup") renderSignup(); else renderLogin();
       }
     }, 0);
   });

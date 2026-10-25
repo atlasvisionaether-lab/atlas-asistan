@@ -34,3 +34,11 @@ Bu demo panel, ayrı atlas-asistan-panel-preview Vercel projesinde yalnızca pre
 - **Abonelik / Faturalar**: `atlas_my_orders` (yalnız owner/manager; fatura bilgisi dönmez). Sipariş, doğrulanmış aynı e-postayla verildiyse kuruma bağlanır.
 - `services.js` / `inbox.js` artık sabit demo kurum kimliği yerine oturumdaki kurumu (`window.atlasOrgId`) kullanır.
 - Gerekli: `supabase/migrations/0017_self_signup.sql` uygulanmalı; Supabase Auth → URL Configuration'a panel adresi (Site URL / Redirect URLs) eklenmeli.
+
+## Panelden iyzico ödemesi (2026-10-25)
+
+- **Paket / Ödeme** ekranı (`#odeme`, `scripts/checkout.js`): paket seçimi + fatura bilgileri (TR'de TC Kimlik No ya da VKN + vergi dairesi zorunlu) → iyzico barındırılan ödeme sayfası.
+- Ödeme ucu atlasasistan.com'da: panel `POST https://atlasasistan.com/api/atlas-checkout` çağrısını oturum jetonuyla (CORS) yapar; sunucu jetonu Supabase Auth'a sorar ve siparişi kliniğe bağlar (`api/_atlas/panel.js`). Yalnız owner/manager ödeme başlatır.
+- iyzico dönüşü panelin **Kurulum** ekranına `?odeme=success|pending|failed` ile gelir. WhatsApp'a yönlendirme yok.
+- atlasasistan.com/checkout artık form değil: "Kayıt Ol ve Devam Et" → panel (`?plan=…#signup`); seçilen paket kayıttan sonra ödeme ekranında seçili gelir.
+- Testler: `node tools/atlas-panel-checkout-test.js`, `node tools/atlas-billing-test.js`.

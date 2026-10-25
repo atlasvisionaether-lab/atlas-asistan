@@ -5,7 +5,7 @@
  *
  *   POST /api/atlas-checkout-return  (iyzico, form jetonu ile)
  *   GET  /api/atlas-checkout-return?token=…
- *   → 303 /checkout?plan=…&status=success|pending|failed
+ *   → 303 <panel>/?odeme=success|pending|failed#onboarding  (bkz. _atlas/panel.js)
  *
  * GÖVDEYE GÜVENİLMİYOR: sonuç jetonla iyzico'ya sorulur. Sipariş jeton
  * özetiyle VERİTABANINDAN bulunur; tutar ve plan oradan karşılaştırılır.
@@ -23,9 +23,11 @@ const { readToken } = require('../cyberlionai/api/checkout-return.js');
 const { verify } = require('../cyberlionai/api/fix-pay-return.js');
 const plans = require('./_atlas/plans.js');
 const orders = require('./_atlas/orders.js');
+const panel = require('./_atlas/panel.js');
 
+/* Ödeme panelden başlar; sonuç ne olursa olsun kullanıcı panelin Kurulum ekranına döner. */
 function back(res, plan, status) {
-  res.setHeader('Location', '/checkout?plan=' + encodeURIComponent(plan || '') + '&status=' + encodeURIComponent(status));
+  res.setHeader('Location', panel.returnUrl(status));
   return res.status(303).end();
 }
 
