@@ -9,7 +9,8 @@
  * RLS: authenticated kullanıcı kendi organizasyonuna yazar (0002). */
 (function(){
  var ui = window.ATLAS_UI;
- var ORG_ID = "fff29ed3-f2e3-4837-bdfc-f4e974f366e7";
+ /* Oturumdaki kullanıcının kurumu (auth.js, atlas_claim_clinic). */
+ function orgId(){ return window.atlasOrgId; }
  var realtimeChannel = null;
  var currentWrap = null;
  var selectedCustomerId = null;
@@ -118,7 +119,7 @@
 
   sb.from("assistant_settings")
    .select("auto_reply_enabled, working_hours")
-   .eq("organization_id", ORG_ID)
+   .eq("organization_id", orgId())
    .limit(1)
    .maybeSingle()
    .then(function(res){
@@ -139,13 +140,13 @@
      working_hours: { start: startInput.value || "09:00", end: endInput.value || "18:00" },
      updated_at: new Date().toISOString()
     })
-    .eq("organization_id", ORG_ID)
+    .eq("organization_id", orgId())
     .then(function(res){
      save.disabled = false;
      if (res.error){ ui.toast("Ayarlar kaydedilemedi: " + res.error.message); return; }
      if (res.data && res.data.length === 0){
       var payload = {
-       organization_id: ORG_ID,
+       organization_id: orgId(),
        auto_reply_enabled: autoInput.checked,
        working_hours: { start: startInput.value || "09:00", end: endInput.value || "18:00" }
       };
@@ -215,7 +216,7 @@
  function loadCustomers(listWrap, chatWrap, sb){
   sb.from("customers")
    .select("id, full_name, is_handled_by_human, last_message_at")
-   .eq("organization_id", ORG_ID)
+   .eq("organization_id", orgId())
    .order("last_message_at", { ascending: false, nullsFirst: false })
    .range(0, 49)
    .then(function(res){
@@ -282,7 +283,7 @@
   input.value = "";
   sb.from("messages")
    .insert({
-    organization_id: ORG_ID,
+    organization_id: orgId(),
     customer_id: selectedCustomerId,
     content: text,
     channel: "panel",

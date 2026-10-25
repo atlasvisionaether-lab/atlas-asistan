@@ -2,12 +2,13 @@
 /* Hizmetler / Fiyatlar: Supabase services tablosu — canlı CRUD.
  * Bağımlılıklar: window.ATLAS_UI (ui.js), window.ATLAS_SUPABASE (auth.js), window.atlasUser.
  * RLS: yalnızca kendi organizasyonunun satırları görünür/değiştirilebilir;
- * ORG_ID ek savunma olarak panel sorgularında tekrar uygulanır.
+ * orgId() ek savunma olarak panel sorgularında tekrar uygulanır.
  * Edge Function bu tabloyu her çağrıda okur — buradaki değişiklikler
  * otomatik yansır, Edge Function deploy'ı GEREKMEZ. */
 (function(){
  var ui = window.ATLAS_UI;
- var ORG_ID = "fff29ed3-f2e3-4837-bdfc-f4e974f366e7";
+ /* Oturumdaki kullanıcının kurumu (auth.js, atlas_claim_clinic). */
+ function orgId(){ return window.atlasOrgId; }
  var realtimeChannel = null;
  var currentWrap = null;
 
@@ -170,7 +171,7 @@
    var name = nameInput.value.trim();
    if (!name){ err.textContent = "Hizmet adı boş olamaz."; return; }
    var payload = {
-    organization_id: ORG_ID,
+    organization_id: orgId(),
     name: name,
     price: priceInput.value === "" ? null : Number(priceInput.value),
     duration_min: durInput.value === "" ? null : Number(durInput.value),
@@ -217,7 +218,7 @@
   state(wrap, "loading", "Hizmetler yükleniyor…");
   sb.from("services")
    .select("*")
-   .eq("organization_id", ORG_ID)
+   .eq("organization_id", orgId())
    .order("created_at")
    .then(function(res){
     ui.clear(wrap);

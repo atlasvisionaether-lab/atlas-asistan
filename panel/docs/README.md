@@ -1,4 +1,4 @@
-﻿# Atlas Asistan Panel Prototipi (DEMO)
+# Atlas Asistan Panel Prototipi (DEMO)
 
 Türkiye’deki güzellik, lazer/estetik merkezleri ve seçili klinikler için randevu, müşteri iletişimi, kampanya ve operasyon yönetimi panelinin statik prototipi.
 
@@ -25,3 +25,12 @@ Tarayıcı: `http://localhost:8080`
 ## Vercel Preview
 
 Bu demo panel, ayrı atlas-asistan-panel-preview Vercel projesinde yalnızca preview/test amacıyla yayınlanır. Mevcut canlı site, Cyber Lion projesi, özel domainler ve canlı entegrasyonlar bu preview'dan bağımsızdır.
+
+## Self-servis kayıt ve kurulum (2026-10-25)
+
+- Giriş ekranında **Kayıt ol** (klinik adı + e-posta + şifre), **Şifremi unuttum** ve şifre yenileme var (`scripts/auth.js`).
+- İlk oturumda `atlas_claim_clinic` RPC'si kurumu ve `owner` kullanıcıyı açar; kurulumu bitmeyen kullanıcı `#onboarding`'e gider.
+- **Kurulum** ekranı: hizmet → ödeme → WhatsApp → test. Adımlar veriden türetilir (`atlas_onboarding_status`); elle işaretlenmez.
+- **Abonelik / Faturalar**: `atlas_my_orders` (yalnız owner/manager; fatura bilgisi dönmez). Sipariş, doğrulanmış aynı e-postayla verildiyse kuruma bağlanır.
+- `services.js` / `inbox.js` artık sabit demo kurum kimliği yerine oturumdaki kurumu (`window.atlasOrgId`) kullanır.
+- Gerekli: `supabase/migrations/0017_self_signup.sql` uygulanmalı; Supabase Auth → URL Configuration'a panel adresi (Site URL / Redirect URLs) eklenmeli.

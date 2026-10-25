@@ -2,7 +2,7 @@
 (function(){
  const store=window.ATLAS_STORE,ui=window.ATLAS_UI,data=store.data;
  const SCREENS=[
-  {id:"overview",label:"Genel Bakış"},{id:"inbox",label:"Gelen Kutusu"},{id:"appointments",label:"Randevular"},{id:"customers",label:"Müşteriler / Leadler"},{id:"campaigns",label:"Kampanyalar"},{id:"automations",label:"Otomasyonlar"},{id:"services",label:"Hizmetler / Fiyatlar"},{id:"knowledge",label:"Bilgi Bankası"},{id:"ai",label:"AI Asistan Ayarları"},{id:"widget",label:"Tasarım / Widget"},{id:"plugins",label:"Eklentiler"},{id:"analytics",label:"Analitik"},{id:"team",label:"Ekip / Yetkiler"},{id:"settings",label:"Ayarlar"}
+  {id:"onboarding",label:"Kurulum"},{id:"overview",label:"Genel Bakış"},{id:"inbox",label:"Gelen Kutusu"},{id:"appointments",label:"Randevular"},{id:"customers",label:"Müşteriler / Leadler"},{id:"campaigns",label:"Kampanyalar"},{id:"automations",label:"Otomasyonlar"},{id:"services",label:"Hizmetler / Fiyatlar"},{id:"knowledge",label:"Bilgi Bankası"},{id:"ai",label:"AI Asistan Ayarları"},{id:"widget",label:"Tasarım / Widget"},{id:"plugins",label:"Eklentiler"},{id:"analytics",label:"Analitik"},{id:"team",label:"Ekip / Yetkiler"},{id:"billing",label:"Abonelik / Faturalar"},{id:"settings",label:"Ayarlar"}
  ];
  const main=document.getElementById("main"),nav=document.getElementById("nav");
  function normScreen(id){return id==="ai-settings"?"ai":id}
@@ -22,7 +22,9 @@
  function screenAnalytics(){const f=header("Analitik","Son 7 gün — Supabase messages tablosundan (canlı)");if(window.ATLAS_ANALYTICS&&window.ATLAS_ANALYTICS.mount){window.ATLAS_ANALYTICS.mount(f)}else{f.appendChild(ui.el("div",{class:"card",text:"Analitik yükleniyor…"}))}return f}
  function screenTeam(){const f=header("Ekip / Yetkiler","Canlı — Supabase users");if(window.ATLAS_TEAM&&window.ATLAS_TEAM.mount){window.ATLAS_TEAM.mount(f)}else{f.appendChild(ui.el("div",{class:"card",text:"Ekip yükleniyor…"}))}return f}
  function screenSettings(){const f=header("Ayarlar","Canlı — dil, saat dilimi, KVKK");if(window.ATLAS_SETTINGS&&window.ATLAS_SETTINGS.mount){window.ATLAS_SETTINGS.mount(f)}else{f.appendChild(ui.el("div",{class:"card",text:"Ayarlar yükleniyor…"}))}return f}
- const RENDER={overview:screenOverview,inbox:screenInbox,appointments:screenAppointments,customers:screenCustomers,campaigns:screenCampaigns,automations:screenAutomations,services:screenServices,knowledge:screenKnowledge,ai:screenAI,widget:screenWidget,plugins:screenPlugins,analytics:screenAnalytics,team:screenTeam,settings:screenSettings};
+ function screenOnboarding(){const f=header("Kurulum","Asistanınızı dört adımda yayına alın");if(window.ATLAS_ONBOARDING){window.ATLAS_ONBOARDING.mount(f)}return f}
+ function screenBilling(){const f=header("Abonelik / Faturalar","Paketiniz ve ödeme geçmişiniz");if(window.ATLAS_ONBOARDING){window.ATLAS_ONBOARDING.mountBilling(f)}return f}
+ const RENDER={onboarding:screenOnboarding,billing:screenBilling,overview:screenOverview,inbox:screenInbox,appointments:screenAppointments,customers:screenCustomers,campaigns:screenCampaigns,automations:screenAutomations,services:screenServices,knowledge:screenKnowledge,ai:screenAI,widget:screenWidget,plugins:screenPlugins,analytics:screenAnalytics,team:screenTeam,settings:screenSettings};
  function render(){const s=store.get(),id=normScreen(s.screen||"overview");ui.clear(nav);SCREENS.forEach(x=>{const a=ui.el("a",{href:"#"+x.id,text:x.label});if(x.id===id)a.className="active";nav.appendChild(a)});ui.clear(main);main.appendChild((RENDER[id]||screenOverview)())}
  store.subscribe(s=>{if(s.lastToast)ui.toast(s.lastToast.msg);render()});
  window.addEventListener("hashchange",()=>{const id=normScreen((location.hash||"#overview").slice(1));if(SCREENS.some(x=>x.id===id))store.set({screen:id})});
