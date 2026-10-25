@@ -32,7 +32,9 @@ function analyze(context) {
     const note = r && r.reason === 'not_configured' ? 'not_configured' : 'not_measured';
     checks.push(check('blacklist', 'info', 'skipped', null, { note: note }));
   } else if (r.threats && r.threats.length) {
-    checks.push(check('blacklist', 'info', 'fail', 'Google Web Risk: ' + r.threats.join(', '),
+    /* Ayrıntıda ham tür kodu (MALWARE…) YOK: müşteriye görünen metin; türler
+       `threats` alanında, arayüz kendi diliyle yazar. */
+    checks.push(check('blacklist', 'info', 'fail', 'Google Web Risk',
       { note: 'webrisk_match', threats: r.threats.slice(), expireTime: r.expireTime || null }));
   } else {
     checks.push(check('blacklist', 'info', 'pass', 'Google Web Risk'));

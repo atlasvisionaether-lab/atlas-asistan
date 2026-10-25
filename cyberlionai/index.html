@@ -4751,7 +4751,15 @@
       // Kanıt: sunucudan gelen ham başlık değeri veya ölçüm sonucu
       var evidence = [];
       if (item.detail) evidence.push(item.detail);
-      if (item.note) evidence.push(t('scan.note.' + item.note));
+      if (item.id === 'blacklist' && item.status === 'fail' && (item.threats || []).length) {
+        /* Kara liste: tür adları dilde, kesin olmayan dille (Web Risk koşulları). */
+        var trAd = { MALWARE: 'zararlı yazılım', SOCIAL_ENGINEERING: 'oltalama', UNWANTED_SOFTWARE: 'istenmeyen yazılım' };
+        var enAd = { MALWARE: 'malware', SOCIAL_ENGINEERING: 'phishing', UNWANTED_SOFTWARE: 'unwanted software' };
+        var adlar = item.threats.map(function (x) { return (currentLang === 'en' ? enAd : trAd)[x] || x; }).join(', ');
+        evidence.push(currentLang === 'en'
+          ? 'flagged as a possible source of ' + adlar
+          : 'olası ' + adlar + ' kaynağı olarak işaretliyor');
+      } else if (item.note) evidence.push(t('scan.note.' + item.note));
       if (evidence.length) {
         var detail = document.createElement('span');
         detail.style.display = 'block';
