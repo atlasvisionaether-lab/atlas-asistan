@@ -295,6 +295,9 @@ jobs:
       - name: Geçersiz sertifikada tam tarama
         run: node cyberlionai/tools/scan-cert-test.js
 
+      - name: Kara liste (Google Web Risk)
+        run: node cyberlionai/tools/webrisk-test.js
+
       - name: Lambda paketi üretilebiliyor
         run: cyberlionai/aws/lambda-scanner/build.sh
 

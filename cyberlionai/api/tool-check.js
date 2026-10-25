@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * POST /api/tool-check { type: 'headers' | 'email' | 'ssl', url }  → ücretsiz araç sonucu
+ * POST /api/tool-check { type: 'headers' | 'email' | 'ssl' | 'blacklist', url }  → ücretsiz araç sonucu
  *
  * Anonim. PASİF okuma (bkz. _lib/toolcheck.js); her istek tarama günlüğüne
  * yazılıyor (seviye: passive). Ana ücretsiz tarama kotasını HARCAMAZ; kendi
@@ -51,11 +51,16 @@ async function handler(req, res) {
     } catch (err) { /* sınır uygulanamadı */ }
   }
 
-  const cacheKey = 'cl:tool:' + type + ':' + host;
+  /* Kara liste yolu da sorguluyor (ornek.com/a ≠ ornek.com/b); diğerleri host. */
+  const cacheKey = 'cl:tool:' + type + ':' + host + (type === 'blacklist' ? target.url.pathname : '');
   if (store.isConfigured()) {
     try {
       const cached = await store.cacheGet(cacheKey);
-      if (cached) return res.status(200).json(Object.assign(cached, { cached: true }));
+      /* Kara liste eşleşmesi süresi geçtiyse önbellekten GÖSTERİLMEZ
+         (Google Web Risk koşulları); taze sorgu yapılır. */
+      if (cached && toolcheck.cacheSecondsFor(cached, CACHE_SECONDS) > 0) {
+        return res.status(200).json(Object.assign(cached, { cached: true }));
+      }
     } catch (err) { /* önbellek yok sayılır */ }
   }
 
@@ -66,11 +71,14 @@ async function handler(req, res) {
 
   const result = await toolcheck.run(type, target.url);
   if (!result.ok) {
-    const status = HATALI_GIRDI.indexOf(result.code) !== -1 ? 400 : 502;
+    const status = HATALI_GIRDI.indexOf(result.code) !== -1 ? 400 : result.code === 'unavailable' ? 503 : 502;
     return res.status(status).json({ error: { code: result.code } });
   }
   if (store.isConfigured()) {
-    try { await store.cacheSet(cacheKey, result, CACHE_SECONDS); } catch (err) { /* yok say */ }
+    const ttl = toolcheck.cacheSecondsFor(result, CACHE_SECONDS);
+    if (ttl > 0) {
+      try { await store.cacheSet(cacheKey, result, ttl); } catch (err) { /* yok say */ }
+    }
   }
   return res.status(200).json(result);
 }

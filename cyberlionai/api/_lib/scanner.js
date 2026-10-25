@@ -27,7 +27,7 @@ const MAX_REDIRECTS = 4;
 
 /* Rapor ve motor sürümü: kaydedilen her taramaya ve PDF'e yazılır, böylece
    eski bir sonuç hangi kural setiyle üretildiği bilinerek okunabilir. */
-const SCANNER_VERSION = '1.4.2-owasp-lite';
+const SCANNER_VERSION = '1.5.0-owasp-lite';
 const REPORT_VERSION = '1';
 
 /* ============================================================
@@ -288,6 +288,7 @@ const cookieEngine = require('./engines/cookie-scanner.js');
 const tlsEngine = require('./engines/tls-scanner.js');
 const dnsEngine = require('./engines/dns-scanner.js');
 const blacklistEngine = require('./engines/blacklist-scanner.js');
+const webrisk = require('./webrisk.js');
 
 const ENGINES = [headerEngine, cookieEngine, tlsEngine, dnsEngine, blacklistEngine];
 
@@ -387,8 +388,10 @@ async function scanSite(rawUrl, options) {
   const mailSozu = mail.mailKayitlari(host).catch(function (e) {
     return { ok: false, sebep: 'query_failed', hata: e && e.message };
   });
-  /* Kara liste (URLhaus) da paralel; önbellekli, düşerse null → skipped. */
-  const blacklistSozu = blacklistEngine.loadBlacklist().catch(function () { return null; });
+  /* Kara liste (Google Web Risk) da paralel; hedef siteye değil Google'a
+     sorulur. Son adres (yönlendirmeler sonrası) kullanılır: sorgu hem alan
+     adını hem o sayfayı kapsar. Düşerse null → skipped; tarama düşmez. */
+  const blacklistSozu = webrisk.lookup(finalUrl).catch(function () { return null; });
   /* DNSSEC sorgusu da paralel: hedef siteye değil genel DNS'e. */
   const dnssecSozu = dnssec.dnssecDurumu(host).catch(function () { return { ok: false, reason: 'not_measured' }; });
   /* CAA, DNSSEC ve posta kayıtlarıyla PARALEL: üçü de ağı bekliyor, sırayla

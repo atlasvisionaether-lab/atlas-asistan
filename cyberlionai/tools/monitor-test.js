@@ -85,11 +85,6 @@ async function kos() {
   esit('kayıtlı alan: .com', monitor.registrableDomain('a.b.ornek.com'), 'ornek.com');
   esit('kayıtlı alan: .com.tr', monitor.registrableDomain('www.ornek.com.tr'), 'ornek.com.tr');
   esit('kayıtlı alan: .tr tek seviye', monitor.registrableDomain('ornek.tr'), 'ornek.tr');
-  const set = monitor.parseHostfile('# yorum\n127.0.0.1\tkotu.example\n127.0.0.1\tlocalhost\n\n127.0.0.1 diger.test\n');
-  esit('host listesi boyutu', set.size, 2);
-  esit('kara liste birebir', monitor.blacklistedHost('kotu.example', set), 'kotu.example');
-  esit('kara liste alt alan', monitor.blacklistedHost('cdn.kotu.example', set), 'kotu.example');
-  esit('kara liste benzer ad değil', monitor.blacklistedHost('iyikotu.example', set), null);
   esit('RDAP bitiş', monitor.rdapExpiration({ events: [{ eventAction: 'registration', eventDate: '2020-01-01T00:00:00Z' },
     { eventAction: 'expiration', eventDate: '2027-02-01T00:00:00Z' }] }), '2027-02-01T00:00:00.000Z');
   esit('RDAP olay yok', monitor.rdapExpiration({}), null);
@@ -107,8 +102,8 @@ async function kos() {
   const hedef = { userId: 'u1', domain: 'ornek.com', plan: 'pro' };
   let istenen = null;
   const ctx = {
-    blacklist: new Set(['ornek.com']),
-    scanSite: async function (url, o) { istenen = o; return { score: 70, tls: { validTo: '2026-10-10T00:00:00.000Z', daysLeft: 6 } }; },
+    scanSite: async function (url, o) { istenen = o; return { score: 70, tls: { validTo: '2026-10-10T00:00:00.000Z', daysLeft: 6 },
+      checks: [{ id: 'blacklist', status: 'fail', threats: ['SOCIAL_ENGINEERING', 'MALWARE'], expireTime: '2026-10-04T00:05:00Z' }] }; },
     saveJob: async function () { return 'job-1'; },
     domainExpiry: async function () { return '2026-10-20T00:00:00.000Z'; },
     now: function () { return Date.parse('2026-10-04T00:00:00Z'); }
@@ -120,6 +115,10 @@ async function kos() {
   dogru('skor düşüşü uyarısı', r.alerts.indexOf('score_drop') !== -1);
   dogru('SSL uyarısı', r.alerts.indexOf('ssl_expiry') !== -1);
   dogru('kara liste uyarısı', r.alerts.indexOf('blacklist') !== -1);
+  const blU = uyarilar.find(function (u) { return u.kind === 'blacklist'; });
+  esit('kara liste kaynağı Web Risk', blU.data.source, 'google_web_risk');
+  esit('kara liste tehdit türleri sıralı', blU.data.threats.join(), 'MALWARE,SOCIAL_ENGINEERING');
+  esit('kara liste geçerlilik süresi taşınır', blU.data.expireTime, '2026-10-04T00:05:00Z');
   dogru('alan adı bitiş uyarısı', r.alerts.indexOf('domain_expiry') !== -1);
   const ssl = uyarilar.find(function (u) { return u.kind === 'ssl_expiry'; });
   esit('SSL 6 gün → kritik', ssl.severity, 'critical');
@@ -137,13 +136,14 @@ async function kos() {
   /* Küçük düşüş uyarı üretmez */
   oncekiSkor = 72;
   const r2 = await monitor.dailyCheck({ userId: 'u9', domain: 'temiz.com', plan: 'pro' }, {
-    blacklist: new Set(), now: ctx.now, domainExpiry: async function () { return null; },
-    scanSite: async function () { return { score: 70, tls: { validTo: 'x', daysLeft: 200 } }; }
+    now: ctx.now, domainExpiry: async function () { return null; },
+    scanSite: async function () { return { score: 70, tls: { validTo: 'x', daysLeft: 200 },
+      checks: [{ id: 'blacklist', status: 'pass' }] }; }
   });
   esit('2 puan düşüş uyarı yok', r2.alerts.length, 0);
 
   const r3 = await monitor.dailyCheck({ userId: 'u9', domain: 'bozuk.com', plan: 'pro' }, {
-    blacklist: new Set(), scanSite: async function () { throw new Error('unreachable'); }
+    scanSite: async function () { throw new Error('unreachable'); }
   });
   esit('tarama düşerse ok:false', r3.ok, false);
   esit('tarama hatası kodu', r3.error, 'unreachable');

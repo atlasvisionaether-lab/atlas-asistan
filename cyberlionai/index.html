@@ -2132,6 +2132,7 @@
             <li><a href="/araclar/ssl-kontrol">SSL Kontrolü</a></li>
             <li><a href="/araclar/spf-dmarc">SPF ve DMARC Kontrolü</a></li>
             <li><a href="/araclar/guvenlik-basliklari">Güvenlik Başlıkları Testi</a></li>
+            <li><a href="/araclar/kara-liste">Kara Liste Kontrolü</a></li>
             <li><a href="/#pricing" data-i18n="nav.pricing">Fiyatlandırma</a></li>
             <li><a href="/odeme?plan=pro" data-i18n="nav.upgrade">Pro'ya Geç</a></li>
           </ul>
@@ -2603,6 +2604,8 @@
             not_https: 'sayfa HTTPS değil',
             no_html: 'HTML içerik alınamadı',
             not_measured: 'bu ortamda ölçülemedi',
+            not_configured: 'kara liste kaynağı yapılandırılmamış',
+            webrisk_match: 'Google Web Risk bu adresi olası tehlikeli içerik kaynağı olarak işaretliyor',
             not_implemented: 'başlık uygulanmamış (tavsiye edilen ek katman)',
             no_external_scripts: 'sayfada dış kaynaklı script yok',
             wildcard_with_credentials: "'*' ile kimlik bilgisi birlikte kullanılamaz",
@@ -2671,7 +2674,7 @@
             spf:           { name: 'SPF kaydı', fix: 'TXT kaydı ekleyin:  v=spf1 include:<posta sağlayıcınız> -all' },
             dmarc:         { name: 'DMARC politikası', fix: '_dmarc.<alan adınız> altında TXT kaydı:  v=DMARC1; p=quarantine; rua=mailto:dmarc@<alan adınız>' },
             dkim:          { name: 'DKIM imzası', fix: 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan adınız> altında yayınlayın.' },
-            blacklist:     { name: 'Kara liste (URLhaus)', fix: 'Sitenizdeki zararlı dosyayı/bağlantıyı kaldırın, sunucuyu temizleyin ve URLhaus üzerinden kaldırma talebi gönderin (urlhaus.abuse.ch).' },
+            blacklist:     { name: 'Olası kara liste kaydı (Google Web Risk)', fix: 'Sunucunuzu ve sitenizi tarayıp zararlı dosya, bağlantı ve yönlendirmeleri kaldırın; yazılımlarınızı güncelleyin ve yönetici şifrelerini değiştirin. Temizlikten sonra Google Search Console › Güvenlik Sorunları ekranından inceleme isteyin.' },
             dnssec:        { name: 'DNSSEC', fix: 'Alan adı sağlayıcınızın (veya Cloudflare: DNS › Settings › DNSSEC) panelinden DNSSEC\'i açın ve verilen DS kaydını kayıt firmanıza ekleyin.' },
             caa:           { name: 'CAA kaydı (sertifika yetkisi)', fix: 'TXT değil CAA kaydı ekleyin:  0 issue "letsencrypt.org"  — yalnızca kullandığınız makamı yazın.' },
             a01___env: { name: 'Açıkta .env dosyası', fix: 'Dosyayı web kökünden kaldırın ya da sunucuda bu yola erişimi engelleyin; içindeki anahtarları sızmış sayıp yenileyin.' },
@@ -3085,6 +3088,8 @@
             not_https: 'the page is not served over HTTPS',
             no_html: 'HTML content was not available',
             not_measured: 'could not be measured in this environment',
+            not_configured: 'blacklist source not configured',
+            webrisk_match: 'Google Web Risk flags this address as a possible source of unsafe content',
             not_implemented: 'header not implemented (recommended extra layer)',
             no_external_scripts: 'the page loads no external scripts',
             wildcard_with_credentials: "'*' cannot be combined with credentials",
@@ -3150,7 +3155,7 @@
             spf:           { name: 'SPF record', fix: 'Add a TXT record:  v=spf1 include:<your mail provider> -all' },
             dmarc:         { name: 'DMARC policy', fix: 'TXT record at _dmarc.<your domain>:  v=DMARC1; p=quarantine; rua=mailto:dmarc@<your domain>' },
             dkim:          { name: 'DKIM signature', fix: 'Publish the DKIM record from your mail provider at <selector>._domainkey.<your domain>.' },
-            blacklist:     { name: 'Blacklist (URLhaus)', fix: 'Remove the malicious file or link from your site, clean the server and request removal via URLhaus (urlhaus.abuse.ch).' },
+            blacklist:     { name: 'Possible blacklist entry (Google Web Risk)', fix: 'Scan your server and site and remove malicious files, links and redirects; update your software and change admin passwords. After cleaning up, request a review in Google Search Console › Security Issues.' },
             dnssec:        { name: 'DNSSEC', fix: 'Enable DNSSEC in your DNS provider (or Cloudflare: DNS › Settings › DNSSEC) and add the DS record it gives you at your registrar.' },
             caa:           { name: 'CAA record (certificate authority)', fix: 'Add a CAA record (not TXT):  0 issue "letsencrypt.org"  — name only the CA you actually use.' },
             a01___env: { name: 'Exposed .env file', fix: 'Remove the file from the web root or block this path on the server; treat the keys inside as leaked and rotate them.' },
@@ -4686,6 +4691,43 @@
       if (cartBar) renderCart();
     }
 
+    /* Google Web Risk koşulları: atıf ("Advisory provided by Google"), tehdit
+       türüne göre bilgi bağlantısı ve hatalı pozitif/negatif notu. Yalnızca
+       Google verisine dayanan kara liste satırında gösterilir. */
+    var WR_MORE = {
+      SOCIAL_ENGINEERING: 'https://www.antiphishing.org',
+      MALWARE: 'https://developers.google.com/search/docs/advanced/security/malware',
+      UNWANTED_SOFTWARE: 'https://www.google.com/about/company/unwanted-software-policy.html'
+    };
+    function webRiskBlock(item) {
+      var en = currentLang === 'en';
+      var box = document.createElement('span');
+      box.style.display = 'block';
+      box.style.marginTop = '7px';
+      box.style.fontSize = '0.78rem';
+      box.style.color = 'var(--text-gray)';
+      var adv = document.createElement('a');
+      adv.href = 'https://docs.cloud.google.com/web-risk/docs/advisory';
+      adv.target = '_blank'; adv.rel = 'noopener';
+      adv.textContent = 'Advisory provided by Google';
+      box.appendChild(adv);
+      (item.threats || []).forEach(function (tur) {
+        if (!WR_MORE[tur]) return;
+        box.appendChild(document.createTextNode(' · '));
+        var a = document.createElement('a');
+        a.href = WR_MORE[tur]; a.target = '_blank'; a.rel = 'noopener';
+        var ad = en
+          ? { MALWARE: 'malware', SOCIAL_ENGINEERING: 'phishing', UNWANTED_SOFTWARE: 'unwanted software' }
+          : { MALWARE: 'zararlı yazılım', SOCIAL_ENGINEERING: 'oltalama', UNWANTED_SOFTWARE: 'istenmeyen yazılım' };
+        a.textContent = (en ? 'Learn more: ' : 'Daha fazla bilgi: ') + (ad[tur] || tur);
+        box.appendChild(a);
+      });
+      box.appendChild(document.createTextNode(en
+        ? ' — Google cannot guarantee that its information is comprehensive and error-free; some risky sites may not be identified and some safe sites may be identified in error.'
+        : ' — Google bilgilerinin eksiksiz ve hatasız olduğunu garanti edemez; bazı riskli siteler tespit edilmeyebilir, bazı güvenli siteler hatayla işaretlenebilir.'));
+      return box;
+    }
+
     function addCheckRow(item) {
       var li = document.createElement('li');
       li.style.alignItems = 'flex-start';
@@ -4709,7 +4751,15 @@
       // Kanıt: sunucudan gelen ham başlık değeri veya ölçüm sonucu
       var evidence = [];
       if (item.detail) evidence.push(item.detail);
-      if (item.note) evidence.push(t('scan.note.' + item.note));
+      if (item.id === 'blacklist' && item.status === 'fail' && (item.threats || []).length) {
+        /* Kara liste: tür adları dilde, kesin olmayan dille (Web Risk koşulları). */
+        var trAd = { MALWARE: 'zararlı yazılım', SOCIAL_ENGINEERING: 'oltalama', UNWANTED_SOFTWARE: 'istenmeyen yazılım' };
+        var enAd = { MALWARE: 'malware', SOCIAL_ENGINEERING: 'phishing', UNWANTED_SOFTWARE: 'unwanted software' };
+        var adlar = item.threats.map(function (x) { return (currentLang === 'en' ? enAd : trAd)[x] || x; }).join(', ');
+        evidence.push(currentLang === 'en'
+          ? 'flagged as a possible source of ' + adlar
+          : 'olası ' + adlar + ' kaynağı olarak işaretliyor');
+      } else if (item.note) evidence.push(t('scan.note.' + item.note));
       if (evidence.length) {
         var detail = document.createElement('span');
         detail.style.display = 'block';
@@ -4743,6 +4793,7 @@
           ? t('scan.notefix.' + item.note)
           : t('scan.checks.' + item.id + '.fix');
         body.appendChild(fix);
+        if (item.id === 'blacklist') body.appendChild(webRiskBlock(item));
         body.appendChild(howToFixBlock(item));
         var cf = cloudflareBlock(item);
         if (cf) body.appendChild(cf);

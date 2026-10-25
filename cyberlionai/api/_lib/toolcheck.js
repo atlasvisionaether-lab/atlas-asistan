@@ -2,7 +2,8 @@
 
 /**
  * Ücretsiz tek konulu araçlar (/araclar/*): güvenlik başlıkları ('headers'),
- * e-posta kimlik doğrulaması ('email': SPF + DMARC) ve SSL/TLS ('ssl').
+ * e-posta kimlik doğrulaması ('email': SPF + DMARC), SSL/TLS ('ssl') ve kara
+ * liste ('blacklist': Google Web Risk).
  *
  * Tam taramanın KOPYASI değil: aynı motoru (engines/header-scanner.js) ve
  * aynı SSRF kapısını (scanner.guardedFetch → guard.assertPublicHost)
@@ -21,11 +22,12 @@ const { normalizeTarget, assertPublicHost } = require('./guard.js');
 const { CHECKS, NOTE_FIX } = require('./report.js');
 const fixpricing = require('./fixpricing.js');
 const mail = require('./mail.js');
+const webrisk = require('./webrisk.js');
 const net = require('net');
 
 const HEADER_IDS = ['https', 'hsts', 'csp', 'xframe', 'nosniff', 'referrer', 'permissions', 'disclosure'];
 const TOP_N = 3;
-const TYPES = ['headers', 'email', 'ssl'];
+const TYPES = ['headers', 'email', 'ssl', 'blacklist'];
 
 /** Bağlamdan (headers + finalUrl) araç sonucunu üretir. Saf: ağ yok. */
 function headersReport(context) {
@@ -283,6 +285,50 @@ async function sslRun(target, deps) {
   return Object.assign({ ok: true }, sslReport(host, olcum.tls, olcum.legacy, headers));
 }
 
+/* --- Kara liste (Google Web Risk) ------------------------------------------
+   Hedef siteye HİÇ istek gitmez: adres yalnızca Google'a sorulur (sorgu
+   dizesi atılır, bkz. webrisk.lookupUri). Sonuç dili koşullara uygun:
+   eşleşme "olası", temiz sonuç "kayıt bulunamadı" — "güvenli" DEĞİL. Uyarı
+   yalnızca expireTime'a kadar gösterilebilir; uç önbelleği buna göre
+   kısaltır (bkz. cacheSecondsFor). */
+function blacklistReport(r) {
+  const turler = r.threats || [];
+  return {
+    type: 'blacklist',
+    host: new URL(r.uri).hostname,
+    uri: r.uri,
+    listed: turler.length > 0,
+    threats: turler.map(function (t) {
+      return { type: t, label: webrisk.THREAT_LABEL.tr[t] || t, learnMore: webrisk.LEARN_MORE[t] || null };
+    }),
+    expireTime: r.expireTime || null,
+    advisoryUrl: turler.length ? webrisk.ADVISORY_URL : null,
+    fixPrice: turler.length ? fixpricing.TIERS[fixpricing.tierOf('blacklist')] : null,
+    checkedAt: r.checkedAt || new Date().toISOString()
+  };
+}
+
+async function blacklistRun(target, deps) {
+  const oku = (deps && deps.webrisk) || webrisk.lookup;
+  let r;
+  try { r = await oku(target.url); } catch (e) { r = null; }
+  if (!r || !r.ok) {
+    return { ok: false, code: r && r.reason === 'bad_uri' ? 'invalid_url' : 'unavailable' };
+  }
+  return Object.assign({ ok: true }, blacklistReport(r));
+}
+
+/**
+ * Sonucun uç önbelleğinde kalabileceği süre (sn). Kara liste eşleşmesi
+ * Google'ın verdiği geçerlilik süresini aşamaz; süresi yoksa önbelleğe
+ * alınmaz (0). Diğer türler varsayılanı kullanır.
+ */
+function cacheSecondsFor(result, varsayilan, now) {
+  if (!result || result.type !== 'blacklist' || !result.listed) return varsayilan;
+  const kalan = webrisk.warningSecondsLeft({ ok: true, threats: result.threats, expireTime: result.expireTime }, now);
+  return Math.min(varsayilan, kalan);
+}
+
 function errorCode(err) {
   const m = err && err.message;
   /* cert_invalid: sunucu yanıt veriyor ama sertifikası geçersiz — "ulaşılamadı"
@@ -304,6 +350,7 @@ async function run(type, rawUrl, deps) {
   if (target.error) return { ok: false, code: target.error };
   if (type === 'email') return emailRun(target.host, deps);
   if (type === 'ssl') return sslRun(target, deps);
+  if (type === 'blacklist') return blacklistRun(target, deps);
   const fetchFn = (deps && deps.fetch) || scanner.guardedFetch;
   let sonuc;
   try {
@@ -316,4 +363,4 @@ async function run(type, rawUrl, deps) {
     headersReport({ headers: sonuc.response.headers, finalUrl: sonuc.finalUrl, html: null }));
 }
 
-module.exports = { run, headersReport, emailReport, sslReport, HEADER_IDS, EMAIL_IDS, SSL_IDS, TOP_N, TYPES };
+module.exports = { run, headersReport, emailReport, sslReport, blacklistReport, cacheSecondsFor, HEADER_IDS, EMAIL_IDS, SSL_IDS, TOP_N, TYPES };

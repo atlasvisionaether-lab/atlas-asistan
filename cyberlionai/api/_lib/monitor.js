@@ -8,7 +8,7 @@
  *   - Skor düşüşü (≥5 puan, bir önceki tamamlanmış taramaya göre)
  *   - SSL sertifikası bitişine 30 / 7 / 1 gün kala (her eşikte bir kez)
  *   - Alan adı kaydının bitişine 30 / 7 gün kala (RDAP; haftada bir sorgu)
- *   - Kara liste: URLhaus host listesi (abuse.ch, CC0; ticari kullanım serbest)
+ *   - Kara liste: Google Web Risk (günlük taramanın kendi sorgusu; bkz. _lib/webrisk.js)
  *   - Kesinti (yalnız Enterprise): art arda 2 başarısız yoklama → uyarı;
  *     geri gelince "düzeldi" uyarısı
  *
@@ -119,10 +119,6 @@ function crossedThreshold(daysLeft, thresholds) {
 /* Kayıtlı alan adı tek yerde: _lib/dnssec.js (DNSSEC ve RDAP aynı kuralı kullanıyor). */
 const registrableDomain = require('./dnssec.js').registrableDomain;
 
-/* Kara liste ayrıştırma ve eşleştirme tek yerde: engines/blacklist-scanner.js. */
-const blacklistEngine = require('./engines/blacklist-scanner.js');
-const parseHostfile = blacklistEngine.parseHostfile;
-const blacklistedHost = blacklistEngine.blacklistedHost;
 
 /** RDAP olaylarından kayıt bitiş tarihi (ISO) ya da null. */
 function rdapExpiration(json) {
@@ -148,11 +144,6 @@ async function timedFetch(url, opts, ms) {
   } finally {
     clearTimeout(timer);
   }
-}
-
-/** Kara liste: koşu başına bir kez (motorun 30 dk önbelleği). Düşerse boş küme. */
-async function loadBlacklist() {
-  return (await blacklistEngine.loadBlacklist()) || new Set();
 }
 
 /** RDAP alan adı bitişi; .tr gibi RDAP sunmayan uzantılarda null. */
@@ -226,7 +217,7 @@ function newFindings(previous, current) {
 
 /**
  * @param target  { userId, domain, plan }
- * @param ctx     { blacklist: Set, scanSite, saveJob, now }
+ * @param ctx     { scanSite, saveJob, now }
  */
 async function dailyCheck(target, ctx) {
   const out = { domain: target.domain, ok: false, alerts: [] };
@@ -288,11 +279,15 @@ async function dailyCheck(target, ctx) {
     }
   }
 
-  /* Kara liste */
-  const hit = blacklistedHost(target.domain, ctx.blacklist);
-  if (hit) {
-    if (await raise(target, 'blacklist', 'critical', { source: 'urlhaus', match: hit },
-      'bl:' + target.userId + ':' + target.domain + ':' + hit, 7 * 86400)) {
+  /* Kara liste: taramanın kendi Web Risk sorgusu (ayrı liste indirilmez).
+     Uyarı tehdit türlerini ve Google'ın verdiği geçerlilik süresini taşır;
+     e-posta özeti süresi geçmiş eşleşmeyi göstermez (Web Risk koşulları). */
+  const bl = (scan.checks || []).filter(function (c) { return c.id === 'blacklist'; })[0];
+  if (bl && bl.status === 'fail') {
+    const turler = (bl.threats || []).slice().sort();
+    if (await raise(target, 'blacklist', 'critical',
+      { source: 'google_web_risk', threats: turler, expireTime: bl.expireTime || null },
+      'bl:' + target.userId + ':' + target.domain + ':' + turler.join(','), 7 * 86400)) {
       out.alerts.push('blacklist');
     }
   }
@@ -417,8 +412,8 @@ async function ensureTickSchedule(siteUrl, fetcher) {
 
 module.exports = {
   newFindings, previousFindingKeys, NEW_FINDING_SEVERITIES,
-  paidTargets, claimDue, dailyCheck, uptimeCheck, probe, raise, loadBlacklist, domainExpiry,
-  ensureTickSchedule, crossedThreshold, registrableDomain, parseHostfile, blacklistedHost,
+  paidTargets, claimDue, dailyCheck, uptimeCheck, probe, raise, domainExpiry,
+  ensureTickSchedule, crossedThreshold, registrableDomain,
   rdapExpiration, previousScore, TICK_BODY,
   SSL_THRESHOLDS, DOMAIN_THRESHOLDS, SCORE_DROP_ALERT, UPTIME_FAILS_FOR_DOWN
 };

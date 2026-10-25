@@ -114,6 +114,26 @@ const T = {
    ikisi aynı şeyi söylemeli, yoksa aynı tarama iki farklı yerde iki farklı
    tavsiye verir. Genel "sertifikayı yenileyin" metni eksik ara sertifika için
    yanlış yönlendirme: yenileme sorunu çözmez, zinciri tam göndermek çözer. */
+/* Süresi dolmuş kara liste eşleşmesi için PDF metni (bkz. buildReport). */
+const BL_EXPIRED = {
+  tr: ['Kara liste kontrolü', 'Bu tarama sırasında kara liste kontrolü bir eşleşme bildirdi. Google Web Risk bilgileri süreli olduğundan ve bu bilginin geçerlilik süresi dolduğundan ayrıntı gösterilmiyor.', 'Güncel durum için sitenizi yeniden tarayın.'],
+  en: ['Blacklist check', 'The blacklist check reported a match during this scan. Google Web Risk information is time-limited and this information has expired, so no details are shown.', 'Rescan your site for the current status.']
+};
+
+/**
+ * Bulgunun PDF metni [ad, etki, düzeltme]. Kara liste (Google Web Risk): PDF
+ * taramadan sonra da üretilebiliyor; koşullar gereği uyarı yalnızca Google'ın
+ * verdiği geçerlilik süresi içinde basılır, süre dolduysa ya da bilinmiyorsa
+ * yalnızca yeniden tarama önerilir.
+ */
+function findingMeta(item, lang, now) {
+  const C = CHECKS[lang] || CHECKS.tr;
+  if (item.id === 'blacklist' && !(Date.parse(item.expireTime || '') > now)) {
+    return BL_EXPIRED[lang] || BL_EXPIRED.tr;
+  }
+  return C[item.id] || [item.id, '', ''];
+}
+
 const NOTE_FIX = {
   tr: {
     chain_incomplete: 'Sunucuya yalnızca site sertifikasını değil, ara sertifikaları da içeren zinciri verin. Nginx: ssl_certificate /etc/letsencrypt/live/ALANADI/fullchain.pem;  (cert.pem DEĞİL). Apache: SSLCertificateFile .../fullchain.pem. Doğrulama: openssl s_client -connect ALANADI:443 -servername ALANADI',
@@ -160,7 +180,7 @@ const CHECKS = {
     spf: ['SPF kaydı', 'SPF olmadan üçüncü bir kişi bu alan adı adına e-posta gönderebilir ve alıcının bunu eleyecek dayanağı olmaz.', 'TXT kaydı:  v=spf1 include:<posta sağlayıcınız> -all'],
     dmarc: ['DMARC politikası', 'DMARC olmadan (veya p=none ile) SPF/DKIM doğrulamasından geçemeyen sahte e-posta yine teslim edilir.', 'TXT kaydı:  _dmarc.<alan>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<alan>'],
     dkim: ['DKIM imzası', 'DKIM, e-postanın yolda değiştirilmediğini ve gerçekten sizden geldiğini imzayla kanıtlar.', 'Posta sağlayıcınızın verdiği DKIM kaydını <seçici>._domainkey.<alan> altında yayınlayın.'],
-    blacklist: ['Kara liste (URLhaus)', 'Alan adınızın abuse.ch URLhaus kötü amaçlı yazılım listesinde olup olmadığını gösterir; listedeyse tarayıcılar ve güvenlik ürünleri sitenizi engelleyebilir.', 'Zararlı dosyayı/bağlantıyı kaldırın, sunucuyu temizleyin ve URLhaus üzerinden kaldırma talebi gönderin (urlhaus.abuse.ch).'],
+    blacklist: ['Olası kara liste kaydı (Google Web Risk)', 'Google Web Risk bu adresi olası zararlı yazılım, oltalama veya istenmeyen yazılım kaynağı olarak işaretliyor. Böyle işaretlenen siteleri tarayıcılar ve güvenlik ürünleri ziyaretçilere uyarıyla gösterebilir ya da engelleyebilir. Advisory provided by Google (https://docs.cloud.google.com/web-risk/docs/advisory). Google bilgilerinin eksiksiz ve hatasız olduğunu garanti edemez.', 'Sunucunuzu ve sitenizi tarayıp zararlı dosya, bağlantı ve yönlendirmeleri kaldırın; yazılımlarınızı güncelleyin ve yönetici şifrelerini değiştirin. Temizlikten sonra Google Search Console › Güvenlik Sorunları ekranından inceleme isteyin.'],
     dnssec: ['DNSSEC', 'DNSSEC, alan adınızın DNS yanıtlarını imzalar; sahte DNS yanıtıyla ziyaretçilerin başka bir sunucuya yönlendirilmesini zorlaştırır.', 'DNS sağlayıcınızda (ör. Cloudflare: DNS › Settings › DNSSEC) DNSSEC\'i açın ve verilen DS kaydını kayıt firmanıza ekleyin.'],
     caa: ['CAA kaydı', 'CAA kaydı olmayan bir alan adına dünyadaki herhangi bir güvenilir sertifika makamı sertifika kesebilir; makamlardan birinde yaşanan bir ihlal, sizin adınıza geçerli bir sertifika üretilmesine yeter.', 'CAA kaydı ekleyin:  0 issue "letsencrypt.org"  — yalnızca kullandığınız makamı yazın.'],
     /* OWASP Lite kontrolleri (owasp.js). Bunlar burada yoktu; PDF'te ham
@@ -201,7 +221,7 @@ const CHECKS = {
     spf: ['SPF record', 'Without SPF a third party can send email as this domain and the recipient has no basis to reject it.', 'TXT record:  v=spf1 include:<your mail provider> -all'],
     dmarc: ['DMARC policy', 'Without DMARC (or with p=none) forged email that fails SPF/DKIM is still delivered.', 'TXT record:  _dmarc.<domain>   v=DMARC1; p=quarantine; rua=mailto:dmarc@<domain>'],
     dkim: ['DKIM signature', 'DKIM proves with a signature that the message was not altered in transit and really came from you.', 'Publish the DKIM record from your mail provider at <selector>._domainkey.<domain>.'],
-    blacklist: ['Blacklist (URLhaus)', 'Shows whether your domain is on the abuse.ch URLhaus malware list; if it is, browsers and security products may block your site.', 'Remove the malicious file or link, clean the server and request removal via URLhaus (urlhaus.abuse.ch).'],
+    blacklist: ['Possible blacklist entry (Google Web Risk)', 'Google Web Risk flags this address as a possible source of malware, phishing or unwanted software. Browsers and security products may warn visitors about, or block, sites flagged this way. Advisory provided by Google (https://docs.cloud.google.com/web-risk/docs/advisory). Google cannot guarantee that its information is comprehensive and error-free.', 'Scan your server and site and remove malicious files, links and redirects; update your software and change admin passwords. After cleaning up, request a review in Google Search Console › Security Issues.'],
     dnssec: ['DNSSEC', 'DNSSEC signs your domain\'s DNS answers, making it harder to send visitors to another server with forged DNS responses.', 'Enable DNSSEC at your DNS provider (e.g. Cloudflare: DNS › Settings › DNSSEC) and add the DS record it gives you at your registrar.'],
     caa: ['CAA record', 'Without a CAA record any publicly trusted certificate authority may issue a certificate for this domain; a breach at any one of them is enough to produce a valid certificate in your name.', 'Add a CAA record:  0 issue "letsencrypt.org"  — name only the CA you actually use.'],
     /* OWASP Lite checks (owasp.js). */
@@ -343,7 +363,7 @@ function buildReport(scan, lang) {
   const NF = NOTE_FIX[lang] || NOTE_FIX.tr;
 
   for (const item of failed) {
-    const meta = C[item.id] || [item.id, '', ''];
+    const meta = findingMeta(item, lang, Date.now());
     const impactLines = doc.wrap(meta[1], 9, CONTENT_W - 16);
     /* Sebebi bilinen bir başarısızlıkta sebebe özel metin; yoksa genel metin. */
     const fixLines = doc.wrap((item.note && NF[item.note]) || meta[2], 8.5, CONTENT_W - 32);
@@ -411,4 +431,4 @@ function reportFilename(scan) {
   return 'cyberlionai-security-report-' + host + '-' + date + '.pdf';
 }
 
-module.exports = { buildReport, reportFilename, riskOf, RISK_BANDS, CHECKS, NOTE_FIX };
+module.exports = { buildReport, reportFilename, riskOf, findingMeta, RISK_BANDS, CHECKS, NOTE_FIX };

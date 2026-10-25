@@ -1,5 +1,5 @@
 # GİZLİLİK POLİTİKASI
-Son Güncelleme: 21.10.2026
+Son Güncelleme: 25.10.2026
 
 
 SATICI BİLGİLERİ:
@@ -43,6 +43,7 @@ Cyber Lion AI olarak gizliliğinize önem veriyoruz.
 - Hız sınırı sayaçları: Upstash (yalnızca IP özetinden türetilmiş süreli anahtar)
 - Yapay zekâ asistanı: DeepSeek (Çin) ve yedek olarak Anthropic (ABD); yalnızca açık rızanızla ve yalnızca gizlenmiş soru metni ile sohbet bağlamı
 - İşlem e-postaları: Resend (ABD). Hesap e-postaları (kayıt onayı, giriş bağlantısı, şifre sıfırlama), silme sertifikası ve ücretli planlarda sabah izleme özeti e-posta adresinize bu sağlayıcı üzerinden gönderilir; yalnızca e-posta adresiniz ve e-postanın içeriği iletilir
+- Kara liste kontrolü: Google Web Risk (Google Cloud, ABD). Ücretsiz kara liste aracında ve tam taramada, kontrol edilen sitenin adresi (alan adı ve yol; sorgu dizesi gönderilmez) Google'ın zararlı yazılım ve oltalama listelerinde aranmak üzere Google'a gönderilir. IP adresiniz, e-posta adresiniz ve hesap bilgileriniz gönderilmez.
 - Verileriniz satılmaz. Altyapı sağlayıcılarımızın sunucuları yurt dışında bulunabilir; bu nedenle verileriniz yurt dışındaki sunucularda işlenebilir. Ayrıntı için KVKK Aydınlatma Metni'ne bakınız.
 
 **Hesabınızı ve Verilerinizi Silme:** Hesabınızı ve hesaba bağlı tüm verileri kendiniz silebilirsiniz; bekleme süresi yoktur.

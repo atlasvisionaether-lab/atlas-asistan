@@ -69,7 +69,12 @@ async function request(pathAndQuery, options) {
  */
 function sanitizeFindings(checks) {
   return (checks || []).map(function (c) {
-    return { id: c.id, severity: c.severity, status: c.status, note: c.note || null };
+    const o = { id: c.id, severity: c.severity, status: c.status, note: c.note || null };
+    /* Kara liste (Google Web Risk) eşleşmesinin geçerlilik süresi: PDF sonradan
+       üretildiğinde süresi geçmiş uyarıyı basmamak için (Web Risk koşulları).
+       Yalnızca bir zaman damgası; kişisel veri değil. */
+    if (c.id === 'blacklist' && c.status === 'fail' && c.expireTime) o.expireTime = String(c.expireTime);
+    return o;
   });
 }
 

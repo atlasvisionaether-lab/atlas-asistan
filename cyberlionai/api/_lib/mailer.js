@@ -139,7 +139,13 @@ const KIND_TR = {
       ? 'Alan adı kaydının süresi ' + (-Number(d.daysLeft)) + ' gün önce doldu'
       : 'Alan adı kaydının bitmesine ' + Number(d.daysLeft) + ' gün kaldı';
   },
-  blacklist: function (d) { return 'Kara listede görünüyor (' + String(d.source || '') + ')'; },
+  /* Web Risk koşulları: kesin dil yok ("olası"), atıf özetin sonunda. */
+  blacklist: function (d) {
+    const ad = require('./webrisk.js').THREAT_LABEL.tr;
+    const turler = (Array.isArray(d.threats) ? d.threats : []).map(function (t) { return ad[t] || t; });
+    return 'Olası kara liste kaydı: Google Web Risk bu siteyi olası '
+      + (turler.length ? turler.join(', ') : 'tehlikeli içerik') + ' kaynağı olarak işaretliyor';
+  },
   downtime: function (d) { return 'Site erişilemedi (' + String(d.reason || '') + ')'; },
   recovered: function () { return 'Site yeniden erişilebilir oldu'; },
   new_findings: function (d) { return 'Önceki taramada olmayan ' + Number(d.count) + ' yeni bulgu: ' + String(d.first || ''); }
@@ -176,6 +182,25 @@ function digestEmail(alerts) {
     html += '</ul>';
     textParts.push('');
   });
+  /* Web Risk atfı ve bilgi bağlantıları: yalnızca Google verisine dayanan
+     bir satır varsa ve yalnızca o satırlar için (koşul: Google atfı Google
+     dışı veriye eklenmez). */
+  const wr = require('./webrisk.js');
+  const blTurler = [];
+  (alerts || []).forEach(function (a) {
+    if (a.kind === 'blacklist') ((a.data && a.data.threats) || []).forEach(function (t) { if (blTurler.indexOf(t) === -1) blTurler.push(t); });
+  });
+  if ((alerts || []).some(function (a) { return a.kind === 'blacklist'; })) {
+    const bilgi = blTurler.map(function (t) { return wr.LEARN_MORE[t]; }).filter(Boolean);
+    textParts.push('Kara liste bilgisi: Advisory provided by Google — ' + wr.ADVISORY_URL);
+    textParts.push('Google bilgilerinin eksiksiz ve hatasız olduğunu garanti edemez; bazı riskli siteler tespit edilmeyebilir, bazı güvenli siteler hatayla işaretlenebilir.');
+    if (bilgi.length) textParts.push('Daha fazla bilgi: ' + bilgi.join(' · '));
+    textParts.push('');
+    html += '<p style="color:#555;font-size:13px">Kara liste bilgisi: <a href="' + wr.ADVISORY_URL + '">Advisory provided by Google</a>. '
+      + 'Google bilgilerinin eksiksiz ve hatasız olduğunu garanti edemez; bazı riskli siteler tespit edilmeyebilir, bazı güvenli siteler hatayla işaretlenebilir.'
+      + (bilgi.length ? ' Daha fazla bilgi: ' + bilgi.map(function (u) { return '<a href="' + esc(u) + '">' + esc(u.replace(/^https?:\/\//, '')) + '</a>'; }).join(' · ') : '')
+      + '</p>';
+  }
   const panel = 'https://www.cyberlionai.com/dashboard#notifications';
   textParts.push('Ayrıntılar ve düzeltme adımları panelinizde: ' + panel, '',
     'Bu özet, aboneliğinizdeki günlük izleme hizmetinin bildirimidir. Sitelerinizi dışarıdan, pasif olarak tarıyoruz; sunucunuza ve loglarınıza erişimimiz yoktur.',
