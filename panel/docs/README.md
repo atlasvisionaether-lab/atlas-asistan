@@ -42,3 +42,11 @@ Bu demo panel, ayrı atlas-asistan-panel-preview Vercel projesinde yalnızca pre
 - iyzico dönüşü panelin **Kurulum** ekranına `?odeme=success|pending|failed` ile gelir. WhatsApp'a yönlendirme yok.
 - atlasasistan.com/checkout artık form değil: "Kayıt Ol ve Devam Et" → panel (`?plan=…#signup`); seçilen paket kayıttan sonra ödeme ekranında seçili gelir.
 - Testler: `node tools/atlas-panel-checkout-test.js`, `node tools/atlas-billing-test.js`.
+
+## Rehber — klinik sahibine ELI10 kurulum rehberi (2026-10-26)
+
+- **Rehber** ekranı (`#rehber`, `scripts/guide.js`): 5 konu (ilk kurulum, WhatsApp bağlantısı, hizmet/fiyat, ilk test mesajı, randevu takvimi); her adımda "Anladım, sonraki adım", adımla ilgili soru kutusu ve "Şimdi aç" bağlantısı. Kurulum ekranındaki her adımda "Nasıl yapılır? Rehbere sor".
+- Sunucu: `api/atlas-guide.js` (DeepSeek, `cyberlionai/api/_lib/llm.js`; yedek Claude Haiku yalnız `ANTHROPIC_API_KEY` varsa). Oturum zorunlu, CORS panel origin'i.
+- **Doğruluk:** model yalnızca adımın `facts` listesini anlatır (`api/_atlas/guide-content.js`); ürün değişince önce orası güncellenir. Model cevap veremezse panel aynı bilgileri düz liste gösterir.
+- **Maliyet:** kullanıcı başına 24 saatte `GUIDE_DAILY_LIMIT` (varsayılan 60) istek; sayaç `supabase/migrations/0018_guide_usage.sql`.
+- Gerekli env (atlasasistan-static): `DEEPSEEK_API_KEY`. Test: `node tools/atlas-guide-test.js`.
