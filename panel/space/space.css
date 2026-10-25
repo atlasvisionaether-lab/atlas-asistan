@@ -1,0 +1,94 @@
+/* Atlas — uzay teması ortak katmanı.
+ * TEK KAYNAK: /space/space.css (panel/space/space.css birebir kopya; tools/space-sync-test.js).
+ *
+ * İçerik: renk/yazı jetonları, 3B tuval yerleşimi, cam yüzey (.sx-glass) +
+ * altın/gümüş kenar parlaması, yıldız imleç, parçacık tuvali, ekran geçişi.
+ * Sayfalar kendi bileşenlerini bu jetonlarla giydirir.
+ */
+:root{
+  --sx-void:#03020a;
+  --sx-ink:#f5f2ff;
+  --sx-muted:#a7a1c4;
+  --sx-gold:#fbbf24;
+  --sx-gold-light:#fde68a;
+  --sx-cyan:#22d3ee;
+  --sx-silver:#cbd5e1;
+  --sx-glass:linear-gradient(155deg,rgba(255,255,255,.085) 0%,rgba(255,255,255,.035) 45%,rgba(255,255,255,.02) 100%);
+  --sx-glass-solid:rgba(12,9,30,.42);
+  --sx-edge:linear-gradient(135deg,rgba(253,230,138,.85) 0%,rgba(255,255,255,.14) 22%,rgba(203,213,225,.22) 55%,rgba(255,255,255,.08) 72%,rgba(34,211,238,.7) 100%);
+  --sx-blur:blur(18px) saturate(150%);
+  --sx-radius:20px;
+  --sx-serif:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --sx-sans:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
+  --sx-ease:cubic-bezier(.22,1,.36,1);
+}
+
+/* ---- 3B tuval: her şeyin arkasında, sabit ---- */
+#space3d{position:fixed;inset:0;width:100vw;height:100vh;z-index:-3;display:block;pointer-events:none;opacity:0;transition:opacity 1.4s var(--sx-ease)}
+html.space-3d #space3d{opacity:1}
+/* Boyama sırası: html'nin arka planı varsa body'ninki görünüm alanına aktarılmaz
+   ve negatif z-index'li tuvalin ÜSTÜNE boyanır. 3B hazırken body şeffaf. */
+html.space-3d body{background:transparent !important}
+
+/* ---- Cam yüzey + kenar parlaması ---- */
+.sx-glass{
+  position:relative;
+  background:var(--sx-glass),var(--sx-glass-solid);
+  -webkit-backdrop-filter:var(--sx-blur);backdrop-filter:var(--sx-blur);
+  border:0;border-radius:var(--sx-radius);
+  box-shadow:0 30px 80px -32px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07);
+  transition:box-shadow .5s var(--sx-ease),transform .5s var(--sx-ease);
+}
+.sx-glass::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:var(--sx-edge);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:.75;transition:opacity .5s var(--sx-ease);
+}
+.sx-glass:hover::before{opacity:1}
+.sx-glass:hover{box-shadow:0 30px 80px -32px rgba(0,0,0,.85),0 0 42px -14px rgba(251,191,36,.35),inset 0 1px 0 rgba(255,255,255,.1)}
+
+/* backdrop-filter desteklemeyen tarayıcıda okunurluk */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .sx-glass{background:rgba(14,10,34,.92)}
+}
+
+/* ---- Parçacık tuvali ---- */
+.sx-fx{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9998}
+
+/* ---- Yıldız imleç ---- */
+html.sx-cursor-on,html.sx-cursor-on *{cursor:none !important}
+html.sx-cursor-on.sx-cursor-text input,html.sx-cursor-on.sx-cursor-text textarea,html.sx-cursor-on.sx-cursor-text [contenteditable=true]{cursor:text !important}
+html.sx-cursor-on.sx-cursor-text select{cursor:default !important}
+.sx-cursor,.sx-cursor-halo{position:fixed;left:0;top:0;pointer-events:none;z-index:9999;opacity:0;will-change:transform}
+.sx-cursor{width:0;height:0}
+.sx-cursor svg{position:absolute;left:-16px;top:-16px;filter:drop-shadow(0 0 6px rgba(251,191,36,.9)) drop-shadow(0 0 14px rgba(34,211,238,.35));transition:transform .35s var(--sx-ease);animation:sx-spin 9s linear infinite}
+.sx-cursor-halo{width:0;height:0}
+.sx-cursor-halo::after{content:"";position:absolute;left:-17px;top:-17px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(34,211,238,.45);box-shadow:0 0 18px rgba(34,211,238,.25);transition:transform .35s var(--sx-ease),border-color .35s,opacity .35s}
+html.sx-cursor-in .sx-cursor,html.sx-cursor-in .sx-cursor-halo{opacity:1}
+html.sx-cursor-hot .sx-cursor svg{transform:scale(1.45)}
+html.sx-cursor-hot .sx-cursor-halo::after{transform:scale(1.6);border-color:rgba(253,230,138,.7)}
+html.sx-cursor-down .sx-cursor svg{transform:scale(.75)}
+html.sx-cursor-text .sx-cursor,html.sx-cursor-text .sx-cursor-halo{opacity:0}
+@keyframes sx-spin{to{rotate:360deg}}
+
+/* ---- Ekran geçişi (View Transitions) ----
+   Yalnız .sx-page (içerik alanı) canlanır; kök sabit kalır, yoksa 3B tuval de
+   anlık görüntüye girip her geçişte bulanıklaşıp sönerdi. */
+.sx-page{view-transition-name:sx-page}
+::view-transition-old(root),::view-transition-new(root){animation:none}
+::view-transition-old(sx-page){animation:sx-out .26s var(--sx-ease) both}
+::view-transition-new(sx-page){animation:sx-in .5s var(--sx-ease) both}
+@keyframes sx-out{to{opacity:0;filter:blur(6px);transform:scale(.985)}}
+@keyframes sx-in{from{opacity:0;filter:blur(8px);transform:translateY(10px) scale(1.01)}}
+
+/* ---- Yumuşak kaydırma ---- */
+html{scroll-behavior:smooth}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto !important}  /* sayfanın kendi smooth kuralını da ezer */
+  #space3d{transition:none}
+  .sx-glass,.sx-glass::before{transition:none}
+  ::view-transition-old(sx-page),::view-transition-new(sx-page){animation:none}
+}
