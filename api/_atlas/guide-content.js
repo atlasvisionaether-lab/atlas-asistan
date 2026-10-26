@@ -185,6 +185,42 @@ const TOPICS = [
     ]
   },
   {
+    id: 'site',
+    title: 'Web sitenizi oluşturup yayınlamak',
+    steps: [
+      {
+        title: 'Bilgiler ve görseller',
+        screen: 'site',
+        facts: [
+          'Menüde "Web Sitem" ekranında önce site adresini seçersiniz: <adınız>.atlasasistan.com (küçük harf, rakam, tire).',
+          'Adres, ilçe/şehir, telefon, çalışma saatleri ve "Hakkımızda notları" girilir; dört şablondan biri (Nebula, Aurora, Eclipse, Rose) ve bir vurgu rengi seçilir.',
+          'Logo ve mekân/ekip fotoğrafları yüklenir (JPEG, PNG, WebP; en çok 12 fotoğraf). Öncesi/sonrası fotoğraf yüklenmez: sağlık hizmetlerinin tanıtımında mevzuatla sınırlıdır.',
+          'Hizmet adları ve fiyatlar sitede Hizmetler / Fiyatlar ekranından otomatik gelir; orada değişiklik yapınca siteyi yeniden yayınlamanız yeterlidir.'
+        ]
+      },
+      {
+        title: 'Metni yapay zekâya yazdırmak',
+        screen: 'site',
+        facts: [
+          '"Yapay zekâ ile metin yaz" düğmesi başlık, hakkımızda, hizmet açıklamaları ve sık sorulan soruları yazar (günde en çok 10 kez).',
+          'Yapay zekâ yalnız sizin notlarınızdaki bilgiyi kullanır; ödül, kuruluş yılı, doktor adı gibi bilgileri uydurmaz. Fiyat, adres ve telefon yazmaz; bunlar sayfaya veritabanından gelir.',
+          'Tüm metinleri dilediğiniz gibi düzenleyip "Metni kaydet" ile kaydedebilirsiniz.',
+          'Metinde "garanti", "%100", "en iyi", "acısız", "kalıcı çözüm" gibi sağlık tanıtımında riskli ifadeler varsa ilgili alan kırmızı işaretlenir ve düzeltilene kadar site yayınlanamaz.'
+        ]
+      },
+      {
+        title: 'Önizlemek ve yayınlamak',
+        screen: 'site',
+        facts: [
+          '"Önizle" ile sitenin son halini panelde görürsünüz; önizleme yayınlanmaz.',
+          'Yayınlamak için metinleri okuduğunuzu ve sağlık iddiası ile öncesi/sonrası görsel içermediğini onay kutusuyla onaylarsınız. Yayınlanan, onayladığınız halidir.',
+          'Site <adınız>.atlasasistan.com adresinde ve yedek olarak atlasasistan.com/s/<adınız> adresinde açılır.',
+          'Bilgi ya da metin değiştirdiğinizde güncel hali için yeniden onaylayıp yayınlamanız gerekir. "Yayından kaldır" ile siteyi kapatabilirsiniz. Siteyi yalnız klinik sahibi ya da yöneticisi yayınlayabilir.'
+        ]
+      }
+    ]
+  },
+  {
     id: 'takvim',
     title: 'Randevu takvimi',
     steps: [

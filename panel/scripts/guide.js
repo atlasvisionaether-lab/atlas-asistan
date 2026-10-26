@@ -13,7 +13,7 @@
  var ui = window.ATLAS_UI;
  var API = "https://atlasasistan.com/api/atlas-guide";
  var SCREEN_LABELS = {
-  onboarding: "Kurulum", kanallar: "Kanallar", ai: "AI Asistan Ayarları", automations: "Otomasyonlar", odeme: "Paket / Ödeme",
+  onboarding: "Kurulum", kanallar: "Kanallar", site: "Web Sitem", ai: "AI Asistan Ayarları", automations: "Otomasyonlar", odeme: "Paket / Ödeme",
   services: "Hizmetler / Fiyatlar", knowledge: "Bilgi Bankası", inbox: "Gelen Kutusu", appointments: "Randevular"
  };
 
