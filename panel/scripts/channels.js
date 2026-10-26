@@ -6,7 +6,14 @@
  * Kimlik bilgileri yalnız sunucuya gider, şifreli saklanır; liste cevabında
  * jeton DÖNMEZ. Meta kanallarında son adım: kliniğin Meta uygulamasına webhook
  * adresi + doğrulama jetonu girilir (yalnız sahip/yönetici görür).
- * Bağlama/kesme yalnız sahip/yönetici; diğer roller durumu görür. */
+ * Bağlama/kesme yalnız sahip/yönetici; diğer roller durumu görür.
+ *
+ * WhatsApp "tek tıkla bağla" (Embedded Signup v4): sunucu Atlas Meta uygulaması
+ * yapılandırılmışsa (GET → embedded.whatsapp) Facebook SDK'sı düğmeye basılınca
+ * yüklenir; Facebook penceresi WABA + numara kimliğini postMessage ile, 30 sn
+ * ömürlü kodu FB.login cevabıyla verir; ikisi sunucuya gider (kod orada jetona
+ * çevrilir). "Mevcut WhatsApp Business numaram" = coexistence: telefondaki
+ * uygulama çalışmaya devam eder. Eski el ile bağlama "Gelişmiş" altında kalır. */
 (function(){
  var ui = window.ATLAS_UI;
  var API = "https://atlasasistan.com/api/atlas-channels";
@@ -60,6 +67,86 @@
    ]
   }
  };
+
+ var embedded = null;   // GET → { whatsapp: { appId, configId, graphVersion } } | null
+ var sdkPromise = null;
+
+ function loadSdk(cfg){
+  if (sdkPromise) return sdkPromise;
+  sdkPromise = new Promise(function(resolve, reject){
+   window.fbAsyncInit = function(){
+    window.FB.init({ appId: cfg.appId, autoLogAppEvents: true, xfbml: false, version: cfg.graphVersion });
+    resolve(window.FB);
+   };
+   var sc = document.createElement("script");
+   sc.src = "https://connect.facebook.net/en_US/sdk.js"; sc.async = true; sc.defer = true; sc.crossOrigin = "anonymous";
+   sc.onerror = function(){ sdkPromise = null; reject(new Error("sdk")); };
+   document.head.appendChild(sc);
+  });
+  return sdkPromise;
+ }
+
+ /* Facebook penceresi → { phone_number_id, waba_id } (postMessage) + FB.login → kod. */
+ function embeddedSignup(coexistence, setStatus, reload){
+  var cfg = embedded && embedded.whatsapp;
+  if (!cfg) return;
+  var session = null, done = false;
+  function onMsg(ev){
+   var host = ""; try { host = new URL(ev.origin).hostname; } catch (e) { return; }
+   if (host !== "facebook.com" && !/\.facebook\.com$/.test(host)) return;
+   var d; try { d = typeof ev.data === "string" ? JSON.parse(ev.data) : ev.data; } catch (e) { return; }
+   if (!d || d.type !== "WA_EMBEDDED_SIGNUP") return;
+   if (/^FINISH/.test(String(d.event || "")) && d.data) session = { wabaId: String(d.data.waba_id || ""), phoneNumberId: String(d.data.phone_number_id || "") };
+   else if (d.event === "CANCEL" || d.event === "ERROR"){ session = { cancelled: true, step: d.data && (d.data.current_step || d.data.error_message) }; }
+  }
+  window.addEventListener("message", onMsg);
+  function finish(text, ok){ if (done) return; done = true; window.removeEventListener("message", onMsg); setStatus(text, ok); }
+  setStatus("Facebook penceresi açılıyor…", true);
+  loadSdk(cfg).then(function(FB){
+   var extras = { setup: {}, sessionInfoVersion: "3" };
+   if (coexistence) extras.featureType = "whatsapp_business_app_onboarding";
+   FB.login(function(resp){
+    var code = resp && resp.authResponse && resp.authResponse.code;
+    if (!code){ finish(session && session.step ? "Bağlama tamamlanmadı (adım: " + session.step + "). Tekrar deneyebilirsiniz." : "Bağlama iptal edildi."); return; }
+    setStatus("WhatsApp hesabınız bağlanıyor…", true);
+    var tries = 0;
+    (function wait(){
+     /* Oturum bilgisi (postMessage) kodla aynı anda ya da hemen ardından gelir; kod 30 sn geçerli. */
+     if ((!session || !session.phoneNumberId) && tries++ < 15){ setTimeout(wait, 200); return; }
+     if (!session || !session.phoneNumberId){ finish("Facebook numara bilgisini iletmedi. Pencerede numara seçimini tamamlayıp tekrar deneyin."); return; }
+     api("POST", { action: "embeddedSignup", channel: "whatsapp", code: code, wabaId: session.wabaId, phoneNumberId: session.phoneNumberId, coexistence: !!coexistence }).then(function(r){
+      if (r.status === 200 && r.data && r.data.success){ finish("", true); ui.toast(r.data.message || "WhatsApp bağlandı."); reload(); return; }
+      finish((r.data && r.data.message) || (r.status === 403 ? "Kanalları yalnız klinik sahibi ya da yöneticisi bağlayabilir." : "Bağlanamadı. Tekrar deneyin."));
+     });
+    })();
+   }, { config_id: cfg.configId, response_type: "code", override_default_response_type: true, extras: extras });
+  }).catch(function(){ finish("Facebook bağlantısı yüklenemedi. Reklam/izleme engelleyiciyi bu sayfa için kapatıp tekrar deneyin."); });
+ }
+
+ function embeddedBox(reload){
+  var box = ui.el("div", { class: "ch-embedded" });
+  box.appendChild(ui.el("h3", { class: "ch-sub", text: "Tek tıkla bağla (önerilen)" }));
+  box.appendChild(ui.el("p", { class: "muted", text: "Facebook hesabınızla giriş yapıp işletmenizi ve numaranızı seçmeniz yeterli; uygulama, jeton ya da webhook ayarı gerekmez." }));
+  var msg = ui.el("p", { role: "status" });
+  function setStatus(text, ok){ msg.textContent = text || ""; msg.className = ok ? "muted" : "auth-error-text"; btns.forEach(function(b){ b.disabled = !!(ok && text); }); }
+  var coex = ui.el("button", { class: "btn", type: "button", text: "Mevcut WhatsApp Business numaramı bağla" });
+  var fresh = ui.el("button", { class: "btn ghost", type: "button", text: "Yeni bir numara bağla" });
+  var btns = [coex, fresh];
+  coex.addEventListener("click", function(){ embeddedSignup(true, setStatus, reload); });
+  fresh.addEventListener("click", function(){ embeddedSignup(false, setStatus, reload); });
+  var acts = ui.el("div", { class: "ch-actions" }); acts.appendChild(coex); acts.appendChild(fresh);
+  box.appendChild(acts); box.appendChild(msg);
+  var info = ui.el("details", { class: "ch-steps" });
+  info.appendChild(ui.el("summary", { text: "Hangisini seçmeliyim?" }));
+  var ul = ui.el("ul");
+  [
+   "Mevcut WhatsApp Business numaram: Telefonunuzdaki WhatsApp Business uygulaması (sürüm 2.24.17 ve üzeri) çalışmaya devam eder; müşterilerinize hem telefondan hem asistanla yanıt verilir. Telefondan yanıt verdiğiniz müşteriye asistan karışmaz. Bağlanınca yayın listeleri salt okunur olur ve WhatsApp Web gibi bağlı cihazlardan çıkış yapılır.",
+   "Yeni bir numara: Henüz WhatsApp'ta kullanılmayan bir hat. Bu numara yalnız asistan ve panel üzerinden kullanılır.",
+   "Her iki durumda da WhatsApp mesaj ücretlerini Meta doğrudan sizden alır: WhatsApp Manager'da ödeme yöntemi ekleyin. Numara başına ayda 1.000 yanıt mesajı ücretsizdir."
+  ].forEach(function(t){ ul.appendChild(ui.el("li", { text: t })); });
+  info.appendChild(ul); box.appendChild(info);
+  return box;
+ }
 
  var STATUS = {
   connected: ["Bağlı", "ok"], pending: ["Son adım bekleniyor", "warn"], error: ["Hata", "danger"], disconnected: ["Bağlı değil", ""]
@@ -177,7 +264,8 @@
   head.appendChild(icon(type));
   var t = ui.el("div", { class: "ch-title" });
   t.appendChild(ui.el("h2", { text: def.title }));
-  t.appendChild(ui.el("span", { class: "muted", text: view.displayName || def.tagline }));
+  var tagline = type === "whatsapp" && embedded && embedded.whatsapp ? "Facebook hesabınızla tek tıkla bağlanır; mevcut numaranız telefonda da çalışır." : def.tagline;
+  t.appendChild(ui.el("span", { class: "muted", text: view.displayName || tagline }));
   head.appendChild(t);
   head.appendChild(ui.el("span", { class: "tag " + st[1], text: st[0] }));
   c.appendChild(head);
@@ -188,6 +276,12 @@
 
   if (view.status === "connected"){
    c.appendChild(ui.el("p", { class: "muted", text: "Asistan bu kanaldan gelen mesajlara cevap veriyor. Mesajlar Gelen Kutusu'nda görünür." }));
+   if (type === "whatsapp" && view.mode === "embedded"){
+    var pay = ui.el("p", { class: "notice info" });
+    pay.appendChild(document.createTextNode("Mesaj ücretlerini Meta doğrudan sizden alır; ödeme yöntemi eklemediyseniz ayda 1.000 yanıttan sonra mesajlar gitmez. "));
+    pay.appendChild(ui.el("a", { href: "https://business.facebook.com/wa/manage/home/", target: "_blank", rel: "noopener", text: "WhatsApp Manager'ı aç →" }));
+    c.appendChild(pay);
+   }
    if (canManage) c.appendChild(disconnectButton(type, reload));
    return c;
   }
@@ -215,6 +309,14 @@
    c.appendChild(ui.el("p", { class: "muted", text: "Bu kanalı klinik sahibi ya da yöneticisi bağlayabilir." }));
    return c;
   }
+  if (type === "whatsapp" && embedded && embedded.whatsapp){
+   c.appendChild(embeddedBox(reload));
+   var adv = ui.el("details", { class: "ch-steps ch-advanced" });
+   adv.appendChild(ui.el("summary", { text: "Gelişmiş: kendi Meta uygulamamla bağla" }));
+   adv.appendChild(stepsList(type)); adv.appendChild(connectForm(type, reload));
+   c.appendChild(adv);
+   return c;
+  }
   c.appendChild(stepsList(type));
   c.appendChild(connectForm(type, reload));
   return c;
@@ -232,13 +334,14 @@
      wrap.appendChild(ui.el("div", { class: "card", text: r.status === 401 ? "Oturumunuzun süresi dolmuş. Çıkış yapıp tekrar giriş yapın." : "Kanallar yüklenemedi. Sayfayı yenileyin." }));
      return;
     }
+    embedded = r.data.embedded || null;
     if (!r.data.ready){
      wrap.appendChild(ui.el("p", { class: "notice", text: "Kanal bağlama şu an kullanılamıyor (sunucu yapılandırması eksik). Atlas ekibine haber verin." }));
     }
     var connected = r.data.channels.filter(function(v){ return v.status === "connected"; }).length;
     wrap.appendChild(ui.el("p", { class: "notice info", text: connected
      ? connected + " kanal bağlı. Müşterileriniz bu kanallardan yazdığında asistan 7/24 cevaplar."
-     : "Asistanınızın hangi kanallardan cevap vereceğini seçin. En hızlısı Telegram; WhatsApp ve Instagram için Meta uygulaması gerekir." }));
+     : (embedded ? "Asistanınızın hangi kanallardan cevap vereceğini seçin. WhatsApp'ı tek tıkla bağlayabilirsiniz." : "Asistanınızın hangi kanallardan cevap vereceğini seçin. En hızlısı Telegram; WhatsApp ve Instagram için Meta uygulaması gerekir.") }));
     var grid = ui.el("div", { class: "ch-grid" });
     r.data.channels.forEach(function(v){ if (CHANNELS[v.channel]) grid.appendChild(card(v, r.data.canManage, load)); });
     wrap.appendChild(grid);
