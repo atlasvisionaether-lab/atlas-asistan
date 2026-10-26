@@ -47,6 +47,19 @@ async function byOrg(orgId, channel) {
   return withCreds(await one('organization_id=eq.' + orgId + '&channel=eq.' + encodeURIComponent(channel)));
 }
 
+/** Uygulama webhook'u: kanal + sağlayıcı kimliği (WhatsApp phone_number_id) → bağlı, embedded bağlantı. */
+async function byExternal(channel, externalId) {
+  if (!/^\d{5,25}$/.test(String(externalId))) return null;
+  return withCreds(await one('channel=eq.' + encodeURIComponent(channel) + '&external_id=eq.' + externalId + '&mode=eq.embedded&status=eq.connected'));
+}
+
+/** WABA kimliğine bağlı embedded bağlantılar (Meta "PARTNER_REMOVED"). */
+async function byAccount(channel, accountId) {
+  if (!/^\d{5,25}$/.test(String(accountId))) return [];
+  const rows = await db.request('channel_connections?channel=eq.' + encodeURIComponent(channel) + '&account_id=eq.' + accountId + '&mode=eq.embedded&status=neq.disconnected');
+  return Array.isArray(rows) ? rows : [];
+}
+
 async function listByOrg(orgId) {
   if (!UUID_RE.test(String(orgId))) return [];
   const rows = await db.request('channel_connections?organization_id=eq.' + orgId + '&order=channel');
@@ -64,7 +77,7 @@ async function beginConnect(orgId, channel) {
     body: {
       organization_id: orgId, channel: channel, status: 'pending', webhook_secret: secrets.randomToken(),
       secrets: null, external_id: null, display_name: null, last_error: null, connected_at: null,
-      updated_at: new Date().toISOString()
+      mode: 'manual', account_id: null, updated_at: new Date().toISOString()
     }
   });
   return Array.isArray(rows) ? rows[0] : null;
@@ -88,7 +101,7 @@ function disconnect(id) {
 
 /** Panelde gösterilecek alanlar (gizli değer yok). */
 function publicView(row, canManage) {
-  const meta = row.channel === 'whatsapp' || row.channel === 'instagram';
+  const meta = (row.channel === 'whatsapp' || row.channel === 'instagram') && row.mode !== 'embedded';
   return {
     channel: row.channel,
     status: row.status,
@@ -96,6 +109,7 @@ function publicView(row, canManage) {
     externalId: row.external_id || null,
     lastError: row.last_error || null,
     connectedAt: row.connected_at || null,
+    mode: row.mode || 'manual',
     /* Meta uygulamasına girilecek değerler: yalnız yönetebilen görür. */
     webhookUrl: meta && canManage && row.status !== 'disconnected' ? webhookUrl(row.id) : null,
     verifyToken: meta && canManage && row.status !== 'disconnected' ? row.webhook_secret : null
@@ -126,4 +140,4 @@ async function http(url, opts) {
   }
 }
 
-module.exports = { byId, byOrg, listByOrg, beginConnect, update, disconnect, publicView, webhookUrl, siteUrl, http, UUID_RE };
+module.exports = { byId, byOrg, byExternal, byAccount, listByOrg, beginConnect, update, disconnect, publicView, webhookUrl, siteUrl, http, UUID_RE };

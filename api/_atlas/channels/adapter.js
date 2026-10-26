@@ -29,6 +29,7 @@
  * @typedef {Object} ChannelAdapter
  * @property {ChannelType} type
  * @property {(clinicId: string, credentials: ChannelCredentials) => Promise<ConnectResult>} connect
+ * @property {(clinicId: string, input: {code: string, wabaId: string, phoneNumberId: string, coexistence: boolean}) => Promise<ConnectResult>} [connectEmbedded]  yalnız WhatsApp (Embedded Signup v4)
  * @property {(clinicId: string) => Promise<void>} disconnect
  * @property {(clinicId: string, to: string, text: string) => Promise<{ id?: string }>} sendMessage
  * @property {(req: WebhookRequest) => Promise<boolean>} verifyWebhook

@@ -211,3 +211,7 @@ a.btn,button.btn{vertical-align:middle;line-height:1.3}
 .ws-region>label:nth-child(3){grid-column:1/-1}.ws-region>button{justify-self:start}
 @media(max-width:620px){.ws-region{grid-template-columns:1fr}}
 .btn.sm{padding:7px 14px;font-size:.84rem}
+.ch-embedded{margin-top:14px;padding:14px 16px;border-radius:16px;background:rgba(52,211,153,.06);box-shadow:inset 0 0 0 1px rgba(52,211,153,.35)}
+.ch-embedded .ch-sub{margin:0 0 4px;font-size:1rem}.ch-embedded p{margin:4px 0}
+.ch-steps ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;color:var(--sx-muted);font-size:.9rem;line-height:1.5}
+.ch-advanced{margin-top:18px}
