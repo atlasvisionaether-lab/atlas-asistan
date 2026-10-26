@@ -126,8 +126,13 @@
     document.addEventListener("pointerleave", function () { visible = false; root.classList.remove("sx-cursor-in"); });
     document.addEventListener("pointerdown", function () { root.classList.add("sx-cursor-down"); });
     document.addEventListener("pointerup", function () { root.classList.remove("sx-cursor-down"); });
-    (function loop() {
-      hx += (x - hx) * 0.18; hy += (y - hy) * 0.18;
+    var lastT = performance.now();
+    (function loop(now) {
+      /* Hale imleci izler; zamana dayalı yumuşatma (kare hızından bağımsız, ~60 ms). */
+      now = now || performance.now();
+      var k = 1 - Math.exp(-Math.min((now - lastT) / 1000, 0.1) * 16);
+      lastT = now;
+      hx += (x - hx) * k; hy += (y - hy) * k;
       star.style.transform = "translate3d(" + x + "px," + y + "px,0)";
       halo.style.transform = "translate3d(" + hx + "px," + hy + "px,0)";
       requestAnimationFrame(loop);
