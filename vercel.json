@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/s/:sub/:page",
+      "destination": "/api/atlas-site-render?sub=:sub&page=:page"
+    },
+    {
+      "source": "/s/:sub/",
+      "destination": "/api/atlas-site-render?sub=:sub"
+    },
+    {
       "source": "/s/:sub",
       "destination": "/api/atlas-site-render?sub=:sub"
     },

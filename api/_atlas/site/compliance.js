@@ -14,7 +14,7 @@
 const RULES = [
   { id: 'garanti', re: /garanti(?:li|si|ler|dir)?\b|güvence(?:si)? (?:veriyoruz|altında sonuç)/i, why: 'Sonuç garantisi verilemez.' },
   { id: 'kesin', re: /kesin (?:sonuç|çözüm|etki)|%\s?100|yüzde yüz|tam (?:başarı|sonuç)/i, why: 'Kesin/yüzde yüz sonuç iddiası.' },
-  { id: 'kalici', re: /kalıcı (?:çözüm|sonuç|kurtul)|ömür boyu|sonsuza (?:dek|kadar)/i, why: 'Kalıcılık iddiası.' },
+  { id: 'kalici', re: /kalıcı (?:çözüm|sonuç|kurtul)|sonuç\w* kalıcı|ömür boyu|sonsuza (?:dek|kadar)/i, why: 'Kalıcılık iddiası.' },
   { id: 'tedavi', re: /tedavi (?:eder|ediyoruz|edilir)|iyileştir(?:ir|iyoruz)|şifa|hastalığ\w* (?:son|bitir)/i, why: 'Tedavi/iyileştirme vaadi.' },
   { id: 'ustunluk', re: /\ben iyi(?:si)?\b|\bbir numara|\btek adres|türkiye'?nin (?:en|1|bir)|rakipsiz|eşsiz sonuç/i, why: 'Üstünlük/kıyaslama iddiası.' },
   { id: 'acisiz', re: /acısız|ağrısız|hiç acı|yan etkisiz|risksiz|hiçbir (?:yan etki|risk)/i, why: 'Risk/yan etki olmadığı iddiası.' },

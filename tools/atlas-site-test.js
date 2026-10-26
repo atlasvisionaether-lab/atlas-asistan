@@ -26,6 +26,7 @@ const T = {
   clinic_sites: [{ organization_id: ORG_B, subdomain: 'baska-klinik', template: 'nebula', accent: '#fbbf24', info: {}, photos: [], status: 'published', published_html: '<p>B</p>', generations_count: 0 }],
   organizations: [{ id: ORG, name: 'Işıl Güzellik' }],
   services: [{ organization_id: ORG, name: 'Lazer Epilasyon', price: 2500, duration_min: 45, is_active: true }, { organization_id: ORG, name: 'Cilt Bakımı', price: '1500', duration_min: 60, is_active: true }, { organization_id: ORG, name: 'Eski Hizmet', price: 1, is_active: false }],
+  atlas_orders: [],
   channel_connections: [{ organization_id: ORG, channel: 'telegram', status: 'connected', display_name: '@isil_klinik_bot' }]
 };
 let storageCalls = [];
@@ -179,7 +180,7 @@ const JPG = 'data:image/jpeg;base64,' + Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 
 
   /* ---- Sunum ucu ---- */
   r = await call(siteRender, { method: 'GET', query: { sub: 'isil-guzellik' } });
-  sina('sunum: /s/ yolu → 200, onaylanan HTML birebir', [r.statusCode, r.body === pub.published_html], [200, true]);
+  sina('sunum: /s/ yolu → 200, onaylanan HTML birebir (+ base href)', [r.statusCode, r.body === pub.published_html.replace(/<head>/i, '<head><base href="/s/' + pub.subdomain + '/">')], [200, true]);
   sina('sunum: CSP betik yok + noindex (yol adresi)', [/default-src 'none'/.test(r.headers['content-security-policy']), !/script-src/.test(r.headers['content-security-policy']), r.headers['x-robots-tag']], [true, true, 'noindex']);
   r = await call(siteRender, { method: 'GET', query: { sub: 'isil-guzellik' }, headers: { 'x-atlas-site-host': 'isil-guzellik.atlasasistan.com' } });
   sina('sunum: alt alan adından → indekslenebilir', r.headers['x-robots-tag'], undefined);

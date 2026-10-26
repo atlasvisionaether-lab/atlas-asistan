@@ -27,3 +27,14 @@ blog yazıları yapay zekâ taslağı. Google Business profili yarı-manuel (Goo
   filtreden geçer ve **klinik sahibi her sayfayı ve her blog yazısını onaylamadan yayın yok**
   (onay kaydı: kim, ne zaman, hangi sürüm).
 - Rehberdeki kural aynen: model yalnız verilen bilgiyi kullanır, uydurmaz.
+
+## VIP çok sayfalı site (0023)
+
+- **Erişim:** `organizations.plan = 'vip'` ya da ödenmiş VIP siparişi (`atlas_orders.plan='vip', status='paid'`). Paket düşerse ek sayfalar sunulmaz (ana sayfa açık kalır).
+- **Hizmet sayfaları:** her aktif hizmete bir sayfa (`/<hizmet-slug>`); fiyat/süre veritabanından. Pasifleşen hizmetin sayfası bir sonraki yayında iner.
+- **Bölge sayfaları:** en çok 6; her biri bölge + hizmet + **kliniğin bölgeye özgü notu (≥40 karakter)**. Model semt bilgisini yalnız bu nottan alır. Amaç: aynı metni bölge adıyla çoğaltan "kapı sayfası" (doorway) cezasından kaçınmak.
+- **Onay:** hizmet + bölge sayfaları ana sayfayla AYNI onayla yayınlanır; birinde bile riskli ifade varsa hiçbiri yayınlanmaz. **Blog yazıları tek tek**, her biri ayrı onay kutusuyla; onaylayan ve zaman kaydedilir (`approved_by/approved_at`). Blogda yapay zekâ yanıt vermezse yedek "yazı" uydurulmaz.
+- **Silme yok:** kaldırma = `archived` (servis rolüne DELETE yetkisi verilmez).
+- **Sunum:** `<alt>.atlasasistan.com/<sayfa>` (Worker) ve `atlasasistan.com/s/<alt>/<sayfa>` (noindex). Bağlantılar göreli; sunarken `<base href>` eklenir. `sitemap.xml` ve `robots.txt` (Sitemap satırıyla) kendiliğinden.
+- **Sınır:** VIP günde 60 yazdırma (ana metin dahil); her istek tek sayfa (Vercel 60 sn).
+- **Testler:** `node tools/atlas-site-vip-test.js`, `bash tools/atlas-site-vip-sql-test.sh`.

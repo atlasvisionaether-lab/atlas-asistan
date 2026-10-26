@@ -217,6 +217,18 @@ const TOPICS = [
           'Site <adınız>.atlasasistan.com adresinde ve yedek olarak atlasasistan.com/s/<adınız> adresinde açılır.',
           'Bilgi ya da metin değiştirdiğinizde güncel hali için yeniden onaylayıp yayınlamanız gerekir. "Yayından kaldır" ile siteyi kapatabilirsiniz. Siteyi yalnız klinik sahibi ya da yöneticisi yayınlayabilir.'
         ]
+      },
+      {
+        title: 'VIP: hizmet sayfaları, bölge sayfaları ve blog',
+        screen: 'site',
+        facts: [
+          'VIP pakette "Web Sitem" ekranının 5. adımı "Ek sayfalar ve blog" açılır; diğer paketlerde bu adım kilitli görünür.',
+          'Her aktif hizmet için ayrı bir sayfa yazdırılabilir (tek tek ya da "Eksik sayfaların hepsini yaz" ile sırayla). Fiyat ve süre sayfaya Hizmetler ekranından gelir.',
+          'En çok 6 bölge sayfası açılabilir (ör. "Kadıköy" + "Lazer Epilasyon"). Her bölge için o bölgeye özgü en az 40 karakterlik bir not (ulaşım, otopark, yakın semtler) zorunludur; sayfa yalnız bu nottan yazılır, çünkü aynı metni bölge adıyla çoğaltan sayfalar arama motorlarınca cezalandırılır.',
+          'Hizmet ve bölge sayfaları, 4. adımdaki onayla ana sayfayla birlikte yayınlanır. Herhangi birinde riskli ifade varsa hiçbiri yayınlanmaz; uyarı sayfanın satırında görünür, "Düzenle" ile düzeltilir.',
+          'Blog: "Konu öner" ile başlık önerileri alınır ya da başlık yazılır, "Taslak yaz" ile yazı hazırlanır. Her yazı ayrı onay kutusuyla "Onayla ve yayınla" denmeden yayınlanmaz; yazının sonuna "tıbbi tavsiye yerine geçmez" notu otomatik eklenir.',
+          'VIP pakette günde en çok 60 kez yazdırma hakkı vardır (ana metin dahil). Sayfalar <adınız>.atlasasistan.com/<sayfa> adresinde açılır; arama motorları için site haritası (sitemap.xml) kendiliğinden oluşur.'
+        ]
       }
     ]
   },
