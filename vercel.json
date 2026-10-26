@@ -53,6 +53,14 @@
       "destination": "/pages/hakkimizda.html"
     },
     {
+      "source": "/pages/veri-silme",
+      "destination": "/pages/veri-silme.html"
+    },
+    {
+      "source": "/veri-silme",
+      "destination": "/pages/veri-silme.html"
+    },
+    {
       "source": "/pages/gizlilik-politikasi",
       "destination": "/pages/gizlilik-politikasi.html"
     },
