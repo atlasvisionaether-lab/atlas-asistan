@@ -58,3 +58,11 @@ Bu demo panel, ayrı atlas-asistan-panel-preview Vercel projesinde yalnızca pre
 - `space-ui.js`: yıldız imleç (yalnız fare), düğmelerde parçacık patlaması, ekran geçişi (View Transitions; yalnız `.sx-page`).
 - `space.css`: jetonlar (Fraunces + Manrope, altın/cyan), `.sx-glass` cam + altın/gümüş kenar parlaması.
 - WebGL/CDN yoksa: sitede eski 2B yıldızlar, panelde CSS nebula degradesi kalır.
+
+## Kanallar — Telegram, WhatsApp Cloud API, Instagram (2026-10-26)
+
+- **Kanallar** ekranı (`#kanallar`, `scripts/channels.js`): klinik kanalı kendi bağlar; her kart adım adım "nereden alırım" anlatımı, bağlama formu, Meta için webhook adresi + doğrulama jetonu (kopyala), iki adımlı kesme.
+- Sunucu: `api/atlas-channels.js` (panel), `api/atlas-channel-webhook.js` (gelen; Telegram `secret_token`, Meta `X-Hub-Signature-256` ham gövdeyle), `api/atlas-channel-send.js` (giden; tetikleyiciden, her mesaj en fazla bir kez). Adaptörler: `api/_atlas/channels/`.
+- Kurum izolasyonu: kliniğe özel webhook adresi (`?c=<bağlantı>`), kurum bağlantı satırından; Meta'da numara/hesap kimliği ayrıca karşılaştırılır; bir bot/numara/hesap tek kuruma bağlanır.
+- Gerekli: `supabase/migrations/0020_channels.sql`, Vercel env `CHANNEL_ENC_KEY` (64 hex), `atlas-auto-reply` yeniden deploy.
+- Testler: `node tools/atlas-channels-test.js`, `bash tools/atlas-channels-sql-test.sh`.

@@ -148,3 +148,23 @@ html:not(.sx-authed) .sidebar{display:none}
 html:not(.sx-authed) .app{grid-template-columns:1fr}
 /* <a class=btn> ile <button class=btn> yan yana aynı hizada */
 a.btn,button.btn{vertical-align:middle;line-height:1.3}
+
+/* ---- Kanallar ---- */
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:14px;align-items:start}
+.ch-head{display:flex;align-items:center;gap:14px}
+.ch-title{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ch-title h2{margin:0}
+.ch-title .muted{font-size:.85rem;overflow-wrap:anywhere}
+.ch-icon{flex:0 0 auto;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;color:var(--sx-gold-light);background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(203,213,225,.18),0 0 24px -10px rgba(251,191,36,.6)}
+.ch-card.ch-connected .ch-icon{color:#6ee7b7;box-shadow:inset 0 0 0 1px rgba(110,231,183,.45),0 0 26px -8px rgba(52,211,153,.6)}
+.ch-card.ch-connected::before{opacity:.95}
+.ch-card p{margin:12px 0 0}
+.ch-steps{margin-top:14px}
+.ch-steps summary{cursor:pointer;color:var(--sx-gold-light);font-weight:600;font-size:.9rem}
+.ch-steps ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;color:var(--sx-muted);font-size:.9rem;line-height:1.5}
+.ch-form{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.ch-form .btn{align-self:flex-start}
+.ch-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.ch-copy{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;margin-top:12px}
+.ch-copy .kpi-label{grid-column:1/-1}
+.ch-copy code{display:block;padding:10px 12px;border-radius:10px;background:rgba(3,2,12,.6);box-shadow:inset 0 0 0 1px rgba(203,213,225,.16);font-size:.82rem;overflow-wrap:anywhere;color:var(--sx-ink)}

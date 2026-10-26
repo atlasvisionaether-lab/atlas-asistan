@@ -146,7 +146,7 @@ function sina(ad, bulunan, beklenen) {
 
   delete process.env.DEEPSEEK_API_KEY;
   r = await post({ topic: 'whatsapp', step: 0 });
-  sina('anahtar yok → 503 + facts', [r.statusCode, r.body.error.code, r.body.title], [503, 'unavailable', 'Hangi numarayı vermeliyim?']);
+  sina('anahtar yok → 503 + facts', [r.statusCode, r.body.error.code, r.body.title], [503, 'unavailable', 'Hangi kanal, hangi numara?']);
 
   console.log(hata ? '\n' + hata + ' sınama BAŞARISIZ' : '\nTümü geçti');
   process.exit(hata ? 1 : 0);

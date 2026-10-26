@@ -23,12 +23,12 @@
    { done: s.payment, guide: ["kurulum", 3], title: "Paketinizi seçin ve ödeyin",
      body: "Paketinizi seçin, fatura bilgilerinizi girin ve iyzico'nun güvenli sayfasında kartla ödeyin. Ödeme kliniğinize otomatik bağlanır.",
      cta: "Paket seç ve öde", href: "#odeme" },
-   { done: s.whatsapp, guide: ["whatsapp", 0], title: "WhatsApp numaranızı bağlayın",
-     body: s.whatsapp ? "Bağlı numara: " + (waNumber || "tanımlı")
-      : "Numaranız henüz bağlı değil. Ödemeden sonra numaranızı kliniğinize biz bağlıyoruz; bağlanınca bu adım kendiliğinden tamamlanır.",
-     cta: null },
+   { done: s.whatsapp, guide: ["whatsapp", 0], title: "Mesaj kanalınızı bağlayın",
+     body: s.whatsapp ? "Kanalınız bağlı" + (waNumber ? " (" + waNumber + ")" : "") + "; asistan bu kanaldan gelen mesajlara cevap veriyor."
+      : "WhatsApp, Instagram ya da Telegram'ı Kanallar ekranından kendiniz bağlayın; her kanal için adım adım anlatım orada. En hızlısı Telegram (2 dakika).",
+     cta: "Kanalları bağla", href: "#kanallar" },
    { done: s.test, guide: ["test", 0], title: "İlk test mesajını gönderin",
-     body: "Kendi telefonunuzdan klinik numaranıza \"Merhaba\" yazın; mesaj Gelen Kutusu'nda görünür ve asistan cevaplar.",
+     body: "Kendi telefonunuzdan bağladığınız kanala (WhatsApp numaranız, Instagram hesabınız ya da Telegram botunuz) \"Merhaba\" yazın; mesaj Gelen Kutusu'nda görünür ve asistan cevaplar.",
      cta: "Gelen Kutusu", href: "#inbox" }
   ];
  }
