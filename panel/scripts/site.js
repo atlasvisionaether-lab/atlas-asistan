@@ -1,5 +1,6 @@
 "use strict";
-/* Web Sitem ekranı (#site): klinik web sitesi — bilgiler → görseller → metin → önizle ve yayınla.
+/* Web Sitem ekranı (#site): klinik web sitesi — bilgiler → görseller → metin → önizle ve yayınla
+ * → (VIP) hizmet/bölge sayfaları ve blog.
  * Bağımlılıklar: window.ATLAS_UI (ui.js), window.ATLAS_SUPABASE (auth.js).
  *
  * Uç: https://atlasasistan.com/api/atlas-site (CORS, Bearer Supabase jetonu).
@@ -25,7 +26,22 @@
   no_content: "Önce metin üretin ya da yazın.",
   compliance: "Metinde yayına engel ifadeler var; işaretli alanları düzeltin.",
   approval_required: "Yayınlamak için onay kutusunu işaretleyin.",
-  role: "Bu işlemi yalnız klinik sahibi ya da yöneticisi yapabilir."
+  role: "Bu işlemi yalnız klinik sahibi ya da yöneticisi yapabilir.",
+  vip_required: "Ek sayfalar ve blog VIP pakette.",
+  region_name: "Bölge adı en az 2 karakter olmalı.",
+  region_service: "Her bölge için aktif bir hizmet seçin.",
+  region_note: "Her bölge için o bölgeye özgü en az 40 karakterlik bir not yazın.",
+  region_duplicate: "Aynı bölge + hizmet iki kez eklenmiş.",
+  region_limit: "En çok 6 bölge sayfası açılabilir.",
+  service_unknown: "Bu hizmet artık aktif değil.",
+  region_unknown: "Önce bölgeleri kaydedin.",
+  slug_conflict: "Bu adres başka bir sayfada kullanılıyor.",
+  title: "Yazı başlığı en az 8 karakter olmalı.",
+  post_exists: "Bu başlıkta bir yazı zaten var.",
+  llm: "Yapay zekâ şu an yanıt vermedi; biraz sonra tekrar deneyin.",
+  site_not_published: "Blog yazısı yayınlamak için önce siteyi yayınlayın.",
+  compliance_pages: "Bazı ek sayfalarda yayına engel ifadeler var; Ek sayfalar adımında düzeltin.",
+  not_found: "Sayfa bulunamadı; ekranı yenileyin."
  };
 
  var state = null;   // GET cevabı
@@ -271,7 +287,7 @@
   if (!state.canManage){ statusBox.appendChild(ui.el("p", { class: "muted", text: "Yayınlamayı klinik sahibi ya da yöneticisi yapabilir." })); return; }
   var ok = ui.el("input", { type: "checkbox", id: "ws-approve" });
   var l = ui.el("label", { class: "co-consent" }); l.appendChild(ok);
-  l.appendChild(ui.el("span", { text: "Sitedeki metinleri okudum. Sonuç garantisi, tedavi/iyileştirme vaadi, \"en iyi\" gibi üstünlük iddiası ve öncesi/sonrası görsel içermediğini onaylıyorum. Bilgiler doğrudur." }));
+  l.appendChild(ui.el("span", { text: (state.vip ? "Ana sayfayı ve metni hazır tüm hizmet ve bölge sayfalarını okudum (blog yazıları ayrıca onaylanır). " : "Sitedeki metinleri okudum. ") + "Sonuç garantisi, tedavi/iyileştirme vaadi, \"en iyi\" gibi üstünlük iddiası ve öncesi/sonrası görsel içermediğini onaylıyorum. Bilgiler doğrudur." }));
   statusBox.appendChild(l);
   var pub = ui.el("button", { class: "btn", type: "button", text: s.status === "published" ? "Güncel hali yeniden yayınla" : "Yayınla" });
   pub.disabled = !!issues.length || !s.content;
@@ -281,7 +297,8 @@
    pub.disabled = true;
    api("POST", { action: "publish", approve: true }).then(function(r){
     pub.disabled = false;
-    if (r.status === 200){ state.site = r.data.site; ui.toast("Siteniz yayında."); renderStatus(); } else status(msg, errText(r));
+    if (r.status === 200){ state.site = r.data.site; if (r.data.pages) state.pages = r.data.pages; ui.toast("Siteniz yayında."); renderStatus(); if (vipRepaint) vipRepaint(); }
+    else status(msg, errText(r) + (r.data && r.data.pages ? " (" + r.data.pages.join(", ") + ")" : ""));
    });
   });
   var acts = ui.el("div", { class: "ch-actions" }); acts.appendChild(pub);
@@ -293,6 +310,242 @@
   statusBox.appendChild(acts); statusBox.appendChild(msg);
  }
 
+
+ /* ---------- 5. VIP: hizmet/bölge sayfaları ve blog ----------
+  * Hizmet ve bölge sayfaları ana sayfayla birlikte (4. adımdaki onayla) yayınlanır;
+  * blog yazıları tek tek, her biri kendi onayıyla. Üretim tek istekte tek sayfa (60 sn sınırı). */
+ var vipRepaint = null;
+ var STATUS_TXT = { draft: "Taslak", published: "Yayında" };
+ function pageOf(kind, key){
+  return (state.pages || []).filter(function(p){ return p.kind === kind && (kind === "service" ? p.ref === key : p.slug === key); })[0] || null;
+ }
+ function putPage(pg){
+  state.pages = (state.pages || []).filter(function(p){ return p.slug !== pg.slug; });
+  if (pg.status !== "archived") state.pages.push(pg);
+ }
+ function chip(pg){
+  if (!pg || !pg.content) return ui.el("span", { class: "ws-chip", text: "Yazılmadı" });
+  if ((pg.issues || []).length) return ui.el("span", { class: "ws-chip warn", text: pg.issues.length + " uyarı" });
+  return ui.el("span", { class: "ws-chip" + (pg.status === "published" ? " ok" : ""), text: STATUS_TXT[pg.status] || pg.status });
+ }
+
+ /* Ortak sayfa düzenleyici: blog → başlık+özet; hizmet/bölge → giriş+SSS. */
+ function pageEditor(pg, onSaved){
+  var ct = pg.content || {}, blog = pg.kind === "blog";
+  var f = ui.el("form", { class: "ws-form ws-page-edit" });
+  var issues = pg.issues || [];
+  if (issues.length){
+   var box = ui.el("div", { class: "notice" }); box.appendChild(ui.el("b", { text: "Yayına engel ifadeler:" }));
+   var ul = ui.el("ul"); issues.forEach(function(i){ ul.appendChild(ui.el("li", { text: "\"" + i.match + "\" — " + i.why })); }); box.appendChild(ul); f.appendChild(box);
+  }
+  function txt(label, val, max, multi){
+   var el = multi ? area({ rows: multi, maxlength: String(max) }, val) : input({ type: "text", maxlength: String(max) }, val);
+   f.appendChild(field(label, el)); return el;
+  }
+  var title = blog ? txt("Başlık", ct.title, 80) : null;
+  var lead = blog ? txt("Özet", ct.excerpt, 220, "3") : txt("Giriş", ct.intro, 420, "4");
+  var secs = (ct.sections || []).map(function(sc, i){ return { h: txt("Ara başlık " + (i + 1), sc.h, 70), p: txt("Paragraf " + (i + 1), sc.p, 1800, "6") }; });
+  var faqs = blog ? [] : (ct.faq || []).map(function(q, i){ return { q: txt("Soru " + (i + 1), q.q, 90), a: txt("Cevap " + (i + 1), q.a, 260, "3") }; });
+  var meta = txt("Arama motoru açıklaması", ct.metaDescription, 155, "2");
+  var m = ui.el("p", { role: "status" }); var save = ui.el("button", { class: "btn", type: "submit", text: "Kaydet" });
+  f.appendChild(m); f.appendChild(save);
+  f.addEventListener("submit", function(e){
+   e.preventDefault();
+   var out = { metaDescription: meta.value, sections: secs.map(function(x){ return { h: x.h.value, p: x.p.value }; }) };
+   if (blog){ out.title = title.value; out.excerpt = lead.value; } else { out.intro = lead.value; out.faq = faqs.map(function(x){ return { q: x.q.value, a: x.a.value }; }); }
+   save.disabled = true;
+   api("POST", { action: "savePage", slug: pg.slug, content: out }).then(function(r){
+    save.disabled = false;
+    if (r.status === 200){ putPage(r.data.page); onSaved(); ui.toast((r.data.page.issues || []).length ? "Kaydedildi; uyarılar var." : "Kaydedildi."); }
+    else status(m, errText(r));
+   });
+  });
+  return f;
+ }
+
+ function pageRow(list, label, kind, key, onChange){
+  var pg = pageOf(kind, key);
+  var row = ui.el("div", { class: "ws-page-row" });
+  var head = ui.el("div", { class: "ws-page-head" });
+  head.appendChild(ui.el("b", { text: label })); head.appendChild(chip(pg));
+  var acts = ui.el("div", { class: "ch-actions" });
+  var gen = ui.el("button", { class: "btn ghost sm", type: "button", text: pg && pg.content ? "Yeniden yaz" : "Yaz" });
+  var msg = ui.el("span", { class: "muted", role: "status" });
+  var slot = ui.el("div");
+  gen.addEventListener("click", function(){ run(); });
+  function run(){
+   gen.disabled = true; msg.textContent = "Yazılıyor… (15–30 sn)";
+   return api("POST", { action: "generatePage", kind: kind, key: key }).then(function(r){
+    gen.disabled = false;
+    if (r.status === 200){ putPage(r.data.page); onChange(); return true; }
+    msg.textContent = errText(r); msg.className = "auth-error-text"; return false;
+   });
+  }
+  acts.appendChild(gen);
+  if (pg && pg.content){
+   var ed = ui.el("button", { class: "btn ghost sm", type: "button", text: "Düzenle" });
+   ed.addEventListener("click", function(){ if (slot.firstChild) ui.clear(slot); else slot.appendChild(pageEditor(pg, onChange)); });
+   acts.appendChild(ed);
+  }
+  head.appendChild(acts); row.appendChild(head); row.appendChild(msg); row.appendChild(slot); list.appendChild(row);
+  return { run: run, needs: !pg || !pg.content };
+ }
+
+ function vipStep(wrap){
+  var c = stepCard(5, "Ek sayfalar ve blog (VIP)", "Her hizmete ayrı sayfa, seçtiğiniz bölgeler için yerel sayfalar ve onayınızla yayınlanan blog yazıları.");
+  wrap.appendChild(c);
+  if (!state.vip){
+   c.appendChild(ui.el("p", { class: "notice info", text: "Bu adım VIP pakette açılır: hizmet sayfaları, en çok " + ((state.vipLimits || {}).regions || 6) + " bölge sayfası ve blog. Paketinizi yükseltmek için Paketler ekranına bakın." }));
+   return;
+  }
+  if (!state.site || !state.site.subdomain){ c.appendChild(ui.el("p", { class: "notice", text: ERR.save_first })); return; }
+  var body = ui.el("div"); c.appendChild(body);
+  vipRepaint = paint;
+  function paint(){
+   ui.clear(body);
+   if (!state.canManage) body.appendChild(ui.el("p", { class: "muted", text: "Sayfaları klinik sahibi ya da yöneticisi düzenleyebilir." }));
+   body.appendChild(ui.el("p", { class: "muted", text: "Günde en çok " + state.vipLimits.generationsPerDay + " yazma hakkı (ana metin dahil). Hizmet ve bölge sayfaları 4. adımdaki onayla birlikte yayınlanır." }));
+   servicesBlock(); regionsBlock(); blogBlock();
+   if (!state.canManage) body.querySelectorAll("button,input,textarea,select").forEach(function(x){ x.disabled = true; });
+  }
+
+  function servicesBlock(){
+   body.appendChild(ui.el("h3", { class: "ws-sub-title", text: "Hizmet sayfaları" }));
+   var list = ui.el("div", { class: "ws-pages" });
+   var rows = (state.serviceNames || []).map(function(n){ return pageRow(list, n, "service", n, paint); });
+   if (!rows.length){ body.appendChild(ui.el("p", { class: "muted", text: ERR.no_services })); return; }
+   var all = ui.el("button", { class: "btn sm", type: "button", text: "Eksik sayfaların hepsini yaz" });
+   var prog = ui.el("span", { class: "muted", role: "status" });
+   var todo = rows.filter(function(r){ return r.needs; });
+   all.disabled = !todo.length;
+   all.addEventListener("click", function(){
+    all.disabled = true; var i = 0;
+    (function next(){
+     if (i >= todo.length){ paint(); return; }
+     prog.textContent = (i + 1) + " / " + todo.length + " yazılıyor…";
+     todo[i].run().then(function(ok){ if (!ok){ prog.textContent = "Durdu; ayrıntı satırda."; all.disabled = false; return; } i++; next(); });
+    })();
+   });
+   var top = ui.el("div", { class: "ch-actions" }); top.appendChild(all); top.appendChild(prog);
+   body.appendChild(top); body.appendChild(list);
+  }
+
+  function regionsBlock(){
+   var lim = state.vipLimits || { regions: 6, regionNoteMin: 40 };
+   body.appendChild(ui.el("h3", { class: "ws-sub-title", text: "Bölge sayfaları (en çok " + lim.regions + ")" }));
+   body.appendChild(ui.el("p", { class: "muted", text: "Örn. \"Kadıköy\" + \"Lazer Epilasyon\". Her bölge için o bölgeye özgü gerçek bilgi yazın (ulaşım, otopark, hangi semtlerden gelindiği…). Sayfa yalnız bu nottan yazılır; aynı metni bölge adıyla çoğaltan sayfalar arama motorlarınca cezalandırılır." }));
+   var regions = (state.site.regions || []).map(function(r){ return { name: r.name, service: r.service, note: r.note }; });
+   var form = ui.el("form", { class: "ws-form" });
+   var rowsBox = ui.el("div"); form.appendChild(rowsBox);
+   function drawRows(){
+    ui.clear(rowsBox);
+    regions.forEach(function(r, i){
+     var box = ui.el("div", { class: "ws-region" });
+     var name = input({ type: "text", maxlength: "40", placeholder: "Bölge (ör. Kadıköy)" }, r.name);
+     var sel = ui.el("select");
+     (state.serviceNames || []).forEach(function(n){ var o = ui.el("option", { value: n, text: n }); if (n === r.service) o.selected = true; sel.appendChild(o); });
+     var note = area({ rows: "3", maxlength: "600", placeholder: "Bu bölgeye özgü bilgi (en az " + lim.regionNoteMin + " karakter)" }, r.note);
+     var del = ui.el("button", { class: "btn ghost sm", type: "button", text: "Kaldır" });
+     name.addEventListener("input", function(){ r.name = name.value; });
+     sel.addEventListener("change", function(){ r.service = sel.value; });
+     note.addEventListener("input", function(){ r.note = note.value; });
+     del.addEventListener("click", function(){ regions.splice(i, 1); drawRows(); });
+     if (!r.service) r.service = sel.value;
+     box.appendChild(field("Bölge", name)); box.appendChild(field("Hizmet", sel)); box.appendChild(field("Bölgeye özgü not", note)); box.appendChild(del);
+     rowsBox.appendChild(box);
+    });
+    add.disabled = regions.length >= lim.regions;
+   }
+   var add = ui.el("button", { class: "btn ghost sm", type: "button", text: "+ Bölge ekle" });
+   add.addEventListener("click", function(){ regions.push({ name: "", service: "", note: "" }); drawRows(); });
+   var save = ui.el("button", { class: "btn sm", type: "submit", text: "Bölgeleri kaydet" });
+   var m = ui.el("p", { role: "status" });
+   var acts = ui.el("div", { class: "ch-actions" }); acts.appendChild(add); acts.appendChild(save);
+   form.appendChild(acts); form.appendChild(m);
+   form.addEventListener("submit", function(e){
+    e.preventDefault(); save.disabled = true;
+    api("POST", { action: "saveRegions", regions: regions }).then(function(r){
+     save.disabled = false;
+     if (r.status === 200){ state.site = r.data.site; state.pages = r.data.pages; paint(); ui.toast("Bölgeler kaydedildi."); } else status(m, errText(r));
+    });
+   });
+   drawRows(); body.appendChild(form);
+   var list = ui.el("div", { class: "ws-pages" });
+   (state.site.regions || []).forEach(function(r){ pageRow(list, r.name + " " + r.service, "region", r.slug, paint); });
+   body.appendChild(list);
+  }
+
+  function blogBlock(){
+   body.appendChild(ui.el("h3", { class: "ws-sub-title", text: "Blog" }));
+   body.appendChild(ui.el("p", { class: "muted", text: "Her yazı ayrı onayla yayınlanır. Yazılar genel bilgilendirmedir; sonuna \"tıbbi tavsiye yerine geçmez\" notu otomatik eklenir." }));
+   var f = ui.el("form", { class: "ws-form" });
+   var title = input({ type: "text", maxlength: "80", placeholder: "Yazı başlığı" });
+   f.appendChild(field("Yeni yazı", title));
+   var chips = ui.el("div", { class: "ws-chips" });
+   var sug = ui.el("button", { class: "btn ghost sm", type: "button", text: "Konu öner" });
+   var draft = ui.el("button", { class: "btn sm", type: "submit", text: "Taslak yaz" });
+   var m = ui.el("p", { role: "status" });
+   sug.addEventListener("click", function(){
+    sug.disabled = true;
+    api("POST", { action: "suggestTopics" }).then(function(r){
+     sug.disabled = false; ui.clear(chips);
+     if (r.status !== 200){ status(m, errText(r)); return; }
+     (r.data.topics || []).forEach(function(t){
+      var b = ui.el("button", { class: "ws-chip pick", type: "button", text: t });
+      b.addEventListener("click", function(){ title.value = t; title.focus(); }); chips.appendChild(b);
+     });
+    });
+   });
+   f.addEventListener("submit", function(e){
+    e.preventDefault(); draft.disabled = true; status(m, "Yazı hazırlanıyor… (20–40 sn)", true);
+    api("POST", { action: "draftPost", title: title.value }).then(function(r){
+     draft.disabled = false;
+     if (r.status === 200){ putPage(r.data.page); paint(); ui.toast("Taslak hazır; okuyup onaylayın."); } else status(m, errText(r));
+    });
+   });
+   var acts = ui.el("div", { class: "ch-actions" }); acts.appendChild(sug); acts.appendChild(draft);
+   f.appendChild(chips); f.appendChild(acts); f.appendChild(m); body.appendChild(f);
+
+   var posts = (state.pages || []).filter(function(p){ return p.kind === "blog"; });
+   var list = ui.el("div", { class: "ws-pages" });
+   posts.forEach(function(pg){
+    var row = ui.el("div", { class: "ws-page-row" });
+    var head = ui.el("div", { class: "ws-page-head" });
+    head.appendChild(ui.el("b", { text: (pg.content && pg.content.title) || pg.ref })); head.appendChild(chip(pg));
+    var a = ui.el("div", { class: "ch-actions" });
+    var slot = ui.el("div"); var msg = ui.el("p", { role: "status" });
+    var ed = ui.el("button", { class: "btn ghost sm", type: "button", text: "Düzenle" });
+    ed.addEventListener("click", function(){ if (slot.firstChild) ui.clear(slot); else slot.appendChild(pageEditor(pg, paint)); });
+    a.appendChild(ed);
+    function act(action, extra, done){
+     return function(){
+      api("POST", Object.assign({ action: action, slug: pg.slug }, extra || {})).then(function(r){
+       if (r.status === 200){ putPage(r.data.page); paint(); if (done) ui.toast(done); } else status(msg, errText(r));
+      });
+     };
+    }
+    if (pg.status === "published"){
+     var un = ui.el("button", { class: "btn ghost sm", type: "button", text: "Yayından kaldır" }); un.addEventListener("click", act("unpublishPost")); a.appendChild(un);
+    }
+    var ar = ui.el("button", { class: "btn ghost sm", type: "button", text: "Arşivle" }); ar.addEventListener("click", act("archivePost", null, "Yazı arşivlendi.")); a.appendChild(ar);
+    head.appendChild(a); row.appendChild(head);
+    if (pg.status !== "published"){
+     var ok = ui.el("input", { type: "checkbox" });
+     var l = ui.el("label", { class: "co-consent" }); l.appendChild(ok);
+     l.appendChild(ui.el("span", { text: "Bu yazıyı okudum; sonuç garantisi, tedavi vaadi, üstünlük iddiası ve öncesi/sonrası görsel içermediğini onaylıyorum." }));
+     var pub = ui.el("button", { class: "btn sm", type: "button", text: "Onayla ve yayınla" });
+     pub.disabled = !!(pg.issues || []).length;
+     pub.addEventListener("click", function(){ if (!ok.checked){ status(msg, ERR.approval_required); return; } act("publishPost", { approve: true }, "Yazı yayında.")(); });
+     row.appendChild(l); var pa = ui.el("div", { class: "ch-actions" }); pa.appendChild(pub); row.appendChild(pa);
+    }
+    row.appendChild(msg); row.appendChild(slot); list.appendChild(row);
+   });
+   if (!posts.length) list.appendChild(ui.el("p", { class: "muted", text: "Henüz yazı yok." }));
+   body.appendChild(list);
+  }
+  paint();
+ }
+
  function mount(f){
   var wrap = ui.el("div", { class: "ws-wrap" }); f.appendChild(wrap);
   if (!window.ATLAS_SUPABASE){ wrap.appendChild(ui.el("div", { class: "card", text: "Oturum hazır değil." })); return; }
@@ -300,9 +553,9 @@
   api("GET").then(function(r){
    ui.clear(wrap);
    if (r.status !== 200 || !r.data){ wrap.appendChild(ui.el("div", { class: "card", text: r.status === 401 ? errText(r) : "Web sitesi bilgileri yüklenemedi. Sayfayı yenileyin." })); return; }
-   state = r.data; statusBox = null;
+   state = r.data; statusBox = null; vipRepaint = null;
    if (!state.services) wrap.appendChild(ui.el("p", { class: "notice", text: "Sitede hizmet ve fiyat göstermek için önce Hizmetler / Fiyatlar ekranından hizmet ekleyin." }));
-   infoStep(wrap); imagesStep(wrap); textStep(wrap); publishStep(wrap);
+   infoStep(wrap); imagesStep(wrap); textStep(wrap); publishStep(wrap); vipStep(wrap);
   });
  }
 

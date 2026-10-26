@@ -12,3 +12,7 @@ SSL: Cloudflare'ın ücretsiz Universal SSL sertifikası `*.atlasasistan.com`'u 
 
 Deneme: panelde bir siteyi yayınladıktan sonra `https://<alt-alan>.atlasasistan.com` açılmalı;
 yayınlanmamış adres "Bu adreste yayında bir site yok" sayfası verir.
+
+**Güncelleme (VIP çok sayfalı site):** Worker artık `/<sayfa>`, `sitemap.xml` ve `robots.txt` yollarını da aktarıyor.
+Cloudflare → Workers & Pages → `atlas-site-proxy` → **Kodu düzenle**: içeriği güncel `site-proxy-worker.js` ile değiştirip **Deploy**.
+Rota ve DNS değişmez.

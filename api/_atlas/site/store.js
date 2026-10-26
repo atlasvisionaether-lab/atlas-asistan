@@ -30,7 +30,54 @@ function getSite(orgId) {
 }
 
 function getPublished(subdomain) {
-  return one('clinic_sites?subdomain=eq.' + encodeURIComponent(subdomain) + '&status=eq.published&select=published_html,updated_at&limit=1');
+  return one('clinic_sites?subdomain=eq.' + encodeURIComponent(subdomain) + '&status=eq.published&select=organization_id,subdomain,template,accent,info,logo_path,photos,published_html,updated_at&limit=1');
+}
+
+/* ---- VIP çok sayfalı site (0023) ---- */
+
+/** VIP: kurum planı 'vip' (yönetici elle) ya da ödenmiş VIP siparişi. */
+async function isVip(orgId) {
+  if (!UUID_RE.test(String(orgId))) return false;
+  try {
+    const org = await one('organizations?id=eq.' + orgId + '&select=plan&limit=1');
+    if (org && String(org.plan || '').toLowerCase() === 'vip') return true;
+    const order = await one('atlas_orders?organization_id=eq.' + orgId + '&plan=eq.vip&status=eq.paid&select=id&limit=1');
+    return !!order;
+  } catch (e) {
+    /* Okunamazsa VIP sayılmaz; tek sayfalı site çalışmayı sürdürür. */
+    console.warn('site-store: vip_check_failed (' + e.message + ')');
+    return false;
+  }
+}
+
+const PAGE_FIELDS = 'id,kind,slug,ref,content,issues,status,published_at,approved_at,generated_at,updated_at';
+
+async function listPages(orgId) {
+  if (!UUID_RE.test(String(orgId))) return [];
+  const rows = await db.request('clinic_site_pages?organization_id=eq.' + orgId + '&status=neq.archived&select=' + PAGE_FIELDS + '&order=kind,slug');
+  return Array.isArray(rows) ? rows : [];
+}
+
+function getPage(orgId, slug) {
+  return one('clinic_site_pages?organization_id=eq.' + orgId + '&slug=eq.' + encodeURIComponent(slug) + '&select=' + PAGE_FIELDS + '&limit=1');
+}
+
+function getPublishedPage(orgId, slug) {
+  return one('clinic_site_pages?organization_id=eq.' + orgId + '&slug=eq.' + encodeURIComponent(slug) + '&status=eq.published&select=kind,published_html&limit=1');
+}
+
+async function publishedPages(orgId) {
+  const rows = await db.request('clinic_site_pages?organization_id=eq.' + orgId + '&status=eq.published&select=kind,slug,ref,content,published_at&order=published_at.desc');
+  return Array.isArray(rows) ? rows : [];
+}
+
+async function upsertPage(orgId, slug, fields) {
+  const rows = await db.request('clinic_site_pages?on_conflict=organization_id,slug', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: Object.assign({ organization_id: orgId, slug: slug, updated_at: new Date().toISOString() }, fields)
+  });
+  return Array.isArray(rows) ? rows[0] : null;
 }
 
 async function subdomainTaken(subdomain, orgId) {
@@ -106,6 +153,7 @@ async function removeImage(orgId, path) {
 }
 
 module.exports = {
+  isVip, listPages, getPage, getPublishedPage, publishedPages, upsertPage,
   getSite, getPublished, subdomainTaken, upsertSite, orgName, activeServices, channelHandles,
   decodeImage, uploadImage, removeImage, storageBase, MAX_BYTES, UUID_RE
 };
