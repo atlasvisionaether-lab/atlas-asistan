@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="public/icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="public/icon.png">
 <link rel="shortcut icon" href="public/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="/public/logo/atlas-favicon.svg">
 <link rel="apple-touch-icon" href="public/apple-touch-icon.png">
 <link rel="canonical" href="https://atlasasistan.com/">
 <meta property="og:title" content="Atlas Asistan — Klinikler için 7/24 Yapay Zeka Asistanı">
@@ -15,14 +16,14 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="tr_TR">
 <meta property="og:url" content="https://atlasasistan.com/">
-<meta property="og:image" content="https://atlasasistan.com/public/logo/atlas_kurt_yilan_creative.png">
+<meta property="og:image" content="https://atlasasistan.com/public/logo/atlas-og.png">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Atlas Asistan",
   "url": "https://atlasasistan.com/",
-  "logo": "https://atlasasistan.com/public/logo/atlas_kurt_yilan_creative.png",
+  "logo": "https://atlasasistan.com/public/icon.png",
   "email": "merhaba@atlasasistan.com",
   "telephone": "+905344682769",
   "address": {
@@ -93,7 +94,7 @@
   #loader{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;transition:opacity .8s ease,visibility .8s}
   #loader.done{opacity:0;visibility:hidden}
   .loader-core{text-align:center}
-  .loader-core .orb{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#fff 0%,#fde68a 22%,#fbbf24 48%,#b45309 100%);box-shadow:0 0 40px rgba(251,191,36,.55),0 0 90px rgba(232,121,249,.35);animation:orbPulse 1.6s ease-in-out infinite}
+  .loader-core .orb{display:block;width:88px;height:88px;margin:0 auto 18px;filter:drop-shadow(0 0 18px rgba(251,191,36,.55)) drop-shadow(0 0 40px rgba(34,211,238,.25));animation:orbPulse 1.6s ease-in-out infinite}
   @keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
   .loader-core span{font-size:.82rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
 
@@ -105,13 +106,18 @@
   nav{position:sticky;top:0;z-index:50;background:rgba(11,6,32,.55);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.07)}
   .nav-in{display:flex;align-items:center;justify-content:space-between;height:68px}
   .logo{font-weight:700;font-size:1.3rem;display:flex;align-items:center;gap:10px;letter-spacing:.02em}
-  .logo .mark{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0%,#fde68a 25%,#fbbf24 55%,#7c2d12 100%);box-shadow:0 0 22px rgba(251,191,36,.5)}
-  .logo .ring{position:absolute;width:52px;height:52px;border-radius:50%;border:1px solid rgba(34,211,238,.4);animation:spin 14s linear infinite}
-  .logo .ring::before{content:"";position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+  /* Marka işareti (public/logo/atlas-mark.svg): gök küresi + takımyıldızı A + yörünge */
+  .logo-mark{display:block;width:46px;height:46px;filter:drop-shadow(0 0 10px rgba(251,191,36,.45)) drop-shadow(0 0 22px rgba(34,211,238,.18));transition:filter .4s}
+  .logo:hover .logo-mark{filter:drop-shadow(0 0 14px rgba(251,191,36,.7)) drop-shadow(0 0 30px rgba(34,211,238,.35))}
+  .logo .wordmark{font-family:var(--serif);font-weight:600;font-size:1.38rem;letter-spacing:0;gap:.3em}   /* flex: kelime arası boşluk erimesin */
+  .hero-mark{display:block;width:128px;height:128px;margin:0 auto 22px;filter:drop-shadow(0 0 26px rgba(251,191,36,.45)) drop-shadow(0 0 60px rgba(34,211,238,.22));animation:heroFloat 7s ease-in-out infinite}
+  @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .foot-brand .brand-logo{display:block;width:192px;height:auto;filter:drop-shadow(0 0 14px rgba(251,191,36,.3))}
+  @media(prefers-reduced-motion:reduce){.hero-mark,.loader-core .orb{animation:none}}
+  @media(max-width:640px){.hero-mark{width:96px;height:96px}}
   @keyframes spin{to{transform:rotate(360deg)}}
   .logo .wordmark b{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
   .logo .wordmark{position:relative;display:flex;align-items:center}
-  .logo .hold{position:relative;display:flex;align-items:center;width:52px;height:52px;justify-content:center}
   .nav-links{display:flex;gap:30px;font-size:.92rem;font-weight:600}
   .nav-links a{color:var(--muted);text-decoration:none;transition:color .2s,text-shadow .2s}
   .nav-links a:hover{color:var(--ink);text-shadow:0 0 14px rgba(34,211,238,.8)}
@@ -329,13 +335,13 @@
 <div class="nebula n1"></div>
 <div class="nebula n2"></div>
 <div class="nebula n3"></div>
-<div id="loader"><div class="loader-core"><div class="orb"></div><span>Yıldız haritası hazırlanıyor</span></div></div>
+<div id="loader"><div class="loader-core"><img class="orb" src="/public/logo/atlas-mark.svg" alt="" width="88" height="88"><span>Yıldız haritası hazırlanıyor</span></div></div>
 <div id="toast"></div>
 
 <nav>
   <div class="wrap nav-in">
     <div class="logo">
-      <span class="hold"><span class="ring"></span><span class="mark"></span></span>
+      <img class="logo-mark" src="/public/logo/atlas-mark.svg" alt="" width="46" height="46" aria-hidden="true">
       <span class="wordmark">Atlas <b>Asistan</b></span>
     </div>
     <div class="nav-links">
@@ -352,6 +358,7 @@
 
 <header class="hero">
   <div class="wrap hero-inner">
+    <img class="hero-mark" src="/public/logo/atlas-mark.svg" alt="" width="128" height="128" aria-hidden="true">
     <span class="kicker"><span class="dot"></span>Klinikler için Yapay Zeka Asistanı</span>
     <h1>Kliniğiniz Kapalıyken Bile <span class="gold">Randevu Defterinizi Dolduran</span> Yapay Zeka Asistanı.</h1>
     <p class="sub">Güzellik ve sağlık sektörü için tasarlandı. Atlas Asistan ile WhatsApp ve Instagram'dan gelen tüm hasta/müşteri mesajlarını otonom yanıtlayın, randevularınızı 7/24 saniyeler içinde takvime ekleyin.</p>
@@ -1176,7 +1183,7 @@ Randevu hatırlatması WhatsApp'tan gönderilecektir.<time>02:15</time></div>
   <div class="wrap">
     <div class="foot-grid">
       <div class="foot-brand">
-        <div class="brand">Atlas <b>Asistan</b></div>
+        <img class="brand-logo" src="/public/logo/atlas-logo.svg" alt="Atlas Asistan" width="192" height="52">
         <p>Klinikler için 7/24 yapay zeka asistanı SaaS yazılımı.</p>
         <p class="mini">Şirket Unvanı: Ali Kotan<br>Vergi No: 5810910912<br>Adres: Cevizli Mahallesi, Zuhal Caddesi No: 46, İç Kapı No: 50, Maltepe / İstanbul (Ritm AVM)</p>
         <div class="foot-soc">
