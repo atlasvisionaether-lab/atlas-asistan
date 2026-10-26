@@ -32,8 +32,8 @@ function gate(html) {
   clearMain();
   const box = document.createElement("section");
   box.className = "auth-gate";
-  // Marka küresi (sitedeki logoyla aynı dil); yalnız süs, ekran okuyucudan gizli.
-  box.innerHTML = '<div class="auth-brand" aria-hidden="true"><span class="auth-orb"></span></div>' + html;
+  // Marka işareti (assets/logo.svg = public/logo/atlas-mark.svg); yalnız süs, ekran okuyucudan gizli.
+  box.innerHTML = '<div class="auth-brand" aria-hidden="true"><img class="auth-logo" src="assets/logo.svg" alt="" width="92" height="92"></div>' + html;
   main.appendChild(box);
   return box;
 }

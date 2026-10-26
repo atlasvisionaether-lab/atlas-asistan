@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Atlas Asistan — marka işareti. Gök küresi (yıldız haritası) + takımyıldızı "A" + yapay zekâ yörüngesi; tepede yıldız. Altın/cyan, koyu zemin için. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Atlas Asistan">
+  <title>Atlas Asistan</title>
+  <circle cx="32" cy="32" r="31" fill="#07041a"/>
+  <defs>
+    <linearGradient id="af-gold" x1="20" y1="8" x2="44" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff7d6"/><stop offset=".38" stop-color="#fde68a"/><stop offset=".72" stop-color="#fbbf24"/><stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="af-sphere" x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fde68a"/><stop offset=".55" stop-color="#fbbf24" stop-opacity=".75"/><stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="af-orbit" x1="3" y1="43" x2="61" y2="29" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".2"/><stop offset=".55" stop-color="#67e8f9"/><stop offset="1" stop-color="#a5f3fc" stop-opacity=".55"/>
+    </linearGradient>
+    <radialGradient id="af-core" cx="32" cy="30" r="27" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#312e81" stop-opacity=".55"/><stop offset=".7" stop-color="#0b0620" stop-opacity=".35"/><stop offset="1" stop-color="#0b0620" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="af-starfill" cx="32" cy="12" r="7.5" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#fff7d6"/><stop offset="1" stop-color="#fbbf24"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="26" fill="url(#af-core)"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="url(#af-sphere)" stroke-width="3.36"/>
+  <path d="M32 13 L19 49 M32 13 L45 49" fill="none" stroke="url(#af-gold)" stroke-width="5.46" stroke-linecap="round"/>
+  <path d="M61.11 28.74 A30 8.5 -14 0 1 2.89 43.26" fill="none" stroke="url(#af-orbit)" stroke-width="3.57" stroke-linecap="round"/>
+  <circle cx="19" cy="49" r="2.73" fill="#a5f3fc"/>
+  <circle cx="45" cy="49" r="2.73" fill="#a5f3fc"/>
+  <circle class="af-sat" cx="48.33" cy="39.51" r="2.47" fill="#67e8f9"/>
+  <path class="af-star" d="M32 4.2 L33.7 10.3 L39.8 12 L33.7 13.7 L32 19.8 L30.3 13.7 L24.2 12 L30.3 10.3 Z" fill="url(#af-starfill)"/>
+</svg>
