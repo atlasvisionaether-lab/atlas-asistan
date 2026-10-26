@@ -54,6 +54,20 @@ html.space-3d body{background:transparent !important}
   .sx-glass{background:rgba(14,10,34,.92)}
 }
 
+/* ---- Tik ikonu: altın→cyan gradyan halka + tik, hafif parıltı ----
+   <span class="sx-check" aria-hidden="true"></span> ya da ::before'a background olarak. */
+:root{--sx-check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fde68a'/%3E%3Cstop offset='.55' stop-color='%23fbbf24'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='12' cy='12' r='10.2' fill='%23fbbf24' fill-opacity='.09' stroke='url(%23g)' stroke-width='1.3'/%3E%3Cpath d='M7.4 12.5l3.1 3.1 6.1-6.7' fill='none' stroke='url(%23g)' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.sx-check{display:inline-block;flex:0 0 auto;width:20px;height:20px;background:var(--sx-check) center/contain no-repeat;filter:drop-shadow(0 0 5px rgba(251,191,36,.45))}
+
+/* ---- Güvenli ödeme çerçevesi: resmi ödeme kuruluşu bandı DEĞİŞTİRİLMEDEN cam bir
+   kapsülde. Bant iyzico'nun marka kitinden; kart şeması logoları yeniden çizilmez. */
+.sx-pay{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 18px;padding:12px 20px;border-radius:999px;
+  background:var(--sx-glass),var(--sx-glass-solid);-webkit-backdrop-filter:var(--sx-blur);backdrop-filter:var(--sx-blur);
+  box-shadow:inset 0 0 0 1px rgba(203,213,225,.16),0 18px 50px -28px rgba(0,0,0,.9)}
+.sx-pay .sx-pay-label{display:inline-flex;align-items:center;gap:8px;font:600 .74rem/1 var(--sx-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--sx-gold-light)}
+.sx-pay .sx-pay-label svg{filter:drop-shadow(0 0 6px rgba(251,191,36,.6))}
+.sx-pay img{display:block;max-width:100%;height:auto;opacity:.92}
+
 /* ---- Parçacık tuvali ---- */
 .sx-fx{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9998}
 
