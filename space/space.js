@@ -41,6 +41,13 @@ const lowEnd = conn.saveData === true || (navigator.deviceMemory && navigator.de
 const STAR_COUNT = coarse ? 10000 : 50000;
 /* Panelde metin okunurluğu için nebula daha sönük. */
 const NEBULA = mode === "panel" ? 0.8 : 1.25;
+/* Nebula hedefinin ekrana oranı: fbm pahalı (piksel başı ~50 gürültü), görüntü
+   yumuşak — 1/3 çözünürlükte çizip büyütmek ~9 kat ucuz, gözle ayırt edilmez. */
+let nebulaScale = coarse ? 0.25 : 0.34;
+/* Fare paralaksı tepkisi (1/sn): üstel yumuşatma, KARE HIZINDAN BAĞIMSIZ.
+   Hedefin %90'ına ~0,25 sn'de varır (eskiden kare başı 0,04 → 60 FPS'te ~0,9 sn,
+   düşük FPS'te katlanarak daha uzun — "donma" hissi). */
+const PARALLAX_RESPONSE = 9;
 
 const STAR_VS = /* glsl */`
   attribute float aSize; attribute float aPhase; attribute float aSpeed; attribute vec3 aColor;
@@ -56,7 +63,7 @@ const STAR_VS = /* glsl */`
     float size = aSize * uPixelRatio * (900.0 / -mv.z);
     float minSize = 1.6 * uPixelRatio;
     vAlpha *= clamp(size / minSize, 0.25, 1.0);
-    gl_PointSize = clamp(size, minSize, 22.0 * uPixelRatio);
+    gl_PointSize = clamp(size, minSize, 14.0 * uPixelRatio);   // büyük nokta = doldurma maliyeti
     gl_Position = projectionMatrix * mv;
   }`;
 const STAR_FS = /* glsl */`
@@ -75,7 +82,6 @@ const NEB_VS = /* glsl */`
 const NEB_FS = /* glsl */`
   precision highp float;
   uniform float uTime; uniform vec2 uRes; uniform vec2 uOffset; uniform float uIntensity;
-  uniform vec4 uShoot[3];   // xy: başlangıç (ekran, -1..1), z: açı, w: ilerleme 0..1 (<0 kapalı)
   varying vec2 vUv;
   float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
   float noise(vec2 p) {
@@ -104,6 +110,19 @@ const NEB_FS = /* glsl */`
     col += cloud(uv * 2.1 + uOffset * 0.6 + vec2(-t * 0.5, 4.0), t * 1.3,
                  vec3(0.05, 0.22, 0.40), vec3(0.40, 0.26, 0.06), vec3(0.20, 0.06, 0.38)) * 0.45;
     col *= uIntensity * smoothstep(1.35, 0.15, length(uv * vec2(0.8, 1.0)));
+    gl_FragColor = vec4(col, 1.0);
+  }`;
+
+/* Arka plan: nebula DÜŞÜK çözünürlüklü hedeften (yumuşak, büyütülünce fark
+   edilmez) + kayan yıldızlar TAM çözünürlükte (ince çizgi bulanıklaşmasın). */
+const BG_FS = /* glsl */`
+  precision highp float;
+  uniform sampler2D tNebula; uniform vec2 uRes;
+  uniform vec4 uShoot[3];   // xy: başlangıç (ekran, -1..1), z: açı, w: ilerleme 0..1 (<0 kapalı)
+  varying vec2 vUv;
+  void main() {
+    vec3 col = texture2D(tNebula, vUv).rgb;
+    vec2 uv = (vUv - 0.5) * vec2(uRes.x / uRes.y, 1.0);
     for (int i = 0; i < 3; i++) {
       vec4 s = uShoot[i];
       if (s.w < 0.0) continue;
@@ -191,7 +210,7 @@ function start() {
   } catch (e) {
     return;   // WebGL yok: sayfanın yedeği kalır
   }
-  let pixelRatio = Math.min(devicePixelRatio || 1, coarse ? 1.25 : 1.75);
+  let pixelRatio = Math.min(devicePixelRatio || 1, coarse ? 1.25 : 1.5);
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(innerWidth, innerHeight, false);
   canvas.dataset.quality = "0";
@@ -204,16 +223,28 @@ function start() {
     vertexShader: NEB_VS, fragmentShader: NEB_FS, depthWrite: false, depthTest: false,
     uniforms: {
       uTime: { value: 0 }, uRes: { value: new THREE.Vector2(innerWidth, innerHeight) },
-      uOffset: { value: new THREE.Vector2() }, uIntensity: { value: NEBULA },
-      uShoot: { value: [new THREE.Vector4(0, 0, 0, -1), new THREE.Vector4(0, 0, 0, -1), new THREE.Vector4(0, 0, 0, -1)] }
+      uOffset: { value: new THREE.Vector2() }, uIntensity: { value: NEBULA }
     }
   });
   const tri = new THREE.BufferGeometry();
   tri.setAttribute("position", new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
-  const nebula = new THREE.Mesh(tri, nebulaMat);
-  nebula.frustumCulled = false;
-  nebula.renderOrder = -1;
-  scene.add(nebula);
+  const nebulaScene = new THREE.Scene();
+  const nebulaQuad = new THREE.Mesh(tri, nebulaMat);
+  nebulaQuad.frustumCulled = false;
+  nebulaScene.add(nebulaQuad);
+  const nebulaRT = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false, stencilBuffer: false });
+
+  const bgMat = new THREE.ShaderMaterial({
+    vertexShader: NEB_VS, fragmentShader: BG_FS, depthWrite: false, depthTest: false,
+    uniforms: {
+      tNebula: { value: nebulaRT.texture }, uRes: { value: new THREE.Vector2(innerWidth, innerHeight) },
+      uShoot: { value: [new THREE.Vector4(0, 0, 0, -1), new THREE.Vector4(0, 0, 0, -1), new THREE.Vector4(0, 0, 0, -1)] }
+    }
+  });
+  const background = new THREE.Mesh(tri, bgMat);
+  background.frustumCulled = false;
+  background.renderOrder = -1;
+  scene.add(background);
 
   const starGeo = buildStars(STAR_COUNT);
   const starMat = new THREE.ShaderMaterial({
@@ -240,6 +271,8 @@ function start() {
     composer.setSize(w, h);
     bloom.resolution.set(w / 2, h / 2);
     nebulaMat.uniforms.uRes.value.set(w, h);
+    bgMat.uniforms.uRes.value.set(w, h);
+    nebulaRT.setSize(Math.max(1, Math.ceil(w * pixelRatio * nebulaScale)), Math.max(1, Math.ceil(h * pixelRatio * nebulaScale)));
     cinema.uniforms.uRes.value.set(w * pixelRatio, h * pixelRatio);
     if (reduced) frame(performance.now());
   }
@@ -253,7 +286,7 @@ function start() {
   addEventListener("scroll", () => { scroll = scrollY; }, { passive: true });
 
   /* Kayan yıldızlar: 3 yuva, 3–8 sn arayla. */
-  const shoots = nebulaMat.uniforms.uShoot.value;
+  const shoots = bgMat.uniforms.uShoot.value;
   let nextShoot = 2.5;
   function updateShoots(t, dt) {
     if (reduced) return;
@@ -265,21 +298,28 @@ function start() {
     }
   }
 
-  /* Uyarlanır kalite: 60 FPS tutmuyorsa sırayla düş. */
-  let samples = [], level = 0;
+  /* Uyarlanır kalite: 60 FPS tutmuyorsa sırayla düş. Karar SÜREYE göre (ilk
+     0,8 sn ısınma, sonra 1'er sn'lik pencereler): düşük FPS'te 90 kare beklemek
+     saniyeler sürüyordu. Her pencerede en çok bir kademe. */
+  let level = 0, winTime = -0.8, winFrames = 0;
+  /* Yalnız ölçüm: ?sxdebug&sxfull → kalite düşürme kapalı (tam kalite FPS'i). */
+  const fullQualityDebug = /[?&]sxdebug\b/.test(location.search) && /[?&]sxfull\b/.test(location.search);
   function adapt(dt) {
-    if (reduced || level > 3) return;
-    samples.push(dt);
-    if (samples.length < 90) return;
-    const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
-    samples = [];
-    if (avg < 1 / 50) return;
+    if (reduced || level > 4 || fullQualityDebug) return;
+    winTime += dt;
+    if (winTime <= 0) return;
+    winFrames += 1;
+    if (winTime < 1) return;
+    const fps = winFrames / winTime;
+    winTime = 0; winFrames = 0;
+    if (fps >= 50) return;
     level += 1;
     canvas.dataset.quality = String(level);   // 0 = tam kalite; tarayıcı konsolunda görülebilir
-    if (level === 1) { pixelRatio = 1; renderer.setPixelRatio(1); starMat.uniforms.uPixelRatio.value = 1; resize(); }
+    if (level === 1) { pixelRatio = 1; renderer.setPixelRatio(1); starMat.uniforms.uPixelRatio.value = 1; nebulaScale = 0.25; resize(); }
     else if (level === 2) starGeo.setDrawRange(0, Math.floor(STAR_COUNT * 0.5));
     else if (level === 3) { bloom.enabled = false; cinema.uniforms.uCA.value = 0; }
-    else { cinema.enabled = false; starGeo.setDrawRange(0, Math.floor(STAR_COUNT * 0.3)); }
+    else if (level === 4) { nebulaScale = 0.18; resize(); starGeo.setDrawRange(0, Math.floor(STAR_COUNT * 0.3)); }
+    else { cinema.enabled = false; }
   }
 
   let last = performance.now(), elapsed = 0, running = true, shown = false;
@@ -287,8 +327,9 @@ function start() {
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
     elapsed += dt;
-    mx += (tx - mx) * 0.04;
-    my += (ty - my) * 0.04;
+    const k = 1 - Math.exp(-dt * PARALLAX_RESPONSE);
+    mx += (tx - mx) * k;
+    my += (ty - my) * k;
     const drift = reduced ? 0 : elapsed * 0.006;
     stars.rotation.y = drift + scroll * 0.00012;
     stars.rotation.x = scroll * 0.00004;
@@ -300,6 +341,9 @@ function start() {
     starMat.uniforms.uTime.value = elapsed;
     cinema.uniforms.uTime.value = elapsed;
     updateShoots(elapsed, dt);
+    renderer.setRenderTarget(nebulaRT);
+    renderer.render(nebulaScene, camera);
+    renderer.setRenderTarget(null);
     composer.render(dt);
     if (!shown) {
       shown = true;
@@ -328,8 +372,15 @@ function start() {
     dispatchEvent(new CustomEvent("space:lost"));
   });
 
-  if (reduced) frame(performance.now());
-  else requestAnimationFrame(loop);
+  /* Ölçüm kancası — yalnız ?sxdebug ile (Playwright gecikme ölçümü). */
+  if (/[?&]sxdebug\b/.test(location.search)) {
+    window.__sx = { parallax: function () { return { mx: mx, my: my, tx: tx, ty: ty }; }, level: function () { return level; } };
+  }
+
+  /* Nebula hedefi 1×1 açılır: ilk boyut burada — tüm tanımlardan SONRA (reduced
+     kipte resize() frame() çağırır; frame'in let değişkenleri yukarıda hazır olmalı). */
+  resize();
+  if (!reduced) requestAnimationFrame(loop);
 }
 
 start();
