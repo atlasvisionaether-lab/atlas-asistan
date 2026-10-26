@@ -66,33 +66,55 @@ const TOPICS = [
   },
   {
     id: 'whatsapp',
-    title: 'WhatsApp Business\'ı işletmenize bağlamak',
+    title: 'Mesaj kanallarınızı bağlamak (WhatsApp, Instagram, Telegram)',
     steps: [
       {
-        title: 'Hangi numarayı vermeliyim?',
+        title: 'Hangi kanal, hangi numara?',
+        screen: 'kanallar',
         facts: [
-          'Atlas Asistan WhatsApp Business Cloud API altyapısında çalışır; verdiğiniz numara bu altyapıya kaydedilir.',
-          'Kaydedilen numara artık telefondaki WhatsApp ya da WhatsApp Business uygulamasından kullanılamaz.',
-          'Tavsiye: günlük kişisel numaranızı değil, kliniğin resmi iş numarasını ya da bu iş için ayrılmış yeni bir numarayı verin.',
-          'İşletme adınız, profil fotoğrafınız ve müşterilerin bildiği numara aynı kalır; müşteri tarafında bir şey değişmez.'
+          'Kanallar ekranından WhatsApp, Instagram ve Telegram\'ı kendiniz bağlarsınız; Atlas ekibinin bir şey yapmasını beklemeniz gerekmez.',
+          'En hızlısı Telegram: yaklaşık 2 dakika. WhatsApp ve Instagram için bir Meta uygulaması gerekir.',
+          'WhatsApp, Meta\'nın WhatsApp Cloud API altyapısıyla çalışır. Bağlanan numara artık telefondaki WhatsApp ya da WhatsApp Business uygulamasından kullanılamaz.',
+          'Tavsiye: günlük kişisel numaranızı değil, kliniğin resmi iş numarasını ya da bu iş için ayrılmış yeni bir numarayı kullanın. Mevcut sohbet geçmişi taşınmaz; önce yedek alın.'
         ]
       },
       {
-        title: 'Bağlamadan önce hazırlık',
+        title: 'Telegram\'ı bağlamak',
+        screen: 'kanallar',
         facts: [
-          'Mevcut WhatsApp sohbet geçmişi yeni sisteme aktarılmaz; önemliyse önce telefondan yedek alın.',
-          'Numaranın doğrulama kodu (SMS ya da sesli arama) alabilen bir hatta olması gerekir.',
-          'Bu adım geri alınabilir: numara istenince sistemden çıkarılıp normal WhatsApp\'a döndürülebilir.'
+          'Telegram\'da @BotFather\'ı açıp /newbot yazarsınız; bota bir ad ve sonu "bot" ile biten bir kullanıcı adı verirsiniz.',
+          'BotFather size uzun bir token verir. Kanallar ekranındaki Telegram kartına yapıştırıp Bağla\'ya basarsınız.',
+          'Bağlanınca kart "Bağlı" olur. Botunuza Telegram\'dan "Merhaba" yazarak deneyebilirsiniz.'
         ]
       },
       {
-        title: 'Bağlantı nasıl yapılır?',
-        screen: 'onboarding',
+        title: 'WhatsApp\'ı bağlamak',
+        screen: 'kanallar',
         facts: [
-          'Şu an numarayı bağlama işlemini ödemeden sonra Atlas ekibi yapar; panelde kendi kendine bağlama düğmesi henüz yoktur.',
-          'Bağlantı sırasında numaranıza bir doğrulama kodu gelir; ekip sizden bu kodu ister. Kodu yalnızca Atlas ekibiyle, bağlantı sırasında paylaşın.',
-          'Bağlantı tamamlanınca Kurulum ekranındaki 3. adım ("WhatsApp numaranızı bağlayın") kendiliğinden "tamam" olur ve bağlı numara orada yazar.',
-          'Sadece asistan paketlerinde kurulum genellikle 1-2 iş günü sürer; süre bilgileriniz ulaştıktan sonra başlar.'
+          'Meta geliştirici sitesinde (developers.facebook.com) bir İşletme uygulaması oluşturup WhatsApp ürününü eklersiniz.',
+          'Kanallar ekranına dört değer girilir: Phone number ID, WhatsApp Business Account ID, kalıcı (Sistem Kullanıcısı) erişim jetonu ve uygulamanın App Secret\'ı. Her birinin nereden alındığı kartta adım adım yazar.',
+          'Bağla\'ya basınca kart "Son adım bekleniyor" olur ve size bir Webhook adresi ile doğrulama jetonu verir.',
+          'Bu iki değeri Meta uygulamanızda WhatsApp → Yapılandırma → Webhook bölümüne girer ve "messages" alanına abone olursunuz. Meta adresi doğrulayınca kart "Bağlı" olur ve Kurulum\'daki kanal adımı kendiliğinden tamamlanır.',
+          'Erişim jetonu ve App Secret şifreli saklanır; panelde bir daha gösterilmez.'
+        ]
+      },
+      {
+        title: 'Instagram\'ı bağlamak',
+        screen: 'kanallar',
+        facts: [
+          'Instagram hesabınızın İşletme hesabı olması ve bir Facebook Sayfasına bağlı olması gerekir.',
+          'Instagram ayarlarında Mesajlar bölümünde "Mesajlara erişime izin ver" açık olmalıdır.',
+          'Kanallar ekranına iki değer girilir: Facebook Sayfasının uzun ömürlü erişim jetonu ve Meta uygulamanızın App Secret\'ı.',
+          'WhatsApp\'ta olduğu gibi size verilen Webhook adresini ve doğrulama jetonunu uygulamanızın Instagram webhook ayarına girip "messages" alanına abone olursunuz.'
+        ]
+      },
+      {
+        title: 'Bağlantıyı kesmek ve süre',
+        screen: 'kanallar',
+        facts: [
+          'Kanallar ekranındaki "Bağlantıyı kes" ile bir kanalı istediğiniz zaman kapatabilirsiniz; asistan o kanaldan cevap vermeyi bırakır.',
+          'Kanalları yalnız klinik sahibi ya da yöneticisi bağlayıp kesebilir; diğer ekip üyeleri durumu görür.',
+          'Tüm paketlerde bilgileriniz tamamlandıktan sonra 24 saat içinde yayındasınız. Takılırsanız merhaba@atlasasistan.com adresinden ekibimiz yardım eder.'
         ]
       }
     ]
@@ -137,8 +159,8 @@ const TOPICS = [
       {
         title: 'Test mesajı gönderin',
         facts: [
-          'Bu adım için WhatsApp numaranızın bağlanmış olması gerekir (Kurulum ekranında 3. adım "tamam").',
-          'Kendi kişisel telefonunuzdan, kliniğin bağlanan numarasına WhatsApp\'tan "Merhaba" yazın.',
+          'Bu adım için en az bir kanalın bağlı olması gerekir (Kurulum ekranında 3. adım "tamam").',
+          'Kendi kişisel telefonunuzdan bağladığınız kanala "Merhaba" yazın: WhatsApp numaranıza, Instagram hesabınıza ya da Telegram botunuza.',
           'Çalışma saatleri içindeyse ve "AI otomatik cevap" açıksa önce Karşılama Mesajınız gelir (yeni müşteriye bir kez). Yalnızca "Merhaba" yazdıysanız cevap bu kadardır; soru sorduysanız asistan ardından sorunuzu cevaplar.',
           'Çalışma saatleri dışındaysanız "Çalışma saatleri dışı mesajı" gelir. Asistanın cevabını denemek için testi mesai saatinde yapın ya da çalışma saatlerini geçici olarak genişletin.'
         ]

@@ -58,3 +58,17 @@ Bu demo panel, ayrı atlas-asistan-panel-preview Vercel projesinde yalnızca pre
 - `space-ui.js`: yıldız imleç (yalnız fare), düğmelerde parçacık patlaması, ekran geçişi (View Transitions; yalnız `.sx-page`).
 - `space.css`: jetonlar (Fraunces + Manrope, altın/cyan), `.sx-glass` cam + altın/gümüş kenar parlaması.
 - WebGL/CDN yoksa: sitede eski 2B yıldızlar, panelde CSS nebula degradesi kalır.
+
+## Kanallar — Telegram, WhatsApp Cloud API, Instagram (2026-10-26)
+
+- **Kanallar** ekranı (`#kanallar`, `scripts/channels.js`): klinik kanalı kendi bağlar; her kart adım adım "nereden alırım" anlatımı, bağlama formu, Meta için webhook adresi + doğrulama jetonu (kopyala), iki adımlı kesme.
+- Sunucu: `api/atlas-channels.js` (panel), `api/atlas-channel-webhook.js` (gelen; Telegram `secret_token`, Meta `X-Hub-Signature-256` ham gövdeyle), `api/atlas-channel-send.js` (giden; tetikleyiciden, her mesaj en fazla bir kez). Adaptörler: `api/_atlas/channels/`.
+- Kurum izolasyonu: kliniğe özel webhook adresi (`?c=<bağlantı>`), kurum bağlantı satırından; Meta'da numara/hesap kimliği ayrıca karşılaştırılır; bir bot/numara/hesap tek kuruma bağlanır.
+- Gerekli: `supabase/migrations/0020_channels.sql`, Vercel env `CHANNEL_ENC_KEY` (64 hex), `atlas-auto-reply` yeniden deploy.
+- Testler: `node tools/atlas-channels-test.js`, `bash tools/atlas-channels-sql-test.sh`.
+
+## Performans notu — 3B harita (2026-10-26)
+
+- Paralaks kare hızından bağımsız (üstel yumuşatma, `PARALLAX_RESPONSE`): hedefin %90'ı ~0,27 sn. Eski kare başı 0,04 ile 7 FPS'te 7,8 sn sürüyordu.
+- Nebula ekranın 1/3 çözünürlüğünde ayrı hedefe çizilir, kayan yıldızlar tam çözünürlükte; uyarlanır kalite süreye göre karar verir (0,8 sn ısınma + 1 sn pencereler).
+- Ölçüm: `NODE_PATH=$(npm root -g) node tools/space-perf-test.js` (`?sxdebug` kancası; `&sxfull` tam kalite).
