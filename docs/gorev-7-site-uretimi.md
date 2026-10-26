@@ -1,6 +1,7 @@
 # Görev 7 — Klinik web sitesi üretimi (karar notları, 2026-10-26)
 
-Durum: **henüz kod yok.** Web sitesi paketlerindeki (Dijital Başlangıç, VIP) siteler bugün elle yapılıyor.
+Durum (2026-10-26): **ilk sürüm yazıldı** — panel "Web Sitem" (`panel/scripts/site.js`), `/api/atlas-site`, `/api/atlas-site-render`, `api/_atlas/site/` (4 şablon, yapay zekâ metni, sağlık iddiası denetimi, onaylı yayın), 0022, Cloudflare Worker (`tools/cloudflare/`). VIP "10+ sayfa + blog" henüz yok (tek sayfa site).
+Önceki durum: henüz kod yoktu. Web sitesi paketlerindeki (Dijital Başlangıç, VIP) siteler bugün elle yapılıyor.
 Sitedeki vaat 2026-10-26'da tekleştirildi: **"bilgileriniz tamamlandıktan sonra 24 saat içinde yayında"**
 (ana sayfa, /checkout, şehir sayfaları, blog, Ön Bilgilendirme Formu). Görev 7 bu vaadi otomatik karşılamalı.
 

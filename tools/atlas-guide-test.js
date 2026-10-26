@@ -97,7 +97,7 @@ function sina(ad, bulunan, beklenen) {
 (async function () {
   let r = await call({ method: 'GET' });
   sina('GET → konu listesi', [r.statusCode, r.body.enabled, r.body.topics.map(function (t) { return t.id; })],
-    [200, true, ['kurulum', 'whatsapp', 'hizmetler', 'test', 'takvim']]);
+    [200, true, ['kurulum', 'whatsapp', 'hizmetler', 'test', 'site', 'takvim']]);
   sina('GET → CORS panel origin', r.headers['access-control-allow-origin'], PANEL);
   sina('GET → DeepSeek çağrılmadı', deepseekCalls.length, 0);
 

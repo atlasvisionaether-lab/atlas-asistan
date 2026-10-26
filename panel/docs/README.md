@@ -72,3 +72,11 @@ Bu demo panel, ayrı atlas-asistan-panel-preview Vercel projesinde yalnızca pre
 - Paralaks kare hızından bağımsız (üstel yumuşatma, `PARALLAX_RESPONSE`): hedefin %90'ı ~0,27 sn. Eski kare başı 0,04 ile 7 FPS'te 7,8 sn sürüyordu.
 - Nebula ekranın 1/3 çözünürlüğünde ayrı hedefe çizilir, kayan yıldızlar tam çözünürlükte; uyarlanır kalite süreye göre karar verir (0,8 sn ısınma + 1 sn pencereler).
 - Ölçüm: `NODE_PATH=$(npm root -g) node tools/space-perf-test.js` (`?sxdebug` kancası; `&sxfull` tam kalite).
+
+## Web Sitem — klinik web sitesi (Görev 7, 2026-10-26)
+
+- **Web Sitem** (`#site`, `scripts/site.js`): bilgiler + şablon (Nebula/Aurora/Eclipse/Rose) + vurgu rengi → logo/fotoğraf (tarayıcıda küçültülür) → yapay zekâ metni (düzenlenebilir) → önizle → **onay kutusu** ile yayınla.
+- Sunucu: `api/atlas-site.js` (panel), `api/atlas-site-render.js` (herkese açık; `/s/<alt-alan>`), `api/_atlas/site/` (render, content, compliance, slug, store).
+- Kurallar: fiyat/adres/telefon veritabanından, yapay zekâ yalnız metin; sağlık iddiası denetimi (`compliance.js`) bulgu varken yayın yok; onaylanan HTML anlık görüntü olarak saklanır ve birebir sunulur; sıkı CSP.
+- Alt alan adı: Cloudflare Worker (`tools/cloudflare/README.md`). Gerekli: `0022_clinic_sites.sql`.
+- Testler: `node tools/atlas-site-test.js`, `bash tools/atlas-site-sql-test.sh`.

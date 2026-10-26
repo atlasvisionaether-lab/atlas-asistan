@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/s/:sub",
+      "destination": "/api/atlas-site-render?sub=:sub"
+    },
+    {
       "source": "/checkout",
       "destination": "/checkout.html"
     },
