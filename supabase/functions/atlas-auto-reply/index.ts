@@ -1,7 +1,7 @@
 // supabase/functions/atlas-auto-reply/index.ts
 // Atlas Asistan — Gelen Kutusu otomatik AI cevabı.
 // Tetikleyici: messages tablosuna INSERT (Database Webhook, bkz. supabase/migrations/0011_atlas_auto_reply_trigger.sql).
-// Koşul: channel IN ('whatsapp','web_widget') AND is_from_customer = true.
+// Koşul: channel IN ('whatsapp','web_widget','telegram','instagram') AND is_from_customer = true.
 // AI sağlayıcısı: Lovable AI Gateway (LOVABLE_API_KEY) — yoksa OpenAI (OPENAI_API_KEY) fallback'i.
 // Sağlık/şikâyet (risk_flag = 'yüksek') mesajlarına otomatik yanıt ÜRETİLMEZ; insan devralma korunur.
 // Karşılama mesajı yeni müşteriye bir kez; mesai dışında "Çalışma saatleri dışı mesajı"
@@ -202,9 +202,11 @@ Deno.serve(async (req) => {
     return jsonResponse({ skipped: true, reason: "not a messages INSERT" });
   }
 
+  // Kanallar: web_widget + 0020 kanal adaptörleri (whatsapp, telegram, instagram).
+  // Cevap aynı kanala yazılır; on_message_outbound (0020) onu kanala gönderir.
   const isNewCustomerMessage =
     record.is_from_customer === true &&
-    (record.channel === "whatsapp" || record.channel === "web_widget");
+    ["whatsapp", "web_widget", "telegram", "instagram"].includes(record.channel);
 
   if (!isNewCustomerMessage) {
     return jsonResponse({ skipped: true, reason: "conditions not met" });
