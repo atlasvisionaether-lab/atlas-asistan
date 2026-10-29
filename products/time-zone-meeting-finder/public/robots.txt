@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://time-zone-meeting-finder.example.com/sitemap.xml

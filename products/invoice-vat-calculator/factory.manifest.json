@@ -1,0 +1,11 @@
+{
+  "slug": "invoice-vat-calculator",
+  "name": "Invoice VAT Calculator",
+  "problem": "Freelancers miscalculate VAT and get fined",
+  "target": "EU freelancers",
+  "price": "$6 one-time",
+  "createdAt": "2026-10-29T13:27:21.275Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

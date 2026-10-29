@@ -1,0 +1,11 @@
+{
+  "slug": "saas-churn-forecaster",
+  "name": "SaaS Churn Forecaster",
+  "problem": "Founders spot churn too late to act on it",
+  "target": "indie SaaS founders",
+  "price": "$19/mo",
+  "createdAt": "2026-10-29T13:27:21.092Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

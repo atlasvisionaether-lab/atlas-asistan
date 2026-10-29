@@ -1,0 +1,11 @@
+{
+  "slug": "price-per-ounce-calculator",
+  "name": "Price Per Ounce Calculator",
+  "problem": "Comparing unit prices across brands and package sizes is tedious and error-prone",
+  "target": "grocery shoppers",
+  "price": "$9 one-time",
+  "createdAt": "2026-10-29T13:26:57.575Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://password-strength-checker.example.com/sitemap.xml

@@ -1,0 +1,11 @@
+{
+  "slug": "tip-splitter",
+  "name": "Tip Splitter",
+  "problem": "Splitting a bill fairly among friends with different orders is annoying",
+  "target": "friends dining out",
+  "price": "$4 one-time",
+  "createdAt": "2026-10-29T13:27:20.980Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

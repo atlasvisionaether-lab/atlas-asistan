@@ -1,0 +1,11 @@
+{
+  "slug": "calorie-burn-estimator",
+  "name": "Calorie Burn Estimator",
+  "problem": "People overestimate calories burned during exercise",
+  "target": "fitness beginners",
+  "price": "$5 one-time",
+  "createdAt": "2026-10-29T13:27:21.197Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

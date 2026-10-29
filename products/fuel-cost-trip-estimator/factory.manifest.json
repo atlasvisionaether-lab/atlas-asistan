@@ -1,0 +1,11 @@
+{
+  "slug": "fuel-cost-trip-estimator",
+  "name": "Fuel Cost Trip Estimator",
+  "problem": "Drivers underestimate the true cost of a road trip",
+  "target": "road trippers",
+  "price": "$4 one-time",
+  "createdAt": "2026-10-29T13:27:21.312Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

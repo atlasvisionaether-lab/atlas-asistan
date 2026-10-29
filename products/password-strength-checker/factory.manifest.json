@@ -1,0 +1,11 @@
+{
+  "slug": "password-strength-checker",
+  "name": "Password Strength Checker",
+  "problem": "People reuse weak passwords because they don't know how weak they are",
+  "target": "everyone online",
+  "price": "free + $5 pro",
+  "createdAt": "2026-10-29T13:27:21.162Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

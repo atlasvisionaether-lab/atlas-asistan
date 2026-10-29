@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mortgage-refinance-calculator.example.com/sitemap.xml

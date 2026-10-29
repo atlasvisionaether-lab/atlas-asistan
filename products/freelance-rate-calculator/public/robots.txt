@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://freelance-rate-calculator.example.com/sitemap.xml

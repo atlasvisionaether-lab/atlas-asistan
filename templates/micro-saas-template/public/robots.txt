@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://__PRODUCT_SLUG__.example.com/sitemap.xml

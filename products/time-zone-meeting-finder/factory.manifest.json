@@ -1,0 +1,11 @@
+{
+  "slug": "time-zone-meeting-finder",
+  "name": "Time Zone Meeting Finder",
+  "problem": "Scheduling across time zones is a manual back-and-forth",
+  "target": "remote teams",
+  "price": "$9/mo",
+  "createdAt": "2026-10-29T13:27:21.237Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

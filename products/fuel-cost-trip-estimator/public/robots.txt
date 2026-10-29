@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fuel-cost-trip-estimator.example.com/sitemap.xml

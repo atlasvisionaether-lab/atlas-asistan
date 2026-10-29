@@ -1,0 +1,11 @@
+{
+  "slug": "mortgage-refinance-calculator",
+  "name": "Mortgage Refinance Calculator",
+  "problem": "Homeowners can't tell whether refinancing actually saves them money",
+  "target": "homeowners",
+  "price": "$12 one-time",
+  "createdAt": "2026-10-29T13:27:21.016Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tip-splitter.example.com/sitemap.xml

@@ -1,0 +1,11 @@
+{
+  "slug": "freelance-rate-calculator",
+  "name": "Freelance Rate Calculator",
+  "problem": "Freelancers undercharge because they don't know their true hourly cost",
+  "target": "freelancers",
+  "price": "$9 one-time",
+  "createdAt": "2026-10-29T13:27:21.054Z",
+  "template": "micro-saas-template",
+  "files": 19,
+  "replacedFiles": 9
+}

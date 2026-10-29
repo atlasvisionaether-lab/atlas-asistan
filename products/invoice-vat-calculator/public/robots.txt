@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://invoice-vat-calculator.example.com/sitemap.xml

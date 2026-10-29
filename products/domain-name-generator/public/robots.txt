@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://domain-name-generator.example.com/sitemap.xml
