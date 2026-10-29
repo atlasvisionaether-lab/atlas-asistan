@@ -1,0 +1,27 @@
+{
+  "name": "govbid-autopilot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GovBid Autopilot — AI agent that finds, matches, and drafts winning government contract proposals",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "smoke": "node --experimental-strip-types scripts/smoke-matcher.ts"
+  },
+  "dependencies": {
+    "next": "15.5.28",
+    "pdfkit": "^0.20.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "stripe": "^23.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pdfkit": "^0.17.7",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}
